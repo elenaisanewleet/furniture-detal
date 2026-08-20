@@ -19,6 +19,16 @@ document.addEventListener('click',function(e){
   if(b){e.preventDefault();sendTo(b.getAttribute('data-send'))}
 });
 
+/* мобильное меню создаётся для общей шапки на всех страницах */
+(function(){
+  var bar=document.querySelector('.bar .wrap'),nav=bar&&bar.querySelector('nav');if(!bar||!nav)return;
+  var b=document.createElement('button');b.className='menu-toggle';b.type='button';
+  b.setAttribute('aria-label','Открыть меню');b.setAttribute('aria-expanded','false');b.innerHTML='<span></span>';
+  b.addEventListener('click',function(){var open=nav.classList.toggle('open');b.classList.toggle('open',open);b.setAttribute('aria-expanded',open?'true':'false');b.setAttribute('aria-label',open?'Закрыть меню':'Открыть меню')});
+  nav.addEventListener('click',function(e){if(e.target.closest('a')){nav.classList.remove('open');b.classList.remove('open');b.setAttribute('aria-expanded','false')}});
+  bar.insertBefore(b,nav);
+})();
+
 /* тема заявки из карточки станка / услуги */
 function setTopic(v){var e=document.getElementById('f-topic');if(e)e.value=v;
   var ta=document.getElementById('f-task');if(ta&&!ta.value)ta.placeholder='Например: '+v.toLowerCase()+' — опишите деталь и количество';}
