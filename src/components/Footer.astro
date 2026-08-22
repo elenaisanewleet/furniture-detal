@@ -1,0 +1,40 @@
+---
+import { site, placeLine } from '~/data/site';
+import { services, footerLinks } from '~/data/nav';
+---
+
+<footer>
+  <div class="wrap">
+    <div class="col">
+      <b>{site.brand.name}</b>
+      <span class="dimf">{site.positioning} {placeLine}.</span>
+    </div>
+
+    <div class="col">
+      <b>Услуги</b>
+      {services.map((s) => <a href={s.href}>{s.label}</a>)}
+    </div>
+
+    {/* Ник оператора из подписи убран: адрес личной переписки — не
+        название канала связи, и человеку он ничего не говорит.
+        Ссылка ведёт туда же. */}
+    <div class="col">
+      <b>Связаться</b>
+      <a class="tel foot-tel" href={`tel:${site.phone.tel}`}>{site.phone.label}</a>
+      <a href={site.whatsapp} rel="noopener">Написать в WhatsApp</a>
+      <a href={site.telegram.botUrl} rel="noopener">Написать в Telegram</a>
+    </div>
+
+    <div class="col">
+      <b>Разделы</b>
+      {footerLinks.map((l) => <a href={l.href}>{l.label}</a>)}
+    </div>
+  </div>
+
+  <div class="tail">
+    <div class="wrap">
+      <span>{site.phone.person}, {site.phone.role}</span>
+      <span style="margin-inline-start:auto">{placeLine}</span>
+    </div>
+  </div>
+</footer>

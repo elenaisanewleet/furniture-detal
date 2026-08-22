@@ -1,0 +1,47 @@
+---
+import { site } from '~/data/site';
+import { services, primaryNav } from '~/data/nav';
+
+/**
+ * Шапка.
+ *
+ * Действие здесь — чернильное, а не красное. Сигнальный цвет в системе
+ * принадлежит ровно одному действию на экране — приёму детали, — и шапка
+ * его не тратит: иначе на главной оказывается два красных пятна, и ни одно
+ * не главное.
+ *
+ * Телефон набран моноширинным и отделён от меню: иначе он читается как
+ * ещё один пункт навигации, каким не является.
+ */
+const here = Astro.url.pathname;
+const isHere = (href: string) => here === href;
+---
+
+<div class="bar">
+  <div class="wrap">
+    <a class="logo" href="/">
+      {site.brand.short}
+      <span>{site.brand.where}</span>
+    </a>
+
+    <nav aria-label="Основная навигация">
+      <span class="drop" tabindex="0">
+        <b>Услуги</b>
+        <menu>
+          {services.map((s) => <a href={s.href}>{s.label}</a>)}
+        </menu>
+      </span>
+
+      {
+        primaryNav.map((item) => (
+          <a href={item.href} aria-current={isHere(item.href) ? 'page' : undefined}>
+            {item.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <a class="bar-tel" href={`tel:${site.phone.tel}`}>{site.phone.label}</a>
+    <a class="btn dark" href="/zakaz/">Показать деталь</a>
+  </div>
+</div>
