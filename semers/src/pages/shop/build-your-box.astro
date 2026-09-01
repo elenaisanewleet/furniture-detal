@@ -1,0 +1,82 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { productBySlug, FLAVORS, formatPrice } from '~/data/products';
+import { img, imgSrc } from '~/data/images';
+
+const SIZE = 6;
+const DISCOUNT = 0.1;
+const sources = ['apple-bar-35g', 'flourless-apple-bar-50g', 'apple-meringue-35g'].map((s) => productBySlug(s)!).filter(Boolean);
+const items = sources.flatMap((p) =>
+  p.variants.map((v) => ({
+    id: `${p.slug}:${v.key}`,
+    name: `${p.name} ${FLAVORS[v.key].label}`,
+    sub: `${p.weightGrams} g · ${p.kcalPerUnit} kcal · ${formatPrice(v.price ?? p.price)}`,
+    price: v.price ?? p.price,
+    image: imgSrc(p.images[0]),
+    weight: p.weightGrams,
+    color: FLAVORS[v.key].color,
+    group: p.name,
+  })),
+);
+const groups = [...new Set(items.map((i) => i.group))];
+const boxImg = { ...img('gift-box'), src: imgSrc('gift-box') };
+const minPrice = Math.min(...items.map((i) => i.price)) * SIZE * (1 - DISCOUNT);
+---
+<Base
+  title="Build your box — pick 6 bars, save 10%"
+  description="Mix and match Apple Bars, Flourless Bars and apple meringues in a box of six. Any combination, 10% off, one delivery from Riga."
+  canonical="/shop/build-your-box/"
+  ogImage="gift-box"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: 'Build your box', href: '/shop/build-your-box/' }]}
+>
+  <section class="container page-hero">
+    <p class="eyebrow">Build your box</p>
+    <h1>Six bars. Your rules. 10% off.</h1>
+    <p class="lead">Tap to add any bar or meringue pack to a slot. Fill all six and the box goes to your cart as one item — from {formatPrice(minPrice)}.</p>
+  </section>
+
+  <section class="container builder" data-builder data-size={SIZE} data-discount={DISCOUNT} data-image={boxImg.src}>
+    <div class="builder__list">
+      {groups.map((g) => (
+        <div class="builder__group">
+          <h2 class="builder__h">{g}</h2>
+          <div class="builder__items">
+            {items.filter((i) => i.group === g).map((i) => (
+              <div class="bi">
+                <img class="bi__img" src={i.image} alt="" width="64" height="64" loading="lazy" decoding="async" />
+                <div>
+                  <div class="bi__name"><span class="bi__dot" style={`--sw:${i.color}`}></span>{i.name}</div>
+                  <div class="bi__sub">{i.sub}</div>
+                </div>
+                <button class="btn btn--sm btn--ink" type="button" data-builder-pick data-id={i.id} data-name={i.name} data-price={i.price} data-image={i.image} data-weight={i.weight} aria-label={`Add ${i.name} to the box`}><Icon name="plus" size={16} /> Add</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <aside class="builder__aside">
+      <div class="builder__box">
+        <div class="co__row"><h2>Your box</h2><strong data-builder-count>0 / {SIZE}</strong></div>
+        <div class="builder__slots" aria-live="polite">
+          {Array.from({ length: SIZE }).map(() => <div class="builder__slot" data-builder-slot></div>)}
+        </div>
+        <ul class="builder__picked small" data-builder-list></ul>
+        <div class="co__row co__total"><span>Box price</span><span><s class="muted small" data-builder-was></s> <span class="num" data-builder-price>€0.00</span></span></div>
+        <button class="btn btn--lg btn--block" type="button" data-builder-add disabled>Add box to cart</button>
+        <p class="tiny muted">10% off the individual prices. Ships as one parcel; free over €25.</p>
+      </div>
+    </aside>
+  </section>
+</Base>
+<style>
+  .builder__group + .builder__group { margin-top: 1.75rem; }
+  .builder__h { font-size: var(--fs-lg); margin-bottom: 0.75rem; }
+  .builder__items { display: grid; gap: 0.6rem; }
+  .bi__dot { display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%; background: var(--sw); margin-right: 0.4em; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1); }
+  .builder__picked { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
+  .builder__picked li { display: flex; justify-content: space-between; gap: 1rem; }
+  .builder__box .co__row h2 { font-size: var(--fs-xl); }
+</style>

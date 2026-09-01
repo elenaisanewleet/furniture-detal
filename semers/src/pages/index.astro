@@ -1,0 +1,291 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, COLLECTIONS, formatPrice } from '~/data/products';
+import { img, imgSrc, RENDER_BG } from '~/data/images';
+import { ARTICLES_SORTED } from '~/data/journal';
+import { FAQS } from '~/data/faq';
+import { site } from '~/data/site';
+import { itemList, faqPage } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+
+const origin = originOf(Astro.site);
+const best = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 4);
+const homeFaqs = FAQS.filter((f) => ['product', 'nutrition', 'orders'].includes(f.group)).slice(0, 5);
+const tiles = COLLECTIONS.filter((c) => c.key !== 'applite');
+const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
+const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a bar', 'Made in Riga', 'Recipe from 1888', 'Ships across the EU', 'Egg white, nothing else'];
+---
+<Base
+  title="Semers — Apple bars & pastila. 99% apples, no added sugar"
+  description="Baked apple snacks from Riga: Apple Bars, Flourless Bars, apple meringues and Belyov pastila. 99% Antonovka apples, egg white, nothing else. No added sugar, about 97 kcal a bar. Ships across the EU."
+  canonical="/"
+  ogImage="hero-bars"
+  schema={[itemList(origin, best), faqPage(homeFaqs)]}
+  bodyClass="home"
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="hero hero--home bg-grain" aria-labelledby="hero-title">
+    <div class="bg-blob bg-blob--mint" style="width:38rem;height:38rem;right:-8rem;top:-10rem"></div>
+    <div class="bg-blob bg-blob--coral" style="width:26rem;height:26rem;right:22rem;bottom:-8rem;opacity:.45"></div>
+    <div class="container hero__grid">
+      <div>
+        <p class="eyebrow">Baked apple snacks · Riga, Latvia</p>
+        <h1 class="hero__title" id="hero-title">A snack bar that is <em>99% apple.</em></h1>
+        <p class="hero__lead">Antonovka apples baked, whipped with egg white and slowly dried the Belyov way. No added sugar, no flour, no nonsense. About 97 kcal a bar.</p>
+        <div class="hero__cta">
+          <a class="btn btn--lg" href="/shop/">Shop the bars <Icon name="arrow" size={20} class="arrow" /></a>
+          <a class="btn btn--lg btn--ghost" href="/why-pastila/">Why pastila?</a>
+        </div>
+        <div class="hero__proof">
+          <span><Icon name="check" size={16} /> No added sugar</span>
+          <span><Icon name="check" size={16} /> Gluten free</span>
+          <span><Icon name="check" size={16} /> Free EU shipping over {formatPrice(site.shipping.freeFrom)}</span>
+        </div>
+      </div>
+      <div class="hero__media">
+        <div class="hero__stage" aria-hidden="true">
+          <img class="hero__pack hero__pack--b" src={im("packshot-berry").src} alt="" width="2160" height="2160" loading="eager" decoding="async" />
+          <img class="hero__pack hero__pack--a" src={im("packshot-classic").src} alt={im("packshot-classic").alt} width="2160" height="2160" loading="eager" fetchpriority="high" decoding="async" />
+        </div>
+        <div class="hero__float hero__float--a"><strong>97 kcal</strong><span>per 35 g bar</span></div>
+        <div class="hero__float hero__float--b"><strong>2</strong><span>ingredients: apples, egg white</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      {[...tape, ...tape].map((t) => <span class="marquee__item">{t}</span>)}
+    </div>
+  </div>
+
+  <!-- ============================== BESTSELLERS ============================== -->
+  <section class="section container" aria-labelledby="best-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Bestsellers</p>
+        <h2 id="best-title">Start with the ones everyone starts with.</h2>
+      </div>
+      <a class="link" href="/shop/">Shop all products</a>
+    </div>
+    <div class="grid grid--4" data-reveal>
+      {best.map((p, i) => <ProductCard product={p} loading={i < 2 ? 'eager' : 'lazy'} />)}
+    </div>
+  </section>
+
+  <!-- ============================== APPLE RENDER ============================== -->
+  <section class="render" style={`--render-bg:${RENDER_BG}`} aria-labelledby="render-title">
+    <div class="container render__grid">
+      <div class="render__copy" data-reveal>
+        <p class="eyebrow">What pastila is</p>
+        <h2 id="render-title" class="render__title">It’s an apple. <em>Inside, it’s pastila.</em></h2>
+        <p>Take a sour northern apple, bake it until the sugars caramelise, whip the purée with egg white until it holds air, then spread it thin and dry it for hours. What you get is a soft, fibrous loaf that tastes like the concentrated heart of an apple — and nothing else was added to make it so.</p>
+        <p>We cut that loaf into bars, bake it into meringues and press it into desserts. Same two ingredients every time.</p>
+        <div class="cluster mt-4">
+          <a class="btn btn--paper" href="/how-its-made/">How it’s made</a>
+          <a class="link render__link" href="/shop/pastila/">Shop pastila</a>
+        </div>
+      </div>
+      <div class="render__media" data-reveal>
+        <img src={im('apple-split').src} alt={im('apple-split').alt} width={im('apple-split').width} height={im('apple-split').height} loading="lazy" decoding="async" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== INGREDIENTS ============================== -->
+  <section class="section container" aria-labelledby="ing-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">The whole ingredient list</p>
+        <h2 id="ing-title">Apples. Egg white. Sometimes berries.</h2>
+      </div>
+      <p class="muted" style="max-width:36ch">If it isn’t grown in an orchard or laid by a hen, it isn’t in the pack.</p>
+    </div>
+    <div class="trio" data-reveal>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('apples-orchard').src} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" /></div>
+        <h3>Antonovka apples <span class="muted">99%</span></h3>
+        <p>A tart, aromatic northern apple with lots of pectin. That is what lets the purée set without gelatine and taste like fruit rather than sugar.</p>
+      </article>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('process-oven').src} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" /></div>
+        <h3>Egg white <span class="muted">1%</span></h3>
+        <p>Whipped into the purée to trap air. It is why pastila is light and springy instead of a dense fruit leather.</p>
+      </article>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('flourless-bar').src} alt={im('flourless-bar').alt} width={im('flourless-bar').width} height={im('flourless-bar').height} loading="lazy" decoding="async" /></div>
+        <h3>Berries &amp; spice <span class="muted">optional</span></h3>
+        <p>Blueberry, cranberry, cherry, lingonberry, black currant, Ceylon cinnamon. Whole fruit, not “natural flavouring”.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================== COMPARISON ============================== -->
+  <section class="section band" aria-labelledby="vs-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Honest maths</p>
+          <h2 id="vs-title">Same craving. A third of the calories.</h2>
+        </div>
+      </div>
+      <div class="vs" data-reveal>
+        <div class="vs__col vs__col--win">
+          <p class="eyebrow">App’Lite Apple Bar · 35 g</p>
+          <div class="vs__kcal">97 <span class="muted small">kcal</span></div>
+          <ul class="vs__list">
+            <li class="yes"><Icon name="check" size={18} /> 0 g added sugar — sweetness from the apple</li>
+            <li class="yes"><Icon name="check" size={18} /> 2 ingredients</li>
+            <li class="yes"><Icon name="check" size={18} /> 0 g fat, no flour, no gluten</li>
+            <li class="yes"><Icon name="check" size={18} /> Source of fibre</li>
+          </ul>
+        </div>
+        <div class="vs__vs">vs</div>
+        <div class="vs__col">
+          <p class="eyebrow">Typical milk chocolate bar · 45 g</p>
+          <div class="vs__kcal">~240 <span class="muted small">kcal</span></div>
+          <ul class="vs__list">
+            <li class="no"><Icon name="close" size={18} /> ~24 g sugar, mostly added</li>
+            <li class="no"><Icon name="close" size={18} /> 8–12 ingredients incl. emulsifiers</li>
+            <li class="no"><Icon name="close" size={18} /> ~13 g fat</li>
+            <li class="no"><Icon name="close" size={18} /> No meaningful fibre</li>
+          </ul>
+        </div>
+      </div>
+      <p class="tiny muted mt-4">Chocolate figures are typical values for a mainstream 45 g milk chocolate bar; Apple Bar values are per pack. Full nutrition on every product page.</p>
+    </div>
+  </section>
+
+  <!-- ============================== COLLECTIONS ============================== -->
+  <section class="section container" aria-labelledby="col-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Shop by shape</p>
+        <h2 id="col-title">One recipe, six ways to eat it.</h2>
+      </div>
+      <a class="link" href="/shop/">See everything</a>
+    </div>
+    <div class="grid grid--3" data-reveal>
+      {tiles.map((c) => (
+        <a class="ct" href={`/shop/${c.key}/`} style={`--ct-accent:${c.accent}`}>
+          <img src={imgSrc(c.image)} alt="" width={img(c.image).width} height={img(c.image).height} loading="lazy" decoding="async" />
+          <div class="ct__body"><h3>{c.name}</h3><p>{c.description.split('.')[0]}.</p></div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================== HOW IT'S MADE ============================== -->
+  <section class="section container" aria-labelledby="how-title">
+    <div class="split">
+      <div class="frame frame--4x5 rounded" data-reveal>
+        <img src={im('pastila-texture').src} alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">How it’s made</p>
+        <h2 id="how-title">Twelve hours, four steps, zero shortcuts.</h2>
+        <div class="steps steps--col mt-4">
+          <div class="step"><h3>Bake</h3><p>Whole Antonovka apples go into the oven until soft and caramel-edged.</p></div>
+          <div class="step"><h3>Whip</h3><p>The purée is beaten with egg white until it triples in volume.</p></div>
+          <div class="step"><h3>Layer &amp; dry</h3><p>Thin sheets dry slowly at low heat, then are stacked and pressed.</p></div>
+          <div class="step"><h3>Cut &amp; pack</h3><p>Bars, squares and loaves are cut by hand and sealed the same day.</p></div>
+        </div>
+        <a class="btn btn--ghost mt-4" href="/how-its-made/">The full process</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHERE TO BUY / B2B ============================== -->
+  <section class="section container" aria-labelledby="buy-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Also on shelves</p>
+      <h2 id="buy-title">Find Semers at Maxima, on Barbora and in stores across Europe.</h2>
+      <p>Retailer, café, office or distributor? We ship pallets as happily as parcels, and we do private label.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/where-to-buy/">Where to buy</a>
+        <a class="btn btn--ghost cta-band__ghost" href="/wholesale/">Wholesale &amp; B2B</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== JOURNAL ============================== -->
+  <section class="section container section--tight" aria-labelledby="jr-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Journal</p>
+        <h2 id="jr-title">Reading for the kettle to boil.</h2>
+      </div>
+      <a class="link" href="/journal/">All articles</a>
+    </div>
+    <div class="grid grid--3" data-reveal>
+      {ARTICLES_SORTED.slice(0, 3).map((a) => (
+        <a class="jc" href={`/journal/${a.slug}/`}>
+          <div class="frame frame--3x2"><img src={imgSrc(a.image)} alt="" width={img(a.image).width} height={img(a.image).height} loading="lazy" decoding="async" /></div>
+          <div class="jc__meta">{a.readMinutes} min read</div>
+          <h3>{a.title}</h3>
+          <p>{a.description}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================== FAQ ============================== -->
+  <section class="section container" aria-labelledby="faq-title">
+    <div class="faq-grid">
+      <div>
+        <p class="eyebrow">Questions</p>
+        <h2 id="faq-title">Things people ask before their first box.</h2>
+        <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+      </div>
+      <div class="acc" data-reveal>
+        {homeFaqs.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .hero--home { background: var(--bg); }
+  .hero__stage { position: relative; aspect-ratio: 1; max-width: 34rem; margin-inline: auto; }
+  .hero__stage::before { content: ''; position: absolute; inset: 6% 4%; border-radius: 48% 52% 46% 54% / 52% 44% 56% 48%; background: radial-gradient(circle at 30% 30%, var(--mint-100), var(--cream-2) 70%); }
+  .hero__pack { position: absolute; width: 78%; height: auto; filter: drop-shadow(0 30px 40px rgb(27 22 18 / 0.28)); }
+  .hero__pack--a { left: 2%; bottom: 4%; transform: rotate(-6deg); animation: float 7s ease-in-out infinite; }
+  .hero__pack--b { right: -2%; top: 0; width: 66%; transform: rotate(9deg); opacity: 0.95; animation: float 7s ease-in-out -3.5s infinite; }
+  @media (prefers-reduced-motion: reduce) { .hero__pack, .hero__float { animation: none; } }
+
+  /* dark render band */
+  .render { background: var(--render-bg); color: var(--cream-0); overflow: clip; }
+  .render__grid { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: center; padding-block: clamp(3rem, 7vw, 6rem); }
+  @media (min-width: 56rem) { .render__grid { grid-template-columns: 0.9fr 1.1fr; } }
+  .render .eyebrow { color: var(--honey-500); }
+  .render .eyebrow::before { background: var(--honey-500); }
+  .render__title { color: inherit; font-size: var(--fs-4xl); letter-spacing: -0.03em; line-height: 1; margin-bottom: 1rem; }
+  .render__title em { font-style: italic; font-weight: 400; color: var(--honey-500); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .render__copy p { color: rgb(250 243 228 / 0.82); max-width: 52ch; }
+  .render__link { color: var(--cream-0); border-color: var(--honey-500); }
+  .render__media img { width: 100%; height: auto; display: block; border-radius: var(--r-lg); }
+  @media (min-width: 56rem) { .render__media { margin-right: calc(-1 * var(--gutter)); } .render__media img { transform: scale(1.06); } }
+
+  /* ingredient trio with images */
+  .feat--img { padding: 0; overflow: clip; }
+  .feat--img .frame { border-radius: 0; }
+  .feat--img h3, .feat--img p { padding-inline: 1.4rem; }
+  .feat--img h3 { padding-top: 1.2rem; }
+  .feat--img p { padding-bottom: 1.4rem; }
+  .feat--img h3 .muted { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; margin-left: 0.3em; }
+
+  /* steps stacked next to image */
+  .steps--col { grid-template-columns: 1fr 1fr; gap: 1.25rem 2rem; }
+  @media (max-width: 30rem) { .steps--col { grid-template-columns: 1fr; } }
+
+  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+
+  .faq-grid { display: grid; gap: 2rem; }
+  @media (min-width: 56rem) { .faq-grid { grid-template-columns: 1fr 1.4fr; gap: 4rem; } }
+</style>

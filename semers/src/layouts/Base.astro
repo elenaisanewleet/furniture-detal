@@ -1,0 +1,126 @@
+---
+import '~/styles/fonts.css';
+import '~/styles/tokens.css';
+import '~/styles/base.css';
+import '~/styles/site.css';
+
+import Header from '~/components/Header.astro';
+import Footer from '~/components/Footer.astro';
+import CartDrawer from '~/components/CartDrawer.astro';
+import Breadcrumbs from '~/components/Breadcrumbs.astro';
+
+import { site } from '~/data/site';
+import { organization, webSite, breadcrumbs, graph } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { imgSrc } from '~/data/images';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path only, e.g. "/shop/". Canonical is built from it. */
+  canonical?: string;
+  noindex?: boolean;
+  breadcrumb?: { name: string; href: string }[];
+  /** Extra schema.org nodes for this page. */
+  schema?: unknown[];
+  /** Image key or absolute URL for Open Graph. */
+  ogImage?: string;
+  ogType?: 'website' | 'product' | 'article';
+  /** Header becomes transparent over the hero. */
+  heroHeader?: boolean;
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description,
+  canonical = Astro.url.pathname,
+  noindex = false,
+  breadcrumb = [],
+  schema = [],
+  ogImage = 'hero-wide',
+  ogType = 'website',
+  heroHeader = false,
+  bodyClass = '',
+} = Astro.props;
+
+const origin = originOf(Astro.site);
+const canonicalUrl = new URL(canonical, origin).toString();
+const ogSrc = ogImage.startsWith('http') || ogImage.startsWith('/') ? ogImage : imgSrc(ogImage);
+const ogUrl = ogSrc.startsWith('http') ? ogSrc : new URL(ogSrc, origin).toString();
+const fullTitle = title.includes('Semers') ? title : `${title} — Semers`;
+
+const nodes = [
+  organization(origin),
+  webSite(origin),
+  breadcrumb.length > 1 ? breadcrumbs(origin, breadcrumb) : null,
+  ...schema,
+];
+---
+
+<!doctype html>
+<html lang="en" prefix="og: https://ogp.me/ns#">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    <link rel="alternate" hreflang="en" href={canonicalUrl} />
+    <link rel="alternate" hreflang="x-default" href={canonicalUrl} />
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'} />
+    <meta name="theme-color" content="#faf3e4" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="author" content={site.brand.legalName} />
+
+    {site.verify.google && <meta name="google-site-verification" content={site.verify.google} />}
+    {site.verify.bing && <meta name="msvalidate.01" content={site.verify.bing} />}
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={site.brand.name} />
+    <meta property="og:locale" content="en_GB" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:alt" content={description} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogUrl} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <link rel="preload" href="/fonts/fraunces-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/fonts/instrument-sans-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preconnect" href="https://d8j0ntlcm91z4.cloudfront.net" crossorigin />
+
+    <script type="application/ld+json" set:html={graph(nodes)} is:inline />
+    <script is:inline set:html={`window.SEMERS=${JSON.stringify({ endpoint: site.orderEndpoint || '/api/order', freeFrom: site.shipping.freeFrom, email: site.email, whatsapp: site.whatsapp, currency: site.currency })};`} />
+    <slot name="head" />
+  </head>
+
+  <body class={`${heroHeader ? 'has-hero-header' : ''} ${bodyClass}`}>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header transparent={heroHeader} />
+    {breadcrumb.length > 1 && <Breadcrumbs trail={breadcrumb} />}
+    <main id="main">
+      <slot />
+    </main>
+    <Footer />
+    <CartDrawer />
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+      import '~/scripts/site';
+    </script>
+
+    {site.analytics.plausibleDomain && (
+      <script defer data-domain={site.analytics.plausibleDomain} src="https://plausible.io/js/script.js" is:inline></script>
+    )}
+  </body>
+</html>

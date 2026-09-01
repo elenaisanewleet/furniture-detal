@@ -1,0 +1,247 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, FLAVORS, DIET_TAGS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product } from '~/data/products';
+import { img, imgSrc } from '~/data/images';
+import { productSchema, faqPage } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { site } from '~/data/site';
+
+export function getStaticPaths() {
+  return PRODUCTS.map((p) => ({ params: { slug: p.slug }, props: { product: p } }));
+}
+const { product: p } = Astro.props as { product: Product };
+const col = collectionByKey(p.collection)!;
+const origin = originOf(Astro.site);
+const gallery = p.images.map((k) => ({ key: k, ...img(k), src: imgSrc(k) }));
+const first = p.variants[0];
+const addPayload = JSON.stringify({
+  slug: p.slug,
+  name: p.title,
+  variant: first.key,
+  variantLabel: FLAVORS[first.key].label,
+  price: first.price ?? p.price,
+  image: gallery[0].src,
+  weight: p.weightGrams,
+  url: `/products/${p.slug}/`,
+});
+const related = [...productsInCollection(p.collection).filter((x) => x.slug !== p.slug), ...PRODUCTS.filter((x) => x.collection !== p.collection && x.bestseller)].slice(0, 3);
+const multi = p.variants.length > 1;
+const ingredientCount = p.ingredients.split(',').length;
+const ingredientLine = ingredientCount <= 4 ? `${ingredientCount} ingredients` : 'Short ingredient list';
+const isBundle = p.collection === 'gift-sets';
+
+const faqs = [
+  { q: `How many calories are in one ${p.name}?`, a: `About ${p.kcalPerUnit} kcal per ${p.pack > 1 ? 'pack' : 'piece'} (${p.weightGrams} g). Per 100 g: ${p.nutrition.energyKcal} kcal.` },
+  { q: 'Does it contain added sugar?', a: 'No. The sweetness comes from the baked Antonovka apples themselves. Nothing else is added.' },
+  { q: 'How long does it keep?', a: `${p.shelfLifeMonths} months in a cool, dry place. Once opened, enjoy within a few days.` },
+  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatPrice(site.shipping.freeFrom)} ship free.` },
+];
+
+const rows: [string, string][] = [
+  ['Energy', `${p.nutrition.energyKcal} kcal`],
+  ['Fat', `${p.nutrition.fat} g`],
+  ['of which saturates', `${p.nutrition.saturates} g`],
+  ['Carbohydrate', `${p.nutrition.carbs} g`],
+  ['of which sugars', `${p.nutrition.sugars} g`],
+  ['Fibre', `${p.nutrition.fibre} g`],
+  ['Protein', `${p.nutrition.protein} g`],
+  ['Salt', `${p.nutrition.salt} g`],
+];
+---
+<Base
+  title={p.title}
+  description={p.summary}
+  canonical={`/products/${p.slug}/`}
+  ogImage={p.images[0]}
+  ogType="product"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: col.name, href: `/shop/${col.key}/` }, { name: p.name, href: `/products/${p.slug}/` }]}
+  schema={[productSchema(origin, p), faqPage(faqs)]}
+>
+  <article class="pdp container" data-pdp>
+    <div class="pdp__grid">
+      <div class="pdp__gallery">
+        <div class="gal" style={`--gal-accent:${p.accent}`}>
+          <div class={`gal__main ${gallery[0].fit === 'contain' ? 'is-contain' : ''}`} data-gal-wrap>
+            {p.badge || p.bestseller ? <span class="badge">{p.badge || 'Bestseller'}</span> : null}
+            <img data-gal-main src={gallery[0].src} alt={gallery[0].alt} width={gallery[0].width} height={gallery[0].height} loading="eager" fetchpriority="high" decoding="async" />
+          </div>
+          {gallery.length > 1 && (
+            <div class="gal__thumbs" role="group" aria-label="Product images">
+              {gallery.map((g, i) => (
+                <button type="button" data-gal-thumb data-src={g.src} data-alt={g.alt} data-fit={g.fit || 'cover'} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Image ${i + 1}`}>
+                  <img src={g.src} alt="" width="72" height="72" loading="lazy" decoding="async" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div class="pdp__buy">
+        <p class="eyebrow">{p.brand} · <a href={`/shop/${col.key}/`}>{col.name}</a></p>
+        <h1 class="pdp__title">{p.name} <span class="pdp__w">{p.weightGrams} g{p.pack > 1 ? ` · ${p.pack} pcs` : ''}</span></h1>
+        <p class="pdp__hook">{p.hook}</p>
+
+        <div class="pdp__price">
+          <span class="pdp__amount num" data-price>{formatPrice(first.price ?? p.price)}</span>
+          {p.compareAt && <s class="muted">{formatPrice(p.compareAt)}</s>}
+          <span class="pdp__unit">{unitPrice(p)} · incl. VAT</span>
+        </div>
+
+        <ul class="pdp__facts" aria-label="Key facts">
+          <li><Icon name="apple" size={18} /> {p.kcalPerUnit} kcal per {p.pack > 1 ? 'pack' : 'piece'}</li>
+          {p.diet.slice(0, 3).map((d) => <li><Icon name="check" size={18} /> {DIET_TAGS[d]}</li>)}
+        </ul>
+
+        {multi && (
+          <fieldset class="pdp__vars">
+            <legend>Flavour: <strong data-variant-name>{FLAVORS[first.key].label}</strong></legend>
+            <div class="vars">
+              {p.variants.map((v, i) => (
+                <label class="var">
+                  <input type="radio" name="flavour" value={v.key} data-variant data-price={v.price ?? p.price} data-label={FLAVORS[v.key].label} data-gtin={v.gtin || ''} checked={i === 0} disabled={v.inStock === false} />
+                  <span><i style={`--sw:${FLAVORS[v.key].color}`}></i>{FLAVORS[v.key].label}</span>
+                </label>
+              ))}
+            </div>
+            <p class="tiny muted pdp__varnote">{p.variants.map((v) => `${FLAVORS[v.key].label}: ${FLAVORS[v.key].note}`).join(' · ')}</p>
+          </fieldset>
+        )}
+
+        <div class="pdp__cta" data-buy-anchor>
+          <div class="qty" role="group" aria-label="Quantity">
+            <button type="button" data-qty-dec aria-label="Decrease quantity">−</button>
+            <input data-qty-input type="number" min="1" max="99" value="1" inputmode="numeric" aria-label="Quantity" />
+            <button type="button" data-qty-inc aria-label="Increase quantity">+</button>
+          </div>
+          <button class="btn btn--lg pdp__add" type="button" data-add={addPayload}>
+            <Icon name="cart" size={20} /> Add to box
+          </button>
+        </div>
+
+        <ul class="pdp__trust">
+          <li><Icon name="truck" size={18} /> Free shipping over {formatPrice(site.shipping.freeFrom)} · ships from Riga in 1–2 days</li>
+          <li><Icon name="leaf" size={18} /> {ingredientLine}, nothing artificial</li>
+          <li><Icon name="clock" size={18} /> Keeps {p.shelfLifeMonths} months — no fridge needed</li>
+        </ul>
+
+        <div class="pdp__desc prose">
+          {p.description.map((d) => <p>{d}</p>)}
+        </div>
+
+        <div class="acc">
+          <details open>
+            <summary>Ingredients &amp; allergens</summary>
+            <div class="acc__body">
+              <p><strong>Ingredients:</strong> {p.ingredients}.</p>
+              <p><strong>Allergens:</strong> {p.allergens}.</p>
+              {multi && <p class="small muted">EAN for the selected flavour: <span data-gtin>{first.gtin || '—'}</span></p>}
+            </div>
+          </details>
+          <details>
+            <summary>Nutrition per 100 g</summary>
+            <div class="acc__body">
+              <table class="nutri">
+                <thead><tr><th>Typical values</th><th>per 100 g</th></tr></thead>
+                <tbody>
+                  {rows.map(([k, v]) => <tr class={k.startsWith('of which') ? 'sub' : ''}><td>{k}</td><td>{v}</td></tr>)}
+                </tbody>
+              </table>
+              <p class="tiny muted">Approximate per {p.pack > 1 ? 'pack' : 'piece'} ({p.weightGrams} g): {p.kcalPerUnit} kcal. Values are typical for the recipe; see the pack for the batch label.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Shipping &amp; returns</summary>
+            <div class="acc__body">
+              <p>{site.shipping.note} Free shipping over {formatPrice(site.shipping.freeFrom)}; otherwise a flat €3.90 in Latvia. We ship to {site.shipping.regions.join(', ')}.</p>
+              <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">Full policy</a>.</p>
+            </div>
+          </details>
+          {isBundle && (
+            <details>
+              <summary>What’s in the box</summary>
+              <div class="acc__body"><p>{p.summary}</p></div>
+            </details>
+          )}
+        </div>
+      </div>
+    </div>
+
+    <section class="pdp__story section--tight">
+      <div class="split">
+        <div class="frame frame--4x5 rounded">
+          <img src={imgSrc('pastila-texture')} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
+        </div>
+        <div>
+          <p class="eyebrow">Why it works</p>
+          <h2>Sweet because apples are sweet.</h2>
+          <p class="lead">We bake Antonovka apples until their sugars caramelise, whip the purée with egg white, and dry it in thin layers. That is the whole trick: concentrate the fruit, add air, add nothing else.</p>
+          <ul class="ticks">
+            <li><Icon name="check" /> No added sugar, sweeteners or syrups</li>
+            <li><Icon name="check" /> No flour, no gluten, no fat added</li>
+            <li><Icon name="check" /> Source of fibre from the whole fruit</li>
+          </ul>
+          <a class="link" href="/how-its-made/">See how it’s made</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section--tight">
+      <div class="section-head">
+        <h2>Pairs well with</h2>
+        <a class="link" href="/shop/">All products</a>
+      </div>
+      <div class="grid grid--3">
+        {related.map((r) => <ProductCard product={r} compact />)}
+      </div>
+    </section>
+
+    <section class="section--tight pdp__faq">
+      <h2>Questions people ask</h2>
+      <div class="acc">
+        {faqs.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </section>
+  </article>
+
+  <div class="sticky-buy" data-sticky-buy aria-hidden="true">
+    <div class="sticky-buy__in container">
+      <img class="sticky-buy__img" src={gallery[0].src} alt="" width="48" height="48" loading="lazy" />
+      <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price)}</span> · <span data-variant-name>{FLAVORS[first.key].label}</span></span></div>
+      <button class="btn" type="button" data-add={addPayload}>Add to box</button>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .pdp { padding-top: 1rem; }
+  .pdp__grid { display: grid; gap: clamp(1.5rem, 4vw, 4rem); padding-block: 1rem clamp(2rem, 5vw, 4rem); }
+  @media (min-width: 56rem) { .pdp__grid { grid-template-columns: 1.05fr 0.95fr; align-items: start; } .pdp__gallery { position: sticky; top: 5.5rem; } }
+  .pdp__title { font-size: var(--fs-3xl); letter-spacing: -0.02em; margin-top: 0.5rem; }
+  .pdp__w { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-lg); color: var(--fg-3); white-space: nowrap; }
+  .pdp__hook { font-size: var(--fs-lg); color: var(--ink-700); margin: 0.6rem 0 0; }
+  .pdp__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem 0.8rem; margin: 1.25rem 0; }
+  .pdp__amount { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.02em; }
+  .pdp__unit { font-size: var(--fs-sm); color: var(--fg-3); }
+  .pdp__facts { list-style: none; margin: 0 0 1.25rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: var(--fs-sm); font-weight: 600; }
+  .pdp__facts li { display: inline-flex; align-items: center; gap: 0.35em; }
+  .pdp__facts svg { color: var(--leaf-500); }
+  .pdp__vars { border: 0; padding: 0; margin: 0 0 1.25rem; }
+  .pdp__vars legend { font-size: var(--fs-sm); margin-bottom: 0.6rem; padding: 0; }
+  .pdp__varnote { margin: 0.6rem 0 0; }
+  .pdp__cta { display: grid; grid-template-columns: auto 1fr; gap: 0.75rem; align-items: stretch; }
+  .pdp__cta .qty { min-height: 3.5rem; }
+  .pdp__add { gap: 0.6em; }
+  .pdp__trust { list-style: none; margin: 1.25rem 0; padding: 1rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; gap: 0.5rem; font-size: var(--fs-sm); color: var(--fg-2); }
+  .pdp__trust li { display: flex; gap: 0.6em; align-items: flex-start; }
+  .pdp__trust svg { flex: none; color: var(--accent); margin-top: 0.1em; }
+  .pdp__desc { margin-bottom: 1.25rem; }
+  .pdp__story { margin-top: clamp(1rem, 3vw, 2rem); }
+  .pdp__story .ticks { margin: 1.25rem 0; }
+  .pdp__faq { max-width: 52rem; }
+  .pdp__faq h2 { margin-bottom: 1rem; }
+</style>

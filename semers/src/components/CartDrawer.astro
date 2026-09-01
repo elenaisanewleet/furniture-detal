@@ -1,0 +1,33 @@
+---
+/**
+ * Slide-over cart. Markup only; state and rendering live in src/scripts/site.ts
+ * (localStorage cart, free-shipping progress, quantity controls).
+ */
+import Icon from './Icon.astro';
+import { site } from '~/data/site';
+---
+<div class="drawer" id="cart" role="dialog" aria-modal="true" aria-labelledby="cart-title" hidden>
+  <div class="drawer__scrim" data-cart-close></div>
+  <aside class="drawer__panel">
+    <header class="drawer__head">
+      <h2 id="cart-title">Your box <span class="drawer__n" id="cart-n"></span></h2>
+      <button class="drawer__close" type="button" data-cart-close aria-label="Close cart"><Icon name="close" /></button>
+    </header>
+    <div class="drawer__ship" id="cart-ship" data-free-from={site.shipping.freeFrom}>
+      <div class="drawer__bar" aria-hidden="true"><span id="cart-ship-fill"></span></div>
+      <p id="cart-ship-text">Free shipping on orders over €{site.shipping.freeFrom}.</p>
+    </div>
+    <ul class="drawer__items" id="cart-items" aria-live="polite"></ul>
+    <div class="drawer__empty" id="cart-empty">
+      <Icon name="box" size={40} />
+      <p><strong>Your box is empty.</strong><br />Fill it with baked apples.</p>
+      <a class="btn" href="/shop/" data-cart-close>Shop bestsellers</a>
+    </div>
+    <footer class="drawer__foot">
+      <div class="drawer__row"><span>Subtotal</span><strong id="cart-subtotal" class="num">€0.00</strong></div>
+      <p class="tiny muted" style="margin:0">Shipping and any promo codes are calculated at checkout.</p>
+      <a class="btn btn--lg btn--block" href="/checkout/" id="cart-checkout">Checkout <Icon name="arrow" size={18} class="arrow" /></a>
+      <button class="btn btn--ghost btn--block" type="button" data-cart-close>Keep shopping</button>
+    </footer>
+  </aside>
+</div>

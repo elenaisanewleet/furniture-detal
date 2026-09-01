@@ -1,0 +1,59 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { site, footerNav } from '~/data/site';
+const year = new Date().getFullYear();
+---
+<footer class="ftr">
+  <div class="ftr__cta container">
+    <div class="ftr__cta-inner">
+      <p class="eyebrow">Join the apple club</p>
+      <h2 class="display">Get 10% off your first box.</h2>
+      <p class="muted">New flavours, restock alerts and the occasional recipe. No spam, no sugar.</p>
+      <form class="ftr__form" data-newsletter action="#" method="post">
+        <label class="sr-only" for="nl-email">E-mail</label>
+        <input class="input" id="nl-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+        <button class="btn" type="submit">Subscribe <Icon name="arrow" size={18} class="arrow" /></button>
+      </form>
+      <p class="tiny muted" data-newsletter-note>By subscribing you agree to our <a href="/legal/privacy/">privacy policy</a>.</p>
+    </div>
+  </div>
+  <div class="ftr__main container">
+    <div class="ftr__brand">
+      <a href="/" aria-label="Semers home"><Logo size={34} /></a>
+      <p class="ftr__tag">Baked apple snacks made in Riga, Latvia. Bars, meringues and pastila that are 99% apple, with no added sugar.</p>
+      <div class="ftr__social">
+        {site.social.instagram && <a href={site.social.instagram} rel="noopener" target="_blank" aria-label="Instagram"><Icon name="instagram" /></a>}
+        <a href={`mailto:${site.email}`} aria-label="E-mail"><Icon name="mail" /></a>
+      </div>
+    </div>
+    <nav aria-label="Shop"><h4>Shop</h4><ul>{footerNav.shop.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
+    <nav aria-label="Learn"><h4>Learn</h4><ul>{footerNav.learn.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
+    <nav aria-label="Company"><h4>Company</h4><ul>{footerNav.company.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
+  </div>
+  <div class="ftr__legal container">
+    <p>© {year} {site.brand.legalName} · {site.locality}, {site.country}</p>
+    <p>Prices in EUR incl. VAT. <a href="/legal/shipping-returns/">Shipping &amp; returns</a> · <a href="/legal/terms/">Terms</a> · <a href="/legal/privacy/">Privacy</a></p>
+  </div>
+</footer>
+<style>
+  .ftr { margin-top: clamp(3rem, 8vw, 7rem); background: var(--bg-sunken); border-top: 1px solid var(--line); }
+  .ftr__cta { padding-block: clamp(3rem, 7vw, 6rem); }
+  .ftr__cta-inner { max-width: 44rem; }
+  .ftr__cta h2 { margin: 0.6rem 0 0.6rem; font-size: var(--fs-3xl); }
+  .ftr__form { display: grid; grid-template-columns: 1fr auto; gap: 0.6rem; margin: 1.5rem 0 0.75rem; max-width: 34rem; }
+  @media (max-width: 30rem) { .ftr__form { grid-template-columns: 1fr; } }
+  .ftr__main { display: grid; gap: 2.5rem; padding-block: 3rem; border-top: 1px solid var(--line); }
+  @media (min-width: 48rem) { .ftr__main { grid-template-columns: 1.6fr 1fr 1fr 1fr; } }
+  .ftr__brand a { text-decoration: none; display: inline-flex; }
+  .ftr__tag { margin: 1rem 0; max-width: 28ch; color: var(--fg-2); }
+  .ftr__social { display: flex; gap: 0.5rem; }
+  .ftr__social a { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 1px solid var(--line); transition: background var(--dur-fast), color var(--dur-fast); }
+  .ftr__social a:hover { background: var(--ink-900); color: var(--cream-0); }
+  .ftr h4 { margin-bottom: 0.9rem; font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.1em; color: var(--fg-3); }
+  .ftr ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
+  .ftr ul a { text-decoration: none; }
+  .ftr ul a:hover { text-decoration: underline; }
+  .ftr__legal { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 2rem; padding-block: 1.25rem 2rem; border-top: 1px solid var(--line); font-size: var(--fs-xs); color: var(--fg-3); }
+  .ftr__legal p { margin: 0; }
+</style>

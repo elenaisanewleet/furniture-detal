@@ -1,0 +1,96 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, COLLECTIONS, DIET_TAGS } from '~/data/products';
+import { itemList } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+
+const origin = originOf(Astro.site);
+const products = [...PRODUCTS].sort((a, b) => Number(b.bestseller || 0) - Number(a.bestseller || 0) || a.order - b.order);
+const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as const;
+---
+<Base
+  title="Shop apple bars, meringues & pastila"
+  description="Every Semers product in one place: App'Lite Apple Bars, Flourless Bars, PastiLite meringues, Belyov pastila, zephyr and gift boxes. 99% apples, no added sugar. Ships from Riga across the EU."
+  canonical="/shop/"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }]}
+  schema={[itemList(origin, products)]}
+>
+  <section class="container page-hero">
+    <p class="eyebrow">Shop</p>
+    <h1>Everything we bake.</h1>
+    <p class="lead">Bars for bags, meringues for tea, loaves for sharing. 99% apple and no added sugar across the range — plus the one traditional zephyr we make with sugar and agar, clearly labelled.</p>
+  </section>
+
+  <section class="container" data-shop data-collection="all">
+    <div class="shop__bar">
+      <div class="pills" role="group" aria-label="Collection">
+        <button class="pill" type="button" data-filter-collection="all" aria-pressed="true">All</button>
+        {COLLECTIONS.map((c) => <button class="pill" type="button" data-filter-collection={c.key} aria-pressed="false">{c.name}</button>)}
+      </div>
+      <div class="shop__tools">
+        <form class="shop__search" role="search" action="/shop/" method="get">
+          <Icon name="search" size={18} />
+          <label class="sr-only" for="shop-q">Search products</label>
+          <input class="input" id="shop-q" type="search" name="q" placeholder="Search…" data-search autocomplete="off" />
+        </form>
+        <label class="shop__sort">
+          <span class="sr-only">Sort by</span>
+          <select class="select" data-sort>
+            <option value="featured">Featured</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+            <option value="kcal">Lowest calories</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </label>
+      </div>
+    </div>
+    <div class="shop__bar shop__bar--sub">
+      <div class="pills" role="group" aria-label="Dietary filters">
+        {dietKeys.map((k) => <button class="pill pill--sm" type="button" data-filter-diet={k} aria-pressed="false">{DIET_TAGS[k]}</button>)}
+      </div>
+      <p class="small muted" data-shop-count>{products.length} products</p>
+    </div>
+
+    <div class="grid grid--4 shop__grid" data-shop-grid>
+      {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+    </div>
+    <div class="shop__empty" data-shop-empty hidden>
+      <p><strong>Nothing matches those filters.</strong></p>
+      <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
+    </div>
+
+    <div class="trust mt-6">
+      <div><Icon name="truck" /><div><strong>Free shipping over €25</strong><span>Riga → EU in 2–5 days</span></div></div>
+      <div><Icon name="leaf" /><div><strong>Two ingredients</strong><span>Apples and egg white</span></div></div>
+      <div><Icon name="clock" /><div><strong>12-month shelf life</strong><span>No fridge needed</span></div></div>
+      <div><Icon name="shield" /><div><strong>Damaged? Replaced.</strong><span>Photo within 48 h</span></div></div>
+    </div>
+  </section>
+
+  <section class="section container">
+    <div class="cta-band">
+      <p class="eyebrow">Build your box</p>
+      <h2>Pick six bars, save 10%.</h2>
+      <p>Mix Classic, Berry Mix, Cinnamon and the flourless bars any way you like. We pack them in one box.</p>
+      <div><a class="btn btn--paper" href="/shop/build-your-box/">Start building</a></div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .shop__bar { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; justify-content: space-between; padding-block: 0.5rem; }
+  .shop__bar--sub { border-bottom: 1px solid var(--line); margin-bottom: 1.5rem; padding-bottom: 1rem; }
+  .shop__tools { display: flex; gap: 0.6rem; align-items: center; }
+  .shop__search { position: relative; }
+  .shop__search svg { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
+  .shop__search .input { padding-left: 2.4rem; min-width: 12rem; min-height: 2.6rem; }
+  .shop__sort .select { min-height: 2.6rem; }
+  .pill--sm { padding: 0.35em 0.8em; font-size: var(--fs-xs); }
+  .shop__grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
+  .shop__grid > [hidden] { display: none; }
+  .shop__empty { padding: 3rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
+  .shop__empty[hidden] { display: none; }
+</style>

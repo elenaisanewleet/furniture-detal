@@ -1,0 +1,137 @@
+/* =========================================================================
+   SEMERS design tokens — "Baked apple, whipped."
+   Warm cream paper, near-black ink, and a shelf of product colors taken from
+   the real packaging: App'Lite mint (Classic), coral (Berry Mix), plus
+   flavor hues for cinnamon, cherry, blueberry, lingonberry, black currant,
+   pine nut, cranberry. One signal color per screen; product colors are
+   reserved for product surfaces.
+   ========================================================================= */
+:root {
+  color-scheme: light;
+
+  /* ---- Paper ---------------------------------------------------------- */
+  --cream-0: #fffcf5;
+  --cream-1: #faf3e4;
+  --cream-2: #f3e8d2;
+  --cream-3: #e9dabc;
+
+  /* ---- Ink ------------------------------------------------------------ */
+  --ink-900: #1b1612;
+  --ink-800: #2a231d;
+  --ink-700: #3d342c;
+  --ink-500: #6b5f54;
+  --ink-300: #a3978a;
+  --ink-100: #d8cfc2;
+
+  /* ---- Brand / product colors ----------------------------------------- */
+  --apple-500: #e2452f; /* fresh apple red — CTA + signal */
+  --apple-600: #c4321f;
+  --apple-700: #9e2617;
+  --apple-100: #fbe1db;
+
+  --leaf-500: #2e7d4f;
+  --leaf-600: #23653f;
+  --leaf-100: #dcefe1;
+
+  --mint-500: #2bb597; /* App'Lite Classic wrapper */
+  --mint-600: #21957c;
+  --mint-100: #d6f2ea;
+
+  --coral-500: #f26b7a; /* App'Lite Berry Mix wrapper */
+  --coral-600: #d84f5f;
+  --coral-100: #fde3e6;
+
+  --honey-500: #e9a23b; /* baked apple amber */
+  --honey-100: #fbe9c7;
+
+  --bar-700: #a8602a; /* pastila crumb */
+  --bar-500: #d08a45;
+  --bar-300: #ecc48f;
+
+  /* ---- Flavor hues (cards, chips, variant swatches) -------------------- */
+  --fl-classic: var(--mint-500);
+  --fl-berry: var(--coral-500);
+  --fl-cinnamon: #b86a2b;
+  --fl-cherry: #c8253f;
+  --fl-blueberry: #4f5ba6;
+  --fl-lingonberry: #d9483f;
+  --fl-blackcurrant: #5e2a6e;
+  --fl-pine: #6f7f3a;
+  --fl-cranberry: #b21e4b;
+  --fl-apple: #8cc34b;
+  --fl-vanilla: #d9b56a;
+  --fl-chocolate: #4b2c20;
+  --fl-assorted: linear-gradient(135deg, #f26b7a, #e9a23b 50%, #2bb597);
+
+  /* ---- Roles ---------------------------------------------------------- */
+  --bg: var(--cream-1);
+  --bg-raised: var(--cream-0);
+  --bg-sunken: var(--cream-2);
+  --bg-invert: var(--ink-900);
+
+  --fg: var(--ink-900);
+  --fg-2: var(--ink-500);
+  --fg-3: #7d7166; /* 4.6:1 on cream-1 */
+  --fg-invert: var(--cream-0);
+
+  --line: rgb(27 22 18 / 0.12);
+  --line-strong: var(--ink-900);
+
+  --accent: var(--apple-500);
+  --accent-fill: var(--apple-600);
+  --accent-fill-hover: var(--apple-700);
+  --accent-on: #ffffff;
+  --accent-soft: var(--apple-100);
+
+  --focus: #1d6fe6;
+
+  /* ---- Type ----------------------------------------------------------- */
+  --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: 'Instrument Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
+  --fs-xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.625rem);
+  --fs-2xl: clamp(1.625rem, 1.3rem + 1.5vw, 2.5rem);
+  --fs-3xl: clamp(2.125rem, 1.6rem + 2.6vw, 3.75rem);
+  --fs-4xl: clamp(2.75rem, 1.8rem + 4.6vw, 5.75rem);
+  --fs-hero: clamp(3rem, 1.6rem + 7vw, 8rem);
+
+  --lh-tight: 0.98;
+  --lh-snug: 1.15;
+  --lh-body: 1.55;
+
+  /* ---- Space & shape -------------------------------------------------- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4.5rem;
+  --sp-9: 7rem;
+
+  --r-sm: 6px;
+  --r-md: 12px;
+  --r-lg: 22px;
+  --r-xl: 34px;
+  --r-pill: 999px;
+
+  --shadow-1: 0 1px 2px rgb(27 22 18 / 0.06), 0 2px 8px rgb(27 22 18 / 0.06);
+  --shadow-2: 0 10px 30px -10px rgb(27 22 18 / 0.25);
+  --shadow-3: 0 30px 60px -20px rgb(27 22 18 / 0.35);
+
+  --container: 80rem;
+  --gutter: clamp(1rem, 4vw, 2.5rem);
+
+  /* ---- Motion --------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 160ms;
+  --dur: 320ms;
+  --dur-slow: 700ms;
+}

@@ -1,0 +1,76 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { nav } from '~/data/site';
+interface Props { transparent?: boolean }
+const { transparent = false } = Astro.props;
+const path = Astro.url.pathname;
+---
+<header class={`hdr ${transparent ? 'hdr--float' : ''}`} id="hdr">
+  <div class="hdr__bar">
+    <span class="hdr__bar-text"><strong>Free shipping</strong> on orders over €25 · Ships from Riga in 1–2 days · 99% apples, 0 added sugar</span>
+  </div>
+  <div class="hdr__main container--wide">
+    <button class="hdr__burger" id="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label="Open menu">
+      <Icon name="menu" size={24} />
+    </button>
+    <a class="hdr__logo" href="/" aria-label="Semers home"><Logo size={30} /></a>
+    <nav class="hdr__nav" id="nav" aria-label="Primary">
+      <ul>
+        {nav.map((n) => (
+          <li><a href={n.href} aria-current={path.startsWith(n.href) ? 'page' : undefined}>{n.label}</a></li>
+        ))}
+      </ul>
+      <div class="hdr__nav-cta">
+        <a class="btn btn--block" href="/shop/">Shop all</a>
+      </div>
+    </nav>
+    <div class="hdr__actions">
+      <a class="hdr__shop btn btn--sm btn--ink" href="/shop/">Shop</a>
+      <button class="hdr__cart" id="cart-open" aria-label="Open cart" aria-haspopup="dialog">
+        <Icon name="cart" size={24} />
+        <span class="hdr__count" id="cart-count" hidden>0</span>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="hdr__scrim" id="nav-scrim" hidden></div>
+
+<style>
+  .hdr { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--line); transition: background var(--dur), box-shadow var(--dur); }
+  .hdr.is-stuck { box-shadow: 0 6px 24px -12px rgb(27 22 18 / 0.25); }
+  .hdr--float { background: transparent; border-bottom-color: transparent; }
+  .hdr--float.is-stuck { background: var(--bg); border-bottom-color: var(--line); }
+  .hdr__bar { background: var(--ink-900); color: var(--cream-0); font-size: var(--fs-xs); text-align: center; padding: 0.45rem var(--gutter); letter-spacing: 0.02em; }
+  .hdr__bar strong { color: var(--honey-500); }
+  .hdr__main { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sp-4); min-height: 4.25rem; }
+  .hdr__logo { text-decoration: none; display: inline-flex; }
+  .hdr__nav ul { display: flex; gap: clamp(1rem, 2.4vw, 2rem); list-style: none; margin: 0; padding: 0; justify-content: center; }
+  .hdr__nav a { text-decoration: none; font-weight: 600; font-size: var(--fs-sm); padding: 0.4rem 0; position: relative; }
+  .hdr__nav a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform var(--dur) var(--ease-out); }
+  .hdr__nav a:hover::after, .hdr__nav a[aria-current]::after { transform: scaleX(1); }
+  .hdr__nav-cta { display: none; }
+  .hdr__actions { display: flex; align-items: center; gap: var(--sp-3); }
+  .hdr__cart { position: relative; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: 50%; transition: background var(--dur-fast); }
+  .hdr__cart:hover { background: var(--bg-sunken); }
+  .hdr__count { position: absolute; top: 0.2rem; right: 0.1rem; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3rem; border-radius: var(--r-pill); background: var(--accent); color: #fff; font-size: 0.7rem; font-weight: 700; display: grid; place-items: center; animation: pop var(--dur) var(--ease-spring); }
+  .hdr__count[hidden] { display: none; }
+  .hdr__burger { display: none; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 50%; }
+  .hdr__scrim { position: fixed; inset: 0; z-index: 45; background: rgb(27 22 18 / 0.45); }
+  .hdr__scrim[hidden] { display: none; }
+  @keyframes pop { from { transform: scale(0.6); } to { transform: scale(1); } }
+
+  @media (max-width: 56rem) {
+    .hdr__main { grid-template-columns: auto 1fr auto; }
+    .hdr__burger { display: grid; }
+    .hdr__logo { justify-self: center; }
+    .hdr__shop { display: none; }
+    .hdr__nav { position: fixed; inset: 0 auto 0 0; z-index: 60; width: min(22rem, 86vw); background: var(--bg); padding: 5rem var(--gutter) 2rem; transform: translateX(-105%); transition: transform var(--dur) var(--ease-out); box-shadow: var(--shadow-3); overflow-y: auto; }
+    .hdr__nav.is-open { transform: none; }
+    .hdr__nav ul { flex-direction: column; gap: 0; }
+    .hdr__nav li { border-bottom: 1px solid var(--line); }
+    .hdr__nav a { display: block; padding: 1rem 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; }
+    .hdr__nav a::after { display: none; }
+    .hdr__nav-cta { display: block; margin-top: 1.5rem; }
+  }
+</style>
