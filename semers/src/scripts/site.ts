@@ -271,6 +271,15 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') {
     closeCart();
     closeNav();
+    return;
+  }
+  // Wrap Tab inside the open cart dialog (the rest of the page is inert, so this is the only place focus can go).
+  if (e.key === 'Tab' && drawer && !drawer.hidden) {
+    const f = $$<HTMLElement>('a[href], button, input, select, textarea, [tabindex]', drawer).filter((el) => el.tabIndex >= 0 && !(el as HTMLButtonElement).disabled && el.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1], cur = document.activeElement;
+    if (e.shiftKey && (cur === first || !drawer.contains(cur))) (e.preventDefault(), last.focus());
+    else if (!e.shiftKey && (cur === last || !drawer.contains(cur))) (e.preventDefault(), first.focus());
   }
 });
 document.addEventListener('cart:change', renderCart);
@@ -426,18 +435,28 @@ if (pdp) {
     }),
   );
 
+  const clampQty = (v: number) => Math.max(1, Math.min(99, Math.round(v) || 1));
   pdp.addEventListener('click', (e) => {
     const t = e.target as HTMLElement;
     if (!qtyIn) return;
-    if (t.closest('[data-qty-inc]')) qtyIn.value = String(Math.min(99, Number(qtyIn.value) + 1));
-    if (t.closest('[data-qty-dec]')) qtyIn.value = String(Math.max(1, Number(qtyIn.value) - 1));
+    if (t.closest('[data-qty-inc]')) qtyIn.value = String(clampQty(Number(qtyIn.value) + 1));
+    if (t.closest('[data-qty-dec]')) qtyIn.value = String(clampQty(Number(qtyIn.value) - 1));
   });
+  qtyIn?.addEventListener('change', () => (qtyIn.value = String(clampQty(Number(qtyIn.value)))));
 
-  // sticky buy bar appears once the main buy button scrolls out of view
+  // sticky buy bar appears once the main buy button scrolls out of view;
+  // aria-hidden follows visibility so its button is never exposed while it is off-screen
   const bar = $('[data-sticky-buy]');
   const anchor = $('[data-buy-anchor]', pdp);
   if (bar && anchor && 'IntersectionObserver' in window) {
-    new IntersectionObserver(([en]) => bar.classList.toggle('is-visible', !en.isIntersecting && en.boundingClientRect.top < 0), { threshold: 0 }).observe(anchor);
+    new IntersectionObserver(
+      ([en]) => {
+        const on = !en.isIntersecting && en.boundingClientRect.top < 0;
+        bar.classList.toggle('is-visible', on);
+        bar.setAttribute('aria-hidden', String(!on));
+      },
+      { threshold: 0 },
+    ).observe(anchor);
   }
 }
 
@@ -620,7 +639,7 @@ $$<HTMLFormElement>('form[data-form]').forEach((form) => {
     e.preventDefault();
     const type = form.dataset.form!;
     const btn = form.querySelector<HTMLButtonElement>('[type="submit"]');
-    const note = form.querySelector<HTMLElement>('[data-form-note]') || form.nextElementSibling?.matches('[data-form-note]') ? (form.nextElementSibling as HTMLElement) : null;
+    const note = form.querySelector<HTMLElement>('[data-form-note]') || (form.nextElementSibling?.matches('[data-form-note]') ? (form.nextElementSibling as HTMLElement) : null);
     const data = formData(form);
     if (data.website) return; // honeypot
     if (btn) (btn.disabled = true), (btn.dataset.label = btn.textContent || ''), (btn.textContent = 'Sending…');
@@ -656,6 +675,8 @@ if (checkout) {
       toast('Your box is empty — add something first.');
       return;
     }
+    // The form carries `novalidate` (custom field styling), so constraint validation must be run here.
+    if (!checkout.reportValidity()) return;
     const btn = checkout.querySelector<HTMLButtonElement>('[type="submit"]');
     const note = $('[data-checkout-note]');
     const data = formData(checkout);
@@ -678,6 +699,15 @@ if (checkout) {
       cart.clear();
       location.href = `/order/thank-you/?ref=${encodeURIComponent(res.ref || '')}`;
     } catch (err) {
+      const reason = (err as { data?: { reason?: string } })?.data?.reason;
+      if (reason === 'email' || reason === 'empty') {
+        // The server rejected the request itself; opening a mailto here would send a broken order.
+        const msg = reason === 'email' ? 'Please check the e-mail address and try again.' : 'Your box is empty — add something first.';
+        if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
+        toast(msg, 4000);
+        if (btn) (btn.disabled = false), (btn.textContent = 'Place order');
+        return;
+      }
       const lines = order.items.map((i) => `${i.qty} × ${i.name}${i.variant ? ` (${i.variant})` : ''}${i.note ? ` — ${i.note}` : ''} = ${fmt(i.total)}`);
       const body = [
         'New order request from semers.org',
@@ -690,7 +720,10 @@ if (checkout) {
         '',
         ...Object.entries(data).filter(([k]) => k !== 'website').map(([k, v]) => `${k}: ${v}`),
       ].join('\n');
-      const msg = 'Online ordering is not live yet — we opened an e-mail with your order instead. We reply within one business day.';
+      const msg =
+        reason === 'not-configured'
+          ? 'Online ordering is not live yet — we opened an e-mail with your order instead. We reply within one business day.'
+          : 'We could not place the order automatically — we opened an e-mail with your order instead. We reply within one business day.';
       if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
       toast(msg, 5000);
       mailtoFallback('Order request via semers.org', body);
