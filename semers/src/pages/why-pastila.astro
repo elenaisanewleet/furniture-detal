@@ -4,11 +4,11 @@ import Icon from '~/components/Icon.astro';
 import { img, imgSrc, RENDER_BG } from '~/data/images';
 import { FAQS } from '~/data/faq';
 import { site } from '~/data/site';
-import { formatPrice } from '~/data/products';
+import { formatThreshold } from '~/data/products';
 import { faqPage } from '~/lib/schema';
 
 const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
-const freeFrom = formatPrice(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** Five nutrition / product questions from the shared FAQ, in the order a first-time reader asks them. */
 const pick = [
@@ -73,7 +73,7 @@ const ideas = [
       <div><Icon name="apple" size={22} /><div><strong>99% apples</strong><span>Antonovka, baked and whipped</span></div></div>
       <div><Icon name="check" size={22} /><div><strong>0 g added sugar</strong><span>Sweet from the fruit alone</span></div></div>
       <div><Icon name="clock" size={22} /><div><strong>12 months</strong><span>No fridge, no preservatives</span></div></div>
-      <div><Icon name="truck" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Parcels leave Riga in 1–2 days</span></div></div>
+      <div><Icon name="truck" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Parcels leave Riga in 1–2 business days</span></div></div>
     </div>
   </section>
 
@@ -88,7 +88,7 @@ const ideas = [
         <h2 id="what-title">A baked apple, whipped with air and dried into a loaf.</h2>
         <div class="prose mt-4">
           <p>Pastila is a traditional confection from the town of Belyov, first made commercially in 1888 by the merchant Amvrosy Prokhorov. The method has barely changed since. Sour Antonovka apples are baked whole until their sugars caramelise. The purée is whipped with egg white until it holds air, spread in thin sheets and dried for hours at low heat. The sheets are stacked, pressed and dried again.</p>
-          <p>What comes out is neither a fruit leather nor a cake. It is soft, fibrous and slightly springy, and it tastes like the concentrated heart of an apple. We cut that loaf into bars, bake it into meringues and press it into desserts. Same two ingredients every time.</p>
+          <p>What comes out is neither a fruit leather nor a cake. It is soft, fibrous and slightly springy, and it tastes of baked apple and very little else. The loaf becomes a bar when we cut it, a meringue when we bake it, a dessert square when we press it thicker. The ingredient list does not change on the way.</p>
         </div>
         <div class="cluster mt-4">
           <a class="btn btn--paper" href="/shop/pastila/">Shop Belyov pastila</a>
@@ -291,7 +291,7 @@ const ideas = [
   .dark .eyebrow::before { background: var(--honey-500); }
   .dark h2 { color: inherit; letter-spacing: -0.02em; margin: 0.5rem 0 1rem; }
   .dark__copy p { color: rgb(250 243 228 / 0.82); max-width: 52ch; }
-  .dark .stats { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid rgb(250 243 228 / 0.18); }
+  .dark .stats { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid rgb(250 243 228 / 0.18); grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
   .dark .stat strong { color: var(--cream-0); }
   .dark .stat span { color: rgb(250 243 228 / 0.72); }
   .dark__link { color: var(--cream-0); border-color: var(--honey-500); }

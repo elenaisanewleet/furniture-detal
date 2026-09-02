@@ -3,12 +3,12 @@ import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { img, imgSrc } from '~/data/images';
 import { site } from '~/data/site';
-import { formatPrice } from '~/data/products';
+import { formatThreshold } from '~/data/products';
 import { FAQS } from '~/data/faq';
 import { faqPage } from '~/lib/schema';
 
 const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
-const freeFrom = formatPrice(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom);
 const suggestHref = `mailto:${site.email}?subject=${encodeURIComponent('Store suggestion for Semers')}`;
 
 /** Retailers from site.ts, grouped by country in order of first appearance. */
@@ -229,7 +229,7 @@ const faqs = pick.flatMap((q) => {
   .store__name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-weight: 600; }
   .store__name a { text-decoration-color: var(--line); }
   .store__note { display: flex; gap: var(--sp-3); align-items: flex-start; margin-top: var(--sp-5); max-width: 66ch; }
-  .store__note svg { flex: none; margin-top: 0.2em; color: var(--bar-700); }
+  .store__note :global(svg) { flex: none; margin-top: 0.2em; color: var(--bar-700); }
 
   /* wholesale band with image */
   .cta-band--img { gap: var(--sp-6); align-items: center; }

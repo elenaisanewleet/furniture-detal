@@ -4,12 +4,12 @@ import Icon from '~/components/Icon.astro';
 import { img, imgSrc } from '~/data/images';
 import { site } from '~/data/site';
 import { FAQS } from '~/data/faq';
-import { formatPrice } from '~/data/products';
+import { formatThreshold } from '~/data/products';
 import { originOf } from '~/lib/origin';
 
 const origin = originOf(Astro.site);
 const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
-const freeFrom = formatPrice(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 const title = 'Contact Semers in Riga: orders, wholesale, press';
 const description =

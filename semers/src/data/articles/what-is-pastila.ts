@@ -1,9 +1,9 @@
 /**
- * Journal article body: "What is pastila? The 500-year-old apple sweet with two ingredients".
+ * Journal article body: "What is pastila? The apple sweet with two ingredients".
  * HTML fragment (no <h1>), rendered with set:html inside a .prose container.
- * Facts used are limited to those already on the site: 16th–17th-century fruit
- * pastes, the Kolomna and Belyov traditions, Amvrosy Prokhorov in 1888, and the
- * Semers process and nutrition figures.
+ * Facts used are limited to those already on the site: the Kolomna and Belyov
+ * traditions, Amvrosy Prokhorov in 1888, and the Semers process and nutrition
+ * figures. 1888 is the only date on the page.
  */
 export default `
 <p>Pastila is a confection made from baked apples, whipped with a little egg white and slowly dried until it sets into a light, layered loaf. That is the whole recipe. No sugar, no flour, no gelatine; the apple does the sweetening and the setting by itself. It looks like a slice of cake, weighs about as much as a biscuit and tastes like the inside of a baked apple. It is also the base of every Apple Bar, meringue and dessert we make in Riga, and it has a longer history than most things on a snack shelf.</p>
@@ -11,7 +11,7 @@ export default `
 <h2>Where pastila comes from</h2>
 
 <h3>Fruit pastes of the north</h3>
-<p>The idea is older than any brand. In the 16th and 17th centuries, households across northern Russia were already preserving the apple harvest by baking the fruit, spreading the pulp thin and drying it in the fading heat of the stove. It was practical before it was pleasant: drying was the surest way to carry an orchard through the winter. These fruit pastes are the ancestors of pastila.</p>
+<p>The idea is older than any brand. Long before anyone sold it, households across the apple-growing north were preserving the harvest by baking the fruit, spreading the pulp thin and drying it in the fading heat of the stove. It was practical before it was pleasant: drying was the surest way to carry an orchard through the winter. These fruit pastes are the ancestors of pastila.</p>
 
 <h3>Kolomna and Belyov</h3>
 <p>Two towns turned a household habit into a craft, in different directions. Kolomna, south-east of Moscow, became known for a paler, softer pastila, often sweetened and cut into small pieces. Belyov, a small town on the Oka river, made something more austere: an amber loaf built from thin dried sheets of whipped apple, with egg white as the only addition. The Belyov style is the one we follow.</p>
@@ -60,7 +60,7 @@ export default `
 <p>Gluten free, yes: there is no flour and nothing containing gluten in the recipe. Vegan, no: egg white is essential to the texture. Full ingredient lists are on every product page and every pack.</p>
 
 <h3>Why Antonovka and not any apple?</h3>
-<p>Because sweet dessert apples make a flat, sticky pastila. Antonovka is tart, aromatic and rich in pectin, so the purée sets properly and tastes of fruit rather than sugar. There is more in our <a href="/journal/antonovka-apples/">journal piece on Antonovka</a>.</p>
+<p>Because a sweet dessert apple, low in pectin and acid, gives a purée that never quite sets and tastes mostly of sugar. Antonovka is tart, aromatic and rich in pectin, so the purée sets properly and tastes of fruit. There is more in our <a href="/journal/antonovka-apples/">journal piece on Antonovka</a>.</p>
 
-<p>That is pastila: a 500-year-old idea, fixed into a recipe in 1888, still made from two ingredients. For the numbers, the comparison with chocolate and granola bars, and who it suits, read <a href="/why-pastila/">why pastila</a>. If you would rather just taste it, the <a href="/shop/">shop</a> is the shorter route; the 100 g loaf is the one to try first.</p>
+<p>That is pastila: an old household idea, fixed into a recipe in 1888, still made from two ingredients. For the numbers, the comparison with chocolate and granola bars, and who it suits, read <a href="/why-pastila/">why pastila</a>. If you would rather just taste it, the <a href="/shop/">shop</a> is the shorter route; the 100 g loaf is the one to try first.</p>
 `;

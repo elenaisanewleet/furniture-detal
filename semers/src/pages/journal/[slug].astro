@@ -4,7 +4,7 @@ import Icon from '~/components/Icon.astro';
 import { ARTICLES, ARTICLES_SORTED, type Article } from '~/data/journal';
 import { img, imgSrc } from '~/data/images';
 import { site } from '~/data/site';
-import { formatPrice } from '~/data/products';
+import { formatThreshold } from '~/data/products';
 import { article as articleSchema } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
@@ -15,7 +15,7 @@ const { article: a } = Astro.props as { article: Article };
 const origin = originOf(Astro.site);
 const href = `/journal/${a.slug}/`;
 const canonicalUrl = `${origin}${href}`;
-const freeFrom = formatPrice(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom);
 const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const hero = im(a.image);
 
@@ -61,17 +61,17 @@ const dateLabel = fmtDate(a.date);
 const readLabel = `${a.readMinutes} min read`;
 const tagLine = a.tags.join(' · ');
 
-/** <title> must stay under 60 characters; article headlines are longer than that on purpose. */
+/** <title> must stay within 60 characters including the " — Semers" suffix (51 for the page part); article headlines are longer than that on purpose. */
 const SEO_TITLES: Record<string, string> = {
-  'what-is-pastila': 'What Is Pastila? A Two-Ingredient Baked-Apple Sweet',
-  'healthy-snacks-no-added-sugar': 'Healthy Snacks With No Added Sugar: Reading the Label',
-  'antonovka-apples': 'Why Antonovka Apples? The Sour Apple Behind Our Bars',
+  'what-is-pastila': 'What is pastila? A two-ingredient baked-apple sweet',
+  'healthy-snacks-no-added-sugar': 'Healthy snacks with no added sugar: read the label',
+  'antonovka-apples': 'Why Antonovka apples? The sour apple in every bar',
 };
 const shortTitle = (t: string) => {
-  if (t.length <= 60) return t;
-  const clause = t.match(/^(.{12,58}?[?:.])\s/);
+  if (t.length <= 51) return t;
+  const clause = t.match(/^(.{12,50}?[?:.])\s/);
   if (clause) return clause[1];
-  return `${t.slice(0, 57).replace(/\s+\S*$/, '')}…`;
+  return `${t.slice(0, 49).replace(/\s+\S*$/, '')}…`;
 };
 const pageTitle = SEO_TITLES[a.slug] ?? shortTitle(a.title);
 
@@ -107,6 +107,11 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Journal', href: '/journal/' }, { name: a.title, href }]}
   schema={[articleSchema(origin, { title: a.title, description: a.description, href, date: a.date, image: a.image })]}
 >
+  <Fragment slot="head">
+    <meta property="article:published_time" content={a.date} />
+    <meta property="article:modified_time" content={a.date} />
+    {a.tags.map((t) => <meta property="article:tag" content={t} />)}
+  </Fragment>
   <article class="art">
     <!-- ============================== HEADER ============================== -->
     <header class="page-hero container art__head">
@@ -272,7 +277,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   .art__shop-img img { object-fit: contain; padding: 8%; }
   .art__shop-title { font-size: var(--fs-xl); }
   .art__shop .ticks { gap: 0.4rem; }
-  .art__shop .ticks svg { margin-top: 0.2em; }
+  .art__shop .ticks :global(svg) { margin-top: 0.2em; }
   .art__shop .btn { margin-top: 0.25rem; }
   .art__shop-more { justify-self: start; }
 

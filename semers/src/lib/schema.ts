@@ -8,6 +8,8 @@ import { FLAVORS, type Product } from '~/data/products';
 import { imgSrc } from '~/data/images';
 
 export function organization(origin: string) {
+  // Only real profile URLs; a bare domain (the env placeholder) would claim the network's homepage is ours.
+  const sameAs = Object.values(site.social).filter((u) => /^https?:\/\/[^/]+\/.+/.test(u));
   return {
     '@type': 'Organization',
     '@id': `${origin}/#org`,
@@ -21,7 +23,7 @@ export function organization(origin: string) {
       addressLocality: site.locality,
       addressCountry: site.countryCode,
     },
-    sameAs: Object.values(site.social).filter(Boolean),
+    ...(sameAs.length ? { sameAs } : {}),
   };
 }
 
@@ -64,6 +66,13 @@ export function faqPage(items: { q: string; a: string }[]) {
   };
 }
 
+/** GTIN property keyed by code length; the LV market uses EAN-13, the flourless line carries UPC-A (12 digits). */
+function gtinProp(gtin?: string) {
+  if (!gtin) return {};
+  const key = ({ 8: 'gtin8', 12: 'gtin12', 13: 'gtin13', 14: 'gtin14' } as Record<number, string>)[gtin.length] ?? 'gtin';
+  return { [key]: gtin };
+}
+
 function absImg(origin: string, key: string) {
   const s = imgSrc(key);
   return s.startsWith('http') ? s : new URL(s, origin).toString();
@@ -89,10 +98,28 @@ export function productSchema(origin: string, p: Product) {
     availability: 'https://schema.org/InStock',
     itemCondition: 'https://schema.org/NewCondition',
     ...(sku ? { sku } : {}),
-    ...(gtin ? { gtin13: gtin } : {}),
+    ...gtinProp(gtin),
     shippingDetails: {
       '@type': 'OfferShippingDetails',
-      shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'LV' },
+      // Flat Baltic rate for a single item (every product is under the free-shipping threshold on its own).
+      shippingRate: { '@type': 'MonetaryAmount', value: site.shipping.flatRate.toFixed(2), currency: site.currency },
+      shippingDestination: ['LV', 'LT', 'EE'].map((c) => ({ '@type': 'DefinedRegion', addressCountry: c })),
+      deliveryTime: {
+        '@type': 'ShippingDeliveryTime',
+        handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
+      },
+    },
+    // Mirrors /legal/shipping-returns/: 14 days, sealed goods only, customer pays return postage, full refund.
+    hasMerchantReturnPolicy: {
+      '@type': 'MerchantReturnPolicy',
+      applicableCountry: ['LV', 'LT', 'EE'],
+      returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow',
+      merchantReturnDays: 14,
+      returnMethod: 'https://schema.org/ReturnByMail',
+      returnFees: 'https://schema.org/ReturnFeesCustomerResponsibility',
+      refundType: 'https://schema.org/FullRefund',
+      itemCondition: 'https://schema.org/NewCondition',
+      merchantReturnLink: `${origin}/legal/shipping-returns/`,
     },
   });
 
@@ -103,7 +130,7 @@ export function productSchema(origin: string, p: Product) {
       '@id': `${url}#product`,
       ...base,
       sku: `${p.slug}:${v.key}`,
-      ...(v.gtin ? { gtin13: v.gtin } : {}),
+      ...gtinProp(v.gtin),
       offers: offer(v.price ?? p.price, v.gtin, `${p.slug}:${v.key}`),
     };
   }
@@ -113,12 +140,13 @@ export function productSchema(origin: string, p: Product) {
     '@id': `${url}#group`,
     ...base,
     productGroupID: p.slug,
-    variesBy: ['https://schema.org/flavor'],
+    // schema.org has no "flavor" term, so the varying attribute is carried on each variant as a PropertyValue.
     hasVariant: p.variants.map((v) => ({
       '@type': 'Product',
       name: `${p.title} — ${FLAVORS[v.key].label}`,
       sku: `${p.slug}:${v.key}`,
-      ...(v.gtin ? { gtin13: v.gtin } : {}),
+      ...gtinProp(v.gtin),
+      additionalProperty: { '@type': 'PropertyValue', name: 'Flavour', value: FLAVORS[v.key].label },
       image: images[0],
       offers: offer(v.price ?? p.price, v.gtin, `${p.slug}:${v.key}`),
     })),

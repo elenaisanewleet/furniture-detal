@@ -136,7 +136,7 @@ async function sendCustomerReceipt(body, id, text) {
       from,
       to: [email],
       subject: `We received your order request ${id}`,
-      text: `Thank you! We have your order request ${id}. We will confirm availability and send a payment link within one business day.\n\n${text}\n\n— Semers, Riga`,
+      text: `Thank you. We have your order request ${id}. We will confirm availability and send a payment link within one business day.\n\n${text}\n\n— Semers, Riga`,
     }),
   });
   return r.ok;

@@ -12,7 +12,7 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
 ---
 <Base
   title="Shop apple bars, meringues & pastila"
-  description="Every Semers product in one place: App'Lite Apple Bars, Flourless Bars, PastiLite meringues, Belyov pastila, zephyr and gift boxes. 99% apples, no added sugar. Ships from Riga across the EU."
+  description="Every Semers product: App'Lite Apple Bars, Flourless Bars, PastiLite meringues, Belyov pastila, zephyr and gift boxes. 99% apples, no added sugar."
   canonical="/shop/"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }]}
   schema={[itemList(origin, products)]}
@@ -54,6 +54,7 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
       <p class="small muted" data-shop-count>{products.length} products</p>
     </div>
 
+    <h2 class="sr-only">All products</h2>
     <div class="grid grid--4 shop__grid" data-shop-grid>
       {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
     </div>
@@ -63,7 +64,7 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
     </div>
 
     <div class="trust mt-6">
-      <div><Icon name="truck" /><div><strong>Free shipping over €25</strong><span>Riga → EU in 2–5 days</span></div></div>
+      <div><Icon name="truck" /><div><strong>Free shipping over €25</strong><span>Leaves Riga in 1–2 business days</span></div></div>
       <div><Icon name="leaf" /><div><strong>Two ingredients</strong><span>Apples and egg white</span></div></div>
       <div><Icon name="clock" /><div><strong>Up to 12 months shelf life</strong><span>No fridge needed</span></div></div>
       <div><Icon name="shield" /><div><strong>Damaged? Replaced.</strong><span>Photo within 48 h</span></div></div>
@@ -74,7 +75,7 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
     <div class="cta-band">
       <p class="eyebrow">Build your box</p>
       <h2>Pick six bars, save 10%.</h2>
-      <p>Mix Classic, Berry Mix, Cinnamon and the flourless bars any way you like. We pack them in one box.</p>
+      <p>Mix Apple Bars, Flourless Bars and bags of apple meringues any way you like. We pack them in one box.</p>
       <div><a class="btn btn--paper" href="/shop/build-your-box/">Start building</a></div>
     </div>
   </section>
@@ -85,12 +86,12 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
   .shop__bar--sub { border-bottom: 1px solid var(--line); margin-bottom: 1.5rem; padding-bottom: 1rem; }
   .shop__tools { display: flex; gap: 0.6rem; align-items: center; }
   .shop__search { position: relative; }
-  .shop__search svg { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
+  .shop__search :global(svg) { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
   .shop__search .input { padding-left: 2.4rem; min-width: 12rem; min-height: 2.6rem; }
   .shop__sort .select { min-height: 2.6rem; }
   .pill--sm { padding: 0.35em 0.8em; font-size: var(--fs-xs); }
   .shop__grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
-  .shop__grid > [hidden] { display: none; }
+  .shop__grid > :global([hidden]) { display: none; }
   .shop__empty { padding: 3rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
   .shop__empty[hidden] { display: none; }
 </style>

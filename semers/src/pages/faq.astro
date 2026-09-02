@@ -4,11 +4,11 @@ import Icon from '~/components/Icon.astro';
 import { img, imgSrc } from '~/data/images';
 import { FAQS, type Faq } from '~/data/faq';
 import { site } from '~/data/site';
-import { formatPrice } from '~/data/products';
+import { formatThreshold } from '~/data/products';
 import { faqPage } from '~/lib/schema';
 
 const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
-const freeFrom = formatPrice(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** Groups in reading order. `related` feeds the side column of each group. */
 interface Group {
@@ -96,7 +96,7 @@ const more: Record<string, { href: string; label: string }> = {
 
 const reading = [
   { href: '/why-pastila/', title: 'Why pastila?', text: 'The honest numbers against chocolate, granola and dried apple.' },
-  { href: '/how-its-made/', title: 'How it’s made', text: 'Twelve hours, four steps, and why nothing else goes in.' },
+  { href: '/how-its-made/', title: 'How it’s made', text: 'Twelve hours, eight stages, and why nothing else goes in.' },
   { href: '/journal/', title: 'The journal', text: 'Pastila history, Antonovka apples, how to read a snack label.' },
 ];
 
@@ -239,7 +239,7 @@ const hero = im('pastila-slices');
   .faq-links { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: 0.45rem; font-size: var(--fs-sm); font-weight: 600; }
   .faq-links a { display: inline-flex; align-items: center; gap: 0.45em; text-decoration: none; }
   .faq-links a:hover { text-decoration: underline; text-decoration-color: var(--accent); }
-  .faq-links svg { color: var(--accent); }
+  .faq-links :global(svg) { color: var(--accent); }
 
   /* accordion: keep the h3 visually identical to the summary text */
   .faq-acc summary { align-items: flex-start; }

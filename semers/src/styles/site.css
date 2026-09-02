@@ -38,22 +38,24 @@
 /* ---------- Product card ---------- */
 .pc { --pc-accent: var(--bg-sunken); position: relative; display: grid; grid-template-rows: auto 1fr; border-radius: var(--r-lg); background: var(--bg-raised); overflow: clip; box-shadow: var(--shadow-1); transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
 .pc:hover, .pc:focus-within { transform: translateY(-4px); box-shadow: var(--shadow-3); }
+.pc[hidden] { display: none; }
 .pc__media { position: relative; aspect-ratio: 4 / 5; background: var(--pc-accent); overflow: clip; }
 .pc__media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.8s var(--ease-out); }
 .pc:hover .pc__media img { transform: scale(1.04); }
 .pc__media .badge { top: 0.75rem; left: 0.75rem; }
 .pc__media.is-contain img, .gal__main.is-contain img { object-fit: contain; padding: 6%; }
 .gal__thumbs button.is-contain img { object-fit: contain; padding: 10%; }
-.pc__body { padding: 0.9rem 1rem 1.1rem; display: grid; gap: 0.3rem; align-content: start; }
+.pc__body { padding: 0.9rem 1rem 1.1rem; display: flex; flex-direction: column; gap: 0.3rem; }
 .pc__name { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; line-height: 1.15; }
 .pc__name a { text-decoration: none; color: inherit; }
 .pc__name a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
 .pc__hook { font-size: var(--fs-sm); color: var(--fg-2); }
 .pc__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; font-size: var(--fs-xs); color: var(--fg-3); }
-.pc__foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.5rem; }
-.pc__price { display: flex; align-items: baseline; gap: 0.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+.pc__meta span + span::before { content: '·'; margin-right: 0.4rem; }
+.pc__foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: auto; padding-top: 0.5rem; }
+.pc__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .pc__price s { color: var(--fg-3); font-weight: 400; font-size: var(--fs-sm); }
-.pc__unit { font-size: var(--fs-xs); color: var(--fg-3); font-weight: 400; }
+.pc__unit { font-size: var(--fs-xs); color: var(--fg-3); font-weight: 400; white-space: nowrap; }
 .pc__swatches { display: flex; gap: 0.3rem; align-items: center; }
 .pc__swatch { width: 0.8rem; height: 0.8rem; border-radius: 50%; background: var(--sw); box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
 .pc__more { font-size: var(--fs-xs); color: var(--fg-3); }
@@ -61,6 +63,17 @@
 .pc__add:hover { background: var(--accent); transform: scale(1.08); }
 .pc__add.is-done { background: var(--leaf-500); }
 .pc--compact .pc__media { aspect-ratio: 1; }
+/* Phones: product grids go two-up (Graza/Magic Spoon pattern) so /shop/ is not ten screens of single cards. */
+@media (max-width: 40rem) {
+  .grid.grid--4, .grid.grid--4.shop__grid, .grid.grid--4.col-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  .pc__body { padding: 0.75rem 0.8rem 0.9rem; }
+  .pc__name { font-size: var(--fs-md); }
+  .pc__hook { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .pc__swatches { display: none; }
+  .pc__foot { gap: 0.5rem; }
+  .pc__add { width: 2.4rem; height: 2.4rem; }
+  .badge { top: 0.6rem; left: 0.6rem; }
+}
 
 /* ---------- Collection tile ---------- */
 .ct { position: relative; display: grid; align-items: end; aspect-ratio: 4 / 5; border-radius: var(--r-lg); overflow: clip; background: var(--ct-accent, var(--bg-sunken)); color: var(--fg); text-decoration: none; box-shadow: var(--shadow-1); transition: transform var(--dur) var(--ease-out), box-shadow var(--dur); }
@@ -153,6 +166,7 @@
 /* ---------- Sticky buy bar (product page, mobile + desktop) ---------- */
 .sticky-buy { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: var(--bg-raised); border-top: 1px solid var(--line); box-shadow: 0 -8px 30px -12px rgb(27 22 18 / 0.3); transform: translateY(110%); transition: transform var(--dur) var(--ease-out); padding-bottom: env(safe-area-inset-bottom); }
 .sticky-buy.is-visible { transform: none; }
+.has-sticky-buy .ftr { padding-bottom: 4.5rem; }
 .sticky-buy__in { display: flex; align-items: center; gap: 1rem; padding: 0.7rem var(--gutter); }
 .sticky-buy__img { width: 3rem; height: 3rem; border-radius: var(--r-sm); object-fit: cover; }
 .sticky-buy__t { flex: 1; min-width: 0; line-height: 1.2; }
@@ -198,7 +212,7 @@
 
 /* ---------- Trust strip ---------- */
 .trust { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); padding: 1.25rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.trust div { display: flex; gap: 0.7rem; align-items: center; font-size: var(--fs-sm); }
+.trust > div { display: flex; gap: 0.7rem; align-items: center; font-size: var(--fs-sm); }
 .trust svg { flex: none; color: var(--accent); }
 .trust strong { display: block; }
 .trust span { color: var(--fg-3); font-size: var(--fs-xs); }

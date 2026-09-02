@@ -27,12 +27,12 @@ export type FlavorKey =
 export const FLAVORS: Record<FlavorKey, { label: string; color: string; note: string }> = {
   classic: { label: 'Classic', color: 'var(--fl-classic)', note: 'Pure baked Antonovka apple' },
   berry: { label: 'Berry Mix', color: 'var(--fl-berry)', note: 'Apple with blueberry & cranberry' },
-  cinnamon: { label: 'Cinnamon', color: 'var(--fl-cinnamon)', note: 'Apple with Ceylon cinnamon' },
+  cinnamon: { label: 'Cinnamon', color: 'var(--fl-cinnamon)', note: 'Apple with cinnamon' },
   cherry: { label: 'Cherry', color: 'var(--fl-cherry)', note: 'Apple with sour cherry' },
   blueberry: { label: 'Blueberry', color: 'var(--fl-blueberry)', note: 'Apple with wild blueberry' },
   lingonberry: { label: 'Lingonberry', color: 'var(--fl-lingonberry)', note: 'Apple with forest lingonberry' },
   blackcurrant: { label: 'Black Currant', color: 'var(--fl-blackcurrant)', note: 'Apple with black currant' },
-  pine: { label: 'Pine Nut', color: 'var(--fl-pine)', note: 'Apple with Siberian pine nuts' },
+  pine: { label: 'Pine Nut', color: 'var(--fl-pine)', note: 'Apple with pine nuts' },
   cranberry: { label: 'Cranberry', color: 'var(--fl-cranberry)', note: 'Apple with cranberry' },
   apple: { label: 'Antonovka Apple', color: 'var(--fl-apple)', note: 'Classic apple zephyr' },
   vanilla: { label: 'Vanilla', color: 'var(--fl-vanilla)', note: 'Soft vanilla zephyr' },
@@ -161,7 +161,7 @@ export const COLLECTIONS: Collection[] = [
   {
     key: 'meringues',
     name: 'Apple meringues',
-    title: 'PastiLite Apple Meringues — crispy, airy, no added sugar',
+    title: 'PastiLite Apple Meringues — crispy, no added sugar',
     description:
       'PastiLite crispy meringues made from baked apples, egg white and berries. Three ingredients, no added sugar. A light 35 g bag that melts in your mouth.',
     intro:
@@ -172,7 +172,7 @@ export const COLLECTIONS: Collection[] = [
   {
     key: 'applite',
     name: "App'Lite dessert",
-    title: "App'Lite Baked Apple Dessert 50 g",
+    title: "App'Lite Baked Apple Dessert — no added sugar",
     description:
       "App'Lite baked apple dessert: a 50 g pastila square made from 99% baked apples with no added sugar. Classic, Berry Mix and Cinnamon.",
     intro:
@@ -185,7 +185,7 @@ export const COLLECTIONS: Collection[] = [
     name: 'Belyov pastila',
     title: 'Belyov Apple Pastila 100 g & 180 g — no added sugar',
     description:
-      'Traditional Belyov apple pastila with no added sugar: baked Antonovka apples and egg white, whipped and dried in layers. 100 g and 180 g loaves in seven flavours.',
+      'Traditional Belyov apple pastila with no added sugar: baked Antonovka apples and egg white, whipped and dried in layers. 100 g and 180 g loaves.',
     intro:
       'The original. A recipe from 1888: baked Antonovka apples whipped with egg white, spread in thin layers and dried for hours until it becomes a soft, airy loaf. Slice it, share it, or eat it straight from the pack.',
     image: 'pastila-180',
@@ -194,9 +194,9 @@ export const COLLECTIONS: Collection[] = [
   {
     key: 'zephyr',
     name: 'Zephyr',
-    title: 'Belevini Apple Zephyr 250 g',
+    title: 'Belevini Zephyr — soft apple marshmallow',
     description:
-      'Belevini zephyr: the soft apple marshmallow of Eastern Europe, made with Antonovka apple purée, egg white and agar. Apple, cranberry, assorted and chocolate-covered.',
+      'Belevini zephyr: the soft apple marshmallow of Eastern Europe, made with Antonovka apple purée, egg white, sugar and agar. Four kinds, 250 g boxes.',
     intro:
       'Zephyr is what a marshmallow becomes when it is made from apple purée and set with agar instead of gelatine. Cloud-soft, gently sweet, with a real apple tang underneath.',
     image: 'zephyr',
@@ -207,7 +207,7 @@ export const COLLECTIONS: Collection[] = [
     name: 'Gift sets & boxes',
     title: 'Apple Snack Gift Sets & Tasting Boxes',
     description:
-      'Curated boxes of apple bars, meringues and pastila. Tasting boxes, office boxes and gift sets shipped from Riga.',
+      'Curated boxes of apple bars, meringues and pastila. Tasting boxes, 12-packs and discovery sets with no added sugar, packed and shipped from Riga.',
     intro:
       'Boxes we would want to receive: a bit of everything, packed to survive the post, with a card if you ask for one.',
     image: 'gift-box',
@@ -260,7 +260,7 @@ export const PRODUCTS: Product[] = [
     price: 1.45,
     hook: '99% baked apples. That’s the whole idea.',
     summary:
-      'A 35 g bar of whipped, layered baked Antonovka apple. No added sugar, no flour, no gluten — about 97 kcal.',
+      'A 35 g bar of whipped, layered baked Antonovka apple. No added sugar, no flour, no gluten — about 97 kcal. Made in Riga, keeps 12 months.',
     description: [
       'Take a chocolate bar out of the drawer. Put this in instead. Same size, same “I need something now” moment, but the ingredient list reads: baked apples, egg white. That is it.',
       'We bake Antonovka apples until they are soft and caramel-sweet, whip the purée with egg white, spread it thin and dry it slowly in layers. The result is a bar that is soft, slightly chewy, and tastes like the inside of a baked apple.',
@@ -457,11 +457,11 @@ export const PRODUCTS: Product[] = [
     weightGrams: 250,
     pack: 1,
     price: 5.9,
-    hook: 'The marshmallow that is mostly apple.',
+    hook: 'Cloud-soft apple zephyr, set with agar.',
     summary:
-      'Soft apple zephyr made with Antonovka purée, egg white and agar. Classic apple, cranberry, assorted, and dark-chocolate-covered. 250 g box.',
+      'Soft apple zephyr made with Antonovka purée, egg white, sugar and agar. Classic apple, cranberry, assorted, and dark-chocolate-covered. 250 g box.',
     description: [
-      'Zephyr is the Eastern European cousin of the marshmallow, but made with fruit purée and set with agar instead of gelatine. Ours starts with the same Antonovka apples as our pastila.',
+      'Zephyr is the Eastern European cousin of the marshmallow, made with fruit purée and set with agar instead of gelatine. Ours starts with the same Antonovka apples as our pastila and, unlike everything else we make, is made with sugar; the pack says so.',
       'Cloud-soft, delicately sweet, with a fresh apple tang underneath. The chocolate-covered version is the one that disappears first at the table.',
     ],
     ingredients: 'Apple purée, sugar, egg white, agar. Chocolate-covered: plus dark chocolate (cocoa mass, sugar, cocoa butter, emulsifier: soy lecithin).',
@@ -489,8 +489,8 @@ export const PRODUCTS: Product[] = [
     collection: 'gift-sets',
     weightGrams: 420,
     pack: 1,
-    price: 19.9,
-    compareAt: 22.85,
+    price: 17.9,
+    compareAt: 19.0,
     hook: 'Try everything once. Then argue about a favourite.',
     summary:
       'Our starter box: 4 Apple Bars, 2 Flourless Bars, 2 bags of Apple Meringues and a 100 g Belyov pastila loaf. Free shipping.',
@@ -522,7 +522,7 @@ export const PRODUCTS: Product[] = [
     price: 14.9,
     compareAt: 17.4,
     hook: 'A drawer full of good decisions.',
-    summary: 'Twelve App’Lite Apple Bars in one box — Classic, Berry Mix or a half-and-half mix. Saves 14% versus single bars.',
+    summary: 'Twelve App’Lite Apple Bars in one box — Classic, Berry Mix or a half-and-half mix. Saves 14% versus single bars. 99% baked apples, no added sugar.',
     description: [
       'The box we send to offices, gyms and anyone who keeps finding wrappers in coat pockets. Twelve 35 g Apple Bars, sealed individually, in a shelf-friendly box.',
       'Pick a single flavour or let us pack six Classic and six Berry Mix.',
@@ -550,7 +550,7 @@ export const PRODUCTS: Product[] = [
     price: 13.9,
     compareAt: 14.7,
     hook: 'Classic, Cherry, Lingonberry. The holy trinity.',
-    summary: 'Three 100 g loaves of Belyov apple pastila — Classic, Cherry and Lingonberry — in a gift sleeve.',
+    summary: 'Three 100 g loaves of Belyov apple pastila — Classic, Cherry and Lingonberry — in a gift sleeve. Baked Antonovka apples and egg white, no added sugar.',
     description: [
       'The three loaves we would put in front of someone who has never tried pastila: the pure Classic, the bright Cherry, and the forest-sweet Lingonberry.',
       'Packed in a kraft gift sleeve. Add a note at checkout and we will write it on the card.',
@@ -582,6 +582,11 @@ export function collectionByKey(key: string): Collection | undefined {
 
 export function formatPrice(eur: number): string {
   return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(eur);
+}
+
+/** Whole-euro amounts such as the free-shipping threshold read "€25", not "€25.00". */
+export function formatThreshold(eur: number): string {
+  return Number.isInteger(eur) ? `€${eur}` : formatPrice(eur);
 }
 
 /** Price per 100 g, e.g. "€4.14 / 100 g". */

@@ -77,7 +77,7 @@ export default `
   <li><strong>The cheese board.</strong> Pastila does what quince paste does, with two ingredients.</li>
   <li><strong>Something crisp.</strong> <a href="/shop/meringues/">Apple meringues</a> for the moment that usually calls for biscuits.</li>
 </ul>
-<p>For an office, the <a href="/shop/gift-sets/">tasting and office boxes</a> put a bit of everything on the shared shelf.</p>
+<p>For an office, the <a href="/shop/gift-sets/">Tasting Box and the box of twelve</a> put a bit of everything on the shared shelf.</p>
 
 <h2>A note before you go</h2>
 <p>This article is general information about food labelling, written by people who make snacks, not by clinicians. It is not medical or dietary advice. If you manage a health condition through what you eat, take the label to someone qualified. And whatever you buy, turn the pack over first. The <a href="/faq/">FAQ</a> has our own numbers in full, and the <a href="/shop/">shop</a> has the bar.</p>

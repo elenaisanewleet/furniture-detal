@@ -16,6 +16,14 @@ const others = COLLECTIONS.filter((x) => x.key !== c.key);
 const origin = originOf(Astro.site);
 const hero = { ...img(c.image), src: imgSrc(c.image) };
 const isZephyr = c.key === 'zephyr';
+/** Shelf life differs by format (zephyr 3 months, meringues 9), so the tick reads from the catalogue. */
+const months = products.map((p) => p.shelfLifeMonths);
+const shelfLine =
+  months.length === 0
+    ? 'Keeps for months without a fridge'
+    : Math.min(...months) === Math.max(...months)
+      ? `Keeps ${months[0]} months without a fridge`
+      : `Keeps ${Math.min(...months)}–${Math.max(...months)} months without a fridge`;
 ---
 <Base
   title={c.title}
@@ -41,7 +49,8 @@ const isZephyr = c.key === 'zephyr';
       <a class="pill is-active" href={`/shop/${c.key}/`} aria-current="page">{c.name}</a>
       {others.map((o) => <a class="pill" href={`/shop/${o.key}/`}>{o.name}</a>)}
     </div>
-    <div class="grid grid--4 mt-4" data-shop-grid>
+    <h2 class="sr-only">Products</h2>
+    <div class="grid grid--4 col-grid mt-4" data-shop-grid>
       {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
     </div>
     {products.length === 0 && <p class="muted">Nothing here yet — <a href="/shop/">see all products</a>.</p>}
@@ -54,7 +63,7 @@ const isZephyr = c.key === 'zephyr';
         <h2>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
         <p class="lead">{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
         <ul class="ticks mt-4">
-          <li><Icon name="check" /> Keeps 12 months without a fridge</li>
+          <li><Icon name="check" /> {shelfLine}</li>
           <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
           <li><Icon name="check" /> Free shipping over €25</li>
         </ul>
@@ -72,4 +81,6 @@ const isZephyr = c.key === 'zephyr';
   .col-hero__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
   .col-hero__media.is-contain img { object-fit: contain; padding: 6%; }
   .col-nav { padding-top: 1rem; border-top: 1px solid var(--line); }
+  /* Most collections hold 1-3 products: cap at three columns so a lone product reads as a feature, not a stamp. */
+  .col-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, max(18rem, calc((100% - 2 * var(--sp-5)) / 3))), 1fr)); }
 </style>

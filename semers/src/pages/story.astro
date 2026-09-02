@@ -2,11 +2,11 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { img, imgSrc, RENDER_BG } from '~/data/images';
-import { PRODUCTS, collectionByKey, formatPrice } from '~/data/products';
+import { PRODUCTS, collectionByKey, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 
 const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
-const freeFrom = formatPrice(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** Countries with Semers on a shelf, derived from the retailer list (Latvia + export markets). */
 const countries = [...new Set(site.retailers.map((r) => r.country))];
@@ -25,7 +25,7 @@ const milestones = [
   {
     key: 'The Baltics',
     title: 'A recipe travels north',
-    text: 'The same sour apple grows across the Antonovka orchards of the Baltics, and the same method follows it: a sweet that needs no sugar to make and no cold to keep.',
+    text: 'The same sour apple grows in orchards across the Baltics, and the same method follows it: a sweet that needs no sugar to make and no cold to keep.',
   },
   {
     key: 'Riga',
@@ -63,7 +63,7 @@ const shapes = [
 /** One line per sub-brand; product names, weights and links come from the catalogue. */
 const LINE_NOTES: Record<string, string> = {
   "App'Lite": 'The everyday line. Pastila cut to pocket size as a 35 g bar, and its thicker cut for a plate.',
-  Flourless: 'The heartier bar: 50 g of baked apple pressed with whole berries. What a flapjack wants to be, without the flour.',
+  Flourless: 'The heartier bar: 50 g of baked apple pressed with whole berries, for the days when 35 g is not enough.',
   PastiLite: 'The same whipped apple, baked until it crackles. A meringue with no sugar to add.',
   'Belyov Pastila': 'The original loaf, in the shape it has had since 1888. The 100 g is the one to try first; the 180 g is for the table.',
   Belevini: 'Apple zephyr, the soft marshmallow of the east, set with agar. The one line in our range that does contain sugar, and the pack says so.',
@@ -76,7 +76,7 @@ const lines = site.brand.lines.map((brand) => {
 });
 ---
 <Base
-  title="Our Story: The 1888 Belyov Pastila Recipe, Baked in Riga"
+  title="Our story: an 1888 pastila recipe, baked in Riga"
   description="The Semers story: a Belyov apple pastila recipe first sold in 1888, the sour Antonovka apple behind it, and a Riga bakery turning the loaf into bars."
   canonical="/story/"
   ogImage="pastila-block"
@@ -239,7 +239,7 @@ const lines = site.brand.lines.map((brand) => {
       <article class="feat">
         <div class="feat__icon"><Icon name="shield" size={22} /></div>
         <h3>Honest labels</h3>
-        <p>The front of the pack says what the back of the pack says. No “natural flavouring”, no sweeteners with numbers for names, no claims we cannot stand behind. Where a product does contain sugar, as our Belevini zephyr does, the label says so plainly.</p>
+        <p>The front of the pack says what the back of the pack says. No “natural flavouring”, no E-numbers, no claims we cannot stand behind. Where a product does contain sugar, as our Belevini zephyr does, the label says so plainly.</p>
       </article>
       <article class="feat" style="--feat-bg:var(--honey-100);--feat-fg:var(--bar-700)">
         <div class="feat__icon"><Icon name="apple" size={22} /></div>
@@ -254,7 +254,7 @@ const lines = site.brand.lines.map((brand) => {
     <div class="container">
       <div class="section-head">
         <div>
-          <p class="eyebrow">One recipe, five names</p>
+          <p class="eyebrow">Five names on the packs</p>
           <h2 id="lines-title">The names on our packs, explained.</h2>
         </div>
         <a class="link" href="/shop/">Shop all products</a>
@@ -323,7 +323,7 @@ const lines = site.brand.lines.map((brand) => {
 
   /* tradition */
   .recipe { list-style: none; margin: var(--sp-5) 0 0; padding: 0; gap: 0.5rem; }
-  .recipe .chip svg { color: var(--leaf-500); }
+  .recipe .chip :global(svg) { color: var(--leaf-500); }
 
   /* antonovka */
   .story-ticks { margin: var(--sp-5) 0; }

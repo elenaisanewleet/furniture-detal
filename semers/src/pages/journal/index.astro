@@ -4,13 +4,13 @@ import Icon from '~/components/Icon.astro';
 import { ARTICLES_SORTED } from '~/data/journal';
 import { img, imgSrc } from '~/data/images';
 import { site } from '~/data/site';
-import { formatPrice } from '~/data/products';
+import { formatThreshold } from '~/data/products';
 import { article as articleSchema } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
 const origin = originOf(Astro.site);
 const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
-const freeFrom = formatPrice(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** "12 Aug 2026" from an ISO date, without touching time zones. */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -30,7 +30,7 @@ const readLine = featured ? `${featured.readMinutes} min read` : '';
 const startHere = [
   { href: '/why-pastila/', icon: 'apple', title: 'Why pastila', text: 'Two ingredients, no added sugar, about 97 kcal a bar. The case for a snack first sold in 1888, with the numbers.' },
   { href: '/how-its-made/', icon: 'clock', title: 'How it’s made', text: 'Twelve hours from whole Antonovka apples to a sealed pack: bake, whip, dry, press, cut.' },
-  { href: '/story/', icon: 'globe', title: 'Our story', text: 'A Belyov recipe first sold in 1888, a sour northern apple, and a bakery in Riga that refuses to add a third ingredient.' },
+  { href: '/story/', icon: 'globe', title: 'Our story', text: 'A Belyov recipe first sold in 1888, a sour northern apple, and a bakery in Riga that has left the recipe alone.' },
 ] as const;
 
 const schema = [
@@ -47,7 +47,7 @@ const schema = [
 ];
 ---
 <Base
-  title="Journal: Notes on Pastila, Apples & No-Added-Sugar Snacks"
+  title="Journal: pastila, apples & no-added-sugar snacks"
   description="Notes from the Semers bakery in Riga: what pastila is, why we bake Antonovka apples, and how to spot added sugar on a snack label. Short, honest reads."
   canonical="/journal/"
   ogImage={featured ? featured.image : 'hero-wide'}

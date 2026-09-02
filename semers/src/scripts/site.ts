@@ -102,6 +102,17 @@ class Cart {
 const cart = new Cart();
 window.semersCart = cart;
 
+/** Bundles sold as "ships free" regardless of the threshold (the Tasting Box badge and copy promise it). */
+const FREE_SHIP_SLUGS = new Set(['tasting-box']);
+function shipsFree(total: number) {
+  return total >= CFG.freeFrom || cart.items.some((i) => FREE_SHIP_SLUGS.has(i.slug));
+}
+/** "Pick up in Riga" is offered as free on the checkout form, so the summary must not add postage to it. */
+function pickupSelected() {
+  const r = $<HTMLInputElement>('form[data-checkout] input[name="delivery"]:checked');
+  return !!r && /pick ?up/i.test(r.value);
+}
+
 /* ----------------------------------------------------------------- drawer */
 const drawer = $('#cart');
 let lastFocus: HTMLElement | null = null;
@@ -129,13 +140,14 @@ function renderCart() {
   const fill = $('#cart-ship-fill');
   const text = $('#cart-ship-text');
   if (fill && text) {
-    const left = Math.max(0, CFG.freeFrom - total);
-    fill.style.width = `${Math.min(100, (total / CFG.freeFrom) * 100)}%`;
+    const free = c > 0 && shipsFree(total);
+    const left = free ? 0 : Math.max(0, CFG.freeFrom - total);
+    fill.style.width = free ? '100%' : `${Math.min(100, (total / CFG.freeFrom) * 100)}%`;
     text.innerHTML = c === 0
       ? `Free shipping on orders over <strong>${fmt(CFG.freeFrom)}</strong>.`
       : left > 0
         ? `Add <strong>${fmt(left)}</strong> more for free shipping.`
-        : `🎉 You’ve unlocked <strong>free shipping</strong>.`;
+        : `You’ve unlocked <strong>free shipping</strong>.`;
   }
 
   if (list) {
@@ -175,7 +187,7 @@ function renderSummary(root: HTMLElement) {
   const emptyEl = $('[data-summary-empty]', root);
   const full = $('[data-summary-full]', root);
   const total = cart.subtotal();
-  const shipping = total >= CFG.freeFrom || c === 0 ? 0 : Number(root.dataset.shipping || 3.9);
+  const shipping = c === 0 || pickupSelected() || shipsFree(total) ? 0 : Number(root.dataset.shipping || 3.9);
   if (emptyEl) emptyEl.hidden = c > 0;
   if (full) full.hidden = c === 0;
   if (rows)
@@ -295,6 +307,7 @@ function closeNav() {
 }
 navToggle?.addEventListener('click', () => (nav?.classList.contains('is-open') ? closeNav() : openNav()));
 scrim?.addEventListener('click', closeNav);
+$$('[data-nav-close]').forEach((b) => b.addEventListener('click', closeNav));
 
 /* ---------------------------------------------------------- sticky header */
 const hdr = $('#hdr');
@@ -322,10 +335,13 @@ if ('IntersectionObserver' in window && revealEls.length) {
 /* ------------------------------------------------------------ product page */
 const pdp = $('[data-pdp]');
 if (pdp) {
-  const priceEls = $$('[data-price]', pdp);
-  const nameEls = $$('[data-variant-name]', pdp);
+  // Only the elements that belong to this product: skip the related-product
+  // cards (they carry their own data-price / data-add) and the variant radios.
+  const notCard = (el: Element) => !el.closest('[data-product-card]') && !el.matches('input');
+  const priceEls = $$('[data-price]').filter(notCard);
+  const nameEls = $$('[data-variant-name]').filter(notCard);
   const gtinEl = $('[data-gtin]', pdp);
-  const addBtns = $$('[data-add]', pdp);
+  const addBtns = $$('[data-add]').filter(notCard);
   const mainImg = $<HTMLImageElement>('[data-gal-main]', pdp);
   const thumbs = $$<HTMLButtonElement>('[data-gal-thumb]', pdp);
   const qtyIn = $<HTMLInputElement>('[data-qty-input]', pdp);
@@ -592,6 +608,10 @@ $$<HTMLFormElement>('form[data-form]').forEach((form) => {
 /* -------------------------------------------------------------- checkout */
 const checkout = $<HTMLFormElement>('form[data-checkout]');
 if (checkout) {
+  // switching to pick-up (free) or back to a courier must update the summary column
+  checkout.addEventListener('change', (e) => {
+    if ((e.target as HTMLInputElement).name === 'delivery') renderCart();
+  });
   checkout.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (cart.count() === 0) {
@@ -603,7 +623,7 @@ if (checkout) {
     const data = formData(checkout);
     if (data.website) return;
     const total = cart.subtotal();
-    const shipping = total >= CFG.freeFrom ? 0 : Number(checkout.dataset.shipping || 3.9);
+    const shipping = pickupSelected() || shipsFree(total) ? 0 : Number(checkout.dataset.shipping || 3.9);
     const order = {
       type: 'order',
       customer: data,

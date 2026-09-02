@@ -52,8 +52,8 @@ const badge = p.badge || (p.bestseller ? 'Bestseller' : p.new ? 'New' : '');
     </h3>
     <p class="pc__hook">{p.hook}</p>
     <div class="pc__meta">
-      {p.kcalPerUnit > 0 && <span>{p.kcalPerUnit} kcal ·</span>}
-      {p.diet.slice(0, 2).map((d, i) => <span>{i > 0 ? '· ' : ''}{DIET_TAGS[d]}</span>)}
+      {p.kcalPerUnit > 0 && <span>{p.kcalPerUnit} kcal</span>}
+      {p.diet.slice(0, 2).map((d) => <span>{DIET_TAGS[d]}</span>)}
     </div>
     <div class="pc__foot">
       <div>

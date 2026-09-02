@@ -1,7 +1,7 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { formatPrice } from '~/data/products';
+import { formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Poland', 'Austria', 'Netherlands', 'Belgium', 'France', 'Italy', 'Spain', 'Sweden', 'Denmark', 'Czechia', 'Bulgaria', 'Other EU'];
 ---
@@ -9,7 +9,7 @@ const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Pola
   <section class="container page-hero">
     <p class="eyebrow">Checkout</p>
     <h1>Almost there.</h1>
-    <p class="lead">Tell us where to send the box. We confirm by e-mail with a secure payment link the same business day — online card payment is being connected.</p>
+    <p class="lead">Tell us where to send the box. We confirm by e-mail with a secure payment link within one business day; online card payment is being connected.</p>
   </section>
 
   <section class="container co">
@@ -70,7 +70,7 @@ const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Pola
         <div class="co__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>€0.00</strong></div>
         <div class="co__row"><span>Shipping</span><span class="num" data-summary-shipping>—</span></div>
         <div class="co__row co__total"><span>Total</span><span class="num" data-summary-total>€0.00</span></div>
-        <p class="tiny muted">Free shipping over {formatPrice(site.shipping.freeFrom)}; otherwise €3.90 (Baltics) — EU courier rates confirmed by e-mail. Prices include VAT.</p>
+        <p class="tiny muted">Free shipping over {formatThreshold(site.shipping.freeFrom)}; otherwise €3.90 (Baltics) — EU courier rates confirmed by e-mail. Prices include VAT.</p>
         <ul class="ticks small">
           <li><Icon name="truck" size={16} /> {site.shipping.note}</li>
           <li><Icon name="shield" size={16} /> Damaged in transit? We replace it.</li>

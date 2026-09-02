@@ -35,7 +35,6 @@ export default defineConfig({
   integrations: [
     sitemap({
       changefreq: 'weekly',
-      lastmod: new Date(),
       filter: (page) => !/\/(cart|checkout|order)\//.test(page),
       serialize(item) {
         const path = new URL(item.url).pathname;

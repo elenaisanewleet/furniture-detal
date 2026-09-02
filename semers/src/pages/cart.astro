@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
-import { PRODUCTS, formatPrice } from '~/data/products';
+import { PRODUCTS, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 4);
 ---
@@ -29,7 +29,7 @@ const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 4);
         <div class="co__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>€0.00</strong></div>
         <div class="co__row"><span>Shipping</span><span class="num" data-summary-shipping>—</span></div>
         <div class="co__row co__total"><span>Total</span><span class="num" data-summary-total>€0.00</span></div>
-        <p class="tiny muted">Free shipping over {formatPrice(site.shipping.freeFrom)}. Prices include VAT.</p>
+        <p class="tiny muted">Free shipping over {formatThreshold(site.shipping.freeFrom)}. Prices include VAT.</p>
         <a class="btn btn--lg btn--block" href="/checkout/">Checkout <Icon name="arrow" size={18} class="arrow" /></a>
         <ul class="ticks small">
           <li><Icon name="truck" size={16} /> Ships from Riga in 1–2 business days</li>

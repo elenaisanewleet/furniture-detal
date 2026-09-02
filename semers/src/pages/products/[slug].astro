@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
-import { PRODUCTS, FLAVORS, DIET_TAGS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product } from '~/data/products';
+import { PRODUCTS, FLAVORS, DIET_TAGS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, formatThreshold } from '~/data/products';
 import { img, imgSrc } from '~/data/images';
 import { productSchema, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
@@ -31,12 +31,26 @@ const multi = p.variants.length > 1;
 const ingredientCount = p.ingredients.split(',').length;
 const ingredientLine = ingredientCount <= 4 ? `${ingredientCount} ingredients` : 'Short ingredient list';
 const isBundle = p.collection === 'gift-sets';
+/** Zephyr is the one product made with sugar; every claim below is switched on it. */
+const noAddedSugar = p.diet.includes('no-added-sugar');
+/** kcalPerUnit is per single piece (bar, loaf, box); multi-packs list the piece weight. A 0 means "mixed box, see each item". */
+const hasKcal = p.kcalPerUnit > 0;
+const unitGrams = p.pack > 1 ? Math.round(p.weightGrams / p.pack) : p.weightGrams;
+const kcalLine = p.pack > 1 ? `${p.kcalPerUnit} kcal per ${unitGrams} g piece` : `${p.kcalPerUnit} kcal per ${unitGrams} g`;
 
 const faqs = [
-  { q: `How many calories are in one ${p.name}?`, a: `About ${p.kcalPerUnit} kcal per ${p.pack > 1 ? 'pack' : 'piece'} (${p.weightGrams} g). Per 100 g: ${p.nutrition.energyKcal} kcal.` },
-  { q: 'Does it contain added sugar?', a: 'No. The sweetness comes from the baked Antonovka apples themselves. Nothing else is added.' },
+  ...(hasKcal
+    ? [
+        p.pack > 1
+          ? { q: 'How many calories are in each piece?', a: `About ${p.kcalPerUnit} kcal per ${unitGrams} g piece, so around ${p.kcalPerUnit * p.pack} kcal in the whole pack of ${p.pack}. Per 100 g: ${p.nutrition.energyKcal} kcal.` }
+          : { q: `How many calories are in one ${p.name}?`, a: `About ${p.kcalPerUnit} kcal per ${p.weightGrams} g. Per 100 g: ${p.nutrition.energyKcal} kcal.` },
+      ]
+    : []),
+  noAddedSugar
+    ? { q: 'Does it contain added sugar?', a: 'No. The sweetness comes from the baked Antonovka apples themselves. Nothing else is added.' }
+    : { q: 'Does it contain added sugar?', a: 'Yes. Belevini zephyr is a traditional recipe made with apple purée, egg white, agar and sugar, and the pack says so. Our bars, meringues, dessert squares and Belyov pastila are the no-added-sugar range.' },
   { q: 'How long does it keep?', a: `${p.shelfLifeMonths} months in a cool, dry place. Once opened, enjoy within a few days.` },
-  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatPrice(site.shipping.freeFrom)} ship free.` },
+  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatThreshold(site.shipping.freeFrom)} ship free.` },
 ];
 
 const rows: [string, string][] = [
@@ -58,7 +72,14 @@ const rows: [string, string][] = [
   ogType="product"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: col.name, href: `/shop/${col.key}/` }, { name: p.name, href: `/products/${p.slug}/` }]}
   schema={[productSchema(origin, p), faqPage(faqs)]}
+  bodyClass="has-sticky-buy"
 >
+  <Fragment slot="head">
+    <meta property="product:price:amount" content={(first.price ?? p.price).toFixed(2)} />
+    <meta property="product:price:currency" content={site.currency} />
+    <meta property="product:availability" content="in stock" />
+    <meta property="product:brand" content={p.brand} />
+  </Fragment>
   <article class="pdp container" data-pdp>
     <div class="pdp__grid">
       <div class="pdp__gallery">
@@ -91,7 +112,7 @@ const rows: [string, string][] = [
         </div>
 
         <ul class="pdp__facts" aria-label="Key facts">
-          <li><Icon name="apple" size={18} /> {p.kcalPerUnit} kcal per {p.pack > 1 ? 'pack' : 'piece'}</li>
+          {hasKcal && <li><Icon name="apple" size={18} /> {kcalLine}</li>}
           {p.diet.slice(0, 3).map((d) => <li><Icon name="check" size={18} /> {DIET_TAGS[d]}</li>)}
         </ul>
 
@@ -122,8 +143,8 @@ const rows: [string, string][] = [
         </div>
 
         <ul class="pdp__trust">
-          <li><Icon name="truck" size={18} /> Free shipping over {formatPrice(site.shipping.freeFrom)} · ships from Riga in 1–2 days</li>
-          <li><Icon name="leaf" size={18} /> {ingredientLine}, nothing artificial</li>
+          <li><Icon name="truck" size={18} /> Free shipping over {formatThreshold(site.shipping.freeFrom)} · ships from Riga in 1–2 business days</li>
+          <li><Icon name="leaf" size={18} /> {noAddedSugar ? `${ingredientLine}, nothing artificial` : 'Made with sugar and agar, and the label says so'}</li>
           <li><Icon name="clock" size={18} /> Keeps {p.shelfLifeMonths} months — no fridge needed</li>
         </ul>
 
@@ -149,13 +170,13 @@ const rows: [string, string][] = [
                   {rows.map(([k, v]) => <tr class={k.startsWith('of which') ? 'sub' : ''}><td>{k}</td><td>{v}</td></tr>)}
                 </tbody>
               </table>
-              <p class="tiny muted">Approximate per {p.pack > 1 ? 'pack' : 'piece'} ({p.weightGrams} g): {p.kcalPerUnit} kcal. Values are typical for the recipe; see the pack for the batch label.</p>
+              <p class="tiny muted">{hasKcal ? `Approximate per ${unitGrams} g: ${p.kcalPerUnit} kcal. ` : 'Typical values for the baked-apple pastila base; each product in the box carries its own nutrition label. '}Values are typical for the recipe; see the pack for the batch label.</p>
             </div>
           </details>
           <details>
             <summary>Shipping &amp; returns</summary>
             <div class="acc__body">
-              <p>{site.shipping.note} Free shipping over {formatPrice(site.shipping.freeFrom)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.join(', ')}.</p>
+              <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.join(', ')}.</p>
               <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">Full policy</a>.</p>
             </div>
           </details>
@@ -174,17 +195,31 @@ const rows: [string, string][] = [
         <div class="frame frame--4x5 rounded">
           <img src={imgSrc('pastila-texture')} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
         </div>
-        <div>
-          <p class="eyebrow">Why it works</p>
-          <h2>Sweet because apples are sweet.</h2>
-          <p class="lead">We bake Antonovka apples until their sugars caramelise, whip the purée with egg white, and dry it in thin layers. That is the whole trick: concentrate the fruit, add air, add nothing else.</p>
-          <ul class="ticks">
-            <li><Icon name="check" /> No added sugar, sweeteners or syrups</li>
-            <li><Icon name="check" /> No flour, no gluten, no fat added</li>
-            <li><Icon name="check" /> Source of fibre from the whole fruit</li>
-          </ul>
-          <a class="link" href="/how-its-made/">See how it’s made</a>
-        </div>
+        {noAddedSugar ? (
+          <div>
+            <p class="eyebrow">Why it works</p>
+            <h2>Sweet because apples are sweet.</h2>
+            <p class="lead">We bake Antonovka apples until their sugars caramelise, whip the purée with egg white, and dry it in thin layers. That is the whole trick: concentrate the fruit, add air, add nothing else.</p>
+            <ul class="ticks">
+              <li><Icon name="check" /> No added sugar, sweeteners or syrups</li>
+              <li><Icon name="check" /> No flour, no gluten, no fat added</li>
+              <li><Icon name="check" /> Source of fibre from the whole fruit</li>
+            </ul>
+            <a class="link" href="/how-its-made/">See how it’s made</a>
+          </div>
+        ) : (
+          <div>
+            <p class="eyebrow">Good to know</p>
+            <h2>Apple first, even here.</h2>
+            <p class="lead">Zephyr is set with agar rather than gelatine and, unlike the rest of our range, it is made with sugar. We start it from the same Antonovka purée as our pastila, and the pack says exactly what is in it.</p>
+            <ul class="ticks">
+              <li><Icon name="check" /> Antonovka apple purée, egg white, agar, sugar</li>
+              <li><Icon name="check" /> Set with agar, not gelatine</li>
+              <li><Icon name="check" /> The one Semers product with sugar in it, labelled as such</li>
+            </ul>
+            <a class="link" href="/shop/apple-bars/">The no-added-sugar range</a>
+          </div>
+        )}
       </div>
     </section>
 
@@ -198,12 +233,18 @@ const rows: [string, string][] = [
       </div>
     </section>
 
-    <section class="section--tight pdp__faq">
-      <h2>Questions people ask</h2>
-      <div class="acc">
-        {faqs.map((f) => (
-          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
-        ))}
+    <section class="section--tight pdp__faq" aria-labelledby="pdp-faq-title">
+      <div class="pdp__faq-grid">
+        <div>
+          <p class="eyebrow">Questions</p>
+          <h2 id="pdp-faq-title">Questions people ask about the {p.name}.</h2>
+          <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+        </div>
+        <div class="acc">
+          {faqs.map((f) => (
+            <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+          ))}
+        </div>
       </div>
     </section>
   </article>
@@ -229,7 +270,7 @@ const rows: [string, string][] = [
   .pdp__unit { font-size: var(--fs-sm); color: var(--fg-3); }
   .pdp__facts { list-style: none; margin: 0 0 1.25rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: var(--fs-sm); font-weight: 600; }
   .pdp__facts li { display: inline-flex; align-items: center; gap: 0.35em; }
-  .pdp__facts svg { color: var(--leaf-500); }
+  .pdp__facts :global(svg) { color: var(--leaf-500); }
   .pdp__vars { border: 0; padding: 0; margin: 0 0 1.25rem; }
   .pdp__vars legend { font-size: var(--fs-sm); margin-bottom: 0.6rem; padding: 0; }
   .pdp__varnote { margin: 0.6rem 0 0; }
@@ -238,10 +279,10 @@ const rows: [string, string][] = [
   .pdp__add { gap: 0.6em; }
   .pdp__trust { list-style: none; margin: 1.25rem 0; padding: 1rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; gap: 0.5rem; font-size: var(--fs-sm); color: var(--fg-2); }
   .pdp__trust li { display: flex; gap: 0.6em; align-items: flex-start; }
-  .pdp__trust svg { flex: none; color: var(--accent); margin-top: 0.1em; }
+  .pdp__trust :global(svg) { flex: none; color: var(--accent); margin-top: 0.1em; }
   .pdp__desc { margin-bottom: 1.25rem; }
   .pdp__story { margin-top: clamp(1rem, 3vw, 2rem); }
   .pdp__story .ticks { margin: 1.25rem 0; }
-  .pdp__faq { max-width: 52rem; }
-  .pdp__faq h2 { margin-bottom: 1rem; }
+  .pdp__faq-grid { display: grid; gap: 2rem; }
+  @media (min-width: 56rem) { .pdp__faq-grid { grid-template-columns: 1fr 1.4fr; gap: 4rem; } }
 </style>

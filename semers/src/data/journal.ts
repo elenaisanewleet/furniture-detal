@@ -17,7 +17,7 @@ export interface Article {
 export const ARTICLES: Article[] = [
   {
     slug: 'what-is-pastila',
-    title: 'What is pastila? The 500-year-old apple sweet with two ingredients',
+    title: 'What is pastila? The apple sweet with two ingredients',
     description: 'Pastila is a baked-apple confection from Belyov and Kolomna, made from whipped apple purée and egg white. Here is where it comes from, how it is made and why it has no added sugar.',
     date: '2026-08-12',
     readMinutes: 6,

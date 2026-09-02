@@ -7,15 +7,16 @@ const year = new Date().getFullYear();
 <footer class="ftr">
   <div class="ftr__cta container">
     <div class="ftr__cta-inner">
-      <p class="eyebrow">Join the apple club</p>
-      <h2 class="display">Get 10% off your first box.</h2>
+      <p class="eyebrow">By e-mail, occasionally</p>
+      <h2 class="display">Hear about the next flavour first.</h2>
       <p class="muted">New flavours, restock alerts and the occasional recipe. No spam, no sugar.</p>
-      <form class="ftr__form" data-newsletter action="#" method="post">
-        <label class="sr-only" for="nl-email">E-mail</label>
-        <input class="input" id="nl-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+      <form class="ftr__form" data-form="newsletter" data-success="Thanks — you’re on the list. We write rarely, and only when there is something to say.">
+        <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
+        <label class="sr-only" for="ftr-email">E-mail</label>
+        <input class="input" id="ftr-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
         <button class="btn" type="submit">Subscribe <Icon name="arrow" size={18} class="arrow" /></button>
       </form>
-      <p class="tiny muted" data-newsletter-note>By subscribing you agree to our <a href="/legal/privacy/">privacy policy</a>.</p>
+      <p class="tiny muted" data-form-note>By subscribing you agree to our <a href="/legal/privacy/">privacy policy</a>.</p>
     </div>
   </div>
   <div class="ftr__main container">
@@ -27,9 +28,9 @@ const year = new Date().getFullYear();
         <a href={`mailto:${site.email}`} aria-label="E-mail"><Icon name="mail" /></a>
       </div>
     </div>
-    <nav aria-label="Shop"><h4>Shop</h4><ul>{footerNav.shop.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
-    <nav aria-label="Learn"><h4>Learn</h4><ul>{footerNav.learn.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
-    <nav aria-label="Company"><h4>Company</h4><ul>{footerNav.company.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
+    <nav aria-label="Shop"><h3>Shop</h3><ul>{footerNav.shop.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
+    <nav aria-label="Learn"><h3>Learn</h3><ul>{footerNav.learn.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
+    <nav aria-label="Company"><h3>Company</h3><ul>{footerNav.company.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
   </div>
   <div class="ftr__legal container">
     <p>© {year} {site.brand.legalName} · {site.locality}, {site.country}</p>
@@ -50,7 +51,7 @@ const year = new Date().getFullYear();
   .ftr__social { display: flex; gap: 0.5rem; }
   .ftr__social a { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; border: 1px solid var(--line); transition: background var(--dur-fast), color var(--dur-fast); }
   .ftr__social a:hover { background: var(--ink-900); color: var(--cream-0); }
-  .ftr h4 { margin-bottom: 0.9rem; font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.1em; color: var(--fg-3); }
+  .ftr h3 { margin-bottom: 0.9rem; font-size: var(--fs-sm); text-transform: uppercase; letter-spacing: 0.1em; color: var(--fg-3); }
   .ftr ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.55rem; }
   .ftr ul a { text-decoration: none; }
   .ftr ul a:hover { text-decoration: underline; }

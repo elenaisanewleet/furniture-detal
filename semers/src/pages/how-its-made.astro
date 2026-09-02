@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { img, imgSrc, RENDER_BG } from '~/data/images';
-import { formatPrice } from '~/data/products';
+import { formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 import { originOf } from '~/lib/origin';
 
@@ -92,10 +92,10 @@ const howTo = {
   })),
 };
 
-const freeFrom = formatPrice(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom);
 ---
 <Base
-  title="How Our Apple Pastila Is Made: Baked Apples & Egg White"
+  title="How apple pastila is made: baked apples & egg white"
   description="How Semers makes apple pastila in Riga: Antonovka apples baked whole, whipped with egg white, dried thin and pressed. No added sugar, no flour, no tricks."
   canonical="/how-its-made/"
   ogImage="process-oven"
@@ -106,7 +106,7 @@ const freeFrom = formatPrice(site.shipping.freeFrom);
   <section class="page-hero container hiw-hero" aria-labelledby="hero-title">
     <p class="eyebrow">How it’s made · {site.locality}, {site.country}</p>
     <h1 id="hero-title">Twelve hours. Four ingredients at most. <em>Nothing to hide.</em></h1>
-    <p class="lead">This is how our apple pastila is made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into loaves. The method was first sold in Belyov in 1888. The ingredient list has not grown since.</p>
+    <p class="lead">This is how our apple pastila is made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into loaves. The recipe was first sold commercially in Belyov in 1888. The ingredient list has not grown since.</p>
     <ul class="cluster hiw-facts" aria-label="Key facts">
       <li class="chip"><Icon name="apple" size={14} /> 99% baked apples</li>
       <li class="chip"><Icon name="egg" size={14} /> 1% egg white</li>
@@ -204,7 +204,7 @@ const freeFrom = formatPrice(site.shipping.freeFrom);
         <ul class="ticks io__list">
           <li><Icon name="check" /> <span><strong>Baked Antonovka apples</strong> <span class="muted">— 99% of every bar and loaf</span></span></li>
           <li><Icon name="check" /> <span><strong>Egg white</strong> <span class="muted">— the other 1%</span></span></li>
-          <li><Icon name="check" /> <span><strong>Whole berries, Ceylon cinnamon or pine nuts</strong> <span class="muted">— in the flavoured versions only</span></span></li>
+          <li><Icon name="check" /> <span><strong>Whole berries, cinnamon or pine nuts</strong> <span class="muted">— in the flavoured versions only</span></span></li>
         </ul>
       </div>
       <div class="io__col io__col--out">
@@ -216,7 +216,7 @@ const freeFrom = formatPrice(site.shipping.freeFrom);
         </ul>
       </div>
     </div>
-    <p class="tiny muted mt-4">This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different, older confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.</p>
+    <p class="tiny muted mt-4">This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.</p>
   </section>
 
   <!-- ============================== QUALITY & SHELF LIFE ============================== -->
@@ -306,7 +306,7 @@ const freeFrom = formatPrice(site.shipping.freeFrom);
   .hiw-hero h1 { max-width: 20ch; }
   .hiw-hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .hiw-facts { list-style: none; margin: var(--sp-5) 0 0; padding: 0; }
-  .hiw-facts .chip svg { color: var(--leaf-500); }
+  .hiw-facts .chip :global(svg) { color: var(--leaf-500); }
   .hiw-hero__img { aspect-ratio: 3 / 2; box-shadow: var(--shadow-2); }
   @media (min-width: 56rem) { .hiw-hero__img { aspect-ratio: 21 / 9; } }
 
@@ -357,7 +357,7 @@ const freeFrom = formatPrice(site.shipping.freeFrom);
   .io__col--out .eyebrow::before { background: var(--apple-600); }
   .io__list strong { font-weight: 600; }
   .ticks--no { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--sp-3) var(--sp-5); }
-  .ticks--no svg { color: var(--apple-600); }
+  .ticks--no :global(svg) { color: var(--apple-600); }
 
   /* quality specs */
   .specs { display: grid; gap: var(--sp-5) var(--sp-6); margin: var(--sp-5) 0; }

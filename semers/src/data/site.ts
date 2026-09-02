@@ -35,9 +35,8 @@ export const site = {
   retailers: [
     { name: 'Maxima', country: 'Latvia', note: 'Supermarkets across Latvia' },
     { name: 'Barbora', country: 'Latvia', note: 'Online grocery delivery', url: 'https://barbora.lv' },
-    { name: 'Tirgus Online', country: 'Latvia', note: 'Online marketplace' },
     { name: 'Selected retailers', country: 'Germany', note: 'Specialty and online stores' },
-    { name: 'Selected retailers', country: 'Poland', note: 'Drugstore chain listing via our partner' },
+    { name: 'Selected retailers', country: 'Poland', note: 'Specialty and online stores' },
     { name: 'Selected retailers', country: 'Lithuania', note: 'Specialty stores' },
     { name: 'Selected retailers', country: 'Austria', note: 'Specialty stores' },
     { name: 'Selected retailers', country: 'Bulgaria', note: 'Specialty stores' },
@@ -46,6 +45,7 @@ export const site = {
   /** Countries we ship consumer orders to. Adjust when logistics is set. */
   shipping: {
     freeFrom: 25, // EUR — free shipping threshold (was used in the old shop)
+    flatRate: 3.9, // EUR — flat rate in the Baltics below the threshold
     regions: ['Latvia', 'Lithuania', 'Estonia', 'European Union'],
     note: 'Orders ship from Riga within 1–2 business days.',
   },
@@ -85,6 +85,7 @@ export const footerNav = {
     { label: 'Belyov pastila', href: '/shop/pastila/' },
     { label: 'Zephyr', href: '/shop/zephyr/' },
     { label: 'Gift sets', href: '/shop/gift-sets/' },
+    { label: 'Build your box', href: '/shop/build-your-box/' },
   ],
   learn: [
     { label: 'Why pastila', href: '/why-pastila/' },

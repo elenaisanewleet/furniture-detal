@@ -8,7 +8,7 @@ const path = Astro.url.pathname;
 ---
 <header class={`hdr ${transparent ? 'hdr--float' : ''}`} id="hdr">
   <div class="hdr__bar">
-    <span class="hdr__bar-text"><strong>Free shipping</strong> on orders over €25 · Ships from Riga in 1–2 days · 99% apples, 0 added sugar</span>
+    <span class="hdr__bar-text"><strong>Free shipping</strong> on orders over €25 · Ships from Riga in 1–2 business days · 99% apples, 0 added sugar</span>
   </div>
   <div class="hdr__main container--wide">
     <button class="hdr__burger" id="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label="Open menu">
@@ -16,6 +16,7 @@ const path = Astro.url.pathname;
     </button>
     <a class="hdr__logo" href="/" aria-label="Semers home"><Logo size={30} /></a>
     <nav class="hdr__nav" id="nav" aria-label="Primary">
+      <button class="hdr__nav-close" type="button" data-nav-close aria-label="Close menu"><Icon name="close" size={24} /></button>
       <ul>
         {nav.map((n) => (
           <li><a href={n.href} aria-current={path.startsWith(n.href) ? 'page' : undefined}>{n.label}</a></li>
@@ -50,6 +51,8 @@ const path = Astro.url.pathname;
   .hdr__nav a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform var(--dur) var(--ease-out); }
   .hdr__nav a:hover::after, .hdr__nav a[aria-current]::after { transform: scaleX(1); }
   .hdr__nav-cta { display: none; }
+  .hdr__nav-close { display: none; position: absolute; top: 0.75rem; right: 0.75rem; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 50%; }
+  .hdr__nav-close:hover { background: var(--bg-sunken); }
   .hdr__actions { display: flex; align-items: center; gap: var(--sp-3); }
   .hdr__cart { position: relative; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: 50%; transition: background var(--dur-fast); }
   .hdr__cart:hover { background: var(--bg-sunken); }
@@ -67,6 +70,7 @@ const path = Astro.url.pathname;
     .hdr__shop { display: none; }
     .hdr__nav { position: fixed; inset: 0 auto 0 0; z-index: 60; width: min(22rem, 86vw); background: var(--bg); padding: 5rem var(--gutter) 2rem; transform: translateX(-105%); transition: transform var(--dur) var(--ease-out); box-shadow: var(--shadow-3); overflow-y: auto; }
     .hdr__nav.is-open { transform: none; }
+    .hdr__nav-close { display: grid; }
     .hdr__nav ul { flex-direction: column; gap: 0; }
     .hdr__nav li { border-bottom: 1px solid var(--line); }
     .hdr__nav a { display: block; padding: 1rem 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; }
