@@ -21,6 +21,10 @@ The site lives in the `semers/` folder of this repository and is meant for Verce
 
 5. Deploy. Preview deployments get their own URL automatically; production follows the `main` branch once the pull request is merged.
 
+## 1a. Preview before the project exists
+
+Until the Semers Vercel project is created, every preview deployment of this repository (any branch except `main`) also serves the shop at `<preview-url>/semers/` — the root build runs `scripts/semers-preview.mjs`, which builds `semers/` and mounts it under that path. Production deployments of `main` skip this step, so the furniture site is never affected. The order endpoint is not deployed in that mode; checkout falls back to the pre-filled e-mail.
+
 ## 2. Domain
 
 Vercel project → Settings → Domains → add `semers.org` and `www.semers.org` (redirect www → apex). Set the DNS records Vercel shows at your registrar. Keep the old site up until the new one resolves.
