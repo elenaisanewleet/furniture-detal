@@ -1,0 +1,213 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { ARTICLES_SORTED } from '~/data/journal';
+import { img, imgSrc } from '~/data/images';
+import { site } from '~/data/site';
+import { formatPrice } from '~/data/products';
+import { article as articleSchema } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+
+const origin = originOf(Astro.site);
+const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
+const freeFrom = formatPrice(site.shipping.freeFrom);
+
+/** "12 Aug 2026" from an ISO date, without touching time zones. */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDate = (iso: string) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} ${MONTHS[(m || 1) - 1]} ${y}`;
+};
+
+const [featured, ...rest] = ARTICLES_SORTED;
+const hasFeatured = Boolean(featured);
+const hasRest = rest.length > 0;
+const count = ARTICLES_SORTED.length;
+const countLine = count === 1 ? '1 article' : `${count} articles`;
+const readLine = featured ? `${featured.readMinutes} min read` : '';
+
+/** Evergreen pages the journal keeps pointing back to. */
+const startHere = [
+  { href: '/why-pastila/', icon: 'apple', title: 'Why pastila', text: 'Two ingredients, no added sugar, about 97 kcal a bar. The case for a snack first sold in 1888, with the numbers.' },
+  { href: '/how-its-made/', icon: 'clock', title: 'How it’s made', text: 'Twelve hours from whole Antonovka apples to a sealed pack: bake, whip, dry, press, cut.' },
+  { href: '/story/', icon: 'globe', title: 'Our story', text: 'A Belyov recipe first sold in 1888, a sour northern apple, and a bakery in Riga that refuses to add a third ingredient.' },
+] as const;
+
+const schema = [
+  {
+    '@type': 'Blog',
+    '@id': `${origin}/journal/#blog`,
+    name: 'Semers Journal',
+    url: `${origin}/journal/`,
+    description: 'Notes on pastila, Antonovka apples and snacks with no added sugar, from the Semers bakery in Riga.',
+    publisher: { '@id': `${origin}/#org` },
+    inLanguage: 'en',
+    blogPost: ARTICLES_SORTED.map((a) => articleSchema(origin, { title: a.title, description: a.description, href: `/journal/${a.slug}/`, date: a.date, image: a.image })),
+  },
+];
+---
+<Base
+  title="Journal: Notes on Pastila, Apples & No-Added-Sugar Snacks"
+  description="Notes from the Semers bakery in Riga: what pastila is, why we bake Antonovka apples, and how to spot added sugar on a snack label. Short, honest reads."
+  canonical="/journal/"
+  ogImage={featured ? featured.image : 'hero-wide'}
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Journal', href: '/journal/' }]}
+  schema={schema}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container jr-hero" aria-labelledby="page-title">
+    <p class="eyebrow">Journal · From the bakery in {site.locality}</p>
+    <h1 id="page-title">Notes from the <em>bakery.</em></h1>
+    <p class="lead">Longer reads on pastila, Antonovka apples and snacks with no added sugar, written by the people who bake the bars. The kettle takes four minutes. Most of these take six.</p>
+  </section>
+
+  <!-- ============================== FEATURED ============================== -->
+  {hasFeatured && (
+    <section class="section--tight container" aria-labelledby="featured-title">
+      <article class="feature" data-reveal>
+        <a class="feature__media frame frame--3x2 rounded" href={`/journal/${featured.slug}/`} tabindex="-1" aria-hidden="true">
+          <img src={im(featured.image).src} alt="" width={im(featured.image).width} height={im(featured.image).height} loading="eager" fetchpriority="high" decoding="async" class="img-cover zoom" />
+        </a>
+        <div class="feature__body">
+          <p class="eyebrow">Latest</p>
+          <h2 id="featured-title" class="feature__title"><a href={`/journal/${featured.slug}/`}>{featured.title}</a></h2>
+          <p class="jc__meta feature__meta"><time datetime={featured.date}>{fmtDate(featured.date)}</time> · {readLine}</p>
+          <p class="feature__desc">{featured.description}</p>
+          <a class="btn btn--ghost" href={`/journal/${featured.slug}/`}>Read the article <Icon name="arrow" size={18} class="arrow" /></a>
+        </div>
+      </article>
+    </section>
+  )}
+
+  <!-- ============================== ALL ARTICLES ============================== -->
+  {hasRest && (
+    <section class="section container" aria-labelledby="all-title">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">More from the journal</p>
+          <h2 id="all-title">Slow reads for a two-ingredient snack.</h2>
+        </div>
+        <p class="muted small">{countLine} so far. New ones appear as they are written.</p>
+      </div>
+      <div class="grid grid--3 jr-grid" data-reveal>
+        {rest.map((a) => (
+          <a class="jc" href={`/journal/${a.slug}/`}>
+            <div class="frame frame--3x2"><img src={im(a.image).src} alt="" width={im(a.image).width} height={im(a.image).height} loading="lazy" decoding="async" /></div>
+            <div class="jc__meta"><time datetime={a.date}>{fmtDate(a.date)}</time> · {a.readMinutes} min read</div>
+            <h3>{a.title}</h3>
+            <p>{a.description}</p>
+          </a>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- ============================== START HERE ============================== -->
+  <section class="section band" aria-labelledby="start-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Start here</p>
+          <h2 id="start-title">The three pages everything else refers back to.</h2>
+        </div>
+        <a class="link" href="/faq/">Or skip to the FAQ</a>
+      </div>
+      <div class="trio" data-reveal>
+        {startHere.map((s) => (
+          <a class="feat feat--link" href={s.href}>
+            <div class="feat__icon"><Icon name={s.icon} size={22} /></div>
+            <h3>{s.title}</h3>
+            <p>{s.text}</p>
+            <span class="link feat__more">Read <span class="sr-only">{s.title}</span></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== NEWSLETTER ============================== -->
+  <section class="section container" aria-labelledby="nl-title">
+    <div class="nl band--honey" data-reveal>
+      <div class="split nl__grid">
+        <div>
+          <p class="eyebrow">By e-mail</p>
+          <h2 id="nl-title">The next note, when it is written.</h2>
+          <p class="muted mt-2">No countdown timers, no daily deals. An e-mail when there is a new article, and a line when a new flavour leaves the oven. Unsubscribe whenever you like.</p>
+        </div>
+        <div>
+          <form class="nl__form" data-form="newsletter" data-success="Thanks — you’re on the list. We write rarely, and only when there is something to say.">
+            <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
+            <div class="field">
+              <label for="nl-email">E-mail address</label>
+              <div class="nl__row">
+                <input class="input" id="nl-email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" />
+                <button class="btn" type="submit">Subscribe</button>
+              </div>
+            </div>
+            <label class="checkbox">
+              <input type="checkbox" name="consent" value="yes" required />
+              <span>I agree to receive occasional e-mails from {site.brand.legalName}. See our <a href="/legal/privacy/">privacy policy</a>.</span>
+            </label>
+          </form>
+          <p class="small" data-form-note></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container section--tight jr-cta" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Reading done</p>
+      <h2 id="cta-title">Everything these notes describe is in the shop.</h2>
+      <p>Apple bars, flourless bars, apple meringues and Belyov pastila, baked in {site.locality}. Parcels leave in 1–2 business days and ship across the EU; orders over {freeFrom} ship free.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost cta-band__ghost" href="/shop/apple-bars/">Apple bars</a>
+        <a class="link cta-band__link" href="/shop/pastila/">Belyov pastila</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .jr-hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+
+  /* featured article */
+  .feature { display: grid; gap: clamp(1.25rem, 3vw, 2.5rem); align-items: center; padding: clamp(1rem, 2vw, 1.5rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  @media (min-width: 56rem) { .feature { grid-template-columns: 1.15fr 0.85fr; } }
+  .feature__media { display: block; }
+  .feature__body { display: grid; gap: 0.75rem; align-content: center; justify-items: start; padding: clamp(0.25rem, 2vw, 1.5rem); }
+  .feature__title { font-size: var(--fs-2xl); max-width: 22ch; }
+  .feature__title a { text-decoration: none; }
+  .feature__title a:hover { text-decoration: underline; text-decoration-color: var(--accent); }
+  .feature__meta { margin: 0; }
+  .feature__desc { color: var(--ink-700); max-width: 52ch; margin: 0 0 0.25rem; }
+
+  /* card grid */
+  .jr-grid .jc h3 { max-width: 26ch; }
+
+  /* start-here cards as links */
+  .feat--link { color: inherit; text-decoration: none; transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
+  .feat--link:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
+  .feat__more { justify-self: start; margin-top: 0.25rem; font-size: var(--fs-sm); }
+
+  /* newsletter */
+  .nl { border-radius: var(--r-xl); padding: clamp(1.5rem, 5vw, 3.5rem); }
+  .nl__grid { align-items: center; }
+  .nl h2 { font-size: var(--fs-2xl); max-width: 18ch; }
+  .nl__form { display: grid; gap: 1rem; }
+  .nl__row { display: grid; gap: 0.6rem; }
+  @media (min-width: 40rem) { .nl__row { grid-template-columns: 1fr auto; } }
+  .nl .input { border-color: transparent; box-shadow: var(--shadow-1); }
+  .nl .input:focus { border-color: var(--ink-900); }
+  .nl [data-form-note] { margin-top: 0.75rem; }
+  .nl [data-form-note]:empty { display: none; }
+
+  /* cta */
+  .jr-cta { padding-bottom: clamp(3rem, 8vw, 7rem); }
+  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+  .cta-band__link { color: var(--cream-0); border-color: var(--honey-500); }
+</style>

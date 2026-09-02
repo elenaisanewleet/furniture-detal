@@ -26,92 +26,104 @@ export const RENDER_BG = '#3a322e';
 
 export const IMAGES: Record<string, SiteImage> = {
   'hero-bars': {
-    remote: CDN + 'hf_20260901_225023_a4fea9d4-74e6-4d8a-8d6a-b3b1a99ef2c3.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225023_a4fea9d4-74e6-4d8a-8d6a-b3b1a99ef2c3.png
+    remote: UPLOADS + 'af7ae71b-f935-4779-b81a-139f401ba900.webp',
     alt: "App'Lite Apple Bar packs in Classic and Berry Mix with an unwrapped baked-apple bar and fresh apple",
-    width: 1638,
-    height: 2048,
+    width: 1611,
+    height: 2000,
   },
   'hero-wide': {
-    remote: CDN + 'hf_20260901_225023_926c3652-7ec1-4594-b920-a8699340f89e.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225023_926c3652-7ec1-4594-b920-a8699340f89e.png
+    remote: UPLOADS + 'e37fd1e4-cc15-419c-a4eb-cf87d4b77168.webp',
     alt: 'Apple Bar packs, apple slices and berries floating on a cream background',
-    width: 2048,
-    height: 1152,
+    width: 2000,
+    height: 1116,
   },
   'flatlay-lunchbox': {
-    remote: CDN + 'hf_20260901_225022_d78edc83-de42-4ff5-9e36-6103003cf70b.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_d78edc83-de42-4ff5-9e36-6103003cf70b.png
+    remote: UPLOADS + 'c2e1a710-d6c3-41ae-9507-20291a3fcc0a.webp',
     alt: 'Lunchbox with apple slices and an Apple Bar, seen from above',
-    width: 2048,
-    height: 2048,
+    width: 2000,
+    height: 2000,
   },
   'pastila-texture': {
-    remote: CDN + 'hf_20260901_225022_909c6942-a4d8-46ac-ba1b-f095d7897f69.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_909c6942-a4d8-46ac-ba1b-f095d7897f69.png
+    remote: UPLOADS + '12ee57d5-1f75-4df3-b96a-9f53710fe0eb.webp',
     alt: 'Macro of the layered, fibrous texture of baked-apple pastila',
-    width: 2048,
-    height: 1365,
+    width: 2000,
+    height: 1342,
   },
   'apples-orchard': {
-    remote: CDN + 'hf_20260901_225022_29375710-036e-4242-8e6d-57684ccdc717.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_29375710-036e-4242-8e6d-57684ccdc717.png
+    remote: UPLOADS + '71be79db-db13-4b27-b5eb-169203ca946e.webp',
     alt: 'Wooden crate of freshly picked green Antonovka apples in an orchard',
-    width: 2048,
-    height: 1365,
+    width: 2000,
+    height: 1342,
   },
   'process-oven': {
-    remote: CDN + 'hf_20260901_225022_32f57c48-d83c-4ae8-a1b0-f16862fd2c69.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_32f57c48-d83c-4ae8-a1b0-f16862fd2c69.png
+    remote: UPLOADS + '8caa0bf9-27bb-478b-93d3-54535f27fa11.webp',
     alt: 'Whipped baked-apple purée in a bowl with egg whites and baked apple halves',
-    width: 2048,
-    height: 1365,
+    width: 2000,
+    height: 1342,
   },
   meringue: {
-    remote: CDN + 'hf_20260901_225022_a7a325ad-8e39-4352-8904-a46f5eb6cb11.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_a7a325ad-8e39-4352-8904-a46f5eb6cb11.png
+    remote: UPLOADS + '13241143-e0ea-4f9b-8928-2b03e1367b19.webp',
     alt: 'Crispy apple meringues piled in a ceramic bowl',
-    width: 2048,
-    height: 2048,
+    width: 2000,
+    height: 2000,
   },
   'flourless-bar': {
-    remote: CDN + 'hf_20260901_225022_3705d90b-23a2-4009-be83-6afaec8d19c2.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_3705d90b-23a2-4009-be83-6afaec8d19c2.png
+    remote: UPLOADS + '1981833c-2072-4cc0-8b31-5811ffca2a45.webp',
     alt: 'Flourless apple bar with cranberries broken in half',
-    width: 1638,
-    height: 2048,
+    width: 1611,
+    height: 2000,
   },
   'pastila-180': {
-    remote: CDN + 'hf_20260901_225022_42e9288b-7e44-40a9-aa83-e3f8a1b7485a.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_42e9288b-7e44-40a9-aa83-e3f8a1b7485a.png
+    remote: UPLOADS + '5301836e-154e-4419-8486-403fe67e9978.webp',
     alt: 'Sliced loaf of Belyov apple pastila on a walnut board with cinnamon and apple',
-    width: 1638,
-    height: 2048,
+    width: 1611,
+    height: 2000,
   },
   zephyr: {
-    remote: CDN + 'hf_20260901_225022_332f2f27-c930-41e4-8f3f-da2a1da7bc96.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_332f2f27-c930-41e4-8f3f-da2a1da7bc96.png
+    remote: UPLOADS + '90731663-8693-406e-a048-c382645479e1.webp',
     alt: 'Soft pink and ivory apple zephyr on a ceramic plate',
-    width: 2048,
-    height: 2048,
+    width: 2000,
+    height: 2000,
   },
   'lifestyle-desk': {
-    remote: CDN + 'hf_20260901_225022_40687b45-0b6c-41cd-a9b1-c8852a593827.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_40687b45-0b6c-41cd-a9b1-c8852a593827.png
+    remote: UPLOADS + '9f0eb4ff-63e1-4c9f-9d68-aa674de54aed.webp',
     alt: 'Hand reaching for a Berry Mix Apple Bar on a desk beside a laptop and coffee',
-    width: 2048,
-    height: 1365,
+    width: 2000,
+    height: 1342,
   },
   'gift-box': {
-    remote: CDN + 'hf_20260901_225023_ed696359-b629-4008-80b1-482d2ae9cb5f.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_225023_ed696359-b629-4008-80b1-482d2ae9cb5f.png
+    remote: UPLOADS + '51efa1af-0a10-465d-b6e0-5e853db51c36.webp',
     alt: 'Open kraft gift box with Apple Bars, meringues and sliced pastila',
-    width: 2048,
-    height: 2048,
+    width: 2000,
+    height: 2000,
   },
   /* ---------- Semers' own assets ---------- */
   'packshot-classic': {
-    // 2K upscale + background cut-out of the original 500 px packshot (transparent PNG).
-    remote: CDN + 'hf_20260901_233114_a5d78e50-99c2-433b-b954-3db2e42ff935.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_233114_a5d78e50-99c2-433b-b954-3db2e42ff935.png
+    remote: UPLOADS + 'bbd22a70-7da1-4442-a95c-0281faffbc7a.webp',
     alt: "App'Lite Apple Bar Classic — two mint-green packs with slices of baked-apple bar and a green apple",
-    width: 2160,
-    height: 2160,
+    width: 2000,
+    height: 2000,
     fit: 'contain',
   },
   'packshot-berry': {
-    // 2K upscale + background cut-out of the original 500 px packshot (transparent PNG).
-    remote: CDN + 'hf_20260901_233527_46fddb4a-15d6-4f01-aa8e-cf47724bd92c.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_233527_46fddb4a-15d6-4f01-aa8e-cf47724bd92c.png
+    remote: UPLOADS + 'aa5cc467-b640-4c7d-b54a-57ce7cb41830.webp',
     alt: "App'Lite Apple Bar Berry Mix — two coral packs with blueberries and cranberries",
-    width: 2160,
-    height: 2160,
+    width: 2000,
+    height: 2000,
     fit: 'contain',
   },
   'apple-render': {
@@ -181,40 +193,46 @@ export const IMAGES: Record<string, SiteImage> = {
   },
   /* ---------- Generated product shots (batch 2) ---------- */
   'bar-12-pack': {
-    remote: CDN + 'hf_20260901_234638_26ffc8c9-7a3d-40b6-adc5-a6eb13f97d08.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_26ffc8c9-7a3d-40b6-adc5-a6eb13f97d08.png
+    remote: UPLOADS + '245e1dd7-18d9-4124-bcaa-b4e2ff82717b.webp',
     alt: "Open kraft box with twelve App'Lite Apple Bars in Classic and Berry Mix wrappers, a green apple and blueberries",
-    width: 1856,
-    height: 2304,
+    width: 1611,
+    height: 2000,
   },
   'pastila-set': {
-    remote: CDN + 'hf_20260901_234638_81010186-f11b-4c7b-aea6-60515172aee6.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_81010186-f11b-4c7b-aea6-60515172aee6.png
+    remote: UPLOADS + 'a75e9abd-7471-4985-b440-a13306f4b0f1.webp',
     alt: 'Three kraft-wrapped 100 g packs of Belyov apple pastila with a cut slice, a green apple and lingonberries',
-    width: 1856,
-    height: 2304,
+    width: 1611,
+    height: 2000,
   },
   'tasting-box': {
-    remote: CDN + 'hf_20260901_234638_07a2e1ad-5032-416b-9897-00faa6c51229.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_07a2e1ad-5032-416b-9897-00faa6c51229.png
+    remote: UPLOADS + 'af92cfb6-711c-4319-8c19-46130fe4a53b.webp',
     alt: 'Open tasting box with two Apple Bars, a pouch of apple meringues and slices of golden pastila',
-    width: 2048,
-    height: 2048,
+    width: 2000,
+    height: 2000,
   },
   'pastila-100-pack': {
-    remote: CDN + 'hf_20260901_234638_9dc5e7a5-3d4c-4066-b468-a972d5c8b872.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_9dc5e7a5-3d4c-4066-b468-a972d5c8b872.png
+    remote: UPLOADS + '0431747f-8201-4680-9942-1704260a14a5.webp',
     alt: 'A kraft-paper 100 g pack of apple pastila beside two layered slices and half a green apple',
-    width: 1856,
-    height: 2304,
+    width: 1611,
+    height: 2000,
   },
   'meringue-pouch': {
-    remote: CDN + 'hf_20260901_234638_3a1f69aa-c141-4eae-9c65-1e73da9365f4.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_3a1f69aa-c141-4eae-9c65-1e73da9365f4.png
+    remote: UPLOADS + '14a85c0e-692b-45f4-8e53-c30aa9fe202c.webp',
     alt: 'Mint-green pouch of crispy apple meringues spilling onto a ceramic plate with dried apple slices',
-    width: 1856,
-    height: 2304,
+    width: 1611,
+    height: 2000,
   },
   'zephyr-box': {
-    remote: CDN + 'hf_20260901_234638_14176616-67e1-416b-a694-906a8d93a595.png',
+    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_14176616-67e1-416b-a694-906a8d93a595.png
+    remote: UPLOADS + '9526a42b-2ae9-4bac-9192-217cc5225287.webp',
     alt: 'Open box of pink and ivory apple zephyr swirls next to a cup of tea and a green apple',
-    width: 1856,
-    height: 2304,
+    width: 1611,
+    height: 2000,
   },
 };
 

@@ -1,0 +1,269 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { img, imgSrc } from '~/data/images';
+import { FAQS, type Faq } from '~/data/faq';
+import { site } from '~/data/site';
+import { formatPrice } from '~/data/products';
+import { faqPage } from '~/lib/schema';
+
+const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
+const freeFrom = formatPrice(site.shipping.freeFrom);
+
+/** Groups in reading order. `related` feeds the side column of each group. */
+interface Group {
+  key: Faq['group'];
+  id: string;
+  short: string;
+  title: string;
+  intro: string;
+  related: { href: string; label: string }[];
+  /** Optional caution shown under the group's answers. */
+  note?: string;
+}
+
+const GROUPS: Group[] = [
+  {
+    key: 'product',
+    id: 'products',
+    short: 'Products',
+    title: 'The products',
+    intro: 'What pastila actually is, what goes into a bar, and how long a pack keeps in a drawer.',
+    related: [
+      { href: '/shop/', label: 'Shop all products' },
+      { href: '/shop/apple-bars/', label: 'Apple bars' },
+      { href: '/shop/pastila/', label: 'Belyov pastila' },
+      { href: '/why-pastila/', label: 'Why pastila?' },
+    ],
+  },
+  {
+    key: 'nutrition',
+    id: 'nutrition',
+    short: 'Nutrition',
+    title: 'Nutrition & ingredients',
+    intro: 'Sugar, gluten, calories, egg white, and who the bars suit. The whole label, explained.',
+    note: 'Egg white is a core ingredient in every product. If you have an egg allergy, please read the label before buying. Nutrition values are typical for the recipe; the pack carries the batch label.',
+    related: [
+      { href: '/why-pastila/', label: 'The honest numbers' },
+      { href: '/how-its-made/', label: 'How it is made' },
+      { href: '/journal/healthy-snacks-no-added-sugar/', label: 'Reading a snack label' },
+    ],
+  },
+  {
+    key: 'orders',
+    id: 'orders',
+    short: 'Orders',
+    title: 'Orders, shipping & returns',
+    intro: 'Where we ship, how you pay, and what happens if a parcel arrives dented.',
+    related: [
+      { href: '/shop/', label: 'Start an order' },
+      { href: '/where-to-buy/', label: 'Where to buy in a shop' },
+      { href: '/legal/shipping-returns/', label: 'Shipping & returns policy' },
+    ],
+  },
+  {
+    key: 'wholesale',
+    id: 'wholesale',
+    short: 'Wholesale',
+    title: 'Wholesale',
+    intro: 'For retailers, cafés, offices and distributors. Pallets, private label, and who to write to.',
+    related: [
+      { href: '/wholesale/', label: 'Wholesale & B2B' },
+      { href: '/contact/', label: 'Contact' },
+    ],
+  },
+];
+
+const groups = GROUPS.map((g, i) => ({
+  ...g,
+  n: String(i + 1).padStart(2, '0'),
+  items: FAQS.filter((f) => f.group === g.key),
+})).filter((g) => g.items.length !== 0);
+
+/** One deeper link under an answer, where a longer page exists. Keyed by question. */
+const more: Record<string, { href: string; label: string }> = {
+  'What is pastila?': { href: '/why-pastila/', label: 'Read the longer answer' },
+  'What is in an Apple Bar?': { href: '/products/apple-bar-35g/', label: 'See the Apple Bar' },
+  'How long does it keep and how should I store it?': { href: '/how-its-made/', label: 'How the drying works' },
+  'Is there really no added sugar?': { href: '/why-pastila/', label: 'How the sweetness happens' },
+  'How many calories?': { href: '/why-pastila/', label: 'Compare it with a chocolate bar' },
+  'Where do you ship?': { href: '/legal/shipping-returns/', label: 'Full shipping policy' },
+  'How do I pay?': { href: '/shop/', label: 'Start an order request' },
+  'Can I return something?': { href: '/legal/shipping-returns/', label: 'Returns in detail' },
+  'Where can I buy in a shop?': { href: '/where-to-buy/', label: 'Where to buy' },
+  'Do you sell wholesale or private label?': { href: '/wholesale/', label: 'Send a wholesale enquiry' },
+};
+
+const reading = [
+  { href: '/why-pastila/', title: 'Why pastila?', text: 'The honest numbers against chocolate, granola and dried apple.' },
+  { href: '/how-its-made/', title: 'How it’s made', text: 'Twelve hours, four steps, and why nothing else goes in.' },
+  { href: '/journal/', title: 'The journal', text: 'Pastila history, Antonovka apples, how to read a snack label.' },
+];
+
+const total = FAQS.length;
+const topics = groups.length;
+const hero = im('pastila-slices');
+---
+<Base
+  title="FAQ: apple bars, pastila, shipping & wholesale"
+  description="Answers to what people ask about Semers apple bars and Belyov pastila: ingredients, sugar, calories, storage, EU shipping, payment and wholesale."
+  canonical="/faq/"
+  ogImage="pastila-slices"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'FAQ', href: '/faq/' }]}
+  schema={[faqPage(FAQS)]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container faq-hero" aria-labelledby="page-title">
+    <div class="split">
+      <div>
+        <p class="eyebrow">FAQ</p>
+        <h1 id="page-title">Questions, <em>answered.</em></h1>
+        <p class="lead">Everything people ask about Semers apple bars and Belyov pastila before their first box: what is in them, whether there is really no added sugar, how long they keep, where we ship and how you pay. Short answers, no small print.</p>
+        <p class="faq-hero__meta small muted">{total} answers in {topics} topics. In a hurry? Jump to <a href="#orders">shipping</a> or <a href="#wholesale">wholesale</a>.</p>
+        <ul class="ticks faq-hero__ticks">
+          <li><Icon name="check" size={18} /> 99% baked Antonovka apples, egg white, no added sugar</li>
+          <li><Icon name="check" size={18} /> Free shipping over {freeFrom}; parcels leave Riga in 1–2 business days</li>
+          <li><Icon name="check" size={18} /> Keeps 12 months without a fridge</li>
+        </ul>
+      </div>
+      <div class="frame frame--4x5 rounded faq-hero__media" data-reveal>
+        <img src={hero.src} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== TOPIC NAV ============================== -->
+  <nav class="faq-nav" aria-label="FAQ topics">
+    <div class="container">
+      <ul class="pills faq-nav__list">
+        {groups.map((g) => (
+          <li>
+            <a class="pill" href={`#${g.id}`}>{g.title}<span class="faq-nav__n">{g.items.length}</span></a>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </nav>
+
+  <!-- ============================== GROUPS ============================== -->
+  {groups.map((g) => (
+    <section class="section faq-group" id={g.id} aria-labelledby={`${g.id}-title`}>
+      <div class="container faq-grid">
+        <div class="faq-grid__side" data-reveal>
+          <p class="eyebrow">{g.n} · {g.short}</p>
+          <h2 id={`${g.id}-title`}>{g.title}</h2>
+          <p class="muted faq-grid__intro">{g.intro}</p>
+          <ul class="faq-links">
+            {g.related.map((r) => (
+              <li><a href={r.href}><Icon name="arrow" size={16} /> {r.label}</a></li>
+            ))}
+          </ul>
+        </div>
+        <div class="acc faq-acc" data-reveal>
+          {g.items.map((f, i) => (
+            <details open={i === 0}>
+              <summary><h3 class="faq-q">{f.q}</h3></summary>
+              <div class="acc__body">
+                <p>{f.a}</p>
+                {more[f.q] && <p class="small acc__more"><a class="link" href={more[f.q].href}>{more[f.q].label}</a></p>}
+              </div>
+            </details>
+          ))}
+          {g.note && <p class="notice faq-notice">{g.note}</p>}
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <!-- ============================== STILL CURIOUS ============================== -->
+  <section class="section container faq-end" aria-labelledby="curious-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Still curious?</p>
+      <h2 id="curious-title">Ask us the question that is not here yet.</h2>
+      <p>We read every message ourselves, from Riga. Ingredient details, a batch label, a delivery date, a box for someone hard to buy for. Write, and we will write back.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/contact/">Write to us <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost faq-end__ghost" href={`mailto:${site.email}`}><Icon name="mail" size={18} /> {site.email}</a>
+      </div>
+      <p class="small faq-end__shop">Already convinced? <a href="/shop/">Go straight to the shop</a>.</p>
+    </div>
+
+    <aside class="faq-reading" data-reveal aria-labelledby="reading-title">
+      <p class="eyebrow">Popular reading</p>
+      <h2 id="reading-title" class="faq-reading__title">The longer answers.</h2>
+      <ul class="faq-reading__list">
+        {reading.map((r) => (
+          <li>
+            <a href={r.href}>
+              <span class="faq-reading__t">{r.title}</span>
+              <span class="faq-reading__d">{r.text}</span>
+              <Icon name="arrow" size={18} class="faq-reading__arrow" />
+            </a>
+          </li>
+        ))}
+      </ul>
+    </aside>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .faq-hero .split { align-items: center; }
+  .page-hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .faq-hero__meta { margin-top: 1.25rem; }
+  .faq-hero__ticks { margin-top: 1.5rem; max-width: 46ch; color: var(--fg-2); font-size: var(--fs-sm); }
+  .faq-hero__media { border-radius: var(--r-xl); box-shadow: var(--shadow-2); max-width: 30rem; justify-self: end; width: 100%; }
+  @media (max-width: 56rem) { .faq-hero__media { justify-self: start; max-width: 24rem; } }
+
+  /* sticky topic nav — sits just under the sticky header */
+  .faq-nav { position: sticky; top: 6.3rem; z-index: 5; background: var(--bg); border-block: 1px solid var(--line); padding-block: 0.7rem; }
+  .faq-nav__list { list-style: none; margin: 0; padding: 0 0 2px; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
+  .faq-nav__list::-webkit-scrollbar { display: none; }
+  .faq-nav__list li { flex: none; }
+  .faq-nav .pill { display: inline-flex; align-items: center; gap: 0.5em; }
+  .faq-nav__n { font-size: var(--fs-xs); color: var(--fg-3); font-variant-numeric: tabular-nums; }
+  .faq-nav .pill:hover .faq-nav__n { color: inherit; }
+  /* the announcement bar wraps to two lines on narrow phones, so the header is taller there */
+  @media (max-width: 40rem) { .faq-nav { top: 7.45rem; } .faq-group { scroll-margin-top: 11rem; } }
+
+  /* groups */
+  .faq-group { scroll-margin-top: 10rem; padding-block: clamp(2.5rem, 6vw, 5rem); }
+  .faq-group + .faq-group { border-top: 1px solid var(--line); }
+  .faq-grid { display: grid; gap: 1.5rem; }
+  @media (min-width: 56rem) {
+    .faq-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr); gap: 4rem; align-items: start; }
+    .faq-grid__side { position: sticky; top: 10.25rem; }
+  }
+  .faq-group h2 { font-size: var(--fs-2xl); margin-top: 0.4rem; max-width: 14ch; }
+  .faq-grid__intro { margin-top: 0.75rem; max-width: 32ch; }
+  .faq-links { list-style: none; margin: 1.25rem 0 0; padding: 0; display: grid; gap: 0.45rem; font-size: var(--fs-sm); font-weight: 600; }
+  .faq-links a { display: inline-flex; align-items: center; gap: 0.45em; text-decoration: none; }
+  .faq-links a:hover { text-decoration: underline; text-decoration-color: var(--accent); }
+  .faq-links svg { color: var(--accent); }
+
+  /* accordion: keep the h3 visually identical to the summary text */
+  .faq-acc summary { align-items: flex-start; }
+  .faq-q { font-family: inherit; font-size: inherit; font-weight: inherit; line-height: 1.3; letter-spacing: 0; font-variation-settings: normal; }
+  .faq-acc details[open] summary { color: var(--fg); }
+  .faq-acc .acc__body p { margin-bottom: 0.6em; }
+  .faq-acc .acc__more { margin-top: 0.25rem; }
+  .faq-notice { margin-top: 1.25rem; max-width: 66ch; }
+
+  /* end: cta band + reading list */
+  .faq-end { display: grid; gap: 1.5rem; }
+  @media (min-width: 56rem) { .faq-end { grid-template-columns: 1.35fr 1fr; align-items: stretch; } }
+  .faq-end__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .faq-end__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+  .faq-end__shop { color: var(--ink-300); margin-top: 0.5rem; }
+  .faq-end__shop a { color: var(--cream-0); }
+  .faq-reading { display: grid; align-content: start; padding: clamp(1.5rem, 4vw, 2.5rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .faq-reading__title { font-size: var(--fs-2xl); margin: 0.4rem 0 0.75rem; }
+  .faq-reading__list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .faq-reading__list li { border-bottom: 1px solid var(--line); }
+  .faq-reading__list a { display: grid; grid-template-columns: 1fr auto; grid-template-areas: 't a' 'd a'; column-gap: 1rem; align-items: center; padding: 0.9rem 0; text-decoration: none; }
+  .faq-reading__t { grid-area: t; font-family: var(--font-display); font-weight: 600; font-size: var(--fs-lg); letter-spacing: -0.01em; }
+  .faq-reading__d { grid-area: d; font-size: var(--fs-sm); color: var(--fg-2); }
+  .faq-reading__arrow { grid-area: a; color: var(--accent); transition: transform var(--dur-fast) var(--ease-out); }
+  .faq-reading__list a:hover .faq-reading__arrow { transform: translateX(3px); }
+  .faq-reading__list a:hover .faq-reading__t { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 0.16em; }
+</style>
