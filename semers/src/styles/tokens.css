@@ -86,8 +86,8 @@
   --focus: #1d6fe6;
 
   /* ---- Type ----------------------------------------------------------- */
-  --font-display: 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  --font-sans: 'Instrument Sans', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Fraunces', 'Fraunces Fallback', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
+  --font-sans: 'Instrument Sans', 'Instrument Sans Fallback', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
   --fs-xs: 0.75rem;
   --fs-sm: 0.875rem;

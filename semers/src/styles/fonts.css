@@ -65,3 +65,25 @@
   src: url('/fonts/instrument-sans-italic-latin-ext.woff2') format('woff2');
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
+
+/* Fallback faces with matched metrics.
+   Without these the swap from Georgia/system-ui to Fraunces/Instrument Sans changes the
+   height of the hero's text column, the grid row grows, and the packshot frame beside it
+   jumps — measured as CLS 0.237 on the home page at 1440 px. The overrides make the
+   fallback occupy the web font's box, so the swap is invisible to layout. */
+@font-face {
+  font-family: 'Fraunces Fallback';
+  src: local('Georgia'), local('Times New Roman');
+  size-adjust: 103%;
+  ascent-override: 92%;
+  descent-override: 23%;
+  line-gap-override: 0%;
+}
+@font-face {
+  font-family: 'Instrument Sans Fallback';
+  src: local('Arial'), local('Helvetica');
+  size-adjust: 97%;
+  ascent-override: 96%;
+  descent-override: 25%;
+  line-gap-override: 0%;
+}
