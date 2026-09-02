@@ -142,6 +142,14 @@
 .drawer__close:hover { background: var(--bg-sunken); }
 .drawer__ship { padding: 0.9rem var(--sp-5); background: var(--bg-sunken); font-size: var(--fs-sm); }
 .drawer__ship p { margin: 0.5rem 0 0; }
+.drawer__upsell { list-style: none; margin: 0.6rem 0 0; padding: 0; display: grid; }
+.drawer__upsell[hidden] { display: none; }
+.up { display: flex; align-items: center; gap: 0.6rem; padding: 0.4rem 0; border-top: 1px solid var(--line); }
+.up[hidden] { display: none; }
+.up__img { width: 2.75rem; height: 2.75rem; border-radius: var(--r-sm); object-fit: cover; background: var(--bg-raised); flex: none; }
+.up__name { display: block; font-weight: 600; line-height: 1.2; }
+.up__price { font-size: var(--fs-xs); color: var(--fg-3); }
+.up__add { margin-left: auto; width: 2.2rem; height: 2.2rem; flex: none; }
 .drawer__bar { height: 0.4rem; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
 .drawer__bar span { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--leaf-500), var(--mint-500)); transition: width var(--dur-slow) var(--ease-out); }
 .drawer__items { list-style: none; margin: 0; padding: 0.5rem var(--sp-5); overflow-y: auto; display: grid; align-content: start; }

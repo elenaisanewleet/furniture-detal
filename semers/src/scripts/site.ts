@@ -16,7 +16,7 @@ const CFG = window.SEMERS || { endpoint: '/api/order', freeFrom: 25, email: '', 
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel);
 const $$ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => Array.from(root.querySelectorAll<T>(sel));
 const fmt = (n: number) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: CFG.currency || 'EUR' }).format(n);
-const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
 
 /* ------------------------------------------------------------------ toast */
 let toastTimer = 0;
@@ -168,6 +168,19 @@ function renderCart() {
       : left > 0
         ? `Add <strong>${fmt(left)}</strong> more for free shipping.`
         : `You’ve unlocked <strong>free shipping</strong>.`;
+  }
+
+  // quick adds under the progress bar: only while the box is not yet shipping free, never for items already in it
+  const upsell = $('#cart-upsell');
+  if (upsell) {
+    const inBox = new Set(cart.items.map((i) => i.slug));
+    let shown = 0;
+    $$<HTMLElement>('[data-up-slug]', upsell).forEach((li) => {
+      const hide = inBox.has(li.dataset.upSlug || '');
+      li.hidden = hide;
+      if (!hide) shown++;
+    });
+    upsell.hidden = c === 0 || shipsFree(total) || shown === 0;
   }
 
   if (list) {
@@ -505,6 +518,23 @@ if (shop) {
   const url = new URL(location.href);
   state.q = (url.searchParams.get('q') || '').trim().toLowerCase();
   if (searchIn && state.q) searchIn.value = state.q;
+  // Filters and sort live in the URL too, so a filtered view can be shared and survives back navigation.
+  const collections = new Set($$<HTMLElement>('[data-filter-collection]', shop).map((b) => b.dataset.filterCollection));
+  const diets = new Set($$<HTMLElement>('[data-filter-diet]', shop).map((b) => b.dataset.filterDiet));
+  const c0 = url.searchParams.get('collection');
+  if (c0 && collections.has(c0) && (shop.dataset.collection || 'all') === 'all') state.collection = c0;
+  (url.searchParams.get('diet') || '').split(',').filter((d) => diets.has(d)).forEach((d) => state.diet.add(d));
+  const s0 = url.searchParams.get('sort');
+  if (sortSel && s0 && Array.from(sortSel.options).some((o) => o.value === s0)) (state.sort = s0), (sortSel.value = s0);
+  const syncUrl = () => {
+    const u = new URL(location.href);
+    const set = (k: string, v: string) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
+    set('q', state.q);
+    set('collection', state.collection === 'all' ? '' : state.collection);
+    set('diet', [...state.diet].join(','));
+    set('sort', state.sort === 'featured' ? '' : state.sort);
+    if (u.href !== location.href) history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+  };
 
   const apply = () => {
     let visible = 0;
@@ -535,6 +565,7 @@ if (shop) {
     if (emptyEl) emptyEl.hidden = visible > 0;
     $$('[data-filter-collection]', shop).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filterCollection === state.collection)));
     $$('[data-filter-diet]', shop).forEach((b) => b.setAttribute('aria-pressed', String(state.diet.has(b.dataset.filterDiet!))));
+    syncUrl();
   };
 
   shop.addEventListener('click', (e) => {
@@ -746,6 +777,12 @@ if (checkout) {
     try {
       const res = await post(order);
       checkout.dataset.done = '1';
+      try {
+        // The thank-you page shows a recap; the cart itself is cleared right after this.
+        sessionStorage.setItem('semers.lastOrder', JSON.stringify({ ref: res.ref || '', items: order.items, subtotal: order.subtotal, shipping, shippingNote: order.shippingNote, total: order.total, delivery: String(data.delivery || ''), email: String(data.email || '') }));
+      } catch {
+        /* private mode: the recap is a nicety */
+      }
       cart.clear();
       location.href = `/order/thank-you/?ref=${encodeURIComponent(res.ref || '')}`;
     } catch (err) {

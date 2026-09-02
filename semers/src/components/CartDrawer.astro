@@ -5,6 +5,24 @@
  */
 import Icon from './Icon.astro';
 import { site } from '~/data/site';
+import { PRODUCTS, FLAVORS, formatPrice } from '~/data/products';
+import { imgSmall } from '~/data/images';
+
+/** One-tap adds under the free-shipping bar: the cheapest single-piece products, hidden once they are in the box. */
+const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
+  .sort((a, b) => a.price - b.price)
+  .slice(0, 3)
+  .map((p) => {
+    const v0 = p.variants[0];
+    return {
+      slug: p.slug,
+      name: p.name,
+      price: formatPrice(v0.price ?? p.price),
+      image: imgSmall(p.images[0]),
+      add: JSON.stringify({ slug: p.slug, name: p.title, variant: v0.key, variantLabel: FLAVORS[v0.key].label, price: v0.price ?? p.price, image: imgSmall(p.images[0]), weight: p.weightGrams, url: `/products/${p.slug}/` }),
+      label: `Add ${p.title} to your box`,
+    };
+  });
 ---
 <div class="drawer" id="cart" role="dialog" aria-modal="true" aria-labelledby="cart-title" hidden>
   <div class="drawer__scrim" data-cart-close></div>
@@ -16,6 +34,15 @@ import { site } from '~/data/site';
     <div class="drawer__ship" id="cart-ship" data-free-from={site.shipping.freeFrom}>
       <div class="drawer__bar" aria-hidden="true"><span id="cart-ship-fill"></span></div>
       <p id="cart-ship-text">Free shipping on orders over €{site.shipping.freeFrom}.</p>
+      <ul class="drawer__upsell" id="cart-upsell" aria-label="Quick adds" hidden>
+        {upsell.map((u) => (
+          <li class="up" data-up-slug={u.slug}>
+            <img class="up__img" src={u.image} alt="" width="44" height="44" loading="lazy" decoding="async" />
+            <span><span class="up__name">{u.name}</span><span class="up__price">{u.price}</span></span>
+            <button class="pc__add up__add" type="button" data-add={u.add} data-add-open="false" aria-label={u.label}>+</button>
+          </li>
+        ))}
+      </ul>
     </div>
     <ul class="drawer__items" id="cart-items"></ul>
     <div class="drawer__empty" id="cart-empty">
