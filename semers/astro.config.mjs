@@ -7,12 +7,18 @@ import sitemap from '@astrojs/sitemap';
  * Canonical site URL. One place for canonical/OG/sitemap/robots/JSON-LD.
  *   SITE_URL=https://semers.org npm run build
  * On Vercel, VERCEL_PROJECT_PRODUCTION_URL is used until SITE_URL is set.
+ *
+ * The fallback is the host that actually serves the shop, not the brand domain:
+ * semers.org still runs the old AppLite WordPress site, where every shop path 404s.
+ * A canonical pointing there tells Google the real version of each page lives on a
+ * URL that does not exist, and the shop drops out of the index entirely. Point
+ * SITE_URL at the brand domain on the build that ships once it serves this shop.
  */
 const VERCEL_HOST = process.env.VERCEL_PROJECT_PRODUCTION_URL;
 const SITE =
   process.env.SITE_URL ||
   (VERCEL_HOST ? `https://${VERCEL_HOST}` : null) ||
-  'https://semers.org';
+  'https://semers-store.higgsfield.app';
 
 /** Sitemap priorities follow commercial importance, not folder depth. */
 /** @type {[RegExp, number][]} */
