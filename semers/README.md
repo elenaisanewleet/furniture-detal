@@ -55,7 +55,7 @@ npm run preview
 
 There is no payment gateway yet, by design. Checkout collects the order and posts it to `/api/order`, which forwards it to Telegram and/or e-mail (Resend) and answers with a reference number; the customer gets a receipt e-mail if Resend is configured. If no channel is configured the browser falls back to a pre-filled `mailto:` so no order is lost. The same endpoint handles the newsletter, contact and wholesale forms.
 
-To add card payments later: create a Stripe Checkout session in `api/order.js` (or a new `api/checkout.js`) from the `items` array and redirect to the returned URL instead of `/order/thank-you/`. The cart line items already carry `id`, `qty` and `price`.
+To add card payments later: create a Stripe Checkout session in `api/order.js` (or a new `api/checkout.js`) from the `items` array and redirect to the returned URL instead of `/order/thank-you/`. The cart line items already carry `id`, `qty` and `price`. Today the endpoint forwards the prices the browser sent, which is fine while every order is confirmed by hand with a payment link; once a card flow charges automatically, recompute prices server-side from the catalogue (export it as JSON for the function) and add rate limiting.
 
 ## SEO
 
