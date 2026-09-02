@@ -16,6 +16,8 @@ export interface SiteImage {
   fit?: 'cover' | 'contain';
   /** Background colour the photo was shot on, so sections can blend seamlessly. */
   bg?: string;
+  /** Widths of the resized local variants (/img/<key>-<w>.webp) written by localize-images. */
+  widths?: number[];
 }
 
 const CDN = 'https://d8j0ntlcm91z4.cloudfront.net/user_32PUi7N1yLbRwJAjaFXFk2hFbAT/';
@@ -246,3 +248,38 @@ export function imgSrc(key: string): string {
   const i = img(key);
   return i.local || i.remote;
 }
+
+/**
+ * `srcset` for the local width variants, or undefined while images still come
+ * from the CDN (Astro drops undefined attributes, so markup stays valid either way).
+ */
+export function imgSrcset(key: string): string | undefined {
+  const i = img(key);
+  if (!i.local || !i.widths?.length) return undefined;
+  const base = i.local.replace(/\.webp$/, '');
+  const list = i.widths.filter((w) => w !== i.width).map((w) => `${base}-${w}.webp ${w}w`);
+  list.push(`${i.local} ${i.width}w`);
+  return list.join(', ');
+}
+
+/** Smallest local variant (thumbnails, cart rows), falling back to the main file. */
+export function imgSmall(key: string): string {
+  const i = img(key);
+  if (!i.local || !i.widths?.length) return imgSrc(key);
+  const w = Math.min(...i.widths);
+  return w === i.width ? i.local : `${i.local.replace(/\.webp$/, '')}-${w}.webp`;
+}
+
+/** Everything an <img> needs: src, srcset (when variants exist), alt, width, height. */
+export function im(key: string) {
+  return { ...img(key), src: imgSrc(key), srcset: imgSrcset(key) };
+}
+
+/** `sizes` presets matching the layout slots; a slot that is over-estimated only costs bytes, never sharpness. */
+export const SIZES = {
+  full: '100vw',
+  half: '(max-width: 60rem) 100vw, 50vw',
+  third: '(max-width: 40rem) 100vw, (max-width: 60rem) 50vw, 33vw',
+  card: '(max-width: 40rem) 50vw, (max-width: 60rem) 33vw, 25vw',
+  tile: '(max-width: 40rem) 50vw, 33vw',
+} as const;

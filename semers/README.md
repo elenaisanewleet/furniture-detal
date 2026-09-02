@@ -47,7 +47,7 @@ npm run preview
 
 * **Products, prices, flavours, EANs** → `src/data/products.ts`. Prices are launch placeholders marked `TODO`; nutrition tables are typical values and must be checked against the pack.
 * **Contacts, socials, retailers, shipping threshold** → `src/data/site.ts` (or the `PUBLIC_*` env vars, see `.env.example`).
-* **Images** → `src/data/images.ts`. Every visual is referenced by a key. Images currently load from the Higgsfield CDN; before launch run `npm run localize-images` to download and optimise them into `public/img/` (the script rewrites `local:` paths automatically). Commit the result.
+* **Images** → `src/data/images.ts`. Every visual is referenced by a key. Images currently load from the Higgsfield CDN; before launch run `npm run localize-images` to download them into `public/img/` as optimised WebP plus 480/960/1600 px variants (the script writes the `local:` path and `widths:` back into the manifest, and every `<img>` then gets a `srcset` automatically). Commit the result.
 * **FAQ** → `src/data/faq.ts` (rendered on `/faq/`, the home page and product pages with FAQ rich-result markup).
 * **Journal** → `src/data/journal.ts` (metadata) + `src/data/articles/<slug>.ts` (HTML body).
 
