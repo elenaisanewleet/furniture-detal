@@ -78,9 +78,13 @@ function absImg(origin: string, key: string) {
   return s.startsWith('http') ? s : new URL(s, origin).toString();
 }
 
+/** Bundles sold as "ships free" regardless of the threshold; mirrors FREE_SHIP_SLUGS in src/scripts/site.ts. */
+const FREE_SHIP_SLUGS = new Set(['tasting-box']);
+
 export function productSchema(origin: string, p: Product) {
   const url = `${origin}/products/${p.slug}/`;
   const images = p.images.map((k) => absImg(origin, k));
+  const shipRate = FREE_SHIP_SLUGS.has(p.slug) ? 0 : site.shipping.flatRate;
   const base = {
     name: p.title,
     description: p.summary,
@@ -101,8 +105,8 @@ export function productSchema(origin: string, p: Product) {
     ...gtinProp(gtin),
     shippingDetails: {
       '@type': 'OfferShippingDetails',
-      // Flat Baltic rate for a single item (every product is under the free-shipping threshold on its own).
-      shippingRate: { '@type': 'MonetaryAmount', value: site.shipping.flatRate.toFixed(2), currency: site.currency },
+      // Flat Baltic rate for a single item (every product is under the free-shipping threshold on its own), 0 for bundles that ship free.
+      shippingRate: { '@type': 'MonetaryAmount', value: shipRate.toFixed(2), currency: site.currency },
       shippingDestination: ['LV', 'LT', 'EE'].map((c) => ({ '@type': 'DefinedRegion', addressCountry: c })),
       deliveryTime: {
         '@type': 'ShippingDeliveryTime',

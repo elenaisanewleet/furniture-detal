@@ -110,7 +110,7 @@ const webPage = {
           <thead><tr><th>Zone</th><th>Countries</th><th>How it ships</th><th>Cost</th><th>Typical delivery</th></tr></thead>
           <tbody>
             {zones.map((z) => (
-              <tr><td>{z.zone}</td><td>{z.where}</td><td>{z.how}</td><td>{z.cost}</td><td>{z.eta}</td></tr>
+              <tr><td data-label="Zone">{z.zone}</td><td data-label="Countries">{z.where}</td><td data-label="How it ships">{z.how}</td><td data-label="Cost">{z.cost}</td><td data-label="Delivery">{z.eta}</td></tr>
             ))}
           </tbody>
         </table>
@@ -206,6 +206,16 @@ const webPage = {
   .legal__body .table-wrap { margin: 0 0 1.5rem; }
   .legal__zones { min-width: 40rem; }
   .legal__zones td:first-child { font-weight: 600; white-space: nowrap; }
+  /* Phones: the five-column table becomes a stack of labelled rows, so cost and delivery time are never off-screen. */
+  @media (max-width: 40rem) {
+    .legal__zones, .legal__zones tbody { display: block; min-width: 0; width: 100%; }
+    .legal__zones thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .legal__zones tr { display: grid; gap: 0.35rem; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+    .legal__zones td { display: grid; grid-template-columns: 7rem 1fr; gap: 0.5rem; padding: 0; border: 0; font-size: var(--fs-sm); }
+    .legal__zones td::before { content: attr(data-label); padding-top: 0.25em; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+    .legal__zones td:first-child { display: block; font-size: var(--fs-md); white-space: normal; }
+    .legal__zones td:first-child::before { display: none; }
+  }
   .legal__summary { padding: 1.4rem 1.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); margin-bottom: 1rem; }
   .legal__summary h2 { margin: 0 0 1rem; font-size: var(--fs-xl); }
   .legal__stats { grid-template-columns: repeat(2, 1fr); gap: 1rem 1.5rem; }

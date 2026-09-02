@@ -16,6 +16,8 @@ const CFG = window.SEMERS || { endpoint: '/api/order', freeFrom: 25, email: '', 
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel);
 const $$ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => Array.from(root.querySelectorAll<T>(sel));
 const fmt = (n: number) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: CFG.currency || 'EUR' }).format(n);
+/** Whole-euro amounts such as the free-shipping threshold read "€25" everywhere else on the site, so the drawer must not say "€25.00". */
+const fmtWhole = (n: number) => (Number.isInteger(n) ? new Intl.NumberFormat('en-IE', { style: 'currency', currency: CFG.currency || 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n) : fmt(n));
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
 
 /* ------------------------------------------------------------------ toast */
@@ -136,6 +138,24 @@ function shippingQuoted() {
 const drawer = $('#cart');
 let lastFocus: HTMLElement | null = null;
 
+/**
+ * Re-rendering a row list with innerHTML drops keyboard focus to <body>. Remember which row control
+ * had it, run the render, then put focus back on the same control — or, if that row is gone, on the
+ * same control of the row that took its place (APG pattern for deleting list items), else a fallback.
+ */
+function renderKeepingFocus(list: HTMLElement, render: () => void, fallback: () => HTMLElement | null | undefined) {
+  const a = document.activeElement as HTMLElement | null;
+  const row = a && list.contains(a) ? a.closest<HTMLElement>('.ci') : null;
+  const idx = row ? $$<HTMLElement>('.ci', list).indexOf(row) : -1;
+  const ctl = row ? ['data-inc', 'data-dec', 'data-rm'].find((k) => a!.hasAttribute(k)) : undefined;
+  render();
+  if (!row) return;
+  const rows = $$<HTMLElement>('.ci', list);
+  const target = rows.find((r) => r.dataset.id === row.dataset.id) || rows[Math.min(idx, rows.length - 1)];
+  const el = target && ctl ? target.querySelector<HTMLElement>(`[${ctl}]`) : null;
+  (el || fallback())?.focus();
+}
+
 function renderCart() {
   const list = $('#cart-items');
   const empty = $('#cart-empty');
@@ -164,7 +184,7 @@ function renderCart() {
     const left = free ? 0 : Math.max(0, CFG.freeFrom - total);
     fill.style.width = free ? '100%' : `${Math.min(100, (total / CFG.freeFrom) * 100)}%`;
     text.innerHTML = c === 0
-      ? `Free shipping on orders over <strong>${fmt(CFG.freeFrom)}</strong>.`
+      ? `Free shipping on orders over <strong>${fmtWhole(CFG.freeFrom)}</strong>.`
       : left > 0
         ? `Add <strong>${fmt(left)}</strong> more for free shipping.`
         : `You’ve unlocked <strong>free shipping</strong>.`;
@@ -184,11 +204,12 @@ function renderCart() {
   }
 
   if (list) {
+    renderKeepingFocus(list, () => {
     list.innerHTML = cart.items
       .map(
         (i) => `
       <li class="ci" data-id="${esc(i.id)}">
-        <a class="ci__img" href="${esc(i.url)}"><img src="${esc(i.image)}" alt="" loading="lazy" width="72" height="72" /></a>
+        <a class="ci__img" href="${esc(i.url)}" aria-hidden="true" tabindex="-1"><img src="${esc(i.image)}" alt="" loading="lazy" width="72" height="72" /></a>
         <div>
           <div class="ci__name"><a href="${esc(i.url)}">${esc(i.name)}</a></div>
           <div class="ci__var">${esc(i.variantLabel)}${i.note ? ` · ${esc(i.note)}` : ''}</div>
@@ -205,6 +226,7 @@ function renderCart() {
       </li>`,
       )
       .join('');
+    }, () => (drawer ? $<HTMLElement>('.drawer__close', drawer) : null));
   }
 
   // pages that mirror the cart (cart page / checkout summary)
@@ -212,8 +234,9 @@ function renderCart() {
 
   // checkout: an empty box must not be a dead end at the bottom of a long form
   // (skipped once an order went through: the cart is cleared right before the redirect and must not flash "empty")
+  // (also skipped while a submit is in flight, so a re-render from a delivery change or another tab cannot re-enable the button)
   const coForm = $<HTMLFormElement>('form[data-checkout]');
-  const coBtn = coForm && !coForm.dataset.done ? coForm.querySelector<HTMLButtonElement>('[type="submit"]') : null;
+  const coBtn = coForm && !coForm.dataset.done && !coForm.dataset.busy ? coForm.querySelector<HTMLButtonElement>('[type="submit"]') : null;
   const coNote = coForm && !coForm.dataset.done ? $('[data-checkout-note]') : null;
   if (coBtn) coBtn.disabled = c === 0;
   if (coNote) {
@@ -247,15 +270,22 @@ function renderSummary(root: HTMLElement) {
   const cta = $<HTMLAnchorElement>('[data-summary-checkout]', root);
   if (cta) (cta.classList.toggle('is-disabled', c === 0), cta.setAttribute('aria-disabled', String(c === 0)), (cta.tabIndex = c === 0 ? -1 : 0));
   if (rows)
-    rows.innerHTML = cart.items
-      .map(
-        (i) => `<li class="ci" data-id="${esc(i.id)}">
-        <a class="ci__img" href="${esc(i.url)}"><img src="${esc(i.image)}" alt="" width="72" height="72" loading="lazy" /></a>
+    renderKeepingFocus(
+      rows,
+      () => {
+        rows.innerHTML = cart.items
+          .map(
+            (i) => `<li class="ci" data-id="${esc(i.id)}">
+        <a class="ci__img" href="${esc(i.url)}" aria-label="${esc(i.name)}"><img src="${esc(i.image)}" alt="" width="72" height="72" loading="lazy" /></a>
         <div><div class="ci__name">${esc(i.name)}</div><div class="ci__var">${esc(i.variantLabel)}${i.note ? ` · ${esc(i.note)}` : ''}</div>
         <div class="ci__ctl"><div class="qty" role="group" aria-label="Quantity of ${esc(i.name)}"><button type="button" data-dec aria-label="Decrease quantity of ${esc(i.name)}">−</button><output aria-label="Quantity">${i.qty}</output><button type="button" data-inc aria-label="Increase quantity of ${esc(i.name)}">+</button></div><button type="button" class="ci__rm" data-rm aria-label="Remove ${esc(i.name)}">Remove</button></div></div>
         <div class="ci__price">${fmt(i.price * i.qty)}</div></li>`,
-      )
-      .join('');
+          )
+          .join('');
+      },
+      // last row removed: the empty-state link, else the checkout button
+      () => $<HTMLElement>('[data-summary-empty]:not([hidden]) a[href], [data-summary-checkout]', root),
+    );
   if (sub) sub.textContent = fmt(total);
   if (ship) ship.textContent = c === 0 ? '—' : quoted ? 'Quoted by e-mail' : shipping === 0 ? 'Free' : fmt(shipping);
   if (tot) tot.textContent = quoted ? `${fmt(total)} + shipping` : fmt(total + shipping);
@@ -370,6 +400,8 @@ document.addEventListener('click', (e) => {
   window.setTimeout(() => btn.classList.remove('is-done'), 1200);
   if (btn.dataset.addOpen !== 'false') openCart();
   else toast(`Added ${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ''} to your box`);
+  // A quick add inside the drawer hides its own row (the item is in the box now): hand focus to the next quick add, else Close.
+  if (drawer && drawer.contains(btn) && btn.offsetParent === null) ($('#cart-upsell li:not([hidden]) [data-add]') || $('.drawer__close', drawer))?.focus();
 });
 
 /* -------------------------------------------------------------------- nav */
@@ -521,8 +553,10 @@ if (shop) {
   // Filters and sort live in the URL too, so a filtered view can be shared and survives back navigation.
   const collections = new Set($$<HTMLElement>('[data-filter-collection]', shop).map((b) => b.dataset.filterCollection));
   const diets = new Set($$<HTMLElement>('[data-filter-diet]', shop).map((b) => b.dataset.filterDiet));
+  // Collection pages carry the collection in their path (/shop/pastila/); only the all-products page keeps it as ?collection=.
+  const pathCollection = (shop.dataset.collection || 'all') !== 'all';
   const c0 = url.searchParams.get('collection');
-  if (c0 && collections.has(c0) && (shop.dataset.collection || 'all') === 'all') state.collection = c0;
+  if (c0 && collections.has(c0) && !pathCollection) state.collection = c0;
   (url.searchParams.get('diet') || '').split(',').filter((d) => diets.has(d)).forEach((d) => state.diet.add(d));
   const s0 = url.searchParams.get('sort');
   if (sortSel && s0 && Array.from(sortSel.options).some((o) => o.value === s0)) (state.sort = s0), (sortSel.value = s0);
@@ -530,7 +564,7 @@ if (shop) {
     const u = new URL(location.href);
     const set = (k: string, v: string) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
     set('q', state.q);
-    set('collection', state.collection === 'all' ? '' : state.collection);
+    set('collection', state.collection === 'all' || pathCollection ? '' : state.collection);
     set('diet', [...state.diet].join(','));
     set('sort', state.sort === 'featured' ? '' : state.sort);
     if (u.href !== location.href) history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
@@ -746,8 +780,17 @@ if (checkout) {
     if (name === 'delivery' || name === 'country') syncDelivery();
   });
   syncDelivery();
+  // The submit button carries an icon, so restore its markup rather than plain text.
+  const submitBtn = checkout.querySelector<HTMLButtonElement>('[type="submit"]');
+  const submitHtml = submitBtn?.innerHTML || 'Place order';
+  const restoreBtn = () => {
+    if (!submitBtn) return;
+    submitBtn.disabled = cart.count() === 0;
+    submitBtn.innerHTML = submitHtml;
+  };
   checkout.addEventListener('submit', async (e) => {
     e.preventDefault();
+    if (checkout.dataset.busy) return; // one order at a time
     if (cart.count() === 0) {
       toast('Your box is empty — add something first.');
       return;
@@ -773,6 +816,7 @@ if (checkout) {
       currency: CFG.currency,
       page: location.pathname,
     };
+    checkout.dataset.busy = '1';
     if (btn) (btn.disabled = true), (btn.textContent = 'Placing order…');
     try {
       const res = await post(order);
@@ -792,7 +836,7 @@ if (checkout) {
         const msg = reason === 'email' ? 'Please check the e-mail address and try again.' : 'Your box is empty — add something first.';
         if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
         toast(msg, 4000);
-        if (btn) (btn.disabled = false), (btn.textContent = 'Place order');
+        restoreBtn();
         return;
       }
       const lines = order.items.map((i) => `${i.qty} × ${i.name}${i.variant ? ` (${i.variant})` : ''}${i.note ? ` — ${i.note}` : ''} = ${fmt(i.total)}`);
@@ -815,8 +859,18 @@ if (checkout) {
       if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
       toast(msg, 5000);
       mailtoFallback('Order request via semers.org', body);
-      if (btn) (btn.disabled = false), (btn.textContent = 'Place order');
+      restoreBtn();
+    } finally {
+      delete checkout.dataset.busy;
     }
+  });
+  // Back from the thank-you page can restore this page from the bfcache mid-"Placing order…": reset for a fresh attempt.
+  window.addEventListener('pageshow', (e) => {
+    if (!e.persisted) return;
+    delete checkout.dataset.done;
+    restoreBtn();
+    cart.load();
+    renderCart();
   });
 }
 

@@ -73,9 +73,13 @@ import { site } from '~/data/site';
   .ty__recap[hidden] { display: none; }
   .ty__recap h2 { font-size: var(--fs-lg); margin-bottom: 0.5rem; }
   .ty__recap ul { list-style: none; margin: 0; padding: 0; }
-  .ty__recap li { display: flex; justify-content: space-between; gap: 1rem; padding: 0.4rem 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+  /* Rows and totals are created by the inline script, so they carry no scope attribute: :global() keeps the rules matching. */
+  .ty__recap :global(li) { display: flex; justify-content: space-between; gap: 1rem; padding: 0.4rem 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); }
+  .ty__recap :global(li strong) { flex: none; }
   .ty__recap dl { display: grid; grid-template-columns: 1fr auto; gap: 0.25rem 1rem; margin: 0.6rem 0 0; font-size: var(--fs-sm); }
-  .ty__recap dd { margin: 0; text-align: right; }
-  .ty__recap dt:last-of-type, .ty__recap dd:last-of-type { font-weight: 700; }
+  .ty__recap :global(dd) { margin: 0; text-align: right; }
+  .ty__recap :global(dt:last-of-type), .ty__recap :global(dd:last-of-type) { font-weight: 700; }
   .ty__recap p { margin-top: 0.75rem; }
+  /* Phones: the two buttons wrap onto separate lines; keep them centred like the rest of the card. */
+  .ty__card .cluster { justify-content: center; }
 </style>

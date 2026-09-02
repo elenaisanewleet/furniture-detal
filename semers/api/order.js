@@ -20,11 +20,18 @@ export const config = { runtime: 'nodejs' };
 
 const MAX_BODY = 64 * 1024;
 const MAX_ITEMS = 60;
+/** Telegram rejects messages over 4096 characters; keep the notification well under it. */
+const MAX_TG = 4000;
 const TYPES = new Set(['order', 'newsletter', 'contact', 'wholesale']);
 
-const s = (v, max = 400) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+/** Single-line field: control characters and line breaks are collapsed so a value cannot pose as one of our own lines. */
+const s = (v, max = 400) => (typeof v === 'string' ? v.replace(/[\0-\x1f\x7f\u2028\u2029]+/g, ' ').trim().slice(0, max) : '');
+/** Free-text field: keeps its line breaks, indented under the label for the same reason. */
+const multi = (v, max) => (typeof v === 'string' ? v.replace(/\r\n?/g, '\n').replace(/[\0-\x09\x0b-\x1f\x7f\u2028\u2029]+/g, ' ').trim().slice(0, max).split('\n').join('\n    ') : '');
 const n = (v) => (Number.isFinite(Number(v)) ? Math.round(Number(v) * 100) / 100 : 0);
 const money = (v, cur = 'EUR') => `${n(v).toFixed(2)} ${cur}`;
+/** Only an ISO-4217 code goes into the notification text; anything else the client sent falls back to EUR. */
+const currency = (v) => (/^[A-Z]{3}$/.test(String(v || '')) ? v : 'EUR');
 const escapeHtml = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
 
 function ref() {
@@ -35,38 +42,41 @@ function ref() {
 }
 
 async function readJson(req) {
-  if (req.body && typeof req.body === 'object') return req.body;
+  const asObject = (b) => (b && typeof b === 'object' && !Array.isArray(b) ? b : {});
+  if (req.body && typeof req.body === 'object') return asObject(req.body);
   let raw = '';
   for await (const chunk of req) {
     raw += chunk;
     if (raw.length > MAX_BODY) throw new Error('body too large');
   }
-  return raw ? JSON.parse(raw) : {};
+  return asObject(raw ? JSON.parse(raw) : {});
 }
 
 function render(type, body, id) {
   const lines = [];
   if (type === 'order') {
     const items = Array.isArray(body.items) ? body.items.slice(0, MAX_ITEMS) : [];
-    const c = body.customer || {};
+    const c = body.customer && typeof body.customer === 'object' ? body.customer : {};
+    const cur = currency(body.currency);
     lines.push(`🍏 NEW ORDER REQUEST ${id}`);
     lines.push('');
     for (const it of items) {
+      if (!it || typeof it !== 'object') continue;
       const v = s(it.variant, 80);
       const note = s(it.note, 300);
-      lines.push(`${n(it.qty)} × ${s(it.name, 120)}${v ? ` (${v})` : ''}${note ? ` — ${note}` : ''} = ${money(it.total, body.currency)}`);
+      lines.push(`${n(it.qty)} × ${s(it.name, 120)}${v ? ` (${v})` : ''}${note ? ` — ${note}` : ''} = ${money(it.total, cur)}`);
     }
     lines.push('');
-    lines.push(`Subtotal: ${money(body.subtotal, body.currency)}`);
-    lines.push(`Shipping: ${n(body.shipping) ? money(body.shipping, body.currency) : s(body.shippingNote, 120) || 'free'}`);
-    lines.push(`TOTAL: ${money(body.total, body.currency)}`);
+    lines.push(`Subtotal: ${money(body.subtotal, cur)}`);
+    lines.push(`Shipping: ${n(body.shipping) ? money(body.shipping, cur) : s(body.shippingNote, 120) || 'free'}`);
+    lines.push(`TOTAL: ${money(body.total, cur)}`);
     lines.push('');
     lines.push(`Name: ${s(c.name)}`);
     lines.push(`E-mail: ${s(c.email)}`);
     if (s(c.phone)) lines.push(`Phone: ${s(c.phone)}`);
     lines.push(`Address: ${[s(c.address), s(c.city), s(c.postcode), s(c.country)].filter(Boolean).join(', ')}`);
     if (s(c.delivery)) lines.push(`Delivery: ${s(c.delivery)}`);
-    if (s(c.note, 1000)) lines.push(`Note: ${s(c.note, 1000)}`);
+    if (multi(c.note, 1000)) lines.push(`Note: ${multi(c.note, 1000)}`);
     if (s(c.gift)) lines.push(`Gift message: ${s(c.gift, 300)}`);
   } else if (type === 'newsletter') {
     lines.push(`📬 Newsletter signup ${id}`);
@@ -80,13 +90,13 @@ function render(type, body, id) {
     lines.push(`Country: ${s(body.country)}`);
     lines.push(`Type: ${s(body.kind)}`);
     if (s(body.volume)) lines.push(`Volume: ${s(body.volume)}`);
-    if (s(body.message, 2000)) lines.push(`Message: ${s(body.message, 2000)}`);
+    if (multi(body.message, 2000)) lines.push(`Message: ${multi(body.message, 2000)}`);
   } else {
     lines.push(`✉️ Contact form ${id}`);
     lines.push(`Name: ${s(body.name)}`);
     lines.push(`E-mail: ${s(body.email)}`);
     if (s(body.topic)) lines.push(`Topic: ${s(body.topic)}`);
-    lines.push(`Message: ${s(body.message, 2000)}`);
+    lines.push(`Message: ${multi(body.message, 2000)}`);
   }
   if (s(body.page)) lines.push(`Page: ${s(body.page, 200)}`);
   return lines.join('\n');
@@ -99,7 +109,7 @@ async function sendTelegram(text) {
   const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chat, text, disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: chat, text: text.slice(0, MAX_TG), disable_web_page_preview: true }),
   });
   return r.ok;
 }
@@ -156,7 +166,8 @@ export default async function handler(req, res) {
 
   const type = s(body.type, 20);
   if (!TYPES.has(type)) return res.status(400).json({ ok: false, reason: 'bad-type' });
-  if (s(body.website)) return res.status(200).json({ ok: true, ref: 'HP' }); // honeypot: pretend success
+  // Honeypot: pretend success. The checkout posts its fields under `customer`, the lead forms at the top level.
+  if (s(body.website) || s(body.customer?.website)) return res.status(200).json({ ok: true, ref: 'HP' });
 
   const email = s(type === 'order' ? body.customer?.email : body.email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(422).json({ ok: false, reason: 'email' });

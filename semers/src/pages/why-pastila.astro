@@ -176,10 +176,10 @@ const ideas = [
           {rows.map((r) => (
             <tr class={r.ours ? 'is-ours' : ''}>
               <th scope="row">{r.name}{r.ours && <em class="cmp__tag">ours</em>}<span>{r.size}</span></th>
-              <td class="cmp__num">{r.kcal} <small>kcal</small></td>
-              <td class="cmp__num">{r.sugar}</td>
-              <td class="cmp__num">{r.n}</td>
-              <td class="cmp__note">{r.note}</td>
+              <td class="cmp__num" data-label="Energy">{r.kcal} <small>kcal</small></td>
+              <td class="cmp__num" data-label="Added sugar">{r.sugar}</td>
+              <td class="cmp__num" data-label="Ingredients">{r.n}</td>
+              <td class="cmp__note" data-label="Worth knowing">{r.note}</td>
             </tr>
           ))}
         </tbody>
@@ -314,6 +314,21 @@ const ideas = [
   .cmp tr.is-ours th:first-child { border-radius: var(--r-md) 0 0 var(--r-md); }
   .cmp tr.is-ours td:last-child { border-radius: 0 var(--r-md) var(--r-md) 0; }
   .cmp tr.is-ours .cmp__num { color: var(--leaf-600); }
+  /* Phones: each snack becomes a card (name, the three numbers with labels, the note) instead of a 46rem horizontal scroller. */
+  @media (max-width: 40rem) {
+    .cmp-wrap { padding: 0.25rem 0.5rem; }
+    .cmp, .cmp tbody { display: block; min-width: 0; width: 100%; }
+    .cmp thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .cmp tbody tr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem 0.5rem; padding: 1rem 0.75rem; border-bottom: 1px solid var(--line); }
+    .cmp tbody tr:last-child { border-bottom: 0; }
+    .cmp th, .cmp td { padding: 0; border: 0; }
+    .cmp tbody th { grid-column: 1 / -1; min-width: 0; }
+    .cmp__num { font-size: var(--fs-lg); }
+    .cmp__num::before { content: attr(data-label); display: block; margin-bottom: 0.2rem; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); white-space: normal; }
+    .cmp__note { grid-column: 1 / -1; max-width: none; }
+    .cmp tr.is-ours { background: var(--mint-100); border-radius: var(--r-md); border-bottom: 0; }
+    .cmp tr.is-ours th, .cmp tr.is-ours td { background: transparent; border-radius: 0; }
+  }
 
   /* who it's for */
   .who { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: center; }

@@ -39,7 +39,7 @@ const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
           <li class="up" data-up-slug={u.slug}>
             <img class="up__img" src={u.image} alt="" width="44" height="44" loading="lazy" decoding="async" />
             <span><span class="up__name">{u.name}</span><span class="up__price">{u.price}</span></span>
-            <button class="pc__add up__add" type="button" data-add={u.add} data-add-open="false" aria-label={u.label}>+</button>
+            <button class="pc__add up__add" type="button" data-add={u.add} data-add-open="false" aria-label={u.label}><Icon name="plus" size={16} /></button>
           </li>
         ))}
       </ul>

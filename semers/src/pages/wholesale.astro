@@ -170,11 +170,11 @@ const mailHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wh
         <tbody>
           {formats.map((f) => (
             <tr>
-              <td><a class="ws-table__name" href={`/products/${f.slug}/`}>{f.title}</a><span class="tiny muted">{f.brand}</span></td>
-              <td class="nowrap">{f.weight}</td>
-              <td>{f.flavours.join(', ')}</td>
-              <td><div class="ws-table__claims">{f.claims.map((c) => <span class="chip chip--leaf">{c}</span>)}</div></td>
-              <td class="nowrap">{f.shelf}</td>
+              <td data-label="Product"><a class="ws-table__name" href={`/products/${f.slug}/`}>{f.title}</a><span class="tiny muted">{f.brand}</span></td>
+              <td class="nowrap" data-label="Weight">{f.weight}</td>
+              <td data-label="Flavours">{f.flavours.join(', ')}</td>
+              <td data-label="On the label"><div class="ws-table__claims">{f.claims.map((c) => <span class="chip chip--leaf">{c}</span>)}</div></td>
+              <td class="nowrap" data-label="Shelf life">{f.shelf}</td>
             </tr>
           ))}
         </tbody>
@@ -410,6 +410,19 @@ const mailHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wh
   .ws-table__name { display: block; font-family: var(--font-display); font-weight: 600; font-size: var(--fs-md); text-decoration: none; line-height: 1.2; }
   .ws-table__name:hover { color: var(--accent-fill); }
   .ws-table__claims { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  /* Phones: the five-column table becomes a stack of labelled rows; flavours, label claims and shelf life stay on screen. */
+  @media (max-width: 40rem) {
+    .ws-table { padding: 0.25rem 1.1rem; }
+    .ws-table .table, .ws-table tbody { display: block; min-width: 0; width: 100%; }
+    .ws-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .ws-table tbody tr { display: grid; gap: 0.3rem; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+    .ws-table tbody tr:last-child { border-bottom: 0; }
+    .ws-table .table td { display: grid; grid-template-columns: 6rem 1fr; gap: 0.5rem; padding: 0; border: 0; white-space: normal; }
+    .ws-table .table td::before { content: attr(data-label); padding-top: 0.2em; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+    .ws-table .table td:first-child { display: block; margin-bottom: 0.2rem; }
+    .ws-table .table td:first-child::before { display: none; }
+    .ws-table__name { display: inline; margin-right: 0.4em; }
+  }
 
   /* steps: three, not four */
   @media (min-width: 56rem) { .ws-steps { grid-template-columns: repeat(3, 1fr); gap: var(--sp-6); } }

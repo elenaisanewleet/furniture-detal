@@ -40,6 +40,7 @@ Vercel project → Settings → Domains → add `semers.org` and `www.semers.org
 - [ ] Contacts and socials set (`.env.example` → Vercel env).
 - [ ] Google Search Console: verify, submit `https://semers.org/sitemap-index.xml`.
 - [ ] Payment provider (Stripe Checkout) when ready — see README.
+- [ ] Abuse protection for `/api/order`: the endpoint is public and, with Resend configured, e-mails a receipt to whatever address is submitted. Before heavy marketing, enable rate limiting in front of it (Vercel WAF → Rate Limiting on `/api/*`, or a captcha on the checkout form) so it cannot be scripted as a mail relay.
 
 ## Local development
 
