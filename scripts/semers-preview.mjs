@@ -39,6 +39,8 @@ const rewrite = (text, ext) => {
     t = t.replace(/(\s(?:href|src|action|poster)=")\/(?!\/)/g, `$1${BASE}/`);
     t = t.replace(/(\s(?:href|src|action|poster)=')\/(?!\/)/g, `$1${BASE}/`);
   }
+  // The manifest's start_url ("/?utm_source=pwa") must stay inside the mounted scope, or an installed preview PWA opens the root site.
+  if (ext === '.webmanifest') t = t.replace(/("(?:start_url|scope)":\s*")\/(?!\/|semers\/)/g, `$1${BASE}/`);
   if (ext === '.css' || ext === '.html') t = t.replace(/url\(\s*(["']?)\/(?!\/)/g, `url($1${BASE}/`);
   // quoted path literals in scripts (inline and bundled) and in JSON carried by data attributes
   t = t.replace(new RegExp(`(["'\`]|&quot;)/(${PATHS})`, 'g'), `$1${BASE}/$2`);

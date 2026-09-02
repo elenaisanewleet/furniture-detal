@@ -190,6 +190,14 @@ function renderCart() {
         : `You’ve unlocked <strong>free shipping</strong>.`;
   }
 
+  // cart-page suggestions never repeat something already in the box
+  const inBoxNow = new Set(cart.items.map((i) => i.slug));
+  $$<HTMLElement>('[data-cart-suggest] [data-product-card]').forEach((card) => {
+    const add = card.querySelector<HTMLElement>('[data-add]');
+    const slug = add ? parseAdd(add)?.slug : undefined;
+    card.hidden = !!slug && inBoxNow.has(slug);
+  });
+
   // quick adds under the progress bar: only while the box is not yet shipping free, never for items already in it
   const upsell = $('#cart-upsell');
   if (upsell) {
@@ -520,19 +528,23 @@ if (pdp) {
   });
   qtyIn?.addEventListener('change', () => (qtyIn.value = String(clampQty(Number(qtyIn.value)))));
 
-  // sticky buy bar appears once the main buy button scrolls out of view;
-  // aria-hidden follows visibility so its button is never exposed while it is off-screen
+  // sticky buy bar appears once the main buy button has scrolled above the viewport;
+  // aria-hidden follows visibility so its button is never exposed while it is off-screen.
+  // A plain scroll check rather than an IntersectionObserver: on phones the buy row starts below the
+  // fold, and an instant jump past it (hash link, back-navigation restoring the scroll position)
+  // never intersects, so the observer would never fire and the bar would stay hidden.
   const bar = $('[data-sticky-buy]');
   const anchor = $('[data-buy-anchor]', pdp);
-  if (bar && anchor && 'IntersectionObserver' in window) {
-    new IntersectionObserver(
-      ([en]) => {
-        const on = !en.isIntersecting && en.boundingClientRect.top < 0;
-        bar.classList.toggle('is-visible', on);
-        bar.setAttribute('aria-hidden', String(!on));
-      },
-      { threshold: 0 },
-    ).observe(anchor);
+  if (bar && anchor) {
+    const syncBar = () => {
+      const on = anchor.getBoundingClientRect().bottom < 0;
+      bar.classList.toggle('is-visible', on);
+      bar.setAttribute('aria-hidden', String(!on));
+    };
+    syncBar();
+    window.addEventListener('scroll', syncBar, { passive: true });
+    window.addEventListener('resize', syncBar);
+    window.addEventListener('pageshow', syncBar);
   }
 }
 
@@ -573,7 +585,8 @@ if (shop) {
   const apply = () => {
     let visible = 0;
     const arr = cards.slice();
-    const key = (c: HTMLElement) => ({ price: Number(c.dataset.price), order: Number(c.dataset.order), name: c.dataset.name || '', best: c.dataset.best === '1' ? 0 : 1, kcal: Number(c.dataset.kcal || 0) });
+    // kcal 0 means "mixed box, see each item": it must sink to the end of "Lowest calories", not top it.
+    const key = (c: HTMLElement) => ({ price: Number(c.dataset.price), order: Number(c.dataset.order), name: c.dataset.name || '', best: c.dataset.best === '1' ? 0 : 1, kcal: Number(c.dataset.kcal) || Infinity });
     arr.sort((a, b) => {
       const A = key(a), B = key(b);
       switch (state.sort) {
@@ -764,6 +777,15 @@ if (checkout) {
   // Pick-up needs no address: the block is hidden and its fields stop being required (a hidden required field would block reportValidity()).
   const addr = $('[data-address-fields]', checkout);
   const syncDelivery = () => {
+    // Parcel lockers exist only in the Baltics: outside them the option is disabled and a courier takes over.
+    const locker = $<HTMLInputElement>('input[name="delivery"][value^="Parcel locker"]', checkout);
+    const courier = $<HTMLInputElement>('input[name="delivery"][value^="Courier"]', checkout);
+    if (locker && courier) {
+      const abroad = shippingQuoted();
+      locker.disabled = abroad;
+      locker.closest('label')?.classList.toggle('is-disabled', abroad);
+      if (abroad && locker.checked) courier.checked = true;
+    }
     const pickup = pickupSelected();
     if (addr) {
       addr.hidden = pickup;
@@ -849,7 +871,7 @@ if (checkout) {
         `Shipping: ${quoted ? 'EU courier rate to be quoted' : shipping ? fmt(shipping) : 'free'}`,
         `Total: ${fmt(order.total)}${quoted ? ' + shipping' : ''}`,
         '',
-        ...Object.entries(data).filter(([k]) => k !== 'website').map(([k, v]) => `${k}: ${v}`),
+        ...Object.entries(data).filter(([k, v]) => k !== 'website' && String(v).trim()).map(([k, v]) => `${k}: ${v}`),
       ].join('\n');
       const via = CFG.email ? ` (if nothing opened, write to ${CFG.email})` : '';
       const msg =

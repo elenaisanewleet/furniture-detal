@@ -28,8 +28,17 @@ const addPayload = JSON.stringify({
 });
 const related = [...productsInCollection(p.collection).filter((x) => x.slug !== p.slug), ...PRODUCTS.filter((x) => x.collection !== p.collection && x.bestseller)].slice(0, 3);
 const multi = p.variants.length > 1;
-const ingredientCount = p.ingredients.split(',').length;
-const ingredientLine = ingredientCount <= 4 ? `${ingredientCount} ingredients` : 'Short ingredient list';
+/**
+ * The trust line may only quote a number for the base recipe (the first sentence of the ingredient
+ * list, brackets removed): "Baked apples, egg white" → 2. Flavour additions, mixed boxes and
+ * "see individual products" fall back to the wording that is true for every variant.
+ */
+const baseRecipe = p.ingredients.split(/[.;]/)[0].replace(/\([^)]*\)/g, '');
+const ingredientCount = /egg white/i.test(baseRecipe) ? baseRecipe.split(',').length : 0;
+const ingredientLine =
+  ingredientCount === 2 ? `2 ingredients${multi && p.variants.some((v) => v.key === 'classic') ? ' in the Classic' : ''}` : 'Short ingredient list';
+/** "Belyov Pastila · Belyov pastila" reads like a stutter when the brand is the collection. */
+const showBrand = p.brand.toLowerCase() !== col.name.toLowerCase();
 const isBundle = p.collection === 'gift-sets';
 /** Zephyr is the one product made with sugar; every claim below is switched on it. */
 const noAddedSugar = p.diet.includes('no-added-sugar');
@@ -101,7 +110,7 @@ const rows: [string, string][] = [
       </div>
 
       <div class="pdp__buy">
-        <p class="eyebrow">{p.brand} · <a href={`/shop/${col.key}/`}>{col.name}</a></p>
+        <p class="eyebrow">{showBrand && <Fragment>{p.brand} · </Fragment>}<a href={`/shop/${col.key}/`}>{col.name}</a></p>
         <h1 class="pdp__title">{p.name} <span class="pdp__w">{p.weightGrams} g{p.pack > 1 ? ` · ${p.pack} pcs` : ''}</span></h1>
         <p class="pdp__hook">{p.hook}</p>
 
@@ -176,7 +185,7 @@ const rows: [string, string][] = [
           <details>
             <summary>Shipping &amp; returns</summary>
             <div class="acc__body">
-              <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.join(', ')}.</p>
+              <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.slice(0, 3).join(', ')} and the rest of the EU.</p>
               <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">Full policy</a>.</p>
             </div>
           </details>

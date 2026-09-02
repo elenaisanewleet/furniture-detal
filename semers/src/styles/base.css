@@ -198,7 +198,8 @@ a:hover .frame .zoom, .frame:hover .zoom { transform: scale(1.04); }
 .acc .acc__body { padding: 0 0 1.2rem; color: var(--ink-700); max-width: 66ch; }
 
 /* ---- Toast ------------------------------------------------------------ */
-.toast { position: fixed; left: 50%; bottom: 1.25rem; z-index: 90; opacity: 0; transform: translate(-50%, 120%); padding: 0.9rem 1.2rem; border-radius: var(--r-pill); background: var(--ink-900); color: var(--cream-0); font-weight: 600; box-shadow: var(--shadow-3); transition: transform var(--dur) var(--ease-spring); pointer-events: none; }
+/* Centred with left: 50%, so without an explicit width the shrink-to-fit box is capped at half the viewport — a long message on a phone became a tall 190 px pill. */
+.toast { position: fixed; left: 50%; bottom: 1.25rem; z-index: 90; width: max-content; max-width: min(calc(100vw - 2rem), 34rem); text-align: center; opacity: 0; transform: translate(-50%, 120%); padding: 0.9rem 1.2rem; border-radius: var(--r-pill); background: var(--ink-900); color: var(--cream-0); font-weight: 600; box-shadow: var(--shadow-3); transition: transform var(--dur) var(--ease-spring); pointer-events: none; }
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---- Skip link -------------------------------------------------------- */

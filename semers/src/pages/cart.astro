@@ -4,7 +4,7 @@ import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
 import { PRODUCTS, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
-const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 4);
+const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 3);
 ---
 <Base title="Your box" description="Review the apple snacks in your box before checkout." canonical="/cart/" noindex>
   <section class="container page-hero">
@@ -40,7 +40,7 @@ const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 4);
   </section>
   <section class="section container">
     <div class="section-head"><h2>People also add</h2></div>
-    <div class="grid grid--4">{suggestions.map((p) => <ProductCard product={p} compact />)}</div>
+    <div class="grid grid--3" data-cart-suggest>{suggestions.map((p) => <ProductCard product={p} compact />)}</div>
   </section>
 </Base>
 <style>
