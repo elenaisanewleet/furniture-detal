@@ -25,6 +25,10 @@ const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a 
   schema={[itemList(origin, best), faqPage(homeFaqs)]}
   bodyClass="home"
 >
+  <Fragment slot="head">
+    <!-- The hero headline sets "99% apple." in Fraunces italic; without a preload the file is only discovered after the CSS parses. -->
+    <link rel="preload" href="/fonts/fraunces-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+  </Fragment>
   <!-- ============================== HERO ============================== -->
   <section class="hero hero--home bg-grain" aria-labelledby="hero-title">
     <div class="bg-blob bg-blob--mint" style="width:38rem;height:38rem;right:-8rem;top:-10rem"></div>

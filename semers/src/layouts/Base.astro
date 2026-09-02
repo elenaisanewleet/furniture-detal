@@ -62,6 +62,7 @@ const nodes = [
 <html lang="en" prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="utf-8" />
+    <script is:inline>document.documentElement.classList.add("js");</script>
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
@@ -97,7 +98,8 @@ const nodes = [
 
     <link rel="preload" href="/fonts/fraunces-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
     <link rel="preload" href="/fonts/instrument-sans-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preconnect" href="https://d2ol7oe51mr4n9.cloudfront.net" crossorigin />
+    <!-- Images are fetched without CORS, so the warm connection must be non-crossorigin to be reused. -->
+    <link rel="preconnect" href="https://d2ol7oe51mr4n9.cloudfront.net" />
 
     <script type="application/ld+json" set:html={graph(nodes)} is:inline />
     <script is:inline set:html={`window.SEMERS=${JSON.stringify({ endpoint: site.orderEndpoint || '/api/order', freeFrom: site.shipping.freeFrom, email: site.email, whatsapp: site.whatsapp, currency: site.currency })};`} />
@@ -114,6 +116,7 @@ const nodes = [
     <Footer />
     <CartDrawer />
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="sr-only" id="cart-live" role="status" aria-live="polite"></div>
 
     <script>
       import '~/scripts/site';

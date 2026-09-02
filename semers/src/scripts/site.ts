@@ -29,6 +29,14 @@ export function toast(msg: string, ms = 2600) {
   toastTimer = window.setTimeout(() => el.classList.remove('is-on'), ms);
 }
 
+/** Screen-reader-only status line for cart changes (the visible toast is reserved for bigger moments). */
+function announce(msg: string) {
+  const el = $('#cart-live');
+  if (!el) return;
+  el.textContent = '';
+  window.setTimeout(() => (el.textContent = msg), 30);
+}
+
 /* ------------------------------------------------------------------- cart */
 export interface CartItem {
   id: string; // `${slug}:${variant}` or `bundle:<hash>`
@@ -54,7 +62,11 @@ class Cart {
   load() {
     try {
       const raw = localStorage.getItem(KEY);
-      this.items = raw ? (JSON.parse(raw) as CartItem[]).filter((i) => i && i.id && i.qty > 0) : [];
+      // Stored JSON is untrusted (old versions, hand edits): keep only well-formed rows and clamp quantities.
+      const parsed = raw ? (JSON.parse(raw) as CartItem[]) : [];
+      this.items = (Array.isArray(parsed) ? parsed : [])
+        .filter((i) => i && typeof i.id === 'string' && Number(i.qty) > 0 && Number.isFinite(Number(i.price)))
+        .map((i) => ({ ...i, qty: Math.max(1, Math.min(99, Math.round(Number(i.qty)))), price: Number(i.price) }));
     } catch {
       this.items = [];
     }
@@ -68,9 +80,10 @@ class Cart {
     document.dispatchEvent(new CustomEvent('cart:change', { detail: this }));
   }
   add(item: Omit<CartItem, 'qty'>, qty = 1) {
+    const q = Math.max(1, Math.round(qty) || 1); // "2.5" typed into the quantity field must not become a 2.5-bar order
     const ex = this.items.find((i) => i.id === item.id);
-    if (ex) ex.qty = Math.min(99, ex.qty + qty);
-    else this.items.push({ ...item, qty: Math.min(99, qty) });
+    if (ex) ex.qty = Math.min(99, ex.qty + q);
+    else this.items.push({ ...item, qty: Math.min(99, q) });
     this.save();
   }
   setQty(id: string, qty: number) {
@@ -131,9 +144,10 @@ function renderCart() {
     count.textContent = String(c);
     count.hidden = c === 0;
   }
+  $('#cart-open')?.setAttribute('aria-label', c ? `Open cart, ${c} item${c === 1 ? '' : 's'}` : 'Open cart, empty');
   if (n) n.textContent = c ? `· ${c} item${c === 1 ? '' : 's'}` : '';
   if (sub) sub.textContent = fmt(total);
-  if (checkout) checkout.classList.toggle('is-disabled', c === 0), checkout.setAttribute('aria-disabled', String(c === 0));
+  if (checkout) checkout.classList.toggle('is-disabled', c === 0), checkout.setAttribute('aria-disabled', String(c === 0)), (checkout.tabIndex = c === 0 ? -1 : 0);
   if (empty) empty.hidden = c > 0;
 
   // free shipping progress
@@ -160,12 +174,12 @@ function renderCart() {
           <div class="ci__name"><a href="${esc(i.url)}">${esc(i.name)}</a></div>
           <div class="ci__var">${esc(i.variantLabel)}${i.note ? ` · ${esc(i.note)}` : ''}</div>
           <div class="ci__ctl">
-            <div class="qty" role="group" aria-label="Quantity">
-              <button type="button" data-dec aria-label="Decrease">−</button>
-              <output>${i.qty}</output>
-              <button type="button" data-inc aria-label="Increase">+</button>
+            <div class="qty" role="group" aria-label="Quantity of ${esc(i.name)}">
+              <button type="button" data-dec aria-label="Decrease quantity of ${esc(i.name)}">−</button>
+              <output aria-label="Quantity">${i.qty}</output>
+              <button type="button" data-inc aria-label="Increase quantity of ${esc(i.name)}">+</button>
             </div>
-            <button type="button" class="ci__rm" data-rm>Remove</button>
+            <button type="button" class="ci__rm" data-rm aria-label="Remove ${esc(i.name)}">Remove</button>
           </div>
         </div>
         <div class="ci__price">${fmt(i.price * i.qty)}</div>
@@ -196,7 +210,7 @@ function renderSummary(root: HTMLElement) {
         (i) => `<li class="ci" data-id="${esc(i.id)}">
         <a class="ci__img" href="${esc(i.url)}"><img src="${esc(i.image)}" alt="" width="72" height="72" loading="lazy" /></a>
         <div><div class="ci__name">${esc(i.name)}</div><div class="ci__var">${esc(i.variantLabel)}${i.note ? ` · ${esc(i.note)}` : ''}</div>
-        <div class="ci__ctl"><div class="qty" role="group" aria-label="Quantity"><button type="button" data-dec aria-label="Decrease">−</button><output>${i.qty}</output><button type="button" data-inc aria-label="Increase">+</button></div><button type="button" class="ci__rm" data-rm>Remove</button></div></div>
+        <div class="ci__ctl"><div class="qty" role="group" aria-label="Quantity of ${esc(i.name)}"><button type="button" data-dec aria-label="Decrease quantity of ${esc(i.name)}">−</button><output aria-label="Quantity">${i.qty}</output><button type="button" data-inc aria-label="Increase quantity of ${esc(i.name)}">+</button></div><button type="button" class="ci__rm" data-rm aria-label="Remove ${esc(i.name)}">Remove</button></div></div>
         <div class="ci__price">${fmt(i.price * i.qty)}</div></li>`,
       )
       .join('');
@@ -207,18 +221,28 @@ function renderSummary(root: HTMLElement) {
   if (hidden) hidden.value = JSON.stringify({ items: cart.items, subtotal: total, shipping, total: total + shipping });
 }
 
+/** Everything outside the dialog becomes inert while it is open, so Tab and screen readers stay inside. */
+function setInertOutside(on: boolean, keep: Element[]) {
+  Array.from(document.body.children).forEach((el) => {
+    if (el.tagName === 'SCRIPT' || keep.includes(el)) return;
+    el.toggleAttribute('inert', on);
+  });
+}
 export function openCart() {
   if (!drawer) return;
+  closeNav();
   lastFocus = document.activeElement as HTMLElement;
   renderCart();
   drawer.hidden = false;
   document.body.style.overflow = 'hidden';
+  setInertOutside(true, [drawer, $('#toast')!, $('#cart-live')!].filter(Boolean));
   $<HTMLElement>('.drawer__close', drawer)?.focus();
 }
 export function closeCart() {
   if (!drawer || drawer.hidden) return;
   drawer.hidden = true;
   document.body.style.overflow = '';
+  setInertOutside(false, []);
   lastFocus?.focus();
 }
 
@@ -238,9 +262,9 @@ document.addEventListener('click', (e) => {
     const id = row.dataset.id!;
     const it = cart.items.find((i) => i.id === id);
     if (!it) return;
-    if (t.closest('[data-inc]')) cart.setQty(id, it.qty + 1);
-    else if (t.closest('[data-dec]')) cart.setQty(id, it.qty - 1);
-    else if (t.closest('[data-rm]')) cart.remove(id);
+    if (t.closest('[data-inc]')) cart.setQty(id, it.qty + 1), announce(`${it.name}: quantity ${it.qty}`);
+    else if (t.closest('[data-dec]')) cart.setQty(id, it.qty - 1), announce(it.qty > 0 ? `${it.name}: quantity ${it.qty}` : `Removed ${it.name}`);
+    else if (t.closest('[data-rm]')) cart.remove(id), announce(`Removed ${it.name}`);
   }
 });
 document.addEventListener('keydown', (e) => {
@@ -250,6 +274,13 @@ document.addEventListener('keydown', (e) => {
   }
 });
 document.addEventListener('cart:change', renderCart);
+// Another tab changed the cart (the storage event only fires in the tabs that did not write).
+window.addEventListener('storage', (e) => {
+  if (e.key === KEY || e.key === null) {
+    cart.load();
+    renderCart();
+  }
+});
 
 /* ------------------------------------------------------------ add to cart */
 function parseAdd(el: HTMLElement): Omit<CartItem, 'qty'> | null {
@@ -297,6 +328,8 @@ function openNav() {
   navToggle?.setAttribute('aria-expanded', 'true');
   if (scrim) scrim.hidden = false;
   document.body.style.overflow = 'hidden';
+  $$('main, footer, .crumbs').forEach((el) => el.setAttribute('inert', ''));
+  window.setTimeout(() => $<HTMLElement>('.hdr__nav-close', nav || undefined)?.focus(), 30);
 }
 function closeNav() {
   if (!nav?.classList.contains('is-open')) return;
@@ -304,6 +337,8 @@ function closeNav() {
   navToggle?.setAttribute('aria-expanded', 'false');
   if (scrim) scrim.hidden = true;
   document.body.style.overflow = '';
+  $$('main, footer, .crumbs').forEach((el) => el.removeAttribute('inert'));
+  if (nav.contains(document.activeElement)) navToggle?.focus();
 }
 navToggle?.addEventListener('click', () => (nav?.classList.contains('is-open') ? closeNav() : openNav()));
 scrim?.addEventListener('click', closeNav);
@@ -346,7 +381,8 @@ if (pdp) {
   const thumbs = $$<HTMLButtonElement>('[data-gal-thumb]', pdp);
   const qtyIn = $<HTMLInputElement>('[data-qty-input]', pdp);
 
-  const applyVariant = (input: HTMLInputElement) => {
+  /** `syncUrl` only on a user change: the initial call must not append ?flavour= to every product URL that gets shared or tracked. */
+  const applyVariant = (input: HTMLInputElement, syncUrl = false) => {
     const price = Number(input.dataset.price);
     const label = input.dataset.label || '';
     priceEls.forEach((el) => (el.textContent = fmt(price)));
@@ -364,12 +400,14 @@ if (pdp) {
         /* ignore */
       }
     });
-    const url = new URL(location.href);
-    url.searchParams.set('flavour', input.value);
-    history.replaceState(null, '', url);
+    if (syncUrl) {
+      const url = new URL(location.href);
+      url.searchParams.set('flavour', input.value);
+      history.replaceState(null, '', url);
+    }
   };
   const radios = $$<HTMLInputElement>('[data-variant]', pdp);
-  radios.forEach((r) => r.addEventListener('change', () => applyVariant(r)));
+  radios.forEach((r) => r.addEventListener('change', () => applyVariant(r, true)));
   const preset = new URL(location.href).searchParams.get('flavour');
   const initial = radios.find((r) => r.value === preset) || radios.find((r) => r.checked) || radios[0];
   if (initial) {
@@ -510,7 +548,7 @@ if (builder) {
     if (addBtn) addBtn.disabled = picks.length !== size;
     if (listEl)
       listEl.innerHTML = picks
-        .map((p, i) => `<li>${esc(p.name)} <button type="button" class="ci__rm" data-builder-rm="${i}">remove</button></li>`)
+        .map((p, i) => `<li>${esc(p.name)} <button type="button" class="ci__rm" data-builder-rm="${i}" aria-label="Remove ${esc(p.name)}">remove</button></li>`)
         .join('');
     $$('[data-builder-pick]', builder).forEach((b) => ((b as HTMLButtonElement).disabled = picks.length >= size));
   };

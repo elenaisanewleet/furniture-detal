@@ -91,7 +91,7 @@ const rows: [string, string][] = [
           {gallery.length > 1 && (
             <div class="gal__thumbs" role="group" aria-label="Product images">
               {gallery.map((g, i) => (
-                <button type="button" data-gal-thumb data-src={g.src} data-alt={g.alt} data-fit={g.fit || 'cover'} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Image ${i + 1}`}>
+                <button type="button" data-gal-thumb data-src={g.src} data-alt={g.alt} data-fit={g.fit || 'cover'} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Image ${i + 1} of ${gallery.length}`}>
                   <img src={g.src} alt="" width="72" height="72" loading="lazy" decoding="async" />
                 </button>
               ))}
@@ -249,7 +249,7 @@ const rows: [string, string][] = [
     </section>
   </article>
 
-  <div class="sticky-buy" data-sticky-buy aria-hidden="true">
+  <div class="sticky-buy" data-sticky-buy>
     <div class="sticky-buy__in container">
       <img class="sticky-buy__img" src={gallery[0].src} alt="" width="48" height="48" loading="lazy" />
       <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price)}</span> · <span data-variant-name>{FLAVORS[first.key].label}</span></span></div>

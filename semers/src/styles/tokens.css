@@ -71,7 +71,7 @@
 
   --fg: var(--ink-900);
   --fg-2: var(--ink-500);
-  --fg-3: #7d7166; /* 4.6:1 on cream-1 */
+  --fg-3: #726557; /* 5.1:1 on cream-1, 4.65:1 on cream-2 bands, ≥4.5:1 on the tinted -100 bands */
   --fg-invert: var(--cream-0);
 
   --line: rgb(27 22 18 / 0.12);

@@ -51,7 +51,7 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
       <div class="pills" role="group" aria-label="Dietary filters">
         {dietKeys.map((k) => <button class="pill pill--sm" type="button" data-filter-diet={k} aria-pressed="false">{DIET_TAGS[k]}</button>)}
       </div>
-      <p class="small muted" data-shop-count>{products.length} products</p>
+      <p class="small muted" data-shop-count aria-live="polite">{products.length} products</p>
     </div>
 
     <h2 class="sr-only">All products</h2>

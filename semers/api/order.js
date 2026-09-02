@@ -166,9 +166,12 @@ export default async function handler(req, res) {
   const text = render(type, body, id);
   const subject = text.split('\n')[0];
 
-  const [tg, mail] = await Promise.all([sendTelegram(text), sendEmail(subject, text, email)]);
+  // Each channel fails independently: a Telegram outage must not turn a delivered e-mail into a 500.
+  const [tg, mail] = await Promise.all([sendTelegram(text).catch(() => false), sendEmail(subject, text, email).catch(() => false)]);
   if (!tg && !mail) return res.status(503).json({ ok: false, reason: 'not-configured' });
-  if (type === 'order') sendCustomerReceipt(body, id, text).catch(() => {});
+  // Awaited on purpose: serverless execution can be frozen as soon as the response is sent,
+  // so a fire-and-forget receipt would often never leave the function.
+  if (type === 'order') await sendCustomerReceipt(body, id, text).catch(() => false);
 
   return res.status(200).json({ ok: true, ref: id });
 }
