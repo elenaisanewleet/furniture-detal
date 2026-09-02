@@ -34,7 +34,7 @@ const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Pola
           <label class="method"><input type="radio" name="delivery" value="Courier to door" /><span><strong>Courier to door</strong><em>DPD / DHL · 2–5 days across the EU</em></span></label>
           <label class="method"><input type="radio" name="delivery" value="Pickup in Riga" /><span><strong>Pick up in Riga</strong><em>Free · we send the address with your confirmation</em></span></label>
         </div>
-        <div class="form-grid form-grid--2 mt-4">
+        <div class="form-grid form-grid--2 mt-4" data-address-fields>
           <div class="field span-2"><label for="co-address">Street address or parcel locker</label><input class="input" id="co-address" name="address" required autocomplete="street-address" placeholder="Street, house, flat — or the locker name" /></div>
           <div class="field"><label for="co-city">City</label><input class="input" id="co-city" name="city" required autocomplete="address-level2" /></div>
           <div class="field"><label for="co-post">Postcode</label><input class="input" id="co-post" name="postcode" required autocomplete="postal-code" /></div>
@@ -90,5 +90,5 @@ const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Pola
   .method span { display: grid; }
   .method em { font-style: normal; font-size: var(--fs-xs); color: var(--fg-3); }
   .co__items { padding: 0; }
-  [data-summary-full][hidden], [data-summary-empty][hidden], [data-checkout-note][hidden] { display: none; }
+  [data-summary-full][hidden], [data-summary-empty][hidden], [data-checkout-note][hidden], [data-address-fields][hidden] { display: none; }
 </style>

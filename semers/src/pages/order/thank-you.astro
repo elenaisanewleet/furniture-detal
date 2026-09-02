@@ -9,7 +9,7 @@ import { site } from '~/data/site';
       <div class="ty__icon"><Icon name="check" size={32} /></div>
       <p class="eyebrow">Order request received</p>
       <h1>Thank you. We’re on it.</h1>
-      <p class="lead">Your reference is <strong class="num" id="ty-ref">—</strong>. Within one business day you will get an e-mail from {site.email} confirming availability, the delivery estimate and a secure payment link.</p>
+      <p class="lead"><span id="ty-ref-line" hidden>Your reference is <strong class="num" id="ty-ref">—</strong>. </span>Within one business day you will get an e-mail from {site.email} confirming availability, the delivery estimate and a secure payment link.</p>
       <ol class="ty__steps">
         <li><strong>Confirmation e-mail</strong><span>Check spam if it doesn’t arrive within a few hours.</span></li>
         <li><strong>Payment link</strong><span>Card or bank transfer, whichever you prefer.</span></li>
@@ -25,7 +25,8 @@ import { site } from '~/data/site';
     (function () {
       var ref = new URLSearchParams(location.search).get('ref');
       var el = document.getElementById('ty-ref');
-      if (el && ref) el.textContent = ref;
+      var line = document.getElementById('ty-ref-line');
+      if (el && line && ref) { el.textContent = ref; line.hidden = false; }
     })();
   </script>
 </Base>

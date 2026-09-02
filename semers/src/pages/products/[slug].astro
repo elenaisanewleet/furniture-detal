@@ -108,7 +108,7 @@ const rows: [string, string][] = [
         <div class="pdp__price">
           <span class="pdp__amount num" data-price>{formatPrice(first.price ?? p.price)}</span>
           {p.compareAt && <s class="muted">{formatPrice(p.compareAt)}</s>}
-          <span class="pdp__unit">{unitPrice(p)} · incl. VAT</span>
+          <span class="pdp__unit">{p.pack > 1 ? `${formatPrice((first.price ?? p.price) / p.pack)} per piece · ` : ''}{unitPrice(p)} · incl. VAT</span>
         </div>
 
         <ul class="pdp__facts" aria-label="Key facts">
@@ -156,8 +156,8 @@ const rows: [string, string][] = [
           <details open>
             <summary>Ingredients &amp; allergens</summary>
             <div class="acc__body">
-              <p><strong>Ingredients:</strong> {p.ingredients}.</p>
-              <p><strong>Allergens:</strong> {p.allergens}.</p>
+              <p><strong>Ingredients:</strong> {p.ingredients}</p>
+              <p><strong>Allergens:</strong> {p.allergens}</p>
               {multi && <p class="small muted">EAN for the selected flavour: <span data-gtin>{first.gtin || '—'}</span></p>}
             </div>
           </details>

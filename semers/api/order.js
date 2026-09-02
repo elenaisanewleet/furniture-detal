@@ -58,7 +58,7 @@ function render(type, body, id) {
     }
     lines.push('');
     lines.push(`Subtotal: ${money(body.subtotal, body.currency)}`);
-    lines.push(`Shipping: ${n(body.shipping) ? money(body.shipping, body.currency) : 'free'}`);
+    lines.push(`Shipping: ${n(body.shipping) ? money(body.shipping, body.currency) : s(body.shippingNote, 120) || 'free'}`);
     lines.push(`TOTAL: ${money(body.total, body.currency)}`);
     lines.push('');
     lines.push(`Name: ${s(c.name)}`);

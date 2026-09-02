@@ -125,6 +125,12 @@ function pickupSelected() {
   const r = $<HTMLInputElement>('form[data-checkout] input[name="delivery"]:checked');
   return !!r && /pick ?up/i.test(r.value);
 }
+/** The flat rate below the free threshold only covers the Baltics; other EU destinations are quoted in the confirmation e-mail. */
+const BALTICS = new Set(['Latvia', 'Lithuania', 'Estonia']);
+function shippingQuoted() {
+  const sel = $<HTMLSelectElement>('form[data-checkout] select[name="country"]');
+  return !!sel && !BALTICS.has(sel.value);
+}
 
 /* ----------------------------------------------------------------- drawer */
 const drawer = $('#cart');
@@ -190,6 +196,25 @@ function renderCart() {
 
   // pages that mirror the cart (cart page / checkout summary)
   $$('[data-cart-summary]').forEach(renderSummary);
+
+  // checkout: an empty box must not be a dead end at the bottom of a long form
+  // (skipped once an order went through: the cart is cleared right before the redirect and must not flash "empty")
+  const coForm = $<HTMLFormElement>('form[data-checkout]');
+  const coBtn = coForm && !coForm.dataset.done ? coForm.querySelector<HTMLButtonElement>('[type="submit"]') : null;
+  const coNote = coForm && !coForm.dataset.done ? $('[data-checkout-note]') : null;
+  if (coBtn) coBtn.disabled = c === 0;
+  if (coNote) {
+    if (c === 0) {
+      coNote.textContent = 'Your box is empty — add something from the shop first.';
+      coNote.hidden = false;
+      coNote.classList.remove('notice--err', 'notice--ok');
+      coNote.classList.add('notice');
+      coNote.dataset.empty = '1';
+    } else if (coNote.dataset.empty) {
+      coNote.hidden = true;
+      delete coNote.dataset.empty;
+    }
+  }
 }
 
 function renderSummary(root: HTMLElement) {
@@ -201,9 +226,13 @@ function renderSummary(root: HTMLElement) {
   const emptyEl = $('[data-summary-empty]', root);
   const full = $('[data-summary-full]', root);
   const total = cart.subtotal();
-  const shipping = c === 0 || pickupSelected() || shipsFree(total) ? 0 : Number(root.dataset.shipping || 3.9);
+  const free = c === 0 || pickupSelected() || shipsFree(total);
+  const quoted = !free && shippingQuoted();
+  const shipping = free || quoted ? 0 : Number(root.dataset.shipping || 3.9);
   if (emptyEl) emptyEl.hidden = c > 0;
   if (full) full.hidden = c === 0;
+  const cta = $<HTMLAnchorElement>('[data-summary-checkout]', root);
+  if (cta) (cta.classList.toggle('is-disabled', c === 0), cta.setAttribute('aria-disabled', String(c === 0)), (cta.tabIndex = c === 0 ? -1 : 0));
   if (rows)
     rows.innerHTML = cart.items
       .map(
@@ -215,8 +244,8 @@ function renderSummary(root: HTMLElement) {
       )
       .join('');
   if (sub) sub.textContent = fmt(total);
-  if (ship) ship.textContent = c === 0 ? '—' : shipping === 0 ? 'Free' : fmt(shipping);
-  if (tot) tot.textContent = fmt(total + shipping);
+  if (ship) ship.textContent = c === 0 ? '—' : quoted ? 'Quoted by e-mail' : shipping === 0 ? 'Free' : fmt(shipping);
+  if (tot) tot.textContent = quoted ? `${fmt(total)} + shipping` : fmt(total + shipping);
   const hidden = $<HTMLInputElement>('[data-cart-json]', root);
   if (hidden) hidden.value = JSON.stringify({ items: cart.items, subtotal: total, shipping, total: total + shipping });
 }
@@ -319,13 +348,15 @@ document.addEventListener('click', (e) => {
   e.preventDefault();
   const item = parseAdd(btn);
   if (!item) return;
-  const qtyEl = btn.closest('[data-pdp]')?.querySelector<HTMLInputElement>('[data-qty-input]');
+  // The sticky buy bar sits outside [data-pdp] but must honour the same quantity field.
+  const scope = btn.closest('[data-pdp]') || (btn.closest('[data-sticky-buy]') ? $('[data-pdp]') : null);
+  const qtyEl = scope?.querySelector<HTMLInputElement>('[data-qty-input]');
   const qty = qtyEl ? Math.max(1, Number(qtyEl.value) || 1) : 1;
   cart.add(item, qty);
   btn.classList.add('is-done');
   window.setTimeout(() => btn.classList.remove('is-done'), 1200);
   if (btn.dataset.addOpen !== 'false') openCart();
-  else toast(`Added ${item.name} to your box`);
+  else toast(`Added ${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ''} to your box`);
 });
 
 /* -------------------------------------------------------------------- nav */
@@ -493,7 +524,7 @@ if (shop) {
       const okC = state.collection === 'all' || c.dataset.collection === state.collection;
       const diets = (c.dataset.diet || '').split(' ');
       const okD = [...state.diet].every((d) => diets.includes(d));
-      const hay = `${c.dataset.name} ${c.dataset.collection} ${c.dataset.flavours} ${c.dataset.hook}`.toLowerCase();
+      const hay = `${c.dataset.name} ${c.dataset.collection} ${c.dataset.flavours} ${c.dataset.hook} ${c.dataset.diet}`.toLowerCase();
       const okQ = !state.q || hay.includes(state.q);
       const show = okC && okD && okQ;
       c.hidden = !show;
@@ -652,7 +683,7 @@ $$<HTMLFormElement>('form[data-form]').forEach((form) => {
     } catch (err) {
       const subject = `${type} via semers.org`;
       const body = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n');
-      const msg = 'We could not send this automatically. Opening your e-mail app instead…';
+      const msg = `We could not send this automatically. Opening your e-mail app instead${CFG.email ? ` — or write to ${CFG.email}` : ''}.`;
       if (note) (note.textContent = msg), note.classList.add('notice', 'notice--err');
       toast(msg, 4000);
       mailtoFallback(subject, body);
@@ -665,10 +696,25 @@ $$<HTMLFormElement>('form[data-form]').forEach((form) => {
 /* -------------------------------------------------------------- checkout */
 const checkout = $<HTMLFormElement>('form[data-checkout]');
 if (checkout) {
-  // switching to pick-up (free) or back to a courier must update the summary column
+  // Pick-up needs no address: the block is hidden and its fields stop being required (a hidden required field would block reportValidity()).
+  const addr = $('[data-address-fields]', checkout);
+  const syncDelivery = () => {
+    const pickup = pickupSelected();
+    if (addr) {
+      addr.hidden = pickup;
+      $$<HTMLInputElement>('input, select', addr).forEach((el) => {
+        if (el.dataset.req === undefined) el.dataset.req = String(el.required);
+        el.required = !pickup && el.dataset.req === 'true';
+      });
+    }
+    renderCart();
+  };
+  // switching to pick-up (free), back to a courier, or to another country must update the summary column
   checkout.addEventListener('change', (e) => {
-    if ((e.target as HTMLInputElement).name === 'delivery') renderCart();
+    const name = (e.target as HTMLInputElement).name;
+    if (name === 'delivery' || name === 'country') syncDelivery();
   });
+  syncDelivery();
   checkout.addEventListener('submit', async (e) => {
     e.preventDefault();
     if (cart.count() === 0) {
@@ -682,13 +728,16 @@ if (checkout) {
     const data = formData(checkout);
     if (data.website) return;
     const total = cart.subtotal();
-    const shipping = pickupSelected() || shipsFree(total) ? 0 : Number(checkout.dataset.shipping || 3.9);
+    const free = pickupSelected() || shipsFree(total);
+    const quoted = !free && shippingQuoted();
+    const shipping = free || quoted ? 0 : Number(checkout.dataset.shipping || 3.9);
     const order = {
       type: 'order',
       customer: data,
       items: cart.items.map((i) => ({ id: i.id, name: i.name, variant: i.variantLabel, note: i.note, qty: i.qty, price: i.price, total: Math.round(i.qty * i.price * 100) / 100 })),
       subtotal: Math.round(total * 100) / 100,
       shipping,
+      shippingNote: quoted ? 'EU courier rate to be quoted by e-mail' : undefined,
       total: Math.round((total + shipping) * 100) / 100,
       currency: CFG.currency,
       page: location.pathname,
@@ -696,6 +745,7 @@ if (checkout) {
     if (btn) (btn.disabled = true), (btn.textContent = 'Placing order…');
     try {
       const res = await post(order);
+      checkout.dataset.done = '1';
       cart.clear();
       location.href = `/order/thank-you/?ref=${encodeURIComponent(res.ref || '')}`;
     } catch (err) {
@@ -715,15 +765,16 @@ if (checkout) {
         ...lines,
         '',
         `Subtotal: ${fmt(order.subtotal)}`,
-        `Shipping: ${shipping ? fmt(shipping) : 'free'}`,
-        `Total: ${fmt(order.total)}`,
+        `Shipping: ${quoted ? 'EU courier rate to be quoted' : shipping ? fmt(shipping) : 'free'}`,
+        `Total: ${fmt(order.total)}${quoted ? ' + shipping' : ''}`,
         '',
         ...Object.entries(data).filter(([k]) => k !== 'website').map(([k, v]) => `${k}: ${v}`),
       ].join('\n');
+      const via = CFG.email ? ` (if nothing opened, write to ${CFG.email})` : '';
       const msg =
         reason === 'not-configured'
-          ? 'Online ordering is not live yet — we opened an e-mail with your order instead. We reply within one business day.'
-          : 'We could not place the order automatically — we opened an e-mail with your order instead. We reply within one business day.';
+          ? `Online ordering is not live yet — we opened an e-mail with your order instead${via}. Your box is saved; we reply within one business day.`
+          : `We could not place the order automatically — we opened an e-mail with your order instead${via}. Your box is saved; we reply within one business day.`;
       if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
       toast(msg, 5000);
       mailtoFallback('Order request via semers.org', body);
