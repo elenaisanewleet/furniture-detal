@@ -1,14 +1,13 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { img, imgSrc } from '~/data/images';
+import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
 import { FAQS } from '~/data/faq';
 import { formatThreshold } from '~/data/products';
 import { originOf } from '~/lib/origin';
 
 const origin = originOf(Astro.site);
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 const title = 'Contact Semers in Riga: orders, wholesale, press';
@@ -113,7 +112,7 @@ const contactPage = {
 
       <aside class="cx-card" data-reveal aria-labelledby="ways-title">
         <div class="frame frame--3x2">
-          <img src={im('lifestyle-desk').src} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="lazy" decoding="async" class="img-cover" />
+          <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.third} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="lazy" decoding="async" class="img-cover" />
         </div>
         <div class="cx-card__body">
           <h3 id="ways-title">Other ways to reach us</h3>
@@ -180,7 +179,7 @@ const contactPage = {
   <section class="section container section--tight" aria-labelledby="press-title">
     <div class="split">
       <div class="frame frame--4x5 rounded cx-press__img" data-reveal>
-        <img src={im('gift-box').src} alt={im('gift-box').alt} width={im('gift-box').width} height={im('gift-box').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('gift-box').src} srcset={im('gift-box').srcset} sizes={im('gift-box').srcset && SIZES.third} alt={im('gift-box').alt} width={im('gift-box').width} height={im('gift-box').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">Press &amp; partnerships</p>

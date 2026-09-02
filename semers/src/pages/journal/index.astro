@@ -2,14 +2,13 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { ARTICLES_SORTED } from '~/data/journal';
-import { img, imgSrc } from '~/data/images';
+import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
 import { formatThreshold } from '~/data/products';
 import { article as articleSchema } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
 const origin = originOf(Astro.site);
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** "12 Aug 2026" from an ISO date, without touching time zones. */
@@ -66,7 +65,7 @@ const schema = [
     <section class="section--tight container" aria-labelledby="featured-title">
       <article class="feature" data-reveal>
         <a class="feature__media frame frame--3x2 rounded" href={`/journal/${featured.slug}/`} tabindex="-1" aria-hidden="true">
-          <img src={im(featured.image).src} alt="" width={im(featured.image).width} height={im(featured.image).height} loading="eager" fetchpriority="high" decoding="async" class="img-cover zoom" />
+          <img src={im(featured.image).src} srcset={im(featured.image).srcset} sizes={im(featured.image).srcset && SIZES.third} alt="" width={im(featured.image).width} height={im(featured.image).height} loading="eager" fetchpriority="high" decoding="async" class="img-cover zoom" />
         </a>
         <div class="feature__body">
           <p class="eyebrow">Latest</p>
@@ -92,7 +91,7 @@ const schema = [
       <div class="grid grid--3 jr-grid" data-reveal>
         {rest.map((a) => (
           <a class="jc" href={`/journal/${a.slug}/`}>
-            <div class="frame frame--3x2"><img src={im(a.image).src} alt="" width={im(a.image).width} height={im(a.image).height} loading="lazy" decoding="async" /></div>
+            <div class="frame frame--3x2"><img src={im(a.image).src} srcset={im(a.image).srcset} sizes={im(a.image).srcset && SIZES.third} alt="" width={im(a.image).width} height={im(a.image).height} loading="lazy" decoding="async" /></div>
             <div class="jc__meta"><time datetime={a.date}>{fmtDate(a.date)}</time> · {a.readMinutes} min read</div>
             <h3>{a.title}</h3>
             <p>{a.description}</p>

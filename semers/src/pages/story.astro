@@ -1,11 +1,10 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { img, imgSrc, RENDER_BG } from '~/data/images';
+import { RENDER_BG, im, SIZES } from '~/data/images';
 import { PRODUCTS, collectionByKey, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** Countries with Semers on a shelf, derived from the retailer list (Latvia + export markets). */
@@ -96,7 +95,7 @@ const lines = site.brand.lines.map((brand) => {
       </div>
       <div class="story-hero__media" data-reveal>
         <div class="frame frame--4x5 frame--xl">
-          <img src={im('pastila-slices').src} alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+          <img src={im('pastila-slices').src} srcset={im('pastila-slices').srcset} sizes={im('pastila-slices').srcset && SIZES.third} alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
         </div>
         <div class="story-hero__note"><strong>1888</strong><span>The year Belyov pastila was first sold. Two ingredients then, two ingredients now.</span></div>
       </div>
@@ -113,7 +112,7 @@ const lines = site.brand.lines.map((brand) => {
   <section class="section container" aria-labelledby="belyov-title">
     <div class="split">
       <div class="frame frame--1x1 rounded" data-reveal>
-        <img src={im('pastila-block').src} alt={im('pastila-block').alt} width={im('pastila-block').width} height={im('pastila-block').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('pastila-block').src} srcset={im('pastila-block').srcset} sizes={im('pastila-block').srcset && SIZES.third} alt={im('pastila-block').alt} width={im('pastila-block').width} height={im('pastila-block').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">The Belyov tradition</p>
@@ -140,7 +139,7 @@ const lines = site.brand.lines.map((brand) => {
   <section class="section band" aria-labelledby="antonovka-title">
     <div class="container split split--rev">
       <div class="frame frame--4x5 rounded" data-reveal>
-        <img src={im('apples-orchard').src} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes={im('apples-orchard').srcset && SIZES.third} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">Why Antonovka</p>
@@ -187,13 +186,13 @@ const lines = site.brand.lines.map((brand) => {
       <div class="duo" data-reveal>
         <figure>
           <div class="frame frame--4x5 rounded">
-            <img src={im('orchard-picking').src} alt={im('orchard-picking').alt} width={im('orchard-picking').width} height={im('orchard-picking').height} loading="lazy" decoding="async" class="img-cover" />
+            <img src={im('orchard-picking').src} srcset={im('orchard-picking').srcset} sizes={im('orchard-picking').srcset && SIZES.third} alt={im('orchard-picking').alt} width={im('orchard-picking').width} height={im('orchard-picking').height} loading="lazy" decoding="async" class="img-cover" />
           </div>
           <figcaption>It starts in an orchard in autumn, when the apples are at their sharpest.</figcaption>
         </figure>
         <figure>
           <div class="frame frame--4x5 rounded">
-            <img src={im('retail-boxes').src} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="lazy" decoding="async" class="img-cover" />
+            <img src={im('retail-boxes').src} srcset={im('retail-boxes').srcset} sizes={im('retail-boxes').srcset && SIZES.third} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="lazy" decoding="async" class="img-cover" />
           </div>
           <figcaption>It ends as cases packed in Riga, on their way to a shop shelf or to you.</figcaption>
         </figure>
@@ -286,7 +285,7 @@ const lines = site.brand.lines.map((brand) => {
         <p class="quote__by">The team at Semers, Riga. Semers is made by {site.brand.legalName}, {site.locality}, {site.country}.</p>
       </div>
       <div class="quote__media" data-reveal>
-        <img src={im('apple-render-sm').src} alt={im('apple-render-sm').alt} width={im('apple-render-sm').width} height={im('apple-render-sm').height} loading="lazy" decoding="async" />
+        <img src={im('apple-render-sm').src} srcset={im('apple-render-sm').srcset} sizes={im('apple-render-sm').srcset && SIZES.half} alt={im('apple-render-sm').alt} width={im('apple-render-sm').width} height={im('apple-render-sm').height} loading="lazy" decoding="async" />
       </div>
     </div>
   </section>

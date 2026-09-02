@@ -5,7 +5,7 @@
  */
 import Icon from './Icon.astro';
 import { FLAVORS, DIET_TAGS, formatPrice, unitPrice, type Product } from '~/data/products';
-import { img, imgSrc } from '~/data/images';
+import { img, imgSrc, imgSrcset, SIZES } from '~/data/images';
 
 interface Props {
   product: Product;
@@ -44,7 +44,7 @@ const badge = p.badge || (p.bestseller ? 'Bestseller' : p.new ? 'New' : '');
 >
   <div class={`pc__media ${image.fit === 'contain' ? 'is-contain' : ''}`}>
     {badge && <span class="badge">{badge}</span>}
-    <img src={imgSrc(p.images[0])} alt={image.alt} width={image.width} height={image.height} loading={loading} decoding="async" />
+    <img src={imgSrc(p.images[0])} srcset={imgSrcset(p.images[0])} sizes={imgSrcset(p.images[0]) && SIZES.card} alt={image.alt} width={image.width} height={image.height} loading={loading} decoding="async" />
   </div>
   <div class="pc__body">
     <h3 class="pc__name">

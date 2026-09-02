@@ -2,12 +2,11 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { PRODUCTS, FLAVORS, DIET_TAGS } from '~/data/products';
-import { img, imgSrc } from '~/data/images';
+import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
 import { FAQS } from '~/data/faq';
 import { faqPage } from '~/lib/schema';
 
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 
 /** Export markets are whatever site.ts lists outside the home market. */
 const exportMarkets = [...new Set(site.retailers.filter((r) => r.country !== site.country).map((r) => r.country))];
@@ -80,7 +79,7 @@ const mailHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wh
     </div>
     <div class="hero__media" data-reveal>
       <div class="frame ws-hero__img">
-        <img src={im('retail-boxes').src} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+        <img src={im('retail-boxes').src} srcset={im('retail-boxes').srcset} sizes={im('retail-boxes').srcset && SIZES.half} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
       </div>
       <div class="hero__float hero__float--a"><strong>Maxima</strong><span>on shelves across Latvia</span></div>
       <div class="hero__float hero__float--b"><strong>{exportCount}</strong><span>export markets in the EU</span></div>
@@ -120,7 +119,7 @@ const mailHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wh
   <section class="section band" aria-labelledby="why-title">
     <div class="container split">
       <div class="frame frame--4x5 rounded ws-why__img" data-reveal>
-        <img src={im('hero-bars').src} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('hero-bars').src} srcset={im('hero-bars').srcset} sizes={im('hero-bars').srcset && SIZES.third} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">Why it sells</p>
@@ -243,7 +242,7 @@ const mailHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wh
   <section class="section container" aria-labelledby="pl-title">
     <div class="split split--rev">
       <div class="frame frame--4x5 rounded" data-reveal>
-        <img src={im('gift-box').src} alt={im('gift-box').alt} width={im('gift-box').width} height={im('gift-box').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('gift-box').src} srcset={im('gift-box').srcset} sizes={im('gift-box').srcset && SIZES.third} alt={im('gift-box').alt} width={im('gift-box').width} height={im('gift-box').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">Private label</p>
@@ -355,7 +354,7 @@ const mailHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wh
 
       <aside class="ws-enq__aside" data-reveal>
         <div class="frame frame--3x2 rounded ws-aside__img">
-          <img src={im('lifestyle-desk').src} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="lazy" decoding="async" class="img-cover" />
+          <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.third} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="lazy" decoding="async" class="img-cover" />
         </div>
         <div class="ws-aside__card">
           <div class="feat__icon"><Icon name="mail" size={22} /></div>

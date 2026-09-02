@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
 import { PRODUCTS, COLLECTIONS, formatThreshold } from '~/data/products';
-import { img, imgSrc, RENDER_BG } from '~/data/images';
+import { img, imgSrc, RENDER_BG, im, imgSrcset, SIZES } from '~/data/images';
 import { ARTICLES_SORTED } from '~/data/journal';
 import { FAQS } from '~/data/faq';
 import { site } from '~/data/site';
@@ -14,7 +14,6 @@ const origin = originOf(Astro.site);
 const best = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 4);
 const homeFaqs = FAQS.filter((f) => ['product', 'nutrition', 'orders'].includes(f.group)).slice(0, 5);
 const tiles = COLLECTIONS.filter((c) => c.key !== 'applite');
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a bar', 'Made in Riga', 'Recipe from 1888', 'Ships across the EU', 'Egg white, nothing else'];
 ---
 <Base
@@ -50,8 +49,8 @@ const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a 
       </div>
       <div class="hero__media">
         <div class="hero__stage" aria-hidden="true">
-          <img class="hero__pack hero__pack--b" src={im("packshot-berry").src} alt="" width="2000" height="2000" loading="eager" decoding="async" />
-          <img class="hero__pack hero__pack--a" src={im("packshot-classic").src} alt={im("packshot-classic").alt} width="2000" height="2000" loading="eager" fetchpriority="high" decoding="async" />
+          <img class="hero__pack hero__pack--b" src={im("packshot-berry").src} srcset={im("packshot-berry").srcset} sizes={im("packshot-berry").srcset && SIZES.half} alt="" width="2000" height="2000" loading="eager" decoding="async" />
+          <img class="hero__pack hero__pack--a" src={im("packshot-classic").src} srcset={im("packshot-classic").srcset} sizes={im("packshot-classic").srcset && SIZES.half} alt={im("packshot-classic").alt} width="2000" height="2000" loading="eager" fetchpriority="high" decoding="async" />
         </div>
         <div class="hero__float hero__float--a"><strong>97 kcal</strong><span>per 35 g bar</span></div>
         <div class="hero__float hero__float--b"><strong>2</strong><span>ingredients: apples, egg white</span></div>
@@ -93,7 +92,7 @@ const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a 
         </div>
       </div>
       <div class="render__media" data-reveal>
-        <img src={im('apple-split').src} alt={im('apple-split').alt} width={im('apple-split').width} height={im('apple-split').height} loading="lazy" decoding="async" />
+        <img src={im('apple-split').src} srcset={im('apple-split').srcset} sizes={im('apple-split').srcset && SIZES.half} alt={im('apple-split').alt} width={im('apple-split').width} height={im('apple-split').height} loading="lazy" decoding="async" />
       </div>
     </div>
   </section>
@@ -109,17 +108,17 @@ const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a 
     </div>
     <div class="trio" data-reveal>
       <article class="feat feat--img">
-        <div class="frame frame--3x2"><img src={im('apples-orchard').src} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" /></div>
+        <div class="frame frame--3x2"><img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes={im('apples-orchard').srcset && SIZES.third} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" /></div>
         <h3>Antonovka apples <span class="muted">99%</span></h3>
         <p>A tart, aromatic northern apple with lots of pectin. That is what lets the purée set without gelatine and taste like fruit rather than sugar.</p>
       </article>
       <article class="feat feat--img">
-        <div class="frame frame--3x2"><img src={im('process-oven').src} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" /></div>
+        <div class="frame frame--3x2"><img src={im('process-oven').src} srcset={im('process-oven').srcset} sizes={im('process-oven').srcset && SIZES.third} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" /></div>
         <h3>Egg white <span class="muted">1%</span></h3>
         <p>Whipped into the purée to trap air. It is why pastila is light and springy instead of a dense fruit leather.</p>
       </article>
       <article class="feat feat--img">
-        <div class="frame frame--3x2"><img src={im('flourless-bar').src} alt={im('flourless-bar').alt} width={im('flourless-bar').width} height={im('flourless-bar').height} loading="lazy" decoding="async" /></div>
+        <div class="frame frame--3x2"><img src={im('flourless-bar').src} srcset={im('flourless-bar').srcset} sizes={im('flourless-bar').srcset && SIZES.third} alt={im('flourless-bar').alt} width={im('flourless-bar').width} height={im('flourless-bar').height} loading="lazy" decoding="async" /></div>
         <h3>Berries &amp; spice <span class="muted">optional</span></h3>
         <p>Blueberry, cranberry, cherry, lingonberry, black currant, cinnamon, pine nuts. Whole fruit, not “natural flavouring”.</p>
       </article>
@@ -174,7 +173,7 @@ const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a 
     <div class="grid grid--3 tiles" data-reveal>
       {tiles.map((c) => (
         <a class="ct" href={`/shop/${c.key}/`} style={`--ct-accent:${c.accent}`}>
-          <img src={imgSrc(c.image)} alt="" width={img(c.image).width} height={img(c.image).height} loading="lazy" decoding="async" />
+          <img src={imgSrc(c.image)} srcset={imgSrcset(c.image)} sizes={imgSrcset(c.image) && SIZES.tile} alt="" width={img(c.image).width} height={img(c.image).height} loading="lazy" decoding="async" />
           <div class="ct__body"><h3>{c.name}</h3><p>{c.description.split('.')[0]}.</p></div>
         </a>
       ))}
@@ -185,7 +184,7 @@ const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a 
   <section class="section container" aria-labelledby="how-title">
     <div class="split">
       <div class="frame frame--4x5 rounded" data-reveal>
-        <img src={im('pastila-texture').src} alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('pastila-texture').src} srcset={im('pastila-texture').srcset} sizes={im('pastila-texture').srcset && SIZES.third} alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">How it’s made</p>
@@ -226,7 +225,7 @@ const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a 
     <div class="grid grid--3" data-reveal>
       {ARTICLES_SORTED.slice(0, 3).map((a) => (
         <a class="jc" href={`/journal/${a.slug}/`}>
-          <div class="frame frame--3x2"><img src={imgSrc(a.image)} alt="" width={img(a.image).width} height={img(a.image).height} loading="lazy" decoding="async" /></div>
+          <div class="frame frame--3x2"><img src={imgSrc(a.image)} srcset={imgSrcset(a.image)} sizes={imgSrcset(a.image) && SIZES.third} alt="" width={img(a.image).width} height={img(a.image).height} loading="lazy" decoding="async" /></div>
           <div class="jc__meta">{a.readMinutes} min read</div>
           <h3>{a.title}</h3>
           <p>{a.description}</p>

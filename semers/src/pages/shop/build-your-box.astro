@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { productBySlug, FLAVORS, formatPrice } from '~/data/products';
-import { img, imgSrc } from '~/data/images';
+import { img, imgSrc, imgSmall } from '~/data/images';
 
 const SIZE = 6;
 const DISCOUNT = 0.1;
@@ -13,7 +13,7 @@ const items = sources.flatMap((p) =>
     name: `${p.name} ${FLAVORS[v.key].label}`,
     sub: `${p.weightGrams} g · ${p.kcalPerUnit} kcal · ${formatPrice(v.price ?? p.price)}`,
     price: v.price ?? p.price,
-    image: imgSrc(p.images[0]),
+    image: imgSmall(p.images[0]),
     weight: p.weightGrams,
     color: FLAVORS[v.key].color,
     group: p.name,

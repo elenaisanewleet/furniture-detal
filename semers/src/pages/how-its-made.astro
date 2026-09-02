@@ -1,13 +1,12 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { img, imgSrc, RENDER_BG } from '~/data/images';
+import { imgSrc, RENDER_BG, im, SIZES } from '~/data/images';
 import { formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 import { originOf } from '~/lib/origin';
 
 const origin = originOf(Astro.site);
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const abs = (k: string) => {
   const s = imgSrc(k);
   return s.startsWith('http') ? s : new URL(s, origin).toString();
@@ -116,7 +115,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom);
   </section>
   <div class="container">
     <div class="frame frame--xl hiw-hero__img" data-reveal>
-      <img src={im('apples-orchard').src} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+      <img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes={im('apples-orchard').srcset && SIZES.half} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
     </div>
   </div>
 
@@ -135,7 +134,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom);
     <div class="process">
       <aside class="process__aside" data-reveal>
         <div class="frame frame--4x5 rounded">
-          <img src={im('pastila-texture').src} alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
+          <img src={im('pastila-texture').src} srcset={im('pastila-texture').srcset} sizes={im('pastila-texture').srcset && SIZES.third} alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
         </div>
         <p class="small muted process__cap">The cut face of a loaf: thin sheets of whipped apple, dried, stacked and pressed. Every line you can see is a stage on the right.</p>
       </aside>
@@ -154,7 +153,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom);
   <section class="section band" aria-labelledby="air-title">
     <div class="container split">
       <div class="frame frame--1x1 rounded" data-reveal>
-        <img src={im('process-oven').src} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('process-oven').src} srcset={im('process-oven').srcset} sizes={im('process-oven').srcset && SIZES.third} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">The one per cent</p>
@@ -173,7 +172,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom);
 
   <!-- ============================== CUT ONE OPEN ============================== -->
   <section class="open" style={`--render-bg:${RENDER_BG}`} aria-labelledby="open-title">
-    <img class="open__img" src={im('apple-render-wide').src} alt={im('apple-render-wide').alt} width={im('apple-render-wide').width} height={im('apple-render-wide').height} loading="lazy" decoding="async" />
+    <img class="open__img" src={im('apple-render-wide').src} srcset={im('apple-render-wide').srcset} sizes={im('apple-render-wide').srcset && SIZES.half} alt={im('apple-render-wide').alt} width={im('apple-render-wide').width} height={im('apple-render-wide').height} loading="lazy" decoding="async" />
     <div class="container open__in">
       <div class="open__copy" data-reveal>
         <p class="eyebrow">Transparency</p>
@@ -223,7 +222,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom);
   <section class="section band" aria-labelledby="keep-title">
     <div class="container split split--rev">
       <div class="frame frame--1x1 rounded" data-reveal>
-        <img src={im('pastila-block').src} alt={im('pastila-block').alt} width={im('pastila-block').width} height={im('pastila-block').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('pastila-block').src} srcset={im('pastila-block').srcset} sizes={im('pastila-block').srcset && SIZES.third} alt={im('pastila-block').alt} width={im('pastila-block').width} height={im('pastila-block').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">Quality and shelf life</p>

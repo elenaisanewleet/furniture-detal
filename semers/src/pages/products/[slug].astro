@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
 import { PRODUCTS, FLAVORS, DIET_TAGS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, formatThreshold } from '~/data/products';
-import { img, imgSrc } from '~/data/images';
+import { img, imgSrc, im, imgSmall, imgSrcset, SIZES } from '~/data/images';
 import { productSchema, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { site } from '~/data/site';
@@ -14,7 +14,7 @@ export function getStaticPaths() {
 const { product: p } = Astro.props as { product: Product };
 const col = collectionByKey(p.collection)!;
 const origin = originOf(Astro.site);
-const gallery = p.images.map((k) => ({ key: k, ...img(k), src: imgSrc(k) }));
+const gallery = p.images.map((k) => ({ key: k, ...im(k), small: imgSmall(k) }));
 const first = p.variants[0];
 const addPayload = JSON.stringify({
   slug: p.slug,
@@ -92,7 +92,7 @@ const rows: [string, string][] = [
             <div class="gal__thumbs" role="group" aria-label="Product images">
               {gallery.map((g, i) => (
                 <button type="button" data-gal-thumb data-src={g.src} data-alt={g.alt} data-fit={g.fit || 'cover'} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Image ${i + 1} of ${gallery.length}`}>
-                  <img src={g.src} alt="" width="72" height="72" loading="lazy" decoding="async" />
+                  <img src={g.small} alt="" width="72" height="72" loading="lazy" decoding="async" />
                 </button>
               ))}
             </div>
@@ -193,7 +193,7 @@ const rows: [string, string][] = [
     <section class="pdp__story section--tight">
       <div class="split">
         <div class="frame frame--4x5 rounded">
-          <img src={imgSrc('pastila-texture')} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
+          <img src={imgSrc('pastila-texture')} srcset={imgSrcset('pastila-texture')} sizes={imgSrcset('pastila-texture') && SIZES.half} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
         </div>
         {noAddedSugar ? (
           <div>
@@ -251,7 +251,7 @@ const rows: [string, string][] = [
 
   <div class="sticky-buy" data-sticky-buy>
     <div class="sticky-buy__in container">
-      <img class="sticky-buy__img" src={gallery[0].src} alt="" width="48" height="48" loading="lazy" />
+      <img class="sticky-buy__img" src={gallery[0].small} alt="" width="48" height="48" loading="lazy" />
       <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price)}</span> · <span data-variant-name>{FLAVORS[first.key].label}</span></span></div>
       <button class="btn" type="button" data-add={addPayload}>Add to box</button>
     </div>

@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { ARTICLES, ARTICLES_SORTED, type Article } from '~/data/journal';
-import { img, imgSrc } from '~/data/images';
+import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
 import { formatThreshold } from '~/data/products';
 import { article as articleSchema } from '~/lib/schema';
@@ -16,7 +16,6 @@ const origin = originOf(Astro.site);
 const href = `/journal/${a.slug}/`;
 const canonicalUrl = `${origin}${href}`;
 const freeFrom = formatThreshold(site.shipping.freeFrom);
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const hero = im(a.image);
 
 /* ---- Body: written separately into src/data/articles/<slug>.ts. Never crash if it is not there yet. ---- */
@@ -129,7 +128,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
     <!-- ============================== HERO IMAGE ============================== -->
     <div class="container">
       <div class="frame frame--16x9 art__hero" data-reveal>
-        <img src={hero.src} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+        <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.half} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
       </div>
     </div>
 
@@ -168,7 +167,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
           </nav>
         )}
         <aside class="art__shop" aria-labelledby="shop-title">
-          <div class="frame frame--1x1 art__shop-img"><img src={shopcard.src} alt="" width={shopcard.width} height={shopcard.height} loading="lazy" decoding="async" /></div>
+          <div class="frame frame--1x1 art__shop-img"><img src={shopcard.src} srcset={shopcard.srcset} sizes={shopcard.srcset && SIZES.third} alt="" width={shopcard.width} height={shopcard.height} loading="lazy" decoding="async" /></div>
           <p class="eyebrow">From the bakery</p>
           <h2 id="shop-title" class="art__shop-title">The bar these notes are about.</h2>
           <ul class="ticks small">
@@ -194,7 +193,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
           <div class="grid grid--3" data-reveal>
             {others.map((o) => (
               <a class="jc" href={`/journal/${o.slug}/`}>
-                <div class="frame frame--3x2"><img src={im(o.image).src} alt="" width={im(o.image).width} height={im(o.image).height} loading="lazy" decoding="async" /></div>
+                <div class="frame frame--3x2"><img src={im(o.image).src} srcset={im(o.image).srcset} sizes={im(o.image).srcset && SIZES.third} alt="" width={im(o.image).width} height={im(o.image).height} loading="lazy" decoding="async" /></div>
                 <div class="jc__meta"><time datetime={o.date}>{fmtDate(o.date)}</time> · {o.readMinutes} min read</div>
                 <h3>{o.title}</h3>
                 <p>{o.description}</p>

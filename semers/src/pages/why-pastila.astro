@@ -1,13 +1,12 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { img, imgSrc, RENDER_BG } from '~/data/images';
+import { RENDER_BG, im, SIZES } from '~/data/images';
 import { FAQS } from '~/data/faq';
 import { site } from '~/data/site';
 import { formatThreshold } from '~/data/products';
 import { faqPage } from '~/lib/schema';
 
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** Five nutrition / product questions from the shared FAQ, in the order a first-time reader asks them. */
@@ -66,7 +65,7 @@ const ideas = [
     </div>
     <div class="hero-media" data-reveal>
       <div class="frame frame--16x9">
-        <img src={im('lifestyle-desk').src} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+        <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.half} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
       </div>
     </div>
     <div class="trust" data-reveal>
@@ -81,7 +80,7 @@ const ideas = [
   <section class="section container" aria-labelledby="what-title">
     <div class="split">
       <div class="frame frame--1x1 rounded" data-reveal>
-        <img src={im('pastila-macro').src} alt={im('pastila-macro').alt} width={im('pastila-macro').width} height={im('pastila-macro').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('pastila-macro').src} srcset={im('pastila-macro').srcset} sizes={im('pastila-macro').srcset && SIZES.third} alt={im('pastila-macro').alt} width={im('pastila-macro').width} height={im('pastila-macro').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">What pastila is</p>
@@ -132,7 +131,7 @@ const ideas = [
   <section class="dark" style={`--dark-bg:${RENDER_BG}`} aria-labelledby="label-title">
     <div class="container dark__grid">
       <div class="dark__media" data-reveal>
-        <img src={im('apple-split').src} alt={im('apple-split').alt} width={im('apple-split').width} height={im('apple-split').height} loading="lazy" decoding="async" />
+        <img src={im('apple-split').src} srcset={im('apple-split').srcset} sizes={im('apple-split').srcset && SIZES.half} alt={im('apple-split').alt} width={im('apple-split').width} height={im('apple-split').height} loading="lazy" decoding="async" />
       </div>
       <div class="dark__copy" data-reveal>
         <p class="eyebrow">The whole label</p>
@@ -193,7 +192,7 @@ const ideas = [
   <section class="section band--honey" aria-labelledby="who-title">
     <div class="container who">
       <div class="frame frame--1x1 rounded" data-reveal>
-        <img src={im('flatlay-lunchbox').src} alt={im('flatlay-lunchbox').alt} width={im('flatlay-lunchbox').width} height={im('flatlay-lunchbox').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('flatlay-lunchbox').src} srcset={im('flatlay-lunchbox').srcset} sizes={im('flatlay-lunchbox').srcset && SIZES.third} alt={im('flatlay-lunchbox').alt} width={im('flatlay-lunchbox').width} height={im('flatlay-lunchbox').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">Who it’s for</p>
@@ -228,7 +227,7 @@ const ideas = [
     </div>
     <div class="ways">
       <div class="frame frame--4x5 rounded" data-reveal>
-        <img src={im('pastila-slices').src} alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('pastila-slices').src} srcset={im('pastila-slices').srcset} sizes={im('pastila-slices').srcset && SIZES.third} alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div>
         <ol class="ideas" data-reveal>

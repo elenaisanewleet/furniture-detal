@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
 import { COLLECTIONS, productsInCollection, type Collection } from '~/data/products';
-import { img, imgSrc } from '~/data/images';
+import { img, imgSrc, im, imgSrcset, SIZES } from '~/data/images';
 import { itemList } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
@@ -14,7 +14,7 @@ const { collection: c } = Astro.props as { collection: Collection };
 const products = productsInCollection(c.key);
 const others = COLLECTIONS.filter((x) => x.key !== c.key);
 const origin = originOf(Astro.site);
-const hero = { ...img(c.image), src: imgSrc(c.image) };
+const hero = im(c.image);
 const isZephyr = c.key === 'zephyr';
 /** Shelf life differs by format (zephyr 3 months, meringues 9), so the tick reads from the catalogue. */
 const months = products.map((p) => p.shelfLifeMonths);
@@ -40,7 +40,7 @@ const shelfLine =
       <p class="lead">{c.intro}</p>
     </div>
     <div class={`col-hero__media ${hero.fit === 'contain' ? 'is-contain' : ''}`}>
-      <img src={hero.src} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" />
+      <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.half} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" />
     </div>
   </section>
 
@@ -68,7 +68,7 @@ const shelfLine =
           <li><Icon name="check" /> Free shipping over €25</li>
         </ul>
       </div>
-      <div class="frame frame--4x5 rounded"><img src={imgSrc('pastila-texture')} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" /></div>
+      <div class="frame frame--4x5 rounded"><img src={imgSrc('pastila-texture')} srcset={imgSrcset('pastila-texture')} sizes={imgSrcset('pastila-texture') && SIZES.half} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" /></div>
     </div>
   </section>
 </Base>

@@ -1,13 +1,12 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { img, imgSrc } from '~/data/images';
+import { im, SIZES } from '~/data/images';
 import { FAQS, type Faq } from '~/data/faq';
 import { site } from '~/data/site';
 import { formatThreshold } from '~/data/products';
 import { faqPage } from '~/lib/schema';
 
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** Groups in reading order. `related` feeds the side column of each group. */
@@ -127,7 +126,7 @@ const hero = im('pastila-slices');
         </ul>
       </div>
       <div class="frame frame--4x5 rounded faq-hero__media" data-reveal>
-        <img src={hero.src} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+        <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.third} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
       </div>
     </div>
   </section>

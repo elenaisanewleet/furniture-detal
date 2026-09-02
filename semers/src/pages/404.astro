@@ -1,11 +1,11 @@
 ---
 import Base from '~/layouts/Base.astro';
-import { img, imgSrc } from '~/data/images';
-const im = { ...img('apple-render-sm'), src: imgSrc('apple-render-sm') };
+import { im as image, SIZES } from '~/data/images';
+const im = image('apple-render-sm');
 ---
 <Base title="Page not found" description="That page fell off the tree." canonical="/404/" noindex>
   <section class="container nf">
-    <div class="nf__img" style={`background:${im.bg}`}><img src={im.src} alt={im.alt} width={im.width} height={im.height} loading="eager" decoding="async" /></div>
+    <div class="nf__img" style={`background:${im.bg}`}><img src={im.src} srcset={im.srcset} sizes={im.srcset && SIZES.half} alt={im.alt} width={im.width} height={im.height} loading="eager" decoding="async" /></div>
     <div>
       <p class="eyebrow">404</p>
       <h1>That page fell off the tree.</h1>

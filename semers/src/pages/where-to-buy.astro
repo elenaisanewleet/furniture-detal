@@ -1,13 +1,12 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { img, imgSrc } from '~/data/images';
+import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
 import { formatThreshold } from '~/data/products';
 import { FAQS } from '~/data/faq';
 import { faqPage } from '~/lib/schema';
 
-const im = (k: string) => ({ ...img(k), src: imgSrc(k) });
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 const suggestHref = `mailto:${site.email}?subject=${encodeURIComponent('Store suggestion for Semers')}`;
 
@@ -60,7 +59,7 @@ const faqs = pick.flatMap((q) => {
   </section>
   <div class="container">
     <div class="frame frame--xl wtb-hero__img" data-reveal>
-      <img src={im('lifestyle-desk').src} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+      <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.half} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
     </div>
     <div class="trust" data-reveal>
       <div><Icon name="cart" size={22} /><div><strong>Maxima &amp; Barbora</strong><span>On shelves and delivered across Latvia</span></div></div>
@@ -159,7 +158,7 @@ const faqs = pick.flatMap((q) => {
         </div>
       </div>
       <div class="frame cta-band__img">
-        <img src={im('retail-boxes').src} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('retail-boxes').src} srcset={im('retail-boxes').srcset} sizes={im('retail-boxes').srcset && SIZES.half} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
     </div>
   </section>
@@ -184,7 +183,7 @@ const faqs = pick.flatMap((q) => {
   <section class="section container" aria-labelledby="post-title">
     <div class="split">
       <div class="frame frame--4x5 rounded" data-reveal>
-        <img src={im('hero-bars').src} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('hero-bars').src} srcset={im('hero-bars').srcset} sizes={im('hero-bars').srcset && SIZES.third} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div data-reveal>
         <p class="eyebrow">Not near you?</p>
