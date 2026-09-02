@@ -51,7 +51,8 @@
 .pc__name a::after { content: ''; position: absolute; inset: 0; z-index: 1; }
 .pc__hook { font-size: var(--fs-sm); color: var(--fg-2); }
 .pc__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; font-size: var(--fs-xs); color: var(--fg-3); }
-.pc__meta span + span::before { content: '·'; margin-right: 0.4rem; }
+.pc__meta span { white-space: nowrap; }
+.pc__meta span:not(:last-child)::after { content: '·'; margin-left: 0.4rem; color: var(--fg-3); }
 .pc__foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: auto; padding-top: 0.5rem; }
 .pc__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; font-weight: 700; font-variant-numeric: tabular-nums; }
 .pc__price s { color: var(--fg-3); font-weight: 400; font-size: var(--fs-sm); }
