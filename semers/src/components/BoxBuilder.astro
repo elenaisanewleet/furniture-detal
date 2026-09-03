@@ -100,7 +100,7 @@ const pct = Math.round(discount * 100);
       <ul class="builder__picked small" data-builder-list></ul>
       <div class="co__row co__total"><span>{ui.boxPrice}</span><span><s class="muted small" data-builder-was></s> <span class="num" data-builder-price>{formatPrice(0, locale)}</span></span></div>
       <button class="btn btn--lg btn--block" type="button" data-builder-add disabled>{ui.addBoxToCart}</button>
-      <p class="tiny muted">{ui.boxNote(pct, formatPrice(minPrice), formatPrice(minPrice / size), formatThreshold(site.shipping.freeFrom, locale))}</p>
+      <p class="tiny muted">{ui.boxNote(pct, formatPrice(minPrice, locale), formatPrice(minPrice / size, locale), formatThreshold(site.shipping.freeFrom, locale))}</p>
     </div>
   </aside>
 </section>

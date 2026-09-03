@@ -53,17 +53,38 @@ const collect = async (root, skip = []) => {
 const words = (list) => list.reduce((n, e) => n + e.text.split(/\s+/).length, 0);
 
 /*
+ * A sentence with a price in it does not read the same on both pages: English
+ * writes "over €25", Latvian "over 25 €". Comparing them literally would call
+ * an untranslated sentence translated, purely because the number beside it
+ * moved. Money is replaced by a placeholder on both sides, so the words are
+ * what decides.
+ */
+const NORM_MONEY = /€\s?\d+(?:[.,]\d+)*|\d+(?:[.,]\d+)*\s?€/g;
+const norm = (t) => t.replace(NORM_MONEY, '¤');
+
+/*
  * "Still English" needs both halves of the comparison. A localised page is full
  * of prose that is not English — that is the point — so a string counts only if
  * it also appears on the English pages. That is the definition: the same words,
  * unchanged, on both.
  */
-const english = await collect(ROOT, LOCALES);
+const englishRaw = await collect(ROOT, LOCALES);
+const english = new Set([...englishRaw.keys()].map(norm));
+/** Every string any page produces, in any language. */
+const onAnyPage = await collect(ROOT);
+const memories = {};
 const found = {};
 for (const locale of LOCALES) {
+  memories[locale] = JSON.parse(await readFile(join('src/i18n', `prose.${locale}.json`), 'utf-8').catch(() => '{}'));
   try {
     const all = await collect(join(ROOT, locale));
-    found[locale] = [...all.values()].filter((e) => english.has(e.text));
+    /*
+     * A string the memory has an entry for is handled, even when that entry is
+     * the English itself: "35 g" is "35 g" in Latvian, and a translator saying
+     * so is a decision, not a gap. Without this the same few dozen units would
+     * be reported as missing on every run, and a real gap would be lost in them.
+     */
+    found[locale] = [...all.values()].filter((e) => english.has(norm(e.text)) && !(e.text in memories[locale]));
   } catch {
     console.log(`no pages under ${ROOT}/${locale} — skipping`);
   }
@@ -79,7 +100,7 @@ if (!present.length) process.exit(0);
 const everywhere = found[present[0]].filter((e) => present.every((l) => found[l].some((x) => x.text === e.text)));
 const shared = new Set(everywhere.map((e) => e.text));
 
-console.log(`${english.size} English strings on the site`);
+console.log(`${englishRaw.size} English strings on the site`);
 console.log(`still English in every language: ${everywhere.length} (${words(everywhere)} words)`);
 for (const l of present) {
   const only = found[l].filter((e) => !shared.has(e.text));
@@ -88,11 +109,20 @@ for (const l of present) {
 
 for (const locale of present) {
   const path = join('src/i18n', `prose.${locale}.json`);
-  const memory = JSON.parse(await readFile(path, 'utf-8').catch(() => '{}'));
-  const keys = Object.keys(memory);
+  const keys = Object.keys(memories[locale]);
   if (!keys.length) continue;
   // A key that no English page produces cannot ever apply.
-  const dead = keys.filter((k) => !english.has(k));
+  /*
+   * A key is dead when neither it nor its translation appears on any page.
+   *
+   * Both halves are needed. A sentence with a price in it is keyed by what the
+   * localised page says rather than by the English, so checking only the English
+   * tree would call those keys dead — and a key that is working has replaced
+   * itself on the page, so looking for the key alone would call every successful
+   * entry dead too. What is left is the real thing: a translation for a sentence
+   * that no longer exists.
+   */
+  const dead = keys.filter((k) => !englishRaw.has(k) && !onAnyPage.has(k) && !onAnyPage.has(memories[locale][k]));
   console.log(`${path}: ${keys.length} entries` + (dead.length ? `, ${dead.length} matching nothing on any page` : ''));
   dead.slice(0, 5).forEach((k) => console.log(`    unused: ${JSON.stringify(k.slice(0, 66))}`));
   if (dead.length > 5) console.log(`    … and ${dead.length - 5} more`);

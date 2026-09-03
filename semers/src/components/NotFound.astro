@@ -8,17 +8,22 @@
  * one copy of the markup.
  */
 import { im as image, SIZES } from '~/data/images';
+import { stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+
 const im = image('apple-render-sm');
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
 ---
 <section class="container nf">
   <div class="nf__img" style={`background:${im.bg}`}><img src={im.src} srcset={im.srcset} sizes={im.srcset && SIZES.half} alt={im.alt} width={im.width} height={im.height} loading="eager" decoding="async" /></div>
   <div>
     <p class="eyebrow">404</p>
-    <h1>That page fell off the tree.</h1>
-    <p class="lead">The link is old, or the address has a typo. Everything worth eating is still here.</p>
+    <h1>{ui.notFoundHead}</h1>
+    <p class="lead">{ui.notFoundLead}</p>
     <div class="cluster mt-4">
-      <a class="btn" href="/shop/">Shop all products</a>
-      <a class="btn btn--ghost" href="/">Home</a>
+      <a class="btn" href="/shop/">{ui.notFoundShop}</a>
+      <a class="btn btn--ghost" href="/">{ui.notFoundHome}</a>
     </div>
   </div>
 </section>

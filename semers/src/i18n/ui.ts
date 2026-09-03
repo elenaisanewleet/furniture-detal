@@ -26,6 +26,12 @@ const en = {
   shopAll: 'Shop all',
   breadcrumb: 'Breadcrumb',
   homeCrumb: 'Home',
+  /* The 404 page. Its own strings, because it is built as a page per language. */
+  notFoundTitle: 'Page not found',
+  notFoundHead: 'That page fell off the tree.',
+  notFoundLead: 'The link is old, or the address has a typo. Everything worth eating is still here.',
+  notFoundShop: 'Shop all products',
+  notFoundHome: 'Home',
   /* Rendered only on the translated legal pages; English has no discrepancy to resolve. */
   governingLanguage: 'This is a translation. If it differs from the English version, the English version governs.',
   governingLanguageLink: 'Read the English version',
@@ -287,6 +293,11 @@ const ru: Partialised = {
   shopAll: 'Весь ассортимент',
   breadcrumb: 'Навигационная цепочка',
   homeCrumb: 'Главная',
+  notFoundTitle: 'Страница не найдена',
+  notFoundHead: 'Эта страница упала с ветки.',
+  notFoundLead: 'Ссылка устарела или в адресе опечатка. Всё, что стоит съесть, никуда не делось.',
+  notFoundShop: 'Весь ассортимент',
+  notFoundHome: 'На главную',
   governingLanguage: 'Это перевод. При расхождении с английской версией преимущественную силу имеет английская версия.',
   governingLanguageLink: 'Открыть английскую версию',
 
@@ -525,6 +536,11 @@ const lv: Partialised = {
   shopAll: 'Visas preces',
   breadcrumb: 'Navigācijas ceļš',
   homeCrumb: 'Sākums',
+  notFoundTitle: 'Lapa nav atrasta',
+  notFoundHead: 'Šī lapa nokrita no koka.',
+  notFoundLead: 'Saite ir veca vai adresē ir drukas kļūda. Viss, ko vērts apēst, joprojām ir šeit.',
+  notFoundShop: 'Visas preces',
+  notFoundHome: 'Uz sākumu',
   governingLanguage: 'Šis ir tulkojums. Ja tas atšķiras no versijas angļu valodā, noteicošā ir versija angļu valodā.',
   governingLanguageLink: 'Atvērt versiju angļu valodā',
 

@@ -7,7 +7,11 @@
  */
 import Base from '~/layouts/Base.astro';
 import NotFound from '~/components/NotFound.astro';
+import { stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+
+const ui = t(stripLocale(Astro.url.pathname).locale);
 ---
-<Base title="Page not found" description="That page fell off the tree." noindex>
+<Base title={ui.notFoundTitle} description={ui.notFoundHead} noindex>
   <NotFound />
 </Base>
