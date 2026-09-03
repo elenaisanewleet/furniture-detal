@@ -22,15 +22,25 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
     <link rel="icon" href="/favicon.svg" />
   </head>
   <body>
+    <!--
+      The interface is rendered by the script into #adm, so the page needs a
+      heading of its own: it sits outside #adm, where re-rendering cannot remove
+      it, and announces the page to a screen reader before the script has run.
+    -->
+    <h1 class="adm-sr">Semers — админка</h1>
     <div id="adm" data-catalog={JSON.stringify(catalog)}>
       <div class="adm-boot">Загрузка…</div>
     </div>
+    <noscript>
+      <div class="adm-boot">Админка работает на JavaScript. Включите его, чтобы войти.</div>
+    </noscript>
 
     <!-- is:inline keeps this out of the site-wide bundle: the shop builds all CSS
          into one file (vite build.cssCodeSplit = false), so a processed <style> here
          would ship the whole back office to every storefront visitor. -->
     <style is:inline>
       /* Every rule is nested under #adm anyway, so nothing here can reach the shop. */
+      .adm-sr { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
       #adm {
         --a-bg: #10100e;
         --a-panel: #1a1a17;
