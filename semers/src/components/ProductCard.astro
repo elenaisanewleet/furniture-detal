@@ -67,10 +67,10 @@ const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
     <div class="pc__foot">
       <div>
         <div class="pc__price">
-          <span data-card-price>{formatPrice(p.price)}</span>
-          <s data-card-compare hidden={!p.compareAt}>{p.compareAt ? formatPrice(p.compareAt) : ''}</s>
+          <span data-card-price>{formatPrice(p.price, locale)}</span>
+          <s data-card-compare hidden={!p.compareAt}>{p.compareAt ? formatPrice(p.compareAt, locale) : ''}</s>
         </div>
-        <div class="pc__unit">{unitPrice(p)}</div>
+        <div class="pc__unit">{unitPrice(p, locale)} {ui.per100g}</div>
       </div>
       {p.variants.length > 1 && (
         <div class="pc__swatches" title={flavours} aria-label={`${p.variants.length} flavours: ${flavours}`}>

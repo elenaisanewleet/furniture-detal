@@ -16,7 +16,7 @@ const languages = LOCALES.map((l) => ({ locale: l, href: localePath(path, l), na
 ---
 <header class={`hdr ${transparent ? 'hdr--float' : ''}`} id="hdr">
   <div class="hdr__bar">
-    <span class="hdr__bar-text" set:html={bold(ui.headerBar(formatThreshold(site.shipping.freeFrom)))} />
+    <span class="hdr__bar-text" set:html={bold(ui.headerBar(formatThreshold(site.shipping.freeFrom, locale)))} />
   </div>
   <div class="hdr__main container--wide">
     <button class="hdr__burger" id="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label={ui.openMenu}>

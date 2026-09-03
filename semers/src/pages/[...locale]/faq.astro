@@ -19,7 +19,7 @@ const { locale } = Astro.props as { locale: Locale };
 /** Answers in the language the page is being read in. */
 const LOCAL_FAQS = localizedFaqs(FAQS, locale);
 
-const freeFrom = formatThreshold(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
 /** Groups in reading order. `related` feeds the side column of each group. */
 interface Group {

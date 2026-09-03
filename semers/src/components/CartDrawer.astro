@@ -25,7 +25,7 @@ const upsell = localizedProducts(PRODUCTS, locale)
     return {
       slug: p.slug,
       name: p.name,
-      price: formatPrice(v0.price ?? p.price),
+      price: formatPrice(v0.price ?? p.price, locale),
       image: imgSmall(p.images[0]),
       add: JSON.stringify({ slug: p.slug, name: p.title, variant: v0.key, variantLabel: ui.flavours[v0.key], price: v0.price ?? p.price, image: imgSmall(p.images[0]), weight: p.weightGrams, url: `/products/${p.slug}/` }),
       label: ui.addToBoxAria(p.title),
@@ -41,7 +41,7 @@ const upsell = localizedProducts(PRODUCTS, locale)
     </header>
     <div class="drawer__ship" id="cart-ship" data-free-from={site.shipping.freeFrom}>
       <div class="drawer__bar" aria-hidden="true"><span id="cart-ship-fill"></span></div>
-      <p id="cart-ship-text" set:html={bold(ui.freeShippingOver(formatThreshold(site.shipping.freeFrom)))} />
+      <p id="cart-ship-text" set:html={bold(ui.freeShippingOver(formatThreshold(site.shipping.freeFrom, locale)))} />
       {/* Filled by the cart when one more of something reaches the next volume step. */}
       <p class="drawer__tier" id="cart-tier-text" hidden></p>
       <ul class="drawer__upsell" id="cart-upsell" aria-label={ui.quickAdds} hidden>
@@ -61,7 +61,7 @@ const upsell = localizedProducts(PRODUCTS, locale)
       <a class="btn" href={L('/shop/')} data-cart-close>{ui.shopBestsellers}</a>
     </div>
     <footer class="drawer__foot">
-      <div class="drawer__row"><span>{ui.subtotal}</span><strong id="cart-subtotal" class="num">{formatPrice(0)}</strong></div>
+      <div class="drawer__row"><span>{ui.subtotal}</span><strong id="cart-subtotal" class="num">{formatPrice(0, locale)}</strong></div>
       <p class="tiny muted" style="margin:0">{ui.shippingAtCheckout}</p>
       <a class="btn btn--lg btn--block" href={L('/checkout/')} id="cart-checkout">{ui.checkout} <Icon name="arrow" size={18} class="arrow" /></a>
       <button class="btn btn--ghost btn--block" type="button" data-cart-close>{ui.keepShopping}</button>

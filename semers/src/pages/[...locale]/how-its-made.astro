@@ -7,11 +7,14 @@ import { site } from '~/data/site';
 import { originOf } from '~/lib/origin';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
+
+const { locale } = Astro.props as { locale: Locale };
 
 const origin = originOf(Astro.site);
 const abs = (k: string) => {
@@ -98,7 +101,7 @@ const howTo = {
   })),
 };
 
-const freeFrom = formatThreshold(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 ---
 <Base
   title="How apple pastila is made: baked apples & egg white"

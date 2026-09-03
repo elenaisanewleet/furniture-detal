@@ -9,14 +9,17 @@ import { article as articleSchema } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
 
+const { locale } = Astro.props as { locale: Locale };
+
 const origin = originOf(Astro.site);
-const freeFrom = formatThreshold(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
 /** "12 Aug 2026" from an ISO date, without touching time zones. */
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];

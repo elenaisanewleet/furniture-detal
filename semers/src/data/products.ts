@@ -8,6 +8,7 @@
  * Nutrition values are typical per 100 g for baked-apple pastila and must be
  * verified against the pack before publishing (see `nutrition`).
  */
+import { DEFAULT_LOCALE, LOCALE_META, type Locale } from '~/i18n/config';
 
 export type FlavorKey =
   | 'classic'
@@ -599,17 +600,23 @@ export function collectionByKey(key: string): Collection | undefined {
   return COLLECTIONS.find((c) => c.key === key);
 }
 
-export function formatPrice(eur: number): string {
-  return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(eur);
+/*
+ * Money is formatted for the language the page is in. English writes €4.90;
+ * Russian and Latvian both write 4,90 €. The cart does the same formatting in
+ * the browser from the same locale tag, so a price cannot read one way on the
+ * page and another way in the cart.
+ */
+export function formatPrice(eur: number, locale: Locale = DEFAULT_LOCALE): string {
+  return new Intl.NumberFormat(LOCALE_META[locale].intl, { style: 'currency', currency: 'EUR' }).format(eur);
 }
 
 /** Whole-euro amounts such as the free-shipping threshold read "€25", not "€25.00". */
-export function formatThreshold(eur: number): string {
-  return Number.isInteger(eur) ? `€${eur}` : formatPrice(eur);
+export function formatThreshold(eur: number, locale: Locale = DEFAULT_LOCALE): string {
+  if (!Number.isInteger(eur)) return formatPrice(eur, locale);
+  return new Intl.NumberFormat(LOCALE_META[locale].intl, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(eur);
 }
 
-/** Price per 100 g, e.g. "€4.14 / 100 g". */
-export function unitPrice(p: Product): string {
-  const per100 = (p.price / (p.weightGrams / 100));
-  return `${formatPrice(per100)} / 100 g`;
+/** The price of 100 g, e.g. "€4.14". The "per 100 g" label comes from the dictionary. */
+export function unitPrice(p: Product, locale: Locale = DEFAULT_LOCALE): string {
+  return formatPrice(p.price / (p.weightGrams / 100), locale);
 }

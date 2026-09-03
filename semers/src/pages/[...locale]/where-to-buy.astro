@@ -8,13 +8,16 @@ import { FAQS } from '~/data/faq';
 import { faqPage } from '~/lib/schema';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
 
-const freeFrom = formatThreshold(site.shipping.freeFrom);
+const { locale } = Astro.props as { locale: Locale };
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 const suggestHref = `mailto:${site.email}?subject=${encodeURIComponent('Store suggestion for Semers')}`;
 
 /** Retailers from site.ts, grouped by country in order of first appearance. */

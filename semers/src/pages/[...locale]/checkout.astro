@@ -1,15 +1,18 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { formatThreshold } from '~/data/products';
+import { formatPrice, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
+
+const { locale } = Astro.props as { locale: Locale };
 const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Poland', 'Austria', 'Netherlands', 'Belgium', 'France', 'Italy', 'Spain', 'Sweden', 'Denmark', 'Czechia', 'Bulgaria', 'Other EU'];
 ---
 <Base title="Checkout" description="Place your Semers order." canonical="/checkout/" noindex>
@@ -74,10 +77,10 @@ const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Pola
         <div data-summary-full>
           <ul class="drawer__items co__items" data-summary-rows></ul>
         </div>
-        <div class="co__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>€0.00</strong></div>
+        <div class="co__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>{formatPrice(0, locale)}</strong></div>
         <div class="co__row"><span>Shipping</span><span class="num" data-summary-shipping>—</span></div>
-        <div class="co__row co__total"><span>Total</span><span class="num" data-summary-total>€0.00</span></div>
-        <p class="tiny muted">Free shipping over {formatThreshold(site.shipping.freeFrom)}; otherwise €3.90 (Baltics) — EU courier rates confirmed by e-mail. Prices include VAT.</p>
+        <div class="co__row co__total"><span>Total</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
+        <p class="tiny muted">Free shipping over {formatThreshold(site.shipping.freeFrom, locale)}; otherwise €3.90 (Baltics) — EU courier rates confirmed by e-mail. Prices include VAT.</p>
         <ul class="ticks small">
           <li><Icon name="truck" size={16} /> {site.shipping.note}</li>
           <li><Icon name="shield" size={16} /> Damaged in transit? We replace it.</li>

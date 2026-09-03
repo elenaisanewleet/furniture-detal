@@ -20,6 +20,13 @@ import { readdir, readFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
 const ROOT = process.argv[2] || 'dist';
+/**
+ * Russian and Latvian both write money as "4,90 €". A symbol-first price on one
+ * of those pages is either a formatter called without a locale or a sentence
+ * that was never translated — both render fine and read wrong, which is exactly
+ * the kind of failure nothing else catches.
+ */
+const SYMBOL_FIRST = /€\s?\d/;
 const VOID = new Set(['br', 'img', 'input', 'meta', 'link', 'hr', 'source', 'area', 'col', 'wbr', 'base', 'embed', 'track', 'param']);
 /** Elements the parser must not read as markup. */
 const RAW = new Set(['script', 'style']);
@@ -132,6 +139,13 @@ function checkPage(html, report) {
   }
 }
 
+/** Text a reader sees: tags, script and style bodies, and attributes removed. */
+function visibleText(html) {
+  return html
+    .replace(/<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi, ' ')
+    .replace(/<[^>]*>/g, ' ');
+}
+
 let pages = 0;
 let problems = 0;
 const shown = [];
@@ -139,6 +153,13 @@ for await (const file of walk(ROOT)) {
   pages++;
   const page = '/' + relative(ROOT, file).replace(/index\.html$/, '').replace(/\.html$/, '');
   const html = await readFile(file, 'utf-8');
+  if (/^\/(ru|lv)\//.test(page)) {
+    const hit = SYMBOL_FIRST.exec(visibleText(html));
+    if (hit) {
+      problems++;
+      if (shown.length < 50) shown.push(`${page}: price written symbol-first (${hit[0].trim()}…) — a formatter was called without a locale`);
+    }
+  }
   checkPage(html, (msg) => {
     problems++;
     if (shown.length < 50) shown.push(`${page}: ${msg}`);

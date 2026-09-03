@@ -8,13 +8,16 @@ import { formatThreshold } from '~/data/products';
 import { faqPage } from '~/lib/schema';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
 
-const freeFrom = formatThreshold(site.shipping.freeFrom);
+const { locale } = Astro.props as { locale: Locale };
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
 /** Five nutrition / product questions from the shared FAQ, in the order a first-time reader asks them. */
 const pick = [

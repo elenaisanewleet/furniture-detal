@@ -8,15 +8,18 @@ import { formatThreshold } from '~/data/products';
 import { article as articleSchema } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { withLocales } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
 
 export function getStaticPaths() {
   return withLocales(ARTICLES.map((a) => ({ params: { slug: a.slug }, props: { article: a } })));
 }
+
+const { locale } = Astro.props as { locale: Locale };
 const { article: a } = Astro.props as { article: Article };
 const origin = originOf(Astro.site);
 const href = `/journal/${a.slug}/`;
 const canonicalUrl = `${origin}${href}`;
-const freeFrom = formatThreshold(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 const hero = im(a.image);
 
 /* ---- Body: written separately into src/data/articles/<slug>.ts. Never crash if it is not there yet. ---- */

@@ -7,11 +7,14 @@ import { formatPrice, formatThreshold } from '~/data/products';
 import { originOf } from '~/lib/origin';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
+
+const { locale } = Astro.props as { locale: Locale };
 
 const origin = originOf(Astro.site);
 const path = '/legal/terms/';
@@ -20,9 +23,9 @@ const title = 'Terms and conditions of sale';
 const description =
   'Terms of sale for the Semers web shop: ordering and payment, delivery, the 14-day right of withdrawal, damaged goods, allergens and Latvian consumer law.';
 
-const freeFrom = formatThreshold(site.shipping.freeFrom);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 /** Flat Baltic rate; mirrors data-shipping="3.9" on the checkout page. */
-const flatRate = formatPrice(3.9);
+const flatRate = formatPrice(3.9, locale);
 
 const legalNav = [
   { href: '/legal/privacy/', label: 'Privacy policy' },

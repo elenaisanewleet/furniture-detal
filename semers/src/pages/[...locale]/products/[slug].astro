@@ -68,7 +68,7 @@ const faqs = [
     ? { q: 'Does it contain added sugar?', a: 'No. The sweetness comes from the baked Antonovka apples themselves. Nothing else is added.' }
     : { q: 'Does it contain added sugar?', a: 'Yes. Belevini zephyr is a traditional recipe made with apple purée, egg white, agar and sugar, and the pack says so. Our bars, meringues, dessert squares and Belyov pastila are the no-added-sugar range.' },
   { q: 'How long does it keep?', a: `${p.shelfLifeMonths} months in a cool, dry place. Once opened, enjoy within a few days.` },
-  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatThreshold(site.shipping.freeFrom)} ship free.` },
+  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatThreshold(site.shipping.freeFrom, locale)} ship free.` },
 ];
 
 const rows: [string, string][] = [
@@ -124,9 +124,9 @@ const rows: [string, string][] = [
         <p class="pdp__hook">{p.hook}</p>
 
         <div class="pdp__price">
-          <span class="pdp__amount num" data-price>{formatPrice(first.price ?? p.price)}</span>
-          {p.compareAt && <s class="muted">{formatPrice(p.compareAt)}</s>}
-          <span class="pdp__unit">{p.pack > 1 ? `${formatPrice((first.price ?? p.price) / p.pack)} per piece · ` : ''}{unitPrice(p)} · incl. VAT</span>
+          <span class="pdp__amount num" data-price>{formatPrice(first.price ?? p.price, locale)}</span>
+          {p.compareAt && <s class="muted">{formatPrice(p.compareAt, locale)}</s>}
+          <span class="pdp__unit">{p.pack > 1 ? `${ui.perPiece(formatPrice((first.price ?? p.price) / p.pack, locale))} · ` : ''}{unitPrice(p, locale)} {ui.per100g} · {ui.inclVat}</span>
         </div>
 
         <ul class="pdp__facts" aria-label={ui.keyFacts}>
@@ -158,7 +158,7 @@ const rows: [string, string][] = [
             ].map((t, i) => (
               <button type="button" class={`tier ${i === 0 ? 'is-on' : ''}`} data-tier data-tier-qty={t.qty} data-tier-pct={t.pct} aria-pressed={i === 0 ? 'true' : 'false'}>
                 <b>{t.qty} {t.qty === 1 ? 'pack' : 'packs'}</b>
-                <span class="tier__unit num" data-tier-unit>{formatPrice(((first.price ?? p.price) * (100 - t.pct)) / 100)}</span>
+                <span class="tier__unit num" data-tier-unit>{formatPrice(((first.price ?? p.price) * (100 - t.pct)) / 100, locale)}</span>
                 <span class="tier__note">{t.pct ? `each · save ${t.pct}%` : 'each'}</span>
               </button>
             ))}
@@ -195,7 +195,7 @@ const rows: [string, string][] = [
         )}
 
         <ul class="pdp__trust">
-          <li><Icon name="truck" size={18} /> Free shipping over {formatThreshold(site.shipping.freeFrom)} · ships from Riga in 1–2 business days</li>
+          <li><Icon name="truck" size={18} /> Free shipping over {formatThreshold(site.shipping.freeFrom, locale)} · ships from Riga in 1–2 business days</li>
           <li><Icon name="leaf" size={18} /> {noAddedSugar ? `${ingredientLine}, nothing artificial` : 'Made with sugar and agar, and the label says so'}</li>
           <li><Icon name="clock" size={18} /> Keeps {p.shelfLifeMonths} months — no fridge needed</li>
           <li data-batch hidden><Icon name="apple" size={18} /> <span data-batch-text></span></li>
@@ -229,7 +229,7 @@ const rows: [string, string][] = [
           <details>
             <summary>{ui.shippingReturnsTitle}</summary>
             <div class="acc__body">
-              <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.slice(0, 3).join(', ')} and the rest of the EU.</p>
+              <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom, locale)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.slice(0, 3).join(', ')} and the rest of the EU.</p>
               <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">{ui.fullPolicy}</a>.</p>
             </div>
           </details>
@@ -342,7 +342,7 @@ const rows: [string, string][] = [
   <div class="sticky-buy" data-sticky-buy>
     <div class="sticky-buy__in container">
       <img class="sticky-buy__img" src={gallery[0].small} alt="" width="48" height="48" loading="lazy" />
-      <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price)}</span> · <span data-variant-name>{ui.flavours[first.key]}</span></span></div>
+      <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price, locale)}</span> · <span data-variant-name>{ui.flavours[first.key]}</span></span></div>
       <button class="btn" type="button" data-add={addPayload}>Add to box</button>
     </div>
   </div>
