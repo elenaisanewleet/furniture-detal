@@ -76,7 +76,7 @@ There is one set of pages, rendered three times. The words come from three place
 
 The legal pages are translated too, and each translated one carries a note saying the English version governs if the two disagree.
 
-Where a translator had to choose between two defensible renderings — «контролёр» or «оператор персональных данных» for the GDPR controller, «постамат» or «пакомат» for a parcel locker — the choice and the reasoning are in `docs/translation-notes.md`, keyed by the English sentence so they can be found and changed. Nothing in that file is a known error: every number, date, deadline and allergen statement was checked against the English before it was committed.
+Where a translator had to choose between two defensible renderings — «контролёр» or «оператор персональных данных» for the GDPR controller, «постамат» or «пакомат» for a parcel locker — the choice and the reasoning are in `docs/translation-notes.md` — 375 of them, keyed by the English sentence so they can be found and changed. Nothing in that file is a known error: every number, date, deadline and allergen statement was checked against the English before it was committed.
 
 ## SEO
 

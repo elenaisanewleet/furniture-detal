@@ -80,7 +80,7 @@ Vercel project → Settings → Domains → add `semers.org` and `www.semers.org
 - [ ] Google Search Console: verify, submit `https://semers.org/sitemap-index.xml`.
 - [ ] Payment provider (Stripe Checkout) when ready — see README.
 - [x] Abuse protection for `/api/order`: the endpoint is public and, with Resend configured, e-mails a receipt to whatever address is submitted. It is now limited to 30 submissions an hour per caller (10 for reviews), counted in the database against the edge-set client IP. Far above any real shopper, far below any use worth having. A honeypot hit answers before the allowance is spent, so a bot cannot use up a person's tries, and a limiter that cannot reach its table lets the order through rather than turning a customer away. Add a captcha as well only if that proves insufficient.
-- [ ] Russian and Latvian copy read by someone who speaks it. `docs/translation-notes.md` lists every place a translator had to choose between two defensible renderings; the legal pages are worth a lawyer's eye.
+- [ ] Russian and Latvian copy read by someone who speaks it. `docs/translation-notes.md` lists the 375 places a translator had to choose between two defensible renderings; the legal pages are worth a lawyer's eye.
 - [ ] `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` set on the hosting project (see above). Until `ADMIN_PASSWORD` exists, `/admin/` cannot be logged into at all.
 - [ ] Order receipts go out in English whatever language the customer was reading. Every order now reports that language, so a reply can be written in it by hand; automating it needs Resend templates per language.
 
