@@ -766,6 +766,21 @@ async function adminSettings(request, env) {
   return json(200, { ok: true, settings: next });
 }
 
+/**
+ * Removing a subscriber is not housekeeping, it is Article 17 of the GDPR: an
+ * EU shop has to be able to erase someone on request.
+ */
+async function adminSubscriberDelete(request, env) {
+  const email = s(new URL(request.url).searchParams.get('email'), 160);
+  if (!EMAIL_RE.test(email)) return json(422, { ok: false, reason: 'email' });
+  const res = await db(env).prepare(`DELETE FROM subscribers WHERE email = ?`).bind(email).run();
+  if (!res.meta || !res.meta.changes) return json(404, { ok: false, reason: 'not-found' });
+  // The address itself is the personal data, so the trail records that an
+  // erasure happened without keeping a copy of what was erased.
+  await audit(env, 'subscriber.delete', 'one address erased on request');
+  return json(200, { ok: true });
+}
+
 async function adminSubscribers(request, env) {
   const rows = await db(env).prepare(`SELECT email, created_at, source FROM subscribers ORDER BY created_at DESC LIMIT 2000`).all();
   const list = rows.results || [];
@@ -823,6 +838,7 @@ async function handleAdmin(request, env, path) {
   if (head === 'products' && (request.method === 'GET' || request.method === 'PUT')) return adminProducts(request, env);
   if (head === 'settings' && (request.method === 'GET' || request.method === 'PUT')) return adminSettings(request, env);
   if (head === 'subscribers' && request.method === 'GET') return adminSubscribers(request, env);
+  if (head === 'subscribers' && request.method === 'DELETE') return adminSubscriberDelete(request, env);
   return json(404, { ok: false, reason: 'unknown-route' });
 }
 

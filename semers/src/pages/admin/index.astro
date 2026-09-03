@@ -651,11 +651,15 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
       }
 
       function subscribersView() {
-        const rows = state.subscribers.map((r) => `<tr><td>${esc(r.email)}</td><td class="adm-muted">${when(r.created_at)}</td><td class="adm-muted">${esc(r.source)}</td></tr>`).join('');
+        const rows = state.subscribers
+          .map((r) => `<tr><td>${esc(r.email)}</td><td class="adm-muted">${when(r.created_at)}</td><td class="adm-muted">${esc(r.source)}</td>
+            <td class="adm-num"><button class="adm-btn adm-btn--ghost" type="button" data-sub-delete="${esc(r.email)}" title="Удалить адрес по требованию подписчика (GDPR)">Удалить</button></td></tr>`)
+          .join('');
         return `<div class="adm-panel">
           <h2>Подписчики <span class="adm-muted" style="font-weight:400">— ${state.subscribers.length}</span></h2>
           <p><a class="adm-btn" href="/api/admin/subscribers?format=csv" download>Скачать CSV</a></p>
-          <div class="adm-scroll" style="margin-top:.8rem"><table><thead><tr><th>E-mail</th><th>Когда</th><th>Откуда</th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="adm-muted">Пока никто не подписался.</td></tr>'}</tbody></table></div>
+          <p class="adm-muted">Удалить адрес можно по требованию подписчика — это право на забвение по GDPR.</p>
+          <div class="adm-scroll" style="margin-top:.8rem"><table><thead><tr><th>E-mail</th><th>Когда</th><th>Откуда</th><th></th></tr></thead><tbody>${rows || '<tr><td colspan="4" class="adm-muted">Пока никто не подписался.</td></tr>'}</tbody></table></div>
         </div>`;
       }
 
@@ -817,6 +821,20 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
           try {
             await api(`orders/${encodeURIComponent(id)}`, { method: 'DELETE' });
             toast(`${id} удалён`);
+            await loadTab();
+          } catch (err) {
+            toast(`Не получилось: ${(err as Error).message}`);
+          }
+          return;
+        }
+
+        const delSub = t.closest<HTMLElement>('[data-sub-delete]');
+        if (delSub) {
+          const email = delSub.dataset.subDelete!;
+          if (!confirm(`Удалить ${email} из списка навсегда?`)) return;
+          try {
+            await api(`subscribers?email=${encodeURIComponent(email)}`, { method: 'DELETE' });
+            toast('Адрес удалён');
             await loadTab();
           } catch (err) {
             toast(`Не получилось: ${(err as Error).message}`);
