@@ -24,6 +24,7 @@ const add = JSON.stringify({
   image: imgSrc(p.images[0]),
   weight: p.weightGrams,
   url: `/products/${p.slug}/`,
+  tier: p.collection !== 'gift-sets',
 });
 const flavours = p.variants.map((v) => FLAVORS[v.key].label).join(', ');
 const badge = p.badge || (p.bestseller ? 'Bestseller' : p.new ? 'New' : '');
@@ -32,6 +33,7 @@ const badge = p.badge || (p.bestseller ? 'Bestseller' : p.new ? 'New' : '');
   class={`pc ${compact ? 'pc--compact' : ''}`}
   style={`--pc-accent:${p.accent}`}
   data-product-card
+  data-slug={p.slug}
   data-collection={p.collection}
   data-diet={p.diet.join(' ')}
   data-price={p.price}
@@ -58,8 +60,8 @@ const badge = p.badge || (p.bestseller ? 'Bestseller' : p.new ? 'New' : '');
     <div class="pc__foot">
       <div>
         <div class="pc__price">
-          {formatPrice(p.price)}
-          {p.compareAt && <s>{formatPrice(p.compareAt)}</s>}
+          <span data-card-price>{formatPrice(p.price)}</span>
+          <s data-card-compare hidden={!p.compareAt}>{p.compareAt ? formatPrice(p.compareAt) : ''}</s>
         </div>
         <div class="pc__unit">{unitPrice(p)}</div>
       </div>

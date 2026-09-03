@@ -7,12 +7,40 @@
 
 declare global {
   interface Window {
-    SEMERS: { endpoint: string; freeFrom: number; email: string; whatsapp: string; currency: string };
+    SEMERS: {
+      endpoint: string;
+      freeFrom: number;
+      email: string;
+      whatsapp: string;
+      currency: string;
+      guarantee?: string;
+      guaranteeOn?: boolean;
+      tier1Qty?: number;
+      tier1Pct?: number;
+      tier2Qty?: number;
+      tier2Pct?: number;
+      tiersOn?: boolean;
+      reviewsOn?: boolean;
+    };
     semersCart: Cart;
   }
 }
 
-const CFG = window.SEMERS || { endpoint: '/api/order', freeFrom: 25, email: '', whatsapp: '', currency: 'EUR' };
+const CFG = window.SEMERS || {
+  endpoint: '/api/order',
+  freeFrom: 25,
+  email: '',
+  whatsapp: '',
+  currency: 'EUR',
+  guarantee: '',
+  guaranteeOn: false,
+  tier1Qty: 0,
+  tier1Pct: 0,
+  tier2Qty: 0,
+  tier2Pct: 0,
+  tiersOn: false,
+  reviewsOn: false,
+};
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel);
 const $$ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => Array.from(root.querySelectorAll<T>(sel));
 const fmt = (n: number) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: CFG.currency || 'EUR' }).format(n);
@@ -52,6 +80,39 @@ export interface CartItem {
   weight: number;
   url: string;
   note?: string;
+  /** Volume ladder applies to catalogue lines. Boxes built in the bundle builder already carry their own discount. */
+  tier?: boolean;
+}
+
+/**
+ * Volume ladder, newest values from /api/storefront and otherwise the ones the
+ * page was built with. Pairs are [minimum quantity, percent off], best match wins.
+ */
+let TIERS: [number, number][] = [];
+function readTiers(c: typeof CFG) {
+  TIERS = c.tiersOn === false
+    ? []
+    : ([
+        [Number(c.tier1Qty) || 0, Number(c.tier1Pct) || 0],
+        [Number(c.tier2Qty) || 0, Number(c.tier2Pct) || 0],
+      ].filter(([q, pct]) => q > 1 && pct > 0) as [number, number][]).sort((a, b) => a[0] - b[0]);
+}
+readTiers(CFG);
+
+/** Percent off a single line at this quantity — 0 when the line is not eligible or no step is reached. */
+function tierPct(item: { qty: number; tier?: boolean }) {
+  if (item.tier === false || !TIERS.length) return 0;
+  let pct = 0;
+  for (const [minQty, p] of TIERS) if (item.qty >= minQty) pct = p;
+  return pct;
+}
+/** Per-unit price after the ladder, rounded to the cent so the line total is what the customer is shown. */
+function unitOf(item: { price: number; qty: number; tier?: boolean }) {
+  const pct = tierPct(item);
+  return pct ? Math.round(item.price * (100 - pct)) / 100 : item.price;
+}
+function lineOf(item: { price: number; qty: number; tier?: boolean }) {
+  return Math.round(unitOf(item) * item.qty * 100) / 100;
 }
 
 const KEY = 'semers.cart.v1';
@@ -68,7 +129,7 @@ class Cart {
       const parsed = raw ? (JSON.parse(raw) as CartItem[]) : [];
       this.items = (Array.isArray(parsed) ? parsed : [])
         .filter((i) => i && typeof i.id === 'string' && Number(i.qty) > 0 && Number.isFinite(Number(i.price)))
-        .map((i) => ({ ...i, qty: Math.max(1, Math.min(99, Math.round(Number(i.qty)))), price: Number(i.price) }));
+        .map((i) => ({ ...i, qty: Math.max(1, Math.min(99, Math.round(Number(i.qty)))), price: Number(i.price), tier: i.tier !== false }));
     } catch {
       this.items = [];
     }
@@ -107,7 +168,7 @@ class Cart {
     return this.items.reduce((n, i) => n + i.qty, 0);
   }
   subtotal() {
-    return this.items.reduce((n, i) => n + i.qty * i.price, 0);
+    return this.items.reduce((n, i) => n + lineOf(i), 0);
   }
   weight() {
     return this.items.reduce((n, i) => n + i.qty * (i.weight || 0), 0);
@@ -230,7 +291,7 @@ function renderCart() {
             <button type="button" class="ci__rm" data-rm aria-label="Remove ${esc(i.name)}">Remove</button>
           </div>
         </div>
-        <div class="ci__price">${fmt(i.price * i.qty)}</div>
+        <div class="ci__price">${fmt(lineOf(i))}${tierPct(i) ? `<span class="ci__save">−${tierPct(i)}%</span>` : ''}</div>
       </li>`,
       )
       .join('');
@@ -287,7 +348,7 @@ function renderSummary(root: HTMLElement) {
         <a class="ci__img" href="${esc(i.url)}" aria-label="${esc(i.name)}"><img src="${esc(i.image)}" alt="" width="72" height="72" loading="lazy" /></a>
         <div><div class="ci__name">${esc(i.name)}</div><div class="ci__var">${esc(i.variantLabel)}${i.note ? ` · ${esc(i.note)}` : ''}</div>
         <div class="ci__ctl"><div class="qty" role="group" aria-label="Quantity of ${esc(i.name)}"><button type="button" data-dec aria-label="Decrease quantity of ${esc(i.name)}">−</button><output aria-label="Quantity">${i.qty}</output><button type="button" data-inc aria-label="Increase quantity of ${esc(i.name)}">+</button></div><button type="button" class="ci__rm" data-rm aria-label="Remove ${esc(i.name)}">Remove</button></div></div>
-        <div class="ci__price">${fmt(i.price * i.qty)}</div></li>`,
+        <div class="ci__price">${fmt(lineOf(i))}${tierPct(i) ? `<span class="ci__save">−${tierPct(i)}%</span>` : ''}</div></li>`,
           )
           .join('');
       },
@@ -387,6 +448,7 @@ function parseAdd(el: HTMLElement): Omit<CartItem, 'qty'> | null {
       weight: Number(d.weight || 0),
       url: d.url || `/products/${d.slug}/`,
       note: d.note,
+      tier: d.tier !== false,
     };
   } catch {
     return null;
@@ -830,7 +892,7 @@ if (checkout) {
     const order = {
       type: 'order',
       customer: data,
-      items: cart.items.map((i) => ({ id: i.id, name: i.name, variant: i.variantLabel, note: i.note, qty: i.qty, price: i.price, total: Math.round(i.qty * i.price * 100) / 100 })),
+      items: cart.items.map((i) => ({ id: i.id, name: i.name, variant: [i.variantLabel, tierPct(i) ? `−${tierPct(i)}% for ${i.qty}` : ''].filter(Boolean).join(' · '), note: i.note, qty: i.qty, price: unitOf(i), total: lineOf(i) })),
       subtotal: Math.round(total * 100) / 100,
       shipping,
       shippingNote: quoted ? 'EU courier rate to be quoted by e-mail' : undefined,
@@ -912,3 +974,304 @@ $$('[data-year]').forEach((el) => (el.textContent = String(new Date().getFullYea
 
 renderCart();
 export {};
+
+/* ------------------------------------------------- storefront settings & reviews */
+
+/**
+ * Everything below is the runtime half of the admin: one request that tells the
+ * built page what the owner has changed since it was built — the announcement
+ * strip, the free-shipping threshold, the volume ladder, the promise beside the
+ * button, per-product prices and availability, and the reviews for this product.
+ *
+ * The page is already correct without it: every value has a build-time default,
+ * so a slow or failed request leaves the shop exactly as it shipped.
+ */
+interface StorefrontOverride {
+  price: number | null;
+  compareAt: number | null;
+  inStock: boolean | null;
+  hidden: boolean | null;
+  badge: string;
+  batch: string;
+  note: string;
+}
+interface StorefrontData {
+  settings: Record<string, string | number | boolean>;
+  products: Record<string, StorefrontOverride>;
+  reviews: Record<string, { count: number; avg: number }>;
+}
+
+const STORE_KEY = 'semers.storefront.v1';
+
+/** Rewrite a [data-add] payload in place, keeping every field we did not mean to touch. */
+function patchAdd(el: HTMLElement, patch: Record<string, unknown>) {
+  try {
+    el.dataset.add = JSON.stringify({ ...JSON.parse(el.dataset.add || '{}'), ...patch });
+  } catch {
+    /* a payload we cannot parse is one we must not rewrite */
+  }
+}
+
+function applyAnnouncement(text: string, href: string, on: boolean) {
+  const bar = $('[data-announce]');
+  const slot = $('[data-announce-text]');
+  if (!bar || !slot) return;
+  const show = !!(on && text);
+  bar.hidden = !show;
+  if (!show) return;
+  slot.textContent = '';
+  if (href) {
+    const a = document.createElement('a');
+    a.href = href;
+    a.textContent = text;
+    slot.appendChild(a);
+  } else {
+    slot.textContent = text;
+  }
+}
+
+function applyOverrideToCards(products: Record<string, StorefrontOverride>) {
+  $$<HTMLElement>('[data-product-card][data-slug]').forEach((card) => {
+    const o = products[card.dataset.slug || ''];
+    if (!o) return;
+    if (o.hidden) {
+      card.remove();
+      return;
+    }
+    if (o.price != null) {
+      const el = $('[data-card-price]', card);
+      if (el) el.textContent = fmt(o.price);
+      card.dataset.price = String(o.price);
+      const add = card.querySelector<HTMLElement>('[data-add]');
+      if (add) patchAdd(add, { price: o.price });
+    }
+    const cmp = $<HTMLElement>('[data-card-compare]', card);
+    if (cmp && o.compareAt != null) (cmp.textContent = fmt(o.compareAt)), (cmp.hidden = false);
+    const btn = card.querySelector<HTMLButtonElement>('[data-add]');
+    if (btn && o.inStock === false) {
+      btn.disabled = true;
+      btn.setAttribute('aria-label', 'Sold out');
+      card.classList.add('is-soldout');
+    }
+  });
+}
+
+function applyOverrideToPdp(pdpEl: HTMLElement, o: StorefrontOverride) {
+  const notCard = (el: Element) => !el.closest('[data-product-card]') && !el.matches('input');
+  if (o.price != null) {
+    // The radios carry the price the variant picker reads, so they have to move
+    // with the displayed price or the next flavour click would undo the override.
+    $$<HTMLInputElement>('[data-variant]', pdpEl).forEach((r) => (r.dataset.price = String(o.price)));
+    $$('[data-price]').filter(notCard).forEach((el) => (el.textContent = fmt(o.price as number)));
+    $$('[data-add]').filter(notCard).forEach((el) => patchAdd(el, { price: o.price }));
+    $$<HTMLElement>('[data-tier]', pdpEl).forEach((b) => {
+      const unit = $('[data-tier-unit]', b);
+      const pct = Number(b.dataset.tierPct) || 0;
+      if (unit) unit.textContent = fmt(Math.round((o.price as number) * (100 - pct)) / 100);
+    });
+  }
+  if (o.batch) {
+    const li = $('[data-batch]');
+    const txt = $('[data-batch-text]');
+    if (li && txt) (txt.textContent = o.batch), (li.hidden = false);
+  }
+  if (o.inStock === false) {
+    $$<HTMLButtonElement>('[data-add]')
+      .filter(notCard)
+      .forEach((b) => {
+        b.disabled = true;
+        b.textContent = 'Sold out';
+      });
+    const note = $('[data-guarantee]');
+    if (note) note.textContent = 'This one is out of stock right now — write to us and we will tell you when the next batch is ready.';
+  }
+}
+
+function applyStorefront(data: StorefrontData) {
+  const st = data.settings || {};
+  if (typeof st.freeFrom === 'number' && st.freeFrom > 0) CFG.freeFrom = st.freeFrom;
+  CFG.tiersOn = st.tiersOn !== false;
+  CFG.tier1Qty = Number(st.tier1Qty) || CFG.tier1Qty;
+  CFG.tier1Pct = Number(st.tier1Pct) || CFG.tier1Pct;
+  CFG.tier2Qty = Number(st.tier2Qty) || CFG.tier2Qty;
+  CFG.tier2Pct = Number(st.tier2Pct) || CFG.tier2Pct;
+  readTiers(CFG);
+
+  applyAnnouncement(String(st.announcement || ''), String(st.announcementHref || ''), st.announcementOn === true);
+
+  const promise = $('[data-guarantee]');
+  const promiseText = $('[data-guarantee-text]');
+  if (promise && promiseText) {
+    if (st.guaranteeOn === false) promise.hidden = true;
+    else if (st.guarantee) promiseText.textContent = String(st.guarantee);
+  }
+
+  applyOverrideToCards(data.products || {});
+  const pdpEl = $('[data-pdp][data-slug]');
+  if (pdpEl) {
+    const o = (data.products || {})[pdpEl.dataset.slug || ''];
+    if (o) applyOverrideToPdp(pdpEl, o);
+  }
+  renderCart();
+}
+
+async function syncStorefront() {
+  // The last good answer paints immediately; the network call then corrects it.
+  try {
+    const cached = sessionStorage.getItem(STORE_KEY);
+    if (cached) applyStorefront(JSON.parse(cached) as StorefrontData);
+  } catch {
+    /* a bad cache entry is not worth a broken page */
+  }
+  try {
+    const res = await fetch('/api/storefront', { headers: { accept: 'application/json' } });
+    if (!res.ok) return;
+    const data = (await res.json()) as StorefrontData;
+    applyStorefront(data);
+    try {
+      sessionStorage.setItem(STORE_KEY, JSON.stringify(data));
+    } catch {
+      /* private mode */
+    }
+  } catch {
+    /* offline or no worker: the built-in values already on the page are correct */
+  }
+}
+
+/* ------------------------------------------------------------- pdp: volume ladder */
+
+const ladder = $('[data-tiers]');
+if (ladder) {
+  const qtyIn = $<HTMLInputElement>('[data-qty-input]');
+  const buttons = $$<HTMLButtonElement>('[data-tier]', ladder);
+
+  /** The ladder highlights the step the current quantity has actually reached. */
+  const sync = () => {
+    const q = Math.max(1, Number(qtyIn?.value) || 1);
+    let best = buttons[0];
+    for (const b of buttons) if (q >= (Number(b.dataset.tierQty) || 1)) best = b;
+    buttons.forEach((b) => {
+      b.classList.toggle('is-on', b === best);
+      b.setAttribute('aria-pressed', String(b === best));
+    });
+  };
+
+  buttons.forEach((b) =>
+    b.addEventListener('click', () => {
+      if (qtyIn) qtyIn.value = String(Number(b.dataset.tierQty) || 1);
+      sync();
+      announce(`Quantity set to ${b.dataset.tierQty}`);
+    }),
+  );
+  qtyIn?.addEventListener('input', sync);
+  document.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest('[data-qty-inc], [data-qty-dec]')) sync();
+  });
+
+  // Prices on the ladder follow the flavour the shopper picked.
+  $$<HTMLInputElement>('[data-variant]').forEach((r) =>
+    r.addEventListener('change', () => {
+      const base = Number(r.dataset.price);
+      if (!Number.isFinite(base)) return;
+      buttons.forEach((b) => {
+        const unit = $('[data-tier-unit]', b);
+        const pct = Number(b.dataset.tierPct) || 0;
+        if (unit) unit.textContent = fmt(Math.round(base * (100 - pct)) / 100);
+      });
+    }),
+  );
+  sync();
+}
+
+/* ------------------------------------------------------------------ pdp: reviews */
+
+const reviewsEl = $('[data-reviews]');
+if (reviewsEl) {
+  const slug = $('[data-pdp]')?.dataset.slug || '';
+  const list = $('[data-review-list]', reviewsEl)!;
+  const summary = $('[data-review-summary]', reviewsEl);
+  const emptyNote = $('[data-review-empty]', reviewsEl);
+  const stars = (r: number) => '★★★★★'.slice(0, r) + '☆☆☆☆☆'.slice(0, 5 - r);
+
+  const paint = (data: { count: number; avg: number; reviews: { date: string; rating: number; author: string; city: string; title: string; body: string; verified: boolean; reply: string }[] }) => {
+    if (!data.count) {
+      if (emptyNote) emptyNote.hidden = false;
+      return;
+    }
+    if (emptyNote) emptyNote.hidden = true;
+    if (summary) {
+      summary.hidden = false;
+      summary.innerHTML = `<span class="stars" aria-hidden="true">${stars(Math.round(data.avg))}</span> <strong>${data.avg.toFixed(1)}</strong> out of 5 · ${data.count} review${data.count === 1 ? '' : 's'}`;
+    }
+    list.innerHTML = data.reviews
+      .map(
+        (r) => `<article class="rev">
+          <div class="rev__top">
+            <span class="rev__stars" aria-label="${r.rating} out of 5">${stars(r.rating)}</span>
+            <span class="rev__who">${esc(r.author)}</span>
+            <span class="rev__meta">${esc([r.city, r.date].filter(Boolean).join(' · '))}</span>
+            ${r.verified ? '<span class="rev__verified">Verified purchase</span>' : ''}
+          </div>
+          ${r.title ? `<p class="rev__title">${esc(r.title)}</p>` : ''}
+          <p class="rev__body">${esc(r.body)}</p>
+          ${r.reply ? `<p class="rev__reply"><strong>Semers:</strong> ${esc(r.reply)}</p>` : ''}
+        </article>`,
+      )
+      .join('');
+
+    // Structured data for the rating is only ever emitted from reviews that
+    // exist and are approved — an invented AggregateRating is a manual penalty.
+    const ld = document.createElement('script');
+    ld.type = 'application/ld+json';
+    ld.textContent = JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'AggregateRating',
+      itemReviewed: { '@type': 'Product', name: document.querySelector('h1')?.textContent?.trim() || slug },
+      ratingValue: data.avg,
+      reviewCount: data.count,
+      bestRating: 5,
+      worstRating: 1,
+    });
+    document.head.appendChild(ld);
+  };
+
+  if (slug) {
+    const noReviews = () => {
+      if (emptyNote) emptyNote.hidden = false;
+    };
+    fetch(`/api/reviews?slug=${encodeURIComponent(slug)}`)
+      .then((r) => (r.ok ? r.json() : null))
+      // A missing endpoint and an empty product read the same to a shopper:
+      // there is nothing to show yet, and the invitation to be first still stands.
+      .then((d) => (d ? paint(d) : noReviews()))
+      .catch(noReviews);
+  }
+
+  const form = $<HTMLFormElement>('[data-review-form]', reviewsEl);
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!form.reportValidity()) return;
+    const note = $('[data-review-note]', reviewsEl);
+    const btn = form.querySelector<HTMLButtonElement>('[type="submit"]');
+    const data = formData(form);
+    if (data.website) return;
+    if (btn) (btn.disabled = true), (btn.textContent = 'Sending…');
+    try {
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ ...data, slug, rating: Number(data.rating) }),
+      });
+      if (!res.ok) throw new Error(String(res.status));
+      form.reset();
+      if (note) (note.textContent = 'Thank you — we read every review before it appears, so give us a day.'), (note.hidden = false), note.classList.add('notice', 'notice--ok');
+      toast('Review sent for approval');
+    } catch {
+      if (note) (note.textContent = 'That did not send. Please try again, or e-mail us and we will add it by hand.'), (note.hidden = false), note.classList.add('notice', 'notice--err');
+    } finally {
+      if (btn) (btn.disabled = false), (btn.textContent = 'Send review');
+    }
+  });
+}
+
+syncStorefront();

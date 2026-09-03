@@ -25,6 +25,9 @@ const addPayload = JSON.stringify({
   image: gallery[0].src,
   weight: p.weightGrams,
   url: `/products/${p.slug}/`,
+  // Gift sets and multi-packs are already priced as a bundle; stacking the
+  // volume ladder on top of them would discount the same thing twice.
+  tier: p.collection !== 'gift-sets',
 });
 const related = [...productsInCollection(p.collection).filter((x) => x.slug !== p.slug), ...PRODUCTS.filter((x) => x.collection !== p.collection && x.bestseller)].slice(0, 3);
 const multi = p.variants.length > 1;
@@ -89,7 +92,7 @@ const rows: [string, string][] = [
     <meta property="product:availability" content="in stock" />
     <meta property="product:brand" content={p.brand} />
   </Fragment>
-  <article class="pdp container" data-pdp>
+  <article class="pdp container" data-pdp data-slug={p.slug}>
     <div class="pdp__grid">
       <div class="pdp__gallery">
         <div class="gal" style={`--gal-accent:${p.accent}`}>
@@ -140,6 +143,22 @@ const rows: [string, string][] = [
           </fieldset>
         )}
 
+        {site.storefront.tiersOn && !isBundle && (
+          <div class="tiers" data-tiers role="group" aria-label="Quantity discounts">
+            {[
+              { qty: 1, pct: 0 },
+              { qty: site.storefront.tier1Qty, pct: site.storefront.tier1Pct },
+              { qty: site.storefront.tier2Qty, pct: site.storefront.tier2Pct },
+            ].map((t, i) => (
+              <button type="button" class={`tier ${i === 0 ? 'is-on' : ''}`} data-tier data-tier-qty={t.qty} data-tier-pct={t.pct} aria-pressed={i === 0 ? 'true' : 'false'}>
+                <b>{t.qty} {t.qty === 1 ? 'pack' : 'packs'}</b>
+                <span class="tier__unit num" data-tier-unit>{formatPrice(((first.price ?? p.price) * (100 - t.pct)) / 100)}</span>
+                <span class="tier__note">{t.pct ? `each · save ${t.pct}%` : 'each'}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
         <div class="pdp__cta" data-buy-anchor>
           <div class="qty" role="group" aria-label="Quantity">
             <button type="button" data-qty-dec aria-label="Decrease quantity">−</button>
@@ -151,10 +170,17 @@ const rows: [string, string][] = [
           </button>
         </div>
 
+        {site.storefront.guaranteeOn && (
+          <p class="pdp__promise" data-guarantee>
+            <Icon name="shield" size={18} /> <span data-guarantee-text>{site.storefront.guarantee}</span>
+          </p>
+        )}
+
         <ul class="pdp__trust">
           <li><Icon name="truck" size={18} /> Free shipping over {formatThreshold(site.shipping.freeFrom)} · ships from Riga in 1–2 business days</li>
           <li><Icon name="leaf" size={18} /> {noAddedSugar ? `${ingredientLine}, nothing artificial` : 'Made with sugar and agar, and the label says so'}</li>
           <li><Icon name="clock" size={18} /> Keeps {p.shelfLifeMonths} months — no fridge needed</li>
+          <li data-batch hidden><Icon name="apple" size={18} /> <span data-batch-text></span></li>
         </ul>
 
         <div class="pdp__desc prose">
@@ -198,6 +224,43 @@ const rows: [string, string][] = [
         </div>
       </div>
     </div>
+
+    {site.storefront.reviewsOn && (
+      <section class="pdp__reviews section--tight" data-reviews aria-labelledby="pdp-reviews-title">
+        <div class="pdp__revhead">
+          <h2 id="pdp-reviews-title">What people say</h2>
+          <p class="pdp__revsum" data-review-summary hidden></p>
+        </div>
+        <div data-review-list></div>
+        <p class="muted" data-review-empty hidden>No reviews yet. If you have tried {p.name}, yours would be the first.</p>
+        <details class="revform">
+          <summary>Write a review</summary>
+          <form data-review-form novalidate>
+            <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
+            <div class="revform__row">
+              <label>
+                Rating
+                <select name="rating" required>
+                  <option value="5">5 — excellent</option>
+                  <option value="4">4 — good</option>
+                  <option value="3">3 — fine</option>
+                  <option value="2">2 — poor</option>
+                  <option value="1">1 — bad</option>
+                </select>
+              </label>
+              <label>Your name<input type="text" name="author" required maxlength="60" autocomplete="name" /></label>
+              <label>City <span class="muted">(optional)</span><input type="text" name="city" maxlength="60" /></label>
+            </div>
+            <label>Headline <span class="muted">(optional)</span><input type="text" name="title" maxlength="120" /></label>
+            <label>Your review<textarea name="body" required minlength="10" maxlength="2000" rows="4"></textarea></label>
+            <label>E-mail <span class="muted">(not published — only so we can reply)</span><input type="email" name="email" maxlength="160" autocomplete="email" /></label>
+            <p class="tiny muted">We read every review before it appears, so it will not show up straight away.</p>
+            <button class="btn" type="submit">Send review</button>
+            <p class="revform__note" data-review-note hidden></p>
+          </form>
+        </details>
+      </section>
+    )}
 
     <section class="pdp__story section--tight">
       <div class="split">

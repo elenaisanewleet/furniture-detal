@@ -52,6 +52,25 @@ export const site = {
 
   currency: 'EUR',
 
+  /**
+   * Storefront defaults for the parts the owner can change in the admin without
+   * a redeploy. These are what the built pages ship with; /api/storefront
+   * overrides them at runtime once a value has been saved, so the page is
+   * correct before the fetch resolves and correct again after it.
+   */
+  storefront: {
+    /** "Not what you hoped for?" line beside the buy button — the cheapest conversion lever in the research. */
+    guarantee: 'Not what you hoped for? Tell us within 14 days and we refund the order — you keep the box.',
+    guaranteeOn: true,
+    /** Volume ladder: buy this many of one product and the per-unit price drops. */
+    tier1Qty: 3,
+    tier1Pct: 5,
+    tier2Qty: 6,
+    tier2Pct: 10,
+    tiersOn: true,
+    reviewsOn: true,
+  },
+
   /** Order endpoint. Empty = checkout falls back to e-mail/WhatsApp. */
   orderEndpoint: import.meta.env.PUBLIC_ORDER_ENDPOINT || '',
 

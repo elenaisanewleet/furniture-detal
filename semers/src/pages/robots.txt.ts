@@ -10,6 +10,7 @@ export const GET: APIRoute = ({ site }) => {
     'Disallow: /checkout/',
     'Disallow: /order/',
     'Disallow: /api/',
+    'Disallow: /admin/',
     '',
     // Shoppers increasingly ask an assistant instead of a search engine, so the
     // answer engines are named explicitly rather than left to the wildcard.

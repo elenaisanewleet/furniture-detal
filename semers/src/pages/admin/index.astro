@@ -1,0 +1,885 @@
+---
+/**
+ * Back office for the shop owner. Not part of the storefront: no site header,
+ * no footer, noindex, and excluded from the sitemap in astro.config.mjs.
+ *
+ * The page ships the catalogue as build-time data so the product editor can show
+ * what each product costs in the code; everything else is read from and written
+ * to /api/admin/* over fetch. The copy is Russian — this is a tool for the owner,
+ * not a page for customers.
+ */
+import { PRODUCTS, formatPrice } from '~/data/products';
+
+const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.price, priceLabel: formatPrice(p.price) })).sort((a, b) => a.name.localeCompare(b.name, 'en'));
+---
+
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Semers — админка</title>
+    <link rel="icon" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="adm" data-catalog={JSON.stringify(catalog)}>
+      <div class="adm-boot">Загрузка…</div>
+    </div>
+
+    <!-- is:inline keeps this out of the site-wide bundle: the shop builds all CSS
+         into one file (vite build.cssCodeSplit = false), so a processed <style> here
+         would ship the whole back office to every storefront visitor. -->
+    <style is:inline>
+      /* Every rule is nested under #adm anyway, so nothing here can reach the shop. */
+      #adm {
+        --a-bg: #10100e;
+        --a-panel: #1a1a17;
+        --a-line: #2d2d28;
+        --a-ink: #f2efe8;
+        --a-ink-2: #a8a49a;
+        --a-accent: #d8452f;
+        --a-ok: #4a9d6a;
+        --a-warn: #c9922f;
+        --a-radius: 10px;
+        font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        color: var(--a-ink);
+        background: var(--a-bg);
+        min-height: 100vh;
+        -webkit-font-smoothing: antialiased;
+      }
+      #adm *,
+      #adm *::before,
+      #adm *::after {
+        box-sizing: border-box;
+      }
+      #adm .adm-boot {
+        padding: 4rem 1.5rem;
+        text-align: center;
+        color: var(--a-ink-2);
+      }
+      #adm .adm-wrap {
+        max-width: 78rem;
+        margin: 0 auto;
+        padding: 0 1.25rem 5rem;
+      }
+      #adm .adm-top {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1.1rem 0;
+        border-bottom: 1px solid var(--a-line);
+        margin-bottom: 1.5rem;
+      }
+      #adm .adm-brand {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        font-weight: 700;
+        letter-spacing: -0.01em;
+      }
+      #adm .adm-brand span {
+        font-weight: 500;
+        font-size: 0.82rem;
+        color: var(--a-ink-2);
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+      #adm .adm-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+      #adm .adm-tab {
+        border: 1px solid transparent;
+        background: none;
+        color: var(--a-ink-2);
+        padding: 0.45rem 0.8rem;
+        border-radius: 99px;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.9rem;
+      }
+      #adm .adm-tab:hover {
+        color: var(--a-ink);
+        border-color: var(--a-line);
+      }
+      #adm .adm-tab[aria-selected='true'] {
+        background: var(--a-panel);
+        border-color: var(--a-line);
+        color: var(--a-ink);
+        font-weight: 600;
+      }
+      #adm .adm-tab b {
+        display: inline-block;
+        min-width: 1.25rem;
+        margin-left: 0.35rem;
+        padding: 0 0.35rem;
+        border-radius: 99px;
+        background: var(--a-accent);
+        color: #fff;
+        font-size: 0.72rem;
+        text-align: center;
+      }
+      #adm .adm-panel {
+        background: var(--a-panel);
+        border: 1px solid var(--a-line);
+        border-radius: var(--a-radius);
+        padding: 1.15rem;
+      }
+      #adm .adm-panel + .adm-panel {
+        margin-top: 1rem;
+      }
+      #adm h2 {
+        margin: 0 0 0.9rem;
+        font-size: 1.05rem;
+        letter-spacing: -0.01em;
+      }
+      #adm h3 {
+        margin: 0 0 0.35rem;
+        font-size: 0.95rem;
+      }
+      #adm p {
+        margin: 0 0 0.6rem;
+      }
+      #adm .adm-muted {
+        color: var(--a-ink-2);
+        font-size: 0.88rem;
+      }
+      #adm .adm-stats {
+        display: grid;
+        gap: 0.75rem;
+        grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+        margin-bottom: 1rem;
+      }
+      #adm .adm-stat {
+        background: var(--a-panel);
+        border: 1px solid var(--a-line);
+        border-radius: var(--a-radius);
+        padding: 0.9rem 1rem;
+      }
+      #adm .adm-stat dt {
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--a-ink-2);
+        margin-bottom: 0.3rem;
+      }
+      #adm .adm-stat dd {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        letter-spacing: -0.02em;
+      }
+      #adm label {
+        display: block;
+        font-size: 0.82rem;
+        color: var(--a-ink-2);
+        margin-bottom: 0.25rem;
+      }
+      #adm input[type='text'],
+      #adm input[type='number'],
+      #adm input[type='password'],
+      #adm input[type='search'],
+      #adm select,
+      #adm textarea {
+        width: 100%;
+        background: #0c0c0a;
+        border: 1px solid var(--a-line);
+        color: var(--a-ink);
+        border-radius: 8px;
+        padding: 0.5rem 0.65rem;
+        font: inherit;
+      }
+      #adm textarea {
+        min-height: 5rem;
+        resize: vertical;
+      }
+      #adm input:focus-visible,
+      #adm select:focus-visible,
+      #adm textarea:focus-visible,
+      #adm button:focus-visible {
+        outline: 2px solid var(--a-accent);
+        outline-offset: 2px;
+      }
+      #adm .adm-btn {
+        border: 1px solid var(--a-line);
+        background: #26261f;
+        color: var(--a-ink);
+        border-radius: 8px;
+        padding: 0.5rem 0.9rem;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      #adm .adm-btn:hover {
+        border-color: #4a4a42;
+      }
+      #adm .adm-btn--primary {
+        background: var(--a-accent);
+        border-color: var(--a-accent);
+        color: #fff;
+      }
+      #adm .adm-btn--ghost {
+        background: none;
+        font-weight: 500;
+        color: var(--a-ink-2);
+      }
+      #adm .adm-btn[disabled] {
+        opacity: 0.5;
+        cursor: default;
+      }
+      #adm .adm-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        align-items: flex-end;
+      }
+      #adm .adm-row > * {
+        flex: 1 1 8rem;
+        min-width: 0;
+      }
+      #adm .adm-row > .adm-shrink {
+        flex: 0 0 auto;
+      }
+      #adm .adm-scroll {
+        overflow-x: auto;
+      }
+      #adm table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.9rem;
+      }
+      #adm th,
+      #adm td {
+        text-align: left;
+        padding: 0.55rem 0.6rem;
+        border-bottom: 1px solid var(--a-line);
+        vertical-align: top;
+      }
+      #adm th {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--a-ink-2);
+        font-weight: 600;
+      }
+      #adm td.adm-num,
+      #adm th.adm-num {
+        text-align: right;
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
+      #adm .adm-pill {
+        display: inline-block;
+        padding: 0.12rem 0.5rem;
+        border-radius: 99px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        border: 1px solid var(--a-line);
+        white-space: nowrap;
+      }
+      #adm .adm-pill--new {
+        color: #ffd7a0;
+        border-color: #6a5326;
+        background: #2e2413;
+      }
+      #adm .adm-pill--paid,
+      #adm .adm-pill--done,
+      #adm .adm-pill--approved {
+        color: #a9e6c0;
+        border-color: #2f5b40;
+        background: #16281d;
+      }
+      #adm .adm-pill--cancelled,
+      #adm .adm-pill--rejected {
+        color: #f0b3a8;
+        border-color: #6a3227;
+        background: #2c1712;
+      }
+      #adm details.adm-order {
+        border-bottom: 1px solid var(--a-line);
+      }
+      #adm details.adm-order > summary {
+        cursor: pointer;
+        padding: 0.65rem 0.4rem;
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 0.75rem;
+        align-items: baseline;
+      }
+      #adm details.adm-order > summary::-webkit-details-marker {
+        display: none;
+      }
+      #adm .adm-order__body {
+        padding: 0.25rem 0.4rem 1.1rem;
+        display: grid;
+        gap: 0.75rem;
+      }
+      #adm .adm-kv {
+        display: grid;
+        grid-template-columns: minmax(6rem, auto) 1fr;
+        gap: 0.2rem 0.75rem;
+        font-size: 0.9rem;
+      }
+      #adm .adm-kv dt {
+        color: var(--a-ink-2);
+      }
+      #adm .adm-kv dd {
+        margin: 0;
+      }
+      #adm .adm-note {
+        border-left: 3px solid var(--a-accent);
+        padding: 0.5rem 0.75rem;
+        background: #1f1f1a;
+        border-radius: 0 8px 8px 0;
+        font-size: 0.9rem;
+      }
+      #adm .adm-toast {
+        position: fixed;
+        left: 50%;
+        bottom: 1.25rem;
+        transform: translateX(-50%);
+        background: #26261f;
+        border: 1px solid var(--a-line);
+        color: var(--a-ink);
+        padding: 0.6rem 1rem;
+        border-radius: 99px;
+        font-size: 0.9rem;
+        box-shadow: 0 8px 30px rgb(0 0 0 / 0.5);
+        z-index: 40;
+      }
+      #adm .adm-login {
+        max-width: 22rem;
+        margin: 12vh auto 0;
+      }
+      #adm .adm-err {
+        color: #f0b3a8;
+        font-size: 0.88rem;
+      }
+      #adm .adm-stars {
+        color: var(--a-warn);
+        letter-spacing: 0.08em;
+      }
+      #adm .adm-grid2 {
+        display: grid;
+        gap: 0.85rem;
+        grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+      }
+      #adm .adm-switch {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        color: var(--a-ink);
+      }
+      #adm .adm-switch input {
+        width: auto;
+      }
+      @media (max-width: 40rem) {
+        #adm .adm-top {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
+    </style>
+
+    <script>
+      type Health = { ok: boolean; configured: boolean; database?: boolean };
+      type OrderItem = { name?: string; variant?: string; qty?: number; price?: number; total?: number; note?: string };
+      type Order = {
+        id: string; created_at: string; type: string; status: string; name: string; email: string; phone: string;
+        country: string; city: string; postcode: string; address: string; delivery: string; note: string; gift: string;
+        currency: string; subtotal: number; shipping: number; total: number; items: OrderItem[]; admin_note: string; page: string;
+      };
+      type Review = { id: number; created_at: string; slug: string; rating: number; author: string; city: string; title: string; body: string; email: string; status: string; verified: number; reply: string };
+      type Override = { slug: string; price: number | null; compare_at: number | null; in_stock: number | null; hidden: number | null; badge: string; batch: string; note: string };
+      type Settings = Record<string, string | number | boolean>;
+
+      const root = document.getElementById('adm')!;
+      const catalog: { slug: string; name: string; price: number; priceLabel: string }[] = JSON.parse(root.dataset.catalog || '[]');
+      const esc = (v: unknown) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+      const eur = (v: number) => new Intl.NumberFormat('ru-RU', { style: 'currency', currency: 'EUR' }).format(Number(v) || 0);
+      const when = (iso: string) => new Date(iso).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+      const stars = (n: number) => '★★★★★'.slice(0, n) + '☆☆☆☆☆'.slice(0, 5 - n);
+
+      const STATUS_RU: Record<string, string> = { new: 'новый', confirmed: 'подтверждён', paid: 'оплачен', shipped: 'отправлен', done: 'закрыт', cancelled: 'отменён' };
+      const TYPE_RU: Record<string, string> = { order: 'заказ', newsletter: 'подписка', contact: 'вопрос', wholesale: 'опт' };
+      const REVIEW_RU: Record<string, string> = { pending: 'на модерации', approved: 'опубликован', rejected: 'отклонён' };
+
+      let toastTimer: number | undefined;
+      function toast(msg: string) {
+        document.querySelector('#adm .adm-toast')?.remove();
+        const el = document.createElement('div');
+        el.className = 'adm-toast';
+        el.setAttribute('role', 'status');
+        el.textContent = msg;
+        root.appendChild(el);
+        window.clearTimeout(toastTimer);
+        toastTimer = window.setTimeout(() => el.remove(), 3200);
+      }
+
+      /** Every mutating call carries the header the CSRF check looks for; a cross-site form cannot add it. */
+      async function api(path: string, init: RequestInit = {}) {
+        const res = await fetch(`/api/admin/${path}`, {
+          ...init,
+          headers: { 'content-type': 'application/json', 'x-semers-admin': '1', ...(init.headers || {}) },
+        });
+        let data: any = null;
+        try {
+          data = await res.json();
+        } catch {
+          data = null;
+        }
+        if (res.status === 401) {
+          state.authed = false;
+          render();
+          throw new Error('auth');
+        }
+        if (!res.ok) throw Object.assign(new Error(data?.reason || `HTTP ${res.status}`), { data });
+        return data;
+      }
+
+      const state = {
+        authed: false,
+        configured: true,
+        database: true,
+        tab: 'orders' as 'orders' | 'reviews' | 'products' | 'settings' | 'subscribers',
+        stats: null as any,
+        orders: [] as Order[],
+        orderFilter: { status: '', type: '', q: '' },
+        reviews: [] as Review[],
+        reviewFilter: '',
+        overrides: [] as Override[],
+        settings: {} as Settings,
+        subscribers: [] as { email: string; created_at: string; source: string }[],
+        loading: false,
+      };
+
+      /* ------------------------------------------------------------- rendering */
+
+      function loginView(error = '') {
+        return `<div class="adm-wrap"><form class="adm-panel adm-login" data-login>
+          <h2>Semers — вход в админку</h2>
+          ${state.configured ? '' : '<p class="adm-err">Пароль администратора ещё не задан на сервере. Добавьте секрет ADMIN_PASSWORD и передеплойте сайт.</p>'}
+          <label for="adm-pw">Пароль</label>
+          <input id="adm-pw" name="password" type="password" autocomplete="current-password" required ${state.configured ? '' : 'disabled'} />
+          ${error ? `<p class="adm-err" style="margin-top:.6rem">${esc(error)}</p>` : ''}
+          <p class="adm-muted" style="margin:.75rem 0 0">Сессия живёт 12 часов.</p>
+          <button class="adm-btn adm-btn--primary" style="margin-top:.75rem" type="submit" ${state.configured ? '' : 'disabled'}>Войти</button>
+        </form></div>`;
+      }
+
+      function statsView() {
+        const s = state.stats;
+        if (!s) return '';
+        return `<dl class="adm-stats">
+          <div class="adm-stat"><dt>Заказов всего</dt><dd>${s.orders}</dd></div>
+          <div class="adm-stat"><dt>Сумма всего</dt><dd>${eur(s.revenue)}</dd></div>
+          <div class="adm-stat"><dt>За 30 дней</dt><dd>${s.last30.orders} · ${eur(s.last30.revenue)}</dd></div>
+          <div class="adm-stat"><dt>Новых заказов</dt><dd>${s.byStatus?.new || 0}</dd></div>
+          <div class="adm-stat"><dt>Отзывов на модерации</dt><dd>${s.pendingReviews}</dd></div>
+        </dl>`;
+      }
+
+      function orderView(o: Order) {
+        const items = (o.items || [])
+          .map((i) => `<tr><td>${esc(i.name)}${i.variant ? ` <span class="adm-muted">(${esc(i.variant)})</span>` : ''}${i.note ? `<br><span class="adm-muted">${esc(i.note)}</span>` : ''}</td><td class="adm-num">${Number(i.qty) || 0}</td><td class="adm-num">${eur(Number(i.total) || 0)}</td></tr>`)
+          .join('');
+        const addr = [o.address, o.postcode, o.city, o.country].filter(Boolean).join(', ');
+        return `<details class="adm-order" data-order="${esc(o.id)}">
+          <summary>
+            <span><strong>${esc(o.id)}</strong> · ${esc(TYPE_RU[o.type] || o.type)} · ${esc(o.name || o.email)}<br><span class="adm-muted">${when(o.created_at)}</span></span>
+            <span style="text-align:right"><span class="adm-pill adm-pill--${esc(o.status)}">${esc(STATUS_RU[o.status] || o.status)}</span><br><strong>${eur(o.total)}</strong></span>
+          </summary>
+          <div class="adm-order__body">
+            ${items ? `<div class="adm-scroll"><table><thead><tr><th>Позиция</th><th class="adm-num">Кол-во</th><th class="adm-num">Сумма</th></tr></thead><tbody>${items}</tbody>
+              <tfoot><tr><td class="adm-muted">Товары / доставка</td><td class="adm-num">${eur(o.subtotal)}</td><td class="adm-num">${o.shipping ? eur(o.shipping) : 'бесплатно'}</td></tr></tfoot></table></div>` : ''}
+            <dl class="adm-kv">
+              <dt>E-mail</dt><dd><a href="mailto:${esc(o.email)}" style="color:inherit">${esc(o.email)}</a></dd>
+              ${o.phone ? `<dt>Телефон</dt><dd>${esc(o.phone)}</dd>` : ''}
+              ${addr ? `<dt>Адрес</dt><dd>${esc(addr)}</dd>` : ''}
+              ${o.delivery ? `<dt>Доставка</dt><dd>${esc(o.delivery)}</dd>` : ''}
+              ${o.note ? `<dt>Комментарий</dt><dd>${esc(o.note)}</dd>` : ''}
+              ${o.gift ? `<dt>Подарок</dt><dd>${esc(o.gift)}</dd>` : ''}
+              ${o.page ? `<dt>Страница</dt><dd>${esc(o.page)}</dd>` : ''}
+            </dl>
+            <div class="adm-row">
+              <div><label for="st-${esc(o.id)}">Статус</label>
+                <select id="st-${esc(o.id)}" data-order-status>${Object.entries(STATUS_RU).map(([k, v]) => `<option value="${k}"${k === o.status ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
+              <div style="flex:3 1 16rem"><label for="an-${esc(o.id)}">Заметка для себя</label>
+                <input id="an-${esc(o.id)}" type="text" data-order-note value="${esc(o.admin_note)}" placeholder="Счёт выставлен, ждём оплату…" /></div>
+              <div class="adm-shrink"><button class="adm-btn" type="button" data-order-save>Сохранить</button></div>
+            </div>
+          </div>
+        </details>`;
+      }
+
+      function ordersView() {
+        const f = state.orderFilter;
+        const rows = state.orders.length ? state.orders.map(orderView).join('') : `<p class="adm-muted" style="padding:1rem 0">Пока ничего не пришло.</p>`;
+        return `${statsView()}
+        <div class="adm-panel">
+          <h2>Заказы и заявки</h2>
+          <div class="adm-row" style="margin-bottom:.9rem">
+            <div><label for="f-st">Статус</label><select id="f-st" data-filter="status"><option value="">все</option>${Object.entries(STATUS_RU).map(([k, v]) => `<option value="${k}"${f.status === k ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
+            <div><label for="f-ty">Тип</label><select id="f-ty" data-filter="type"><option value="">все</option>${Object.entries(TYPE_RU).map(([k, v]) => `<option value="${k}"${f.type === k ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
+            <div style="flex:2 1 12rem"><label for="f-q">Поиск</label><input id="f-q" type="search" data-filter="q" value="${esc(f.q)}" placeholder="номер, имя или e-mail" /></div>
+            <div class="adm-shrink"><button class="adm-btn" type="button" data-orders-reload>Обновить</button></div>
+          </div>
+          ${rows}
+        </div>`;
+      }
+
+      function reviewView(r: Review) {
+        const p = catalog.find((c) => c.slug === r.slug);
+        return `<div class="adm-panel" data-review="${r.id}" style="margin-top:.75rem">
+          <div class="adm-row" style="align-items:baseline">
+            <div style="flex:2 1 14rem"><h3>${esc(r.title || p?.name || r.slug)}</h3>
+              <p class="adm-muted" style="margin:0"><span class="adm-stars">${stars(r.rating)}</span> · ${esc(r.author)}${r.city ? `, ${esc(r.city)}` : ''} · ${when(r.created_at)}<br>${esc(p?.name || r.slug)}${r.email ? ` · ${esc(r.email)}` : ''}</p></div>
+            <div class="adm-shrink"><span class="adm-pill adm-pill--${esc(r.status)}">${esc(REVIEW_RU[r.status] || r.status)}</span></div>
+          </div>
+          <label for="rb-${r.id}" style="margin-top:.7rem">Текст отзыва</label>
+          <textarea id="rb-${r.id}" data-review-body>${esc(r.body)}</textarea>
+          <label for="rr-${r.id}" style="margin-top:.6rem">Ответ магазина (необязательно)</label>
+          <input id="rr-${r.id}" type="text" data-review-reply value="${esc(r.reply)}" placeholder="Спасибо! Рады, что понравилось." />
+          <div class="adm-row" style="margin-top:.7rem">
+            <label class="adm-switch adm-shrink"><input type="checkbox" data-review-verified ${r.verified ? 'checked' : ''} /> подтверждённая покупка</label>
+            <div class="adm-shrink" style="margin-left:auto;display:flex;gap:.4rem;flex-wrap:wrap">
+              <button class="adm-btn adm-btn--primary" type="button" data-review-action="approved">Опубликовать</button>
+              <button class="adm-btn" type="button" data-review-action="rejected">Отклонить</button>
+              <button class="adm-btn adm-btn--ghost" type="button" data-review-delete>Удалить</button>
+            </div>
+          </div>
+        </div>`;
+      }
+
+      function reviewsView() {
+        const list = state.reviews.length ? state.reviews.map(reviewView).join('') : `<p class="adm-muted" style="padding:1rem 0">Отзывов нет.</p>`;
+        return `<div class="adm-panel">
+          <h2>Отзывы</h2>
+          <p class="adm-muted">Отзыв с сайта попадает сюда и на витрине не появляется, пока вы его не опубликуете. Здесь же можно завести отзыв руками — например, тот, что пришёл в письме или прозвучал в магазине.</p>
+          <div class="adm-row" style="margin-top:.8rem">
+            <div><label for="rf">Показать</label><select id="rf" data-review-filter>
+              <option value="">все</option>${Object.entries(REVIEW_RU).map(([k, v]) => `<option value="${k}"${state.reviewFilter === k ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
+            <div class="adm-shrink"><button class="adm-btn" type="button" data-reviews-reload>Обновить</button></div>
+          </div>
+        </div>
+        <form class="adm-panel" data-review-new>
+          <h3>Добавить отзыв вручную</h3>
+          <div class="adm-row" style="margin-top:.5rem">
+            <div style="flex:2 1 12rem"><label for="nr-slug">Товар</label><select id="nr-slug" name="slug" required>${catalog.map((c) => `<option value="${esc(c.slug)}">${esc(c.name)}</option>`).join('')}</select></div>
+            <div><label for="nr-rating">Оценка</label><select id="nr-rating" name="rating">${[5, 4, 3, 2, 1].map((v) => `<option value="${v}">${stars(v)}</option>`).join('')}</select></div>
+            <div><label for="nr-author">Имя</label><input id="nr-author" name="author" type="text" required maxlength="60" /></div>
+            <div><label for="nr-city">Город</label><input id="nr-city" name="city" type="text" maxlength="60" /></div>
+          </div>
+          <label for="nr-body" style="margin-top:.6rem">Текст</label>
+          <textarea id="nr-body" name="body" required minlength="10" maxlength="2000"></textarea>
+          <div class="adm-row" style="margin-top:.6rem">
+            <label class="adm-switch adm-shrink"><input type="checkbox" name="verified" checked /> подтверждённая покупка</label>
+            <div class="adm-shrink" style="margin-left:auto"><button class="adm-btn adm-btn--primary" type="submit">Опубликовать сразу</button></div>
+          </div>
+        </form>
+        ${list}`;
+      }
+
+      function productsView() {
+        const byslug = new Map(state.overrides.map((o) => [o.slug, o]));
+        const rows = catalog
+          .map((c) => {
+            const o = byslug.get(c.slug) || ({} as Partial<Override>);
+            const changed = byslug.has(c.slug);
+            return `<tr data-product="${esc(c.slug)}"${changed ? ' style="background:#1f1f1a"' : ''}>
+              <td><strong>${esc(c.name)}</strong><br><span class="adm-muted">${esc(c.slug)} · в коде ${esc(c.priceLabel)}</span></td>
+              <td><input type="number" step="0.01" min="0" data-p="price" value="${o.price ?? ''}" placeholder="${c.price.toFixed(2)}" style="width:6.5rem" /></td>
+              <td><input type="number" step="0.01" min="0" data-p="compare_at" value="${o.compare_at ?? ''}" placeholder="—" style="width:6.5rem" /></td>
+              <td><select data-p="in_stock" style="width:8rem"><option value=""${o.in_stock == null ? ' selected' : ''}>как в коде</option><option value="1"${o.in_stock === 1 ? ' selected' : ''}>в наличии</option><option value="0"${o.in_stock === 0 ? ' selected' : ''}>нет в наличии</option></select></td>
+              <td><input type="text" data-p="badge" value="${esc(o.badge || '')}" placeholder="напр. Новинка" style="width:8rem" maxlength="40" /></td>
+              <td><input type="text" data-p="batch" value="${esc(o.batch || '')}" placeholder="напр. урожай 2026" style="width:10rem" maxlength="60" /></td>
+              <td class="adm-num"><button class="adm-btn" type="button" data-product-save>Сохранить</button></td>
+            </tr>`;
+          })
+          .join('');
+        return `<div class="adm-panel">
+          <h2>Товары</h2>
+          <p class="adm-muted">Пустое поле значит «как в коде». Изменения применяются на витрине сразу, без пересборки сайта. Заказы вы всё равно подтверждаете вручную, так что цена в заявке перепроверяется при подтверждении.</p>
+          <div class="adm-scroll" style="margin-top:.8rem"><table>
+            <thead><tr><th>Товар</th><th>Цена €</th><th>Старая цена €</th><th>Наличие</th><th>Плашка</th><th>Партия / урожай</th><th></th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table></div>
+        </div>`;
+      }
+
+      function settingsView() {
+        const s = state.settings as any;
+        const bool = (k: string, label: string) => `<label class="adm-switch"><input type="checkbox" data-s="${k}" ${s[k] ? 'checked' : ''} /> ${label}</label>`;
+        return `<form class="adm-panel" data-settings>
+          <h2>Настройки витрины</h2>
+          <p class="adm-muted">Применяются на всех страницах сразу после сохранения.</p>
+
+          <h3 style="margin-top:1.1rem">Полоса с объявлением</h3>
+          <div class="adm-row">
+            <div style="flex:3 1 18rem"><label for="s-ann">Текст</label><input id="s-ann" type="text" data-s="announcement" value="${esc(s.announcement || '')}" maxlength="120" placeholder="Бесплатная доставка по Латвии до конца недели" /></div>
+            <div><label for="s-annh">Ссылка</label><input id="s-annh" type="text" data-s="announcementHref" value="${esc(s.announcementHref || '')}" maxlength="200" placeholder="/shop/" /></div>
+          </div>
+          <div style="margin-top:.5rem">${bool('announcementOn', 'показывать полосу')}</div>
+
+          <h3 style="margin-top:1.2rem">Доставка и гарантия</h3>
+          <div class="adm-row">
+            <div><label for="s-ff">Бесплатная доставка от, €</label><input id="s-ff" type="number" min="0" max="500" step="1" data-s="freeFrom" value="${Number(s.freeFrom) || 0}" /></div>
+            <div style="flex:3 1 18rem"><label for="s-g">Текст гарантии рядом с кнопкой</label><input id="s-g" type="text" data-s="guarantee" value="${esc(s.guarantee || '')}" maxlength="200" /></div>
+          </div>
+          <div style="margin-top:.5rem">${bool('guaranteeOn', 'показывать гарантию на карточке товара')}</div>
+
+          <h3 style="margin-top:1.2rem">Скидка за количество</h3>
+          <p class="adm-muted">Считается на витрине и в корзине автоматически, когда в заказе набирается нужное число штук одного товара.</p>
+          <div class="adm-row">
+            <div><label for="s-t1q">Ступень 1, шт.</label><input id="s-t1q" type="number" min="2" max="48" data-s="tier1Qty" value="${Number(s.tier1Qty) || 3}" /></div>
+            <div><label for="s-t1p">Скидка 1, %</label><input id="s-t1p" type="number" min="0" max="50" data-s="tier1Pct" value="${Number(s.tier1Pct) || 0}" /></div>
+            <div><label for="s-t2q">Ступень 2, шт.</label><input id="s-t2q" type="number" min="3" max="99" data-s="tier2Qty" value="${Number(s.tier2Qty) || 6}" /></div>
+            <div><label for="s-t2p">Скидка 2, %</label><input id="s-t2p" type="number" min="0" max="50" data-s="tier2Pct" value="${Number(s.tier2Pct) || 0}" /></div>
+          </div>
+          <div style="margin-top:.5rem;display:grid;gap:.35rem">${bool('tiersOn', 'включить скидку за количество')}${bool('reviewsOn', 'показывать блок отзывов на карточке товара')}</div>
+
+          <div style="margin-top:1.1rem"><button class="adm-btn adm-btn--primary" type="submit">Сохранить настройки</button></div>
+        </form>`;
+      }
+
+      function subscribersView() {
+        const rows = state.subscribers.map((r) => `<tr><td>${esc(r.email)}</td><td class="adm-muted">${when(r.created_at)}</td><td class="adm-muted">${esc(r.source)}</td></tr>`).join('');
+        return `<div class="adm-panel">
+          <h2>Подписчики <span class="adm-muted" style="font-weight:400">— ${state.subscribers.length}</span></h2>
+          <p><a class="adm-btn" href="/api/admin/subscribers?format=csv" download>Скачать CSV</a></p>
+          <div class="adm-scroll" style="margin-top:.8rem"><table><thead><tr><th>E-mail</th><th>Когда</th><th>Откуда</th></tr></thead><tbody>${rows || '<tr><td colspan="3" class="adm-muted">Пока никто не подписался.</td></tr>'}</tbody></table></div>
+        </div>`;
+      }
+
+      function shellView() {
+        const pending = state.stats?.pendingReviews || 0;
+        const tab = (id: string, label: string, badge = 0) =>
+          `<button class="adm-tab" type="button" role="tab" data-tab="${id}" aria-selected="${state.tab === id}">${label}${badge ? `<b>${badge}</b>` : ''}</button>`;
+        const body =
+          state.tab === 'orders' ? ordersView()
+          : state.tab === 'reviews' ? reviewsView()
+          : state.tab === 'products' ? productsView()
+          : state.tab === 'settings' ? settingsView()
+          : subscribersView();
+        return `<div class="adm-wrap">
+          <header class="adm-top">
+            <div class="adm-brand">Semers <span>админка</span></div>
+            <nav class="adm-tabs" role="tablist">
+              ${tab('orders', 'Заказы')}${tab('reviews', 'Отзывы', pending)}${tab('products', 'Товары')}${tab('settings', 'Настройки')}${tab('subscribers', 'Подписчики')}
+              <button class="adm-tab" type="button" data-logout>Выйти</button>
+            </nav>
+          </header>
+          ${state.database ? '' : '<div class="adm-panel" style="margin-bottom:1rem"><p class="adm-err" style="margin:0">База данных не подключена: в app.manifest.json нужен <code>"db": true</code>, затем передеплой. Пока её нет, заказы и отзывы не сохраняются.</p></div>'}
+          ${body}
+        </div>`;
+      }
+
+      function render() {
+        root.innerHTML = state.authed ? shellView() : loginView();
+      }
+
+      /* --------------------------------------------------------------- loading */
+
+      async function loadTab() {
+        if (state.loading) return;
+        state.loading = true;
+        try {
+          if (state.tab === 'orders') {
+            const qs = new URLSearchParams();
+            if (state.orderFilter.status) qs.set('status', state.orderFilter.status);
+            if (state.orderFilter.type) qs.set('type', state.orderFilter.type);
+            if (state.orderFilter.q) qs.set('q', state.orderFilter.q);
+            const [stats, orders] = await Promise.all([api('stats'), api(`orders?${qs}`)]);
+            state.stats = stats;
+            state.orders = orders.orders;
+          } else if (state.tab === 'reviews') {
+            const [stats, reviews] = await Promise.all([api('stats'), api(`reviews${state.reviewFilter ? `?status=${state.reviewFilter}` : ''}`)]);
+            state.stats = stats;
+            state.reviews = reviews.reviews;
+          } else if (state.tab === 'products') {
+            state.overrides = (await api('products')).products;
+          } else if (state.tab === 'settings') {
+            state.settings = (await api('settings')).settings;
+          } else {
+            state.subscribers = (await api('subscribers')).subscribers;
+          }
+          render();
+        } catch (err) {
+          if ((err as Error).message !== 'auth') toast(`Не удалось загрузить: ${(err as Error).message}`);
+        } finally {
+          state.loading = false;
+        }
+      }
+
+      /* ---------------------------------------------------------------- events */
+
+      root.addEventListener('submit', async (e) => {
+        const form = (e.target as HTMLElement).closest('form');
+        if (!form) return;
+        e.preventDefault();
+        const fd = new FormData(form as HTMLFormElement);
+
+        if (form.hasAttribute('data-login')) {
+          try {
+            await api('login', { method: 'POST', body: JSON.stringify({ password: String(fd.get('password') || '') }) });
+            state.authed = true;
+            await loadTab();
+          } catch (err) {
+            const reason = (err as any)?.data?.reason;
+            root.innerHTML = loginView(reason === 'too-many-attempts' ? 'Слишком много попыток. Подождите 15 минут.' : 'Неверный пароль.');
+          }
+          return;
+        }
+
+        if (form.hasAttribute('data-review-new')) {
+          try {
+            await api('reviews', {
+              method: 'POST',
+              body: JSON.stringify({ slug: fd.get('slug'), rating: Number(fd.get('rating')), author: fd.get('author'), city: fd.get('city'), body: fd.get('body'), verified: fd.get('verified') === 'on' }),
+            });
+            toast('Отзыв опубликован');
+            await loadTab();
+          } catch (err) {
+            toast(`Не сохранилось: ${(err as Error).message}`);
+          }
+          return;
+        }
+
+        if (form.hasAttribute('data-settings')) {
+          const patch: Settings = {};
+          form.querySelectorAll<HTMLInputElement>('[data-s]').forEach((el) => {
+            const k = el.dataset.s!;
+            patch[k] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) : el.value;
+          });
+          try {
+            state.settings = (await api('settings', { method: 'PUT', body: JSON.stringify(patch) })).settings;
+            toast('Настройки сохранены');
+            render();
+          } catch (err) {
+            toast(`Не сохранилось: ${(err as Error).message}`);
+          }
+        }
+      });
+
+      root.addEventListener('click', async (e) => {
+        const t = e.target as HTMLElement;
+
+        const tabBtn = t.closest<HTMLElement>('[data-tab]');
+        if (tabBtn) {
+          state.tab = tabBtn.dataset.tab as typeof state.tab;
+          render();
+          await loadTab();
+          return;
+        }
+
+        if (t.closest('[data-logout]')) {
+          await fetch('/api/admin/logout', { method: 'POST', headers: { 'x-semers-admin': '1' } });
+          state.authed = false;
+          render();
+          return;
+        }
+
+        if (t.closest('[data-orders-reload]') || t.closest('[data-reviews-reload]')) {
+          await loadTab();
+          return;
+        }
+
+        const saveOrder = t.closest<HTMLElement>('[data-order-save]');
+        if (saveOrder) {
+          const box = saveOrder.closest<HTMLElement>('[data-order]')!;
+          const id = box.dataset.order!;
+          const status = box.querySelector<HTMLSelectElement>('[data-order-status]')!.value;
+          const admin_note = box.querySelector<HTMLInputElement>('[data-order-note]')!.value;
+          try {
+            await api(`orders/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ status, admin_note }) });
+            toast(`${id} сохранён`);
+            const row = state.orders.find((o) => o.id === id);
+            if (row) (row.status = status), (row.admin_note = admin_note);
+          } catch (err) {
+            toast(`Не сохранилось: ${(err as Error).message}`);
+          }
+          return;
+        }
+
+        const rAction = t.closest<HTMLElement>('[data-review-action]');
+        const rDelete = t.closest<HTMLElement>('[data-review-delete]');
+        if (rAction || rDelete) {
+          const box = (rAction || rDelete)!.closest<HTMLElement>('[data-review]')!;
+          const id = box.dataset.review!;
+          try {
+            if (rDelete) {
+              if (!confirm('Удалить отзыв навсегда?')) return;
+              await api(`reviews/${id}`, { method: 'DELETE' });
+              toast('Отзыв удалён');
+            } else {
+              await api(`reviews/${id}`, {
+                method: 'PATCH',
+                body: JSON.stringify({
+                  status: rAction!.dataset.reviewAction,
+                  body: box.querySelector<HTMLTextAreaElement>('[data-review-body]')!.value,
+                  reply: box.querySelector<HTMLInputElement>('[data-review-reply]')!.value,
+                  verified: box.querySelector<HTMLInputElement>('[data-review-verified]')!.checked,
+                }),
+              });
+              toast(rAction!.dataset.reviewAction === 'approved' ? 'Опубликован' : 'Отклонён');
+            }
+            await loadTab();
+          } catch (err) {
+            toast(`Не получилось: ${(err as Error).message}`);
+          }
+          return;
+        }
+
+        const saveProduct = t.closest<HTMLElement>('[data-product-save]');
+        if (saveProduct) {
+          const row = saveProduct.closest<HTMLElement>('[data-product]')!;
+          const val = (k: string) => row.querySelector<HTMLInputElement>(`[data-p="${k}"]`)!.value.trim();
+          try {
+            await api('products', {
+              method: 'PUT',
+              body: JSON.stringify({ slug: row.dataset.product, price: val('price'), compare_at: val('compare_at'), in_stock: val('in_stock'), badge: val('badge'), batch: val('batch') }),
+            });
+            toast(`${row.dataset.product} сохранён`);
+            state.overrides = (await api('products')).products;
+          } catch (err) {
+            toast(`Не сохранилось: ${(err as Error).message}`);
+          }
+        }
+      });
+
+      root.addEventListener('change', async (e) => {
+        const t = e.target as HTMLElement;
+        const f = t.closest<HTMLSelectElement | HTMLInputElement>('[data-filter]');
+        if (f) {
+          (state.orderFilter as any)[f.dataset.filter!] = f.value;
+          await loadTab();
+          return;
+        }
+        if (t.closest('[data-review-filter]')) {
+          state.reviewFilter = (t as HTMLSelectElement).value;
+          await loadTab();
+        }
+      });
+
+      /* ------------------------------------------------------------------ boot */
+
+      (async () => {
+        try {
+          const health: Health = await (await fetch('/api/admin/session')).json();
+          state.authed = !!health.ok;
+          state.configured = health.configured !== false;
+          state.database = health.database !== false;
+        } catch {
+          state.authed = false;
+        }
+        render();
+        if (state.authed) await loadTab();
+      })();
+    </script>
+  </body>
+</html>

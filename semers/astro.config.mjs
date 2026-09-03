@@ -41,7 +41,7 @@ export default defineConfig({
   integrations: [
     sitemap({
       changefreq: 'weekly',
-      filter: (page) => !/\/(cart|checkout|order)\//.test(page),
+      filter: (page) => !/\/(cart|checkout|order|admin)\//.test(page),
       serialize(item) {
         const path = new URL(item.url).pathname;
         const hit = PRIORITY.find(([re]) => re.test(path));

@@ -276,3 +276,61 @@
 .max-prose { max-width: 66ch; }
 .center { text-align: center; margin-inline: auto; }
 .mt-2 { margin-top: var(--sp-2); } .mt-4 { margin-top: var(--sp-4); } .mt-6 { margin-top: var(--sp-6); } .mb-4 { margin-bottom: var(--sp-4); }
+
+/* ---------------------------------------------------- announcement, ladder, reviews */
+
+/* Announcement strip. Hidden until /api/storefront says there is one, so it never
+   reserves space on a page that has nothing to announce. */
+.announce { background: var(--fg); color: var(--bg); font-size: var(--fs-xs); letter-spacing: 0.01em; }
+.announce .container { padding-block: 0.5rem; text-align: center; }
+.announce a { color: inherit; text-underline-offset: 3px; }
+
+/* Volume ladder. Three buttons that each name their own per-unit price, so the
+   shopper compares prices rather than reading a discount rule. */
+.tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin: 1.25rem 0 0.9rem; }
+.tier {
+  display: grid; gap: 0.1rem; padding: 0.6rem 0.5rem; text-align: center; cursor: pointer;
+  border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-raised);
+  color: inherit; font: inherit; line-height: 1.25; transition: border-color var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+}
+.tier:hover { border-color: var(--fg-3); }
+.tier.is-on { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 8%, var(--bg-raised)); }
+.tier b { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); font-weight: 600; }
+.tier.is-on b { color: var(--accent); }
+.tier__unit { font-weight: 700; font-size: var(--fs-md); }
+.tier__note { font-size: var(--fs-xs); color: var(--fg-3); }
+
+/* The promise sits with the button, not in the footer: placement is the whole point. */
+.pdp__promise { display: flex; gap: 0.5rem; align-items: flex-start; margin: 0.85rem 0 0; font-size: var(--fs-sm); color: var(--fg-2); }
+.pdp__promise svg { flex: none; margin-top: 0.15rem; color: var(--accent); }
+
+.pdp__reviews { display: grid; gap: 1rem; }
+.pdp__revhead { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: baseline; justify-content: space-between; }
+.pdp__revsum { margin: 0; font-size: var(--fs-sm); color: var(--fg-2); }
+.pdp__revsum .stars { color: var(--accent); letter-spacing: 0.1em; }
+.rev { border-top: 1px solid var(--line); padding: 0.9rem 0; }
+.rev:last-child { border-bottom: 1px solid var(--line); }
+.rev__top { display: flex; flex-wrap: wrap; gap: 0.35rem 0.75rem; align-items: baseline; }
+.rev__stars { color: var(--accent); letter-spacing: 0.1em; }
+.rev__who { font-weight: 600; }
+.rev__meta { font-size: var(--fs-xs); color: var(--fg-3); }
+.rev__verified { font-size: var(--fs-xs); color: var(--ok, #3f7d54); font-weight: 600; }
+.rev__title { margin: 0.35rem 0 0.15rem; font-weight: 600; }
+.rev__body { margin: 0.15rem 0 0; white-space: pre-line; }
+.rev__reply { margin: 0.5rem 0 0 0; padding-left: 0.85rem; border-left: 2px solid var(--line); font-size: var(--fs-sm); color: var(--fg-2); }
+.revform > summary { cursor: pointer; font-weight: 600; padding: 0.5rem 0; }
+.revform form { display: grid; gap: 0.7rem; max-width: 34rem; padding-top: 0.5rem; }
+.revform label { display: grid; gap: 0.25rem; font-size: var(--fs-sm); }
+.revform__row { display: grid; gap: 0.7rem; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); }
+.revform__note { margin: 0; font-size: var(--fs-sm); }
+.revform button { justify-self: start; }
+
+@media (max-width: 30rem) {
+  .tiers { grid-template-columns: 1fr; }
+  .tier { grid-template-columns: auto 1fr auto; text-align: left; align-items: baseline; gap: 0.5rem; }
+}
+
+/* Saving pill on a discounted cart line, and the sold-out state an override can set. */
+.ci__save { display: block; font-size: var(--fs-xs); font-weight: 600; color: var(--accent); }
+.is-soldout { opacity: 0.62; }
+.is-soldout .pc__add { cursor: not-allowed; }

@@ -102,12 +102,14 @@ const nodes = [
     <link rel="preconnect" href="https://d2ol7oe51mr4n9.cloudfront.net" />
 
     <script type="application/ld+json" set:html={graph(nodes)} is:inline />
-    <script is:inline set:html={`window.SEMERS=${JSON.stringify({ endpoint: site.orderEndpoint || '/api/order', freeFrom: site.shipping.freeFrom, email: site.email, whatsapp: site.whatsapp, currency: site.currency })};`} />
+    <script is:inline set:html={`window.SEMERS=${JSON.stringify({ endpoint: site.orderEndpoint || '/api/order', freeFrom: site.shipping.freeFrom, email: site.email, whatsapp: site.whatsapp, currency: site.currency, ...site.storefront })};`} />
     <slot name="head" />
   </head>
 
   <body class={`${heroHeader ? 'has-hero-header' : ''} ${bodyClass}`}>
     <a class="skip-link" href="#main">Skip to content</a>
+    {/* Filled from /api/storefront when the owner has an announcement running; stays out of the layout until then. */}
+    <div class="announce" data-announce hidden><div class="container"><span data-announce-text></span></div></div>
     <Header transparent={heroHeader} />
     {breadcrumb.length > 1 && <Breadcrumbs trail={breadcrumb} />}
     <main id="main">
