@@ -25,6 +25,41 @@ The site lives in the `semers/` folder of this repository and is meant for Verce
 
 Until the Semers Vercel project is created, every preview deployment of this repository (any branch except `main`) also serves the shop at `<preview-url>/semers/` — the root build runs `scripts/semers-preview.mjs`, which builds `semers/` and mounts it under that path. Production deployments of `main` skip this step, so the furniture site is never affected. The order endpoint is not deployed in that mode; checkout falls back to the pre-filled e-mail.
 
+## 1b. Higgsfield hosting (where the shop runs today)
+
+The live shop is at **https://semers-store.higgsfield.app**, served from a separate
+Higgsfield website project rather than from this repository. That project is a copy
+of `semers/` with three differences:
+
+* **`package.json`** builds with `bun --bun astro build && bun scripts/pack.mjs`.
+* **`scripts/pack.mjs`** rearranges the Astro output into what the platform expects:
+  everything in `dist/` moves to `dist/client/`, and `worker/server.js` is copied to
+  `dist/server/server.js`.
+* **`worker/server.js`** is the Cloudflare Worker — the API (`/api/order`,
+  `/api/storefront`, `/api/reviews`, `/api/admin/*`) plus the per-language 404
+  fallback. It is the same file as `semers/worker/server.js`; keep the two in step.
+
+**Database.** The project has one Cloudflare D1 database, reachable in the Worker as
+`env.DB`. `migrations/0001_init.sql` is the reference shape, but the Worker creates
+every table itself on the first request (`ensureSchema`), so a fresh database needs no
+manual step. Columns added later are applied by `ALTER TABLE` from the `ADDED_COLUMNS`
+list, because `CREATE TABLE IF NOT EXISTS` leaves an existing table alone — SQLite has
+no `ADD COLUMN IF NOT EXISTS`, so "already there" is caught and treated as success.
+
+**Secrets** live on the website project, not in this repository, and a change is staged
+until the next deploy:
+
+| Secret | Purpose |
+| --- | --- |
+| `ADMIN_PASSWORD` | the only credential for `/admin/`. Without it the back office answers 503 and says so. |
+| `ADMIN_SESSION_SECRET` | signs the admin session cookie (HMAC-SHA256). Rotating it logs everyone out, which is how to revoke a session. |
+| `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | where orders and form messages arrive |
+| `RESEND_API_KEY`, `ORDER_TO_EMAIL`, `ORDER_FROM_EMAIL` | orders by e-mail, and the customer's receipt |
+
+**To ship a change:** build and verify here (`npm run verify`), copy `src/`, `public/`,
+`worker/`, `astro.config.mjs` and `scripts/` across to the website project, push, and
+deploy. The Worker and the pages deploy together, so a change to either is one deploy.
+
 ## 2. Domain
 
 Vercel project → Settings → Domains → add `semers.org` and `www.semers.org` (redirect www → apex). Set the DNS records Vercel shows at your registrar. Keep the old site up until the new one resolves.
@@ -45,6 +80,9 @@ Vercel project → Settings → Domains → add `semers.org` and `www.semers.org
 - [ ] Google Search Console: verify, submit `https://semers.org/sitemap-index.xml`.
 - [ ] Payment provider (Stripe Checkout) when ready — see README.
 - [ ] Abuse protection for `/api/order`: the endpoint is public and, with Resend configured, e-mails a receipt to whatever address is submitted. Before heavy marketing, enable rate limiting in front of it (Vercel WAF → Rate Limiting on `/api/*`, or a captcha on the checkout form) so it cannot be scripted as a mail relay.
+- [ ] Russian and Latvian copy read by someone who speaks it. `docs/translation-notes.md` lists every place a translator had to choose between two defensible renderings; the legal pages are worth a lawyer's eye.
+- [ ] `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` set on the hosting project (see above). Until `ADMIN_PASSWORD` exists, `/admin/` cannot be logged into at all.
+- [ ] Order receipts go out in English whatever language the customer was reading. Every order now reports that language, so a reply can be written in it by hand; automating it needs Resend templates per language.
 
 ## Local development
 
