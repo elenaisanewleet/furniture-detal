@@ -31,7 +31,10 @@ semers/
 | Journal | `/journal/`, `/journal/<slug>/` |
 | Cart, Checkout, Thank you | `/cart/`, `/checkout/`, `/order/thank-you/` (noindex) |
 | Legal | `/legal/privacy/`, `/legal/terms/`, `/legal/shipping-returns/` |
+| Admin | `/admin/` (password, noindex) |
 | Machine | `/sitemap-index.xml`, `/robots.txt`, `/site.webmanifest` |
+
+Every page above also exists at `/ru/<path>` and `/lv/<path>`. English keeps the bare path.
 
 ## Run it
 
@@ -57,8 +60,26 @@ There is no payment gateway yet, by design. Checkout collects the order and post
 
 To add card payments later: create a Stripe Checkout session in `api/order.js` (or a new `api/checkout.js`) from the `items` array and redirect to the returned URL instead of `/order/thank-you/`. The cart line items already carry `id`, `qty` and `price`. Today the endpoint forwards the prices the browser sent, which is fine while every order is confirmed by hand with a payment link; once a card flow charges automatically, recompute prices server-side from the catalogue (export it as JSON for the function) and add rate limiting.
 
+## Languages
+
+The shop is published in English (`/`), Russian (`/ru/`) and Latvian (`/lv/`). English keeps the bare URLs; each page declares the other two with `hreflang`, and the language switcher sits in the header.
+
+There is one set of pages, rendered three times. The words come from three places, in order of how much of the site they cover:
+
+1. **Interface strings** — `src/i18n/ui.ts`. Header, footer, cart, buttons, form labels, error messages. English is the source; a key missing from another locale falls back to English, so a half-finished language is readable rather than broken.
+2. **Catalogue copy** — `src/data/copy.data.ts`, keyed by product slug, collection key and English FAQ question. It can only override text fields (`name`, `title`, `hook`, `summary`, `description`, `ingredients`, `allergens`); prices, weights, EANs and nutrition stay in `products.ts`, so a translation cannot change a fact.
+3. **Page prose** — `src/i18n/prose.<locale>.json`, a flat map of English string to translated string. Page copy stays written in the `.astro` files, in English, where it is easy to edit; after the build, the strings are swapped in the pages under `/ru/` and `/lv/`. A string missing from the map renders in English.
+
+**To correct a translation**, edit the value in whichever of those three files holds it and rebuild. The prose map is plain JSON keyed by the English sentence, so it can be searched for the wording you saw on the page.
+
+**To re-extract after adding new page copy**, build, then diff what is still English on a localised page against the English original — `scripts/prose-scan.mjs` is the scanner both the extractor and the substituter use, so the two can never disagree about what is translatable. Anything inside `<script>`, `<style>`, `<code>`, `<pre>`, `<svg>` or an element marked `translate="no"` or carrying its own `lang` is left alone.
+
+The legal pages are translated too, and each translated one carries a note saying the English version governs if the two disagree.
+
 ## SEO
 
-Canonical + hreflang, Open Graph, JSON-LD (`Organization`, `WebSite` with SearchAction, `BreadcrumbList`, `Product`/`ProductGroup` with `Offer` + `gtin13`, `ItemList`, `FAQPage`, `Article`, `HowTo`), sitemap with priorities, `robots.txt`, semantic HTML, `lang="en"` with the brand wordmark marked `translate="no"` so Google Translate handles the rest cleanly. Add your Search Console token via `PUBLIC_GOOGLE_VERIFICATION`.
+Canonical + hreflang (reciprocal, with `x-default`), Open Graph, JSON-LD (`Organization`, `WebSite` with SearchAction, `BreadcrumbList`, `Product`/`ProductGroup` with `Offer` + `gtin13`, `ItemList`, `FAQPage`, `Article`, `HowTo`), sitemap with priorities and `xhtml:link` alternates, `robots.txt`, semantic HTML. The structured data is localised with the page: URLs, breadcrumbs and variant names follow the locale, while `Organization` and `WebSite` keep one identity across all three languages. Add your Search Console token via `PUBLIC_GOOGLE_VERIFICATION`.
+
+`node scripts/check-seo.mjs` reads the built output and fails on a canonical that points elsewhere, hreflang that is not reciprocal, a `lang` that disagrees with the directory, an internal link to a page that was never built, or a sitemap that does not match the indexable set. Run it before a deploy.
 
 See `DEPLOY.md` for hosting.
