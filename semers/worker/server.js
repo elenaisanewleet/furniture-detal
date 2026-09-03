@@ -380,9 +380,26 @@ async function handleLogin(request, env) {
  * One request that carries everything the built pages need to correct
  * themselves: owner settings, per-product overrides and review counts.
  */
+/**
+ * Text settings the owner has not touched are left out of the payload.
+ *
+ * The built page already says these things, in the language it was built for —
+ * the guarantee line is translated with the rest of the page prose. Sending the
+ * default back would make the script overwrite that translation with the
+ * dictionary-free English default a moment after the page loads. Only a value
+ * the owner actually chose should replace what the page says.
+ */
+function ownerChangedOnly(settings) {
+  const out = { ...settings };
+  for (const [k, def] of Object.entries(SETTING_DEFAULTS)) {
+    if (typeof def === 'string' && out[k] === def) delete out[k];
+  }
+  return out;
+}
+
 async function handleStorefront(request, env) {
   const settings = await readSettings(env);
-  const out = { settings: { ...settings }, products: {}, reviews: {} };
+  const out = { settings: ownerChangedOnly(settings), products: {}, reviews: {} };
   const d = db(env);
   if (d) {
     const [ov, rv] = await Promise.all([

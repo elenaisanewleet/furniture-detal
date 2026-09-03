@@ -294,6 +294,39 @@ group('submission limit');
   is('and an unrecorded order says so', (await send({})).status, 503);
 }
 
+/* ------------------------------------------------------- storefront payload */
+group('storefront payload');
+/*
+ * The built page already carries the guarantee line, translated with the rest
+ * of the page prose. If the API echoed the untouched default back, the script
+ * would overwrite that translation with English a moment after the page loads.
+ * So a text setting is sent only once the owner has actually changed it.
+ */
+{
+  const stored = (rows) => ({
+    prepare: (sql) => ({
+      bind: () => ({ run: async () => ({}), first: async () => null, all: async () => ({ results: [] }) }),
+      run: async () => ({}),
+      first: async () => null,
+      all: async () => ({ results: /FROM settings/.test(sql) ? rows : [] }),
+    }),
+  });
+  const payload = async (rows) => {
+    const res = await worker.default.fetch(new Request('https://x.test/api/storefront'), { DB: stored(rows) });
+    return (await res.json()).settings;
+  };
+
+  const untouched = await payload([]);
+  is('an untouched guarantee is not sent', 'guarantee' in untouched, false);
+  is('nor its russian and latvian', 'guaranteeRu' in untouched || 'guaranteeLv' in untouched, false);
+  is('numbers are always sent', untouched.freeFrom, 25);
+  is('and so are switches', untouched.guaranteeOn, true);
+
+  const changed = await payload([{ key: 'guaranteeRu', value: 'Вернём деньги в течение 14 дней.' }]);
+  is('a guarantee the owner wrote is sent', changed.guaranteeRu, 'Вернём деньги в течение 14 дней.');
+  is('and the ones they did not are still absent', 'guarantee' in changed, false);
+}
+
 /* ------------------------------------------------------------ schema */
 group('database schema');
 /*
