@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import GoverningLanguage from '~/components/GoverningLanguage.astro';
 import Icon from '~/components/Icon.astro';
 import { site } from '~/data/site';
 import { originOf } from '~/lib/origin';
@@ -77,6 +78,7 @@ const webPage = {
     <h1 id="page-title" class="legal-title">A privacy policy <em>you can actually read.</em></h1>
     <p class="lead">This privacy policy explains what SIA Semers Group collects when you order apple bars and pastila from semers.org, write to us or subscribe to our e-mails: why we collect it, how long we keep it, and the rights the GDPR gives you.</p>
     <p class="legal__updated"><Icon name="clock" size={16} /> Last updated: {updated}</p>
+    <GoverningLanguage />
   </section>
 
   <!-- ============================== BODY ============================== -->

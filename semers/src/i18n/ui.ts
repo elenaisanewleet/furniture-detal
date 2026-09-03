@@ -26,6 +26,9 @@ const en = {
   shopAll: 'Shop all',
   breadcrumb: 'Breadcrumb',
   homeCrumb: 'Home',
+  /* Rendered only on the translated legal pages; English has no discrepancy to resolve. */
+  governingLanguage: 'This is a translation. If it differs from the English version, the English version governs.',
+  governingLanguageLink: 'Read the English version',
 
   nav: {
     shop: 'Shop',
@@ -284,6 +287,8 @@ const ru: Partialised = {
   shopAll: 'Весь ассортимент',
   breadcrumb: 'Навигационная цепочка',
   homeCrumb: 'Главная',
+  governingLanguage: 'Это перевод. При расхождении с английской версией преимущественную силу имеет английская версия.',
+  governingLanguageLink: 'Открыть английскую версию',
 
   nav: {
     shop: 'Магазин',
@@ -520,6 +525,8 @@ const lv: Partialised = {
   shopAll: 'Visas preces',
   breadcrumb: 'Navigācijas ceļš',
   homeCrumb: 'Sākums',
+  governingLanguage: 'Šis ir tulkojums. Ja tas atšķiras no versijas angļu valodā, noteicošā ir versija angļu valodā.',
+  governingLanguageLink: 'Atvērt versiju angļu valodā',
 
   nav: {
     shop: 'Veikals',

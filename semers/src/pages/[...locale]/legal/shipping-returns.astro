@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import GoverningLanguage from '~/components/GoverningLanguage.astro';
 import Icon from '~/components/Icon.astro';
 import { site } from '~/data/site';
 import { formatPrice, formatThreshold } from '~/data/products';
@@ -75,6 +76,7 @@ const webPage = {
     <h1 id="page-title" class="legal-title">Shipping &amp; returns, <em>from Riga to your door.</em></h1>
     <p class="lead">Everything about shipping and returns for orders from the Semers web shop: what delivery costs, how fast a parcel leaves Riga, how long it takes to reach you in the Baltics or elsewhere in the EU, and what to do if a box arrives damaged or you change your mind.</p>
     <p class="legal__updated"><Icon name="clock" size={16} /> Last updated: {updated}</p>
+    <GoverningLanguage />
   </section>
 
   <!-- ============================== BODY ============================== -->

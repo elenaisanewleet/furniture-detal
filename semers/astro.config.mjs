@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
 import localizeLinks from './scripts/localize-links.mjs';
+import localizeProse from './scripts/localize-prose.mjs';
 
 /**
  * Canonical site URL. One place for canonical/OG/sitemap/robots/JSON-LD.
@@ -41,7 +42,12 @@ export default defineConfig({
   build: { format: 'directory', inlineStylesheets: 'auto' },
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   integrations: [
-    // Runs after the build and prefixes internal links inside /ru/ and /lv/.
+    /*
+     * Both run after the build, over /ru/ and /lv/ only. Prose replaces the
+     * words, links replace the hrefs — orthogonal passes, but prose goes first
+     * so it sees the pages exactly as the extractor did.
+     */
+    localizeProse({ locales: ['ru', 'lv'] }),
     localizeLinks({ locales: ['ru', 'lv'] }),
     sitemap({
       changefreq: 'weekly',

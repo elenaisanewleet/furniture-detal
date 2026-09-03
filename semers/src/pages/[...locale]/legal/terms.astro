@@ -1,5 +1,6 @@
 ---
 import Base from '~/layouts/Base.astro';
+import GoverningLanguage from '~/components/GoverningLanguage.astro';
 import Icon from '~/components/Icon.astro';
 import { site } from '~/data/site';
 import { formatPrice, formatThreshold } from '~/data/products';
@@ -70,6 +71,7 @@ const webPage = {
     <h1 id="page-title" class="legal-title">Terms of sale, <em>in plain language.</em></h1>
     <p class="lead">These terms and conditions of sale govern every order placed with SIA Semers Group through the web shop at semers.org. They explain how ordering and payment work, when a contract is concluded, how delivery and the 14-day right of withdrawal work, and what happens if something arrives damaged.</p>
     <p class="legal__updated"><Icon name="clock" size={16} /> Last updated: {updated}</p>
+    <GoverningLanguage />
   </section>
 
   <!-- ============================== BODY ============================== -->

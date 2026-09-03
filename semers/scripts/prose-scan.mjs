@@ -87,7 +87,10 @@ export function scanProse(html, onRun) {
     const no = /\stranslate=["']?no/i.test(attrs) || (/\slang="/i.test(attrs) && name !== 'html' && name !== 'body');
 
     if (!opaque() && !blocked()) {
-      const metaKey = (/\s(?:name|property)="([^"]+)"/i.exec(attrs) || [])[1];
+      // `name` and `property` also appear on form controls, so the meta key is
+      // only read off an actual <meta>; otherwise a placeholder on <input
+      // name="q"> would be reported as if it were a meta description.
+      const metaKey = name === 'meta' ? (/\s(?:name|property)="([^"]+)"/i.exec(attrs) || [])[1] : undefined;
       const attrStart = m.index + 1 + closing.length + rawName.length;
       const wanted = name === 'meta' ? (metaKey && META_OK.test(metaKey) ? ['content'] : []) : ATTRS;
       for (const a of wanted) {
