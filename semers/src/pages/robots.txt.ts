@@ -6,9 +6,14 @@ export const GET: APIRoute = ({ site }) => {
   const body = [
     'User-agent: *',
     'Allow: /',
-    'Disallow: /cart/',
-    'Disallow: /checkout/',
-    'Disallow: /order/',
+    /*
+     * The cart, checkout and thank-you pages are not listed here on purpose.
+     * They already carry noindex, and a crawler has to fetch a page to see
+     * that — disallowing them would hide the very instruction that keeps them
+     * out of the index, and Google would be free to list the bare URL from a
+     * link. The endpoints below are different: nothing there is a page, so
+     * there is no noindex to see and no reason to fetch them.
+     */
     'Disallow: /api/',
     'Disallow: /admin/',
     '',
