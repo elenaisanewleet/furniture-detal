@@ -140,10 +140,20 @@ async function audit(env, action, detail) {
  */
 const SETTING_DEFAULTS = {
   announcement: '',
+  /*
+   * The shop is read in three languages, so a banner written once is a banner
+   * two thirds of the readers cannot read. English is the one that must be
+   * filled in; a language left blank falls back to it, which is better than an
+   * empty bar and honest about what the owner actually wrote.
+   */
+  announcementRu: '',
+  announcementLv: '',
   announcementHref: '',
   announcementOn: false,
   freeFrom: 25,
   guarantee: 'Not what you hoped for? Tell us within 14 days and we refund the order — you keep the box.',
+  guaranteeRu: 'Что-то не так? Напишите нам в течение 14 дней — вернём деньги за заказ, коробку оставьте себе.',
+  guaranteeLv: 'Kaut kas nav kārtībā? Uzrakstiet mums 14 dienu laikā — atmaksāsim pasūtījumu, kārbu paturiet sev.',
   guaranteeOn: true,
   tier1Qty: 3,
   tier1Pct: 5,

@@ -634,7 +634,9 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
 
           <h3 style="margin-top:1.1rem">Полоса с объявлением</h3>
           <div class="adm-row">
-            <div style="flex:3 1 18rem"><label for="s-ann">Текст</label><input id="s-ann" type="text" data-s="announcement" value="${esc(s.announcement || '')}" maxlength="120" placeholder="Бесплатная доставка по Латвии до конца недели" /></div>
+            <div style="flex:3 1 18rem"><label for="s-ann">Текст (EN)</label><input id="s-ann" type="text" data-s="announcement" value="${esc(s.announcement || '')}" maxlength="120" placeholder="Free shipping in Latvia until Sunday" /></div>
+            <div style="flex:3 1 18rem"><label for="s-annru">Текст (RU)</label><input id="s-annru" type="text" data-s="announcementRu" value="${esc(s.announcementRu || '')}" maxlength="120" placeholder="Бесплатная доставка по Латвии до воскресенья" /></div>
+            <div style="flex:3 1 18rem"><label for="s-annlv">Текст (LV)</label><input id="s-annlv" type="text" data-s="announcementLv" value="${esc(s.announcementLv || '')}" maxlength="120" placeholder="Bezmaksas piegāde Latvijā līdz svētdienai" /></div>
             <div><label for="s-annh">Ссылка</label><input id="s-annh" type="text" data-s="announcementHref" value="${esc(s.announcementHref || '')}" maxlength="200" placeholder="/shop/" /></div>
           </div>
           <div style="margin-top:.5rem">${bool('announcementOn', 'показывать полосу')}</div>
@@ -642,7 +644,9 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
           <h3 style="margin-top:1.2rem">Доставка и гарантия</h3>
           <div class="adm-row">
             <div><label for="s-ff">Бесплатная доставка от, €</label><input id="s-ff" type="number" min="0" max="500" step="1" data-s="freeFrom" value="${Number(s.freeFrom) || 0}" /></div>
-            <div style="flex:3 1 18rem"><label for="s-g">Текст гарантии рядом с кнопкой</label><input id="s-g" type="text" data-s="guarantee" value="${esc(s.guarantee || '')}" maxlength="200" /></div>
+            <div style="flex:3 1 18rem"><label for="s-g">Гарантия рядом с кнопкой (EN)</label><input id="s-g" type="text" data-s="guarantee" value="${esc(s.guarantee || '')}" maxlength="200" /></div>
+            <div style="flex:3 1 18rem"><label for="s-gru">Гарантия (RU)</label><input id="s-gru" type="text" data-s="guaranteeRu" value="${esc(s.guaranteeRu || '')}" maxlength="200" /></div>
+            <div style="flex:3 1 18rem"><label for="s-glv">Гарантия (LV)</label><input id="s-glv" type="text" data-s="guaranteeLv" value="${esc(s.guaranteeLv || '')}" maxlength="200" /></div>
           </div>
           <div style="margin-top:.5rem">${bool('guaranteeOn', 'показывать гарантию на карточке товара')}</div>
 

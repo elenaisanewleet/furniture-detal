@@ -83,6 +83,41 @@ is('an attribute translation is escaped', applyProse('<img alt="Bars">', { Bars:
 is('a text translation is escaped', applyProse('<p>Bars</p>', { Bars: 'Fruit & fibre' }).html, '<p>Fruit &amp; fibre</p>');
 is('an unknown string stays English', applyProse('<p>Bars</p>', {}).html, '<p>Bars</p>');
 
+/* --------------------------------------------------- admin-driven settings */
+group('storefront settings');
+/*
+ * These two rules live in the browser bundle, where the build cannot check
+ * them: the announcement arrives from the database after the page is built, so
+ * neither the link pass nor the prose pass has ever seen it. The logic is
+ * mirrored here from src/scripts/site.ts, and the mirror is the point — if the
+ * two drift, one of them is wrong and this is where it shows.
+ */
+const forLocale = (st, key, locale) => {
+  const suffix = locale === 'ru' ? 'Ru' : locale === 'lv' ? 'Lv' : '';
+  return String((suffix && st[key + suffix]) || st[key] || '');
+};
+const localeHref = (href, locale) => {
+  if (!locale || locale === 'en') return href;
+  if (!href.startsWith('/') || href.startsWith('//')) return href;
+  if (href === `/${locale}` || href.startsWith(`/${locale}/`)) return href;
+  if (/^\/(api|_astro|fonts|img|admin)\//.test(href)) return href;
+  if (href.slice(1).split(/[/?#]/)[0].includes('.')) return href;
+  return `/${locale}${href}`;
+};
+
+const S = { announcement: 'Free shipping', announcementRu: 'Бесплатная доставка', announcementLv: '' };
+is('english takes the english field', forLocale(S, 'announcement', 'en'), 'Free shipping');
+is('russian takes the russian field', forLocale(S, 'announcement', 'ru'), 'Бесплатная доставка');
+is('a blank language falls back to english', forLocale(S, 'announcement', 'lv'), 'Free shipping');
+is('nothing written is empty', forLocale({}, 'announcement', 'ru'), '');
+
+is('a banner link enters the locale', localeHref('/shop/', 'ru'), '/ru/shop/');
+is('english is left alone', localeHref('/shop/', 'en'), '/shop/');
+is('an already-localised link is left alone', localeHref('/ru/shop/', 'ru'), '/ru/shop/');
+is('an external link is left alone', localeHref('https://maxima.lv/', 'ru'), 'https://maxima.lv/');
+is('the back office is left alone', localeHref('/admin/', 'ru'), '/admin/');
+is('a file is left alone', localeHref('/robots.txt', 'ru'), '/robots.txt');
+
 /* ------------------------------------------------------------ worker 404 */
 group('worker 404');
 const worker = await import('data:text/javascript;base64,' + Buffer.from(await readFile(new URL('../worker/server.js', import.meta.url), 'utf-8')).toString('base64'));

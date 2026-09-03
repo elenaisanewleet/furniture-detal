@@ -1053,6 +1053,31 @@ function patchAdd(el: HTMLElement, patch: Record<string, unknown>) {
   }
 }
 
+/**
+ * The owner writes one setting per language. A language left blank falls back
+ * to English, which is better than an empty banner and honest about what was
+ * actually written.
+ */
+function forLocale(st: Record<string, unknown>, key: string): string {
+  const suffix = CFG.locale === 'ru' ? 'Ru' : CFG.locale === 'lv' ? 'Lv' : '';
+  return String((suffix && st[key + suffix]) || st[key] || '');
+}
+
+/**
+ * The owner types a path like "/shop/". The build's link pass cannot reach a
+ * link that does not exist until the settings arrive, so the locale is applied
+ * here, by the same rules: an absolute path that is not already localised, not
+ * an asset and not a file.
+ */
+function localeHref(href: string): string {
+  if (!CFG.locale || CFG.locale === 'en') return href;
+  if (!href.startsWith('/') || href.startsWith('//')) return href;
+  if (href === `/${CFG.locale}` || href.startsWith(`/${CFG.locale}/`)) return href;
+  if (/^\/(api|_astro|fonts|img|admin)\//.test(href)) return href;
+  if (href.slice(1).split(/[/?#]/)[0].includes('.')) return href;
+  return `/${CFG.locale}${href}`;
+}
+
 function applyAnnouncement(text: string, href: string, on: boolean) {
   const bar = $('[data-announce]');
   const slot = $('[data-announce-text]');
@@ -1063,7 +1088,7 @@ function applyAnnouncement(text: string, href: string, on: boolean) {
   slot.textContent = '';
   if (href) {
     const a = document.createElement('a');
-    a.href = href;
+    a.href = localeHref(href);
     a.textContent = text;
     slot.appendChild(a);
   } else {
@@ -1143,13 +1168,16 @@ function applyStorefront(data: StorefrontData) {
   CFG.tier2Pct = Number(st.tier2Pct) || CFG.tier2Pct;
   readTiers(CFG);
 
-  applyAnnouncement(String(st.announcement || ''), String(st.announcementHref || ''), st.announcementOn === true);
+  applyAnnouncement(forLocale(st, 'announcement'), String(st.announcementHref || ''), st.announcementOn === true);
 
   const promise = $('[data-guarantee]');
   const promiseText = $('[data-guarantee-text]');
   if (promise && promiseText) {
     if (st.guaranteeOn === false) promise.hidden = true;
-    else if (st.guarantee) promiseText.textContent = String(st.guarantee);
+    else {
+      const text = forLocale(st, 'guarantee');
+      if (text) promiseText.textContent = text;
+    }
   }
 
   applyOverrideToCards(data.products || {});

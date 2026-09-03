@@ -157,7 +157,7 @@ for await (const file of walk(ROOT)) {
     const hit = SYMBOL_FIRST.exec(visibleText(html));
     if (hit) {
       problems++;
-      if (shown.length < 50) shown.push(`${page}: price written symbol-first (${hit[0].trim()}…) — a formatter was called without a locale`);
+      if (shown.length < 50) shown.push(`${page}: price written symbol-first (${hit[0].trim()}…) — an unlocalised formatter, or an untranslated sentence`);
     }
   }
   checkPage(html, (msg) => {
