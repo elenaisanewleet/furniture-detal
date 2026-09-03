@@ -26,6 +26,7 @@ const PRIORITY = [
   [/^\/$/, 1.0],
   [/^\/shop\/$/, 0.9],
   [/^\/products\/[^/]+\/$/, 0.9],
+  [/^\/shop\/build-your-box\/\d+\/$/, 0.8],
   [/^\/shop\/[^/]+\/$/, 0.8],
   [/^\/(why-pastila|how-its-made|story|where-to-buy|wholesale)\/$/, 0.7],
   [/^\/journal\/[^/]+\/$/, 0.6],

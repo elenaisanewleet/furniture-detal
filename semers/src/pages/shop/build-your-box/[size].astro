@@ -1,0 +1,43 @@
+---
+/**
+ * The non-default box sizes, one page each. The 6-piece box is served by
+ * index.astro at the bare URL, so it is excluded here rather than duplicated.
+ */
+import Base from '~/layouts/Base.astro';
+import BoxBuilder from '~/components/BoxBuilder.astro';
+import { BOX_SIZES, BOX_DEFAULT_SIZE, boxHref, productBySlug, formatPrice } from '~/data/products';
+
+export function getStaticPaths() {
+  return BOX_SIZES.filter((b) => b.size !== BOX_DEFAULT_SIZE).map((b) => ({ params: { size: String(b.size) }, props: { box: b } }));
+}
+const { box } = Astro.props as { box: { size: number; discount: number } };
+const siblings = BOX_SIZES.filter((b) => b.size !== box.size).map((b) => ({ size: b.size, discount: b.discount, href: boxHref(b.size) }));
+const pct = Math.round(box.discount * 100);
+const cheapest = Math.min(...['apple-bar-35g', 'flourless-apple-bar-50g', 'apple-meringue-35g'].map((s) => productBySlug(s)!.price));
+const total = cheapest * box.size * (1 - box.discount);
+const bigger = BOX_SIZES.filter((b) => b.size > box.size).sort((a, b) => a.size - b.size)[0];
+---
+<Base
+  title={`Build a box of ${box.size} — save ${pct}%`}
+  description={`Mix and match Apple Bars, Flourless Bars and apple meringues in a box of ${box.size}. Any combination, ${pct}% off, one delivery from Riga.`}
+  canonical={boxHref(box.size)}
+  ogImage="gift-box"
+  breadcrumb={[
+    { name: 'Home', href: '/' },
+    { name: 'Shop', href: '/shop/' },
+    { name: 'Build your box', href: '/shop/build-your-box/' },
+    { name: `${box.size} pieces`, href: boxHref(box.size) },
+  ]}
+>
+  <section class="container page-hero">
+    <p class="eyebrow">Build your box</p>
+    <h1>{box.size} bars. Your rules. {pct}% off.</h1>
+    <p class="lead">
+      Tap to add any bar or meringue pack to a slot. Fill all {box.size} and the box goes to your cart as one item — from {formatPrice(total)},
+      about {formatPrice(total / box.size)} a piece.
+      {bigger && <Fragment> The {bigger.size}-piece box takes {Math.round(bigger.discount * 100)}% off instead.</Fragment>}
+    </p>
+  </section>
+
+  <BoxBuilder size={box.size} discount={box.discount} siblings={siblings} />
+</Base>

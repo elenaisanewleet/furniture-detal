@@ -1,0 +1,30 @@
+---
+/**
+ * The 6-piece box: the default, and the URL that has always existed. The 4- and
+ * 8-piece boxes are the same builder at /shop/build-your-box/4/ and /8/.
+ */
+import Base from '~/layouts/Base.astro';
+import BoxBuilder from '~/components/BoxBuilder.astro';
+import { BOX_SIZES, BOX_DEFAULT_SIZE, boxHref, productBySlug, formatPrice } from '~/data/products';
+
+const me = BOX_SIZES.find((b) => b.size === BOX_DEFAULT_SIZE)!;
+const siblings = BOX_SIZES.filter((b) => b.size !== me.size).map((b) => ({ size: b.size, discount: b.discount, href: boxHref(b.size) }));
+const pct = Math.round(me.discount * 100);
+const cheapest = Math.min(...['apple-bar-35g', 'flourless-apple-bar-50g', 'apple-meringue-35g'].map((s) => productBySlug(s)!.price));
+const from = formatPrice(cheapest * me.size * (1 - me.discount));
+---
+<Base
+  title={`Build your box — pick ${me.size}, save ${pct}%`}
+  description={`Mix and match Apple Bars, Flourless Bars and apple meringues in a box of ${me.size}. Any combination, ${pct}% off, one delivery from Riga.`}
+  canonical="/shop/build-your-box/"
+  ogImage="gift-box"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: 'Build your box', href: '/shop/build-your-box/' }]}
+>
+  <section class="container page-hero">
+    <p class="eyebrow">Build your box</p>
+    <h1>{me.size} bars. Your rules. {pct}% off.</h1>
+    <p class="lead">Tap to add any bar or meringue pack to a slot. Fill all {me.size} and the box goes to your cart as one item — from {from}. Want more? There is a {BOX_SIZES[2].size}-piece box at {Math.round(BOX_SIZES[2].discount * 100)}% off.</p>
+  </section>
+
+  <BoxBuilder size={me.size} discount={me.discount} siblings={siblings} />
+</Base>

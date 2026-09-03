@@ -568,6 +568,25 @@ export const PRODUCTS: Product[] = [
   },
 ];
 
+/**
+ * Sizes the mix-and-match box is sold in. Each one is its own page with its own
+ * URL and its own per-piece price, so a set can be advertised directly instead
+ * of living behind a quantity control; a bigger box earns a bigger discount,
+ * the same shape as the volume ladder on a single product.
+ */
+export const BOX_SIZES = [
+  { size: 4, discount: 0.05 },
+  { size: 6, discount: 0.1 },
+  { size: 8, discount: 0.15 },
+] as const;
+
+/** The 6-piece box keeps the bare /shop/build-your-box/ URL it has always had. */
+export const BOX_DEFAULT_SIZE = 6;
+
+export function boxHref(size: number): string {
+  return size === BOX_DEFAULT_SIZE ? '/shop/build-your-box/' : `/shop/build-your-box/${size}/`;
+}
+
 export function productBySlug(slug: string): Product | undefined {
   return PRODUCTS.find((p) => p.slug === slug);
 }
