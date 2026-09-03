@@ -4,6 +4,7 @@
  * in search results.
  */
 import { site } from '~/data/site';
+import { LOCALES } from '~/i18n/config';
 import { FLAVORS, type Product } from '~/data/products';
 import { imgSrc } from '~/data/images';
 
@@ -34,7 +35,9 @@ export function webSite(origin: string) {
     url: `${origin}/`,
     name: site.brand.name,
     publisher: { '@id': `${origin}/#org` },
-    inLanguage: 'en',
+    // One WebSite node serves all three languages, so it names all three rather
+    // than claiming the site is English and the other two are something else.
+    inLanguage: [...LOCALES],
     potentialAction: {
       '@type': 'SearchAction',
       target: { '@type': 'EntryPoint', urlTemplate: `${origin}/shop/?q={search_term_string}` },
@@ -81,7 +84,13 @@ function absImg(origin: string, key: string) {
 /** Bundles sold as "ships free" regardless of the threshold; mirrors FREE_SHIP_SLUGS in src/scripts/site.ts. */
 const FREE_SHIP_SLUGS = new Set(['tasting-box']);
 
-export function productSchema(origin: string, p: Product) {
+/**
+ * `flavourLabels` comes from the page's dictionary so the variant a shopper
+ * reads and the variant Google reads are named the same thing; without it the
+ * English labels are used, which is right for the English pages.
+ */
+export function productSchema(origin: string, p: Product, flavourLabels?: Record<string, string>) {
+  const flavour = (key: string) => flavourLabels?.[key] ?? FLAVORS[key as keyof typeof FLAVORS].label;
   const url = `${origin}/products/${p.slug}/`;
   const images = p.images.map((k) => absImg(origin, k));
   const shipRate = FREE_SHIP_SLUGS.has(p.slug) ? 0 : site.shipping.flatRate;
@@ -147,10 +156,10 @@ export function productSchema(origin: string, p: Product) {
     // schema.org has no "flavor" term, so the varying attribute is carried on each variant as a PropertyValue.
     hasVariant: p.variants.map((v) => ({
       '@type': 'Product',
-      name: `${p.title} — ${FLAVORS[v.key].label}`,
+      name: `${p.title} — ${flavour(v.key)}`,
       sku: `${p.slug}:${v.key}`,
       ...gtinProp(v.gtin),
-      additionalProperty: { '@type': 'PropertyValue', name: 'Flavour', value: FLAVORS[v.key].label },
+      additionalProperty: { '@type': 'PropertyValue', name: 'Flavour', value: flavour(v.key) },
       image: images[0],
       offers: offer(v.price ?? p.price, v.gtin, `${p.slug}:${v.key}`),
     })),

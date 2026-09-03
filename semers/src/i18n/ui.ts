@@ -25,6 +25,7 @@ const en = {
   shop: 'Shop',
   shopAll: 'Shop all',
   breadcrumb: 'Breadcrumb',
+  homeCrumb: 'Home',
 
   nav: {
     shop: 'Shop',
@@ -282,6 +283,7 @@ const ru: Partialised = {
   shop: 'Магазин',
   shopAll: 'Весь ассортимент',
   breadcrumb: 'Навигационная цепочка',
+  homeCrumb: 'Главная',
 
   nav: {
     shop: 'Магазин',
@@ -517,6 +519,7 @@ const lv: Partialised = {
   shop: 'Veikals',
   shopAll: 'Visas preces',
   breadcrumb: 'Navigācijas ceļš',
+  homeCrumb: 'Sākums',
 
   nav: {
     shop: 'Veikals',
@@ -774,4 +777,41 @@ export function bold(sTr: string): string {
 /** Substitute {placeholders} in a runtime template. */
 export function fill(tpl: string, vars: Record<string, string | number>): string {
   return tpl.replace(/\{(\w+)\}/g, (_m, k) => String(vars[k] ?? ''));
+}
+
+/**
+ * Breadcrumb trails are written once, in English, by each page, because the
+ * trail is structure rather than copy — `Home › Shop › Apple bars › …` is the
+ * same shape in every language. The fixed segments are named here by their
+ * English text and resolved back to labels the header and footer already carry,
+ * so there is one translation of "Shop", not three.
+ *
+ * A name with no entry is passed through untouched, which is what carries the
+ * product and collection names: those arrive already localised by the page.
+ */
+const CRUMBS: Record<string, (d: Dict) => string> = {
+  Home: (d) => d.homeCrumb,
+  Shop: (d) => d.nav.shop,
+  Journal: (d) => d.nav.journal,
+  Wholesale: (d) => d.nav.wholesale,
+  'Why pastila': (d) => d.nav.whyPastila,
+  'Our story': (d) => d.nav.story,
+  'How it’s made': (d) => d.nav.howItsMade,
+  FAQ: (d) => d.footerLinks.faq,
+  Contact: (d) => d.footerLinks.contact,
+  'Where to buy': (d) => d.footerLinks.whereToBuy,
+  'Build your box': (d) => d.footerLinks.buildYourBox,
+  'Terms of sale': (d) => d.footerLinks.terms,
+  'Shipping & returns': (d) => d.footerLinks.shippingReturns,
+  'Privacy policy': (d) => d.footerLinks.privacy,
+};
+
+/**
+ * English is left exactly as the page wrote it: the pages are the source, and a
+ * lookup that rewrote "Terms of sale" into "Terms" would be this file editing
+ * English copy rather than translating it.
+ */
+export function crumbName(locale: Locale, name: string): string {
+  if (locale === DEFAULT_LOCALE) return name;
+  return CRUMBS[name]?.(t(locale)) ?? name;
 }

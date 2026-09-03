@@ -14,7 +14,7 @@ import { organization, webSite, breadcrumbs, graph } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { imgSrc } from '~/data/images';
 import { LOCALES, LOCALE_META, DEFAULT_LOCALE, localePath, stripLocale } from '~/i18n/config';
-import { t } from '~/i18n/ui';
+import { t, crumbName } from '~/i18n/ui';
 
 interface Props {
   title: string;
@@ -62,10 +62,17 @@ const ogSrc = ogImage.startsWith('http') || ogImage.startsWith('/') ? ogImage : 
 const ogUrl = ogSrc.startsWith('http') ? ogSrc : new URL(ogSrc, origin).toString();
 const fullTitle = title.includes('Semers') ? title : `${title} — Semers`;
 
+/*
+ * Resolved once, so the trail a reader sees and the trail Google reads are the
+ * same words. The hrefs stay English here; the build's link pass moves them
+ * into the locale, the same way it moves every other link on the page.
+ */
+const trail = breadcrumb.map((c) => ({ ...c, name: crumbName(locale, c.name) }));
+
 const nodes = [
   organization(origin),
   webSite(origin),
-  breadcrumb.length > 1 ? breadcrumbs(origin, breadcrumb) : null,
+  trail.length > 1 ? breadcrumbs(origin, trail) : null,
   ...schema,
 ];
 ---
@@ -124,7 +131,7 @@ const nodes = [
     {/* Filled from /api/storefront when the owner has an announcement running; stays out of the layout until then. */}
     <div class="announce" data-announce hidden><div class="container"><span data-announce-text></span></div></div>
     <Header transparent={heroHeader} />
-    {breadcrumb.length > 1 && <Breadcrumbs trail={breadcrumb} />}
+    {trail.length > 1 && <Breadcrumbs trail={trail} />}
     <main id="main">
       <slot />
     </main>

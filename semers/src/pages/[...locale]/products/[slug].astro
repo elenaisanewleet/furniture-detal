@@ -89,7 +89,7 @@ const rows: [string, string][] = [
   ogImage={p.images[0]}
   ogType="product"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: col.name, href: `/shop/${col.key}/` }, { name: p.name, href: `/products/${p.slug}/` }]}
-  schema={[productSchema(origin, p), faqPage(faqs)]}
+  schema={[productSchema(origin, p, ui.flavours), faqPage(faqs)]}
   bodyClass="has-sticky-buy"
 >
   <Fragment slot="head">
