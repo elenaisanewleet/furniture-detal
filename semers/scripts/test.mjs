@@ -239,6 +239,61 @@ group('admin login');
   is('a tampered signature is refused', tampered.status, 401);
 }
 
+/* --------------------------------------------------------- submission limit */
+group('submission limit');
+/*
+ * /api/order is public and, once Resend is configured, e-mails a receipt to
+ * whatever address is submitted. Without a limit it is a mail relay. The limit
+ * must also fail in the right direction: a database that is missing or broken
+ * must not stop the shop taking orders.
+ */
+{
+  const makeDb = (broken = false) => {
+    const rows = [];
+    return {
+      prepare(sql) {
+        const act = (...args) => ({
+          run: async () => {
+            if (broken) throw new Error('d1 unavailable');
+            if (/^INSERT INTO rate/.test(sql)) rows.push(args[0]);
+            return {};
+          },
+          first: async () => {
+            if (broken) throw new Error('d1 unavailable');
+            return /COUNT\(\*\) AS c FROM rate/.test(sql) ? { c: rows.filter((r) => r === args[0]).length } : null;
+          },
+          all: async () => ({ results: [] }),
+        });
+        return { bind: act, ...act() };
+      },
+    };
+  };
+  const send = (env, headers = { 'cf-connecting-ip': '1.2.3.4' }, body = { type: 'contact', name: 'A', email: 'a@b.co', message: 'Hello there' }) =>
+    worker.default.fetch(new Request('https://x.test/api/order', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify(body) }), env);
+
+  const env = { DB: makeDb() };
+  let last;
+  for (let i = 0; i < 31; i++) last = await send(env);
+  is('the thirty-first submission in an hour is refused', last.status, 429);
+  is('another caller is unaffected', (await send(env, { 'cf-connecting-ip': '5.6.7.8' })).status, 200);
+
+  // The honeypot answers before the allowance is spent, so a bot cannot use up
+  // a person's tries.
+  const hp = { DB: makeDb() };
+  for (let i = 0; i < 40; i++) await send(hp, { 'cf-connecting-ip': '9.9.9.9' }, { type: 'contact', name: 'Bot', email: 'b@c.co', message: 'spam', website: 'http://spam' });
+  is('a honeypot hit does not spend the allowance', (await send(hp, { 'cf-connecting-ip': '9.9.9.9' })).status, 200);
+
+  /*
+   * A limiter that cannot read its table must not be the thing that rejects.
+   * With no database and no notification channel the handler answers 503
+   * "not-configured" — there is nowhere to put the order — but that is the
+   * order path failing honestly, not the limiter turning people away.
+   */
+  is('a broken database does not trip the limit', (await send({ DB: makeDb(true) })).status !== 429, true);
+  is('nor does no database at all', (await send({})).status !== 429, true);
+  is('and an unrecorded order says so', (await send({})).status, 503);
+}
+
 /* ------------------------------------------------------------ schema */
 group('database schema');
 /*

@@ -119,6 +119,8 @@ async function ensureSchema(env) {
       badge TEXT, batch TEXT, note TEXT, updated_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT '')`,
     `CREATE TABLE IF NOT EXISTS login_attempts (ip TEXT NOT NULL, at TEXT NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS rate (bucket TEXT NOT NULL, at TEXT NOT NULL)`,
+    `CREATE INDEX IF NOT EXISTS rate_bucket ON rate (bucket, at)`,
     `CREATE INDEX IF NOT EXISTS login_attempts_ip ON login_attempts (ip, at)`,
     `CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, action TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '')`,
     `CREATE INDEX IF NOT EXISTS audit_at ON audit (at DESC)`,
@@ -284,6 +286,34 @@ function cookie(request, name) {
 const SESSION_COOKIE = 'sm_admin';
 const setCookie = (value, maxAge) => `${SESSION_COOKIE}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
 
+/** Form submissions allowed from one caller per hour. */
+const SUBMIT_MAX = 30;
+const SUBMIT_WINDOW_S = 60 * 60;
+
+/**
+ * A sliding-window limit on a named bucket. Returns true when the caller has
+ * already used the allowance, and otherwise records this attempt.
+ *
+ * Without a database there is no limit — the same posture as the rest of the
+ * Worker, which degrades to "the shop still takes orders" rather than refusing
+ * them. An order lost is worse than an order counted twice.
+ */
+async function overLimit(env, bucket, max, windowS) {
+  const d = await ensureSchema(env);
+  if (!d) return false;
+  const since = new Date(Date.now() - windowS * 1000).toISOString();
+  try {
+    await d.prepare(`DELETE FROM rate WHERE at < ?`).bind(since).run();
+    const row = await d.prepare(`SELECT COUNT(*) AS c FROM rate WHERE bucket = ? AND at >= ?`).bind(bucket, since).first();
+    if (row && Number(row.c) >= max) return true;
+    await d.prepare(`INSERT INTO rate (bucket, at) VALUES (?, ?)`).bind(bucket, nowIso()).run();
+  } catch {
+    // A limiter that fails must not take the shop down with it.
+    return false;
+  }
+  return false;
+}
+
 /**
  * The bucket the login rate limit counts against.
  *
@@ -423,6 +453,9 @@ async function handleReviewPost(request, env) {
     return json(400, { ok: false, reason: 'bad-json' });
   }
   if (s(body.website)) return json(200, { ok: true }); // honeypot
+  // Reviews are moderated, so spam costs the owner time rather than reaching a
+  // reader — but a queue nobody can face is a queue nobody reads.
+  if (await overLimit(env, `review:${clientIp(request)}`, 10, SUBMIT_WINDOW_S)) return json(429, { ok: false, reason: 'too-many' });
   const slug = s(body.slug, 64);
   const rating = Math.round(Number(body.rating));
   const author = s(body.author, 60);
@@ -635,6 +668,15 @@ async function handleOrder(request, env) {
   const type = s(body.type, 20);
   if (!TYPES.has(type)) return json(400, { ok: false, reason: 'bad-type' });
   if (s(body.website) || s(body.customer?.website)) return json(200, { ok: true, ref: 'HP' });
+
+  /*
+   * The endpoint is public and, once Resend is configured, e-mails a receipt to
+   * whatever address is submitted — so it must not be scriptable as a mail
+   * relay. Thirty an hour is far above any real shopper and far below any use
+   * worth having. The honeypot above answers first, so a bot that trips it
+   * never spends the allowance a person might need.
+   */
+  if (await overLimit(env, `submit:${clientIp(request)}`, SUBMIT_MAX, SUBMIT_WINDOW_S)) return json(429, { ok: false, reason: 'too-many' });
 
   const email = s(type === 'order' ? body.customer?.email : body.email);
   if (!EMAIL_RE.test(email)) return json(422, { ok: false, reason: 'email' });
