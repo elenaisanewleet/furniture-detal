@@ -138,7 +138,7 @@ export const PRODUCT_COPY: Partial<
       title: "Яблочный батончик App'Lite, 35 г — коробка из 12 шт.",
       hook: "Ящик стола, полный правильных решений.",
       summary:
-        "Двенадцать яблочных батончиков App'Lite в одной коробке — классические, с ягодным миксом или пополам. Экономия 14% по сравнению с покупкой по одному. 99% печёных яблок, без добавленного сахара.",
+        "Двенадцать яблочных батончиков App'Lite в одной коробке: классические, ягодный микс или пополам. Экономия 14%. 99% печёных яблок, без добавленного сахара.",
       description: [
         "Эту коробку мы отправляем в офисы, спортзалы и всем, кто постоянно находит обёртки в карманах пальто. Двенадцать яблочных батончиков по 35 г, каждый в отдельной упаковке, в коробке, которая нормально встаёт на полку.",
         "Выберите один вкус или доверьте нам сложить шесть классических и шесть с ягодным миксом.",
@@ -283,7 +283,7 @@ export const PRODUCT_COPY: Partial<
       title: "App'Lite ābolu batoniņi 35 g — kaste ar 12 gabaliem",
       hook: "Atvilktne, pilna ar labiem lēmumiem.",
       summary:
-        "Divpadsmit App’Lite ābolu batoniņi vienā kastē — Klasiskie, Ogu mikss vai puse uz pusi. Ietaupa 14 % salīdzinājumā ar atsevišķiem batoniņiem. 99 % ceptu ābolu, bez pievienota cukura.",
+        "Divpadsmit App’Lite ābolu batoniņi vienā kastē: Klasiskie, Ogu mikss vai puse uz pusi. Ietaupa 14 %. 99 % ceptu ābolu, bez pievienota cukura.",
       description: [
         "Šo kasti mēs sūtām uz birojiem, sporta zālēm un ikvienam, kas mēteļa kabatās nemitīgi atrod papīriņus. Divpadsmit 35 g ābolu batoniņi, katrs atsevišķi iepakots, plauktam ērtā kastē.",
         "Izvēlieties vienu garšu vai ļaujiet mums salikt sešus Klasiskos un sešus ar Ogu miksu.",
@@ -355,7 +355,7 @@ export const COLLECTION_COPY: Partial<
       name: "Подарочные наборы и боксы",
       title: "Подарочные наборы и дегустационные боксы с яблочными снеками",
       description:
-        "Подобранные наборы яблочных батончиков, меренг и пастилы. Дегустационные боксы, наборы по 12 штук и наборы для знакомства без добавленного сахара, упакованы и отправлены из Риги.",
+        "Готовые наборы яблочных батончиков, меренг и пастилы: дегустационные боксы, коробки по 12 штук и наборы для знакомства. Без добавленного сахара, из Риги.",
     },
   },
   lv: {
@@ -369,7 +369,7 @@ export const COLLECTION_COPY: Partial<
       name: "Batoniņi bez miltiem",
       title: "Ābolu batoniņi bez miltiem, 50 g — blīvi, augļaini, bez miltiem",
       description:
-        "50 g batoniņi bez miltiem, gatavoti no ceptiem āboliem, olu baltuma un īstiem augļiem. Bez miltiem, bez glutēna, bez pievienota cukura. Oriģinālie, dzērveņu, kanēļa un melleņu.",
+        "50 g batoniņi no ceptiem āboliem, olu baltuma un īstiem augļiem. Bez miltiem, bez glutēna, bez pievienota cukura. Oriģinālie, dzērveņu, kanēļa un melleņu.",
     },
     meringues: {
       name: "Ābolu bezē",
@@ -399,7 +399,7 @@ export const COLLECTION_COPY: Partial<
       name: "Dāvanu komplekti un kārbas",
       title: "Ābolu uzkodu dāvanu komplekti un degustācijas kārbas",
       description:
-        "Rūpīgi saliktas kārbas ar ābolu batoniņiem, bezē un pastilu. Degustācijas kārbas, 12 gabalu iepakojumi un iepazīšanās komplekti bez pievienota cukura, iepakoti un nosūtīti no Rīgas.",
+        "Saliktas kārbas ar ābolu batoniņiem, bezē un pastilu: degustācijas kārbas, 12 gabalu iepakojumi un iepazīšanās komplekti. Bez pievienota cukura, no Rīgas.",
     },
   },
 };

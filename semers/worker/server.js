@@ -844,13 +844,24 @@ async function handleAdmin(request, env, path) {
 
 /* ---------------------------------------------------------------------- shell */
 
+/** Languages that have their own 404 page; anything else falls back to English. */
+const LOCALE_404 = { ru: '/ru/404/', lv: '/lv/404/' };
+
 async function notFound(request, env) {
   if (env && env.ASSETS) {
-    try {
-      const page = await env.ASSETS.fetch(new URL('/404.html', request.url));
-      if (page.ok) return new Response(page.body, { status: 404, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
-    } catch {
-      /* fall through to the plain response */
+    const url = new URL(request.url);
+    // A reader who mistypes a URL under /ru/ is already lost; dropping them into
+    // English at that moment makes it worse. The first path segment is the only
+    // thing left to go on, so it is what picks the page.
+    const first = url.pathname.split('/')[1];
+    for (const candidate of [LOCALE_404[first], '/404.html']) {
+      if (!candidate) continue;
+      try {
+        const page = await env.ASSETS.fetch(new URL(candidate, request.url));
+        if (page.ok) return new Response(page.body, { status: 404, headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' } });
+      } catch {
+        /* try the next candidate, then the plain response */
+      }
     }
   }
   return new Response('Not found', { status: 404, headers: { 'cache-control': 'no-store' } });

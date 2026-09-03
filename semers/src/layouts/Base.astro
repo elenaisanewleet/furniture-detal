@@ -85,9 +85,19 @@ const nodes = [
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonicalUrl} />
-    {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)}
-    <link rel="alternate" hreflang="x-default" href={alternates.find((a) => a.lang === DEFAULT_LOCALE)!.href} />
+    {/*
+      * A noindex page has nothing to canonicalise and nothing to offer as an
+      * alternate: the cart, the checkout and the 404 are states, not documents.
+      * Emitting both is a contradiction — "do not index this" next to "and here
+      * is the one true URL for it" — so the pair is dropped together.
+      */}
+    {!noindex && (
+      <Fragment>
+        <link rel="canonical" href={canonicalUrl} />
+        {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)}
+        <link rel="alternate" hreflang="x-default" href={alternates.find((a) => a.lang === DEFAULT_LOCALE)!.href} />
+      </Fragment>
+    )}
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'} />
     <meta name="theme-color" content="#faf3e4" />
     <meta name="format-detection" content="telephone=no" />

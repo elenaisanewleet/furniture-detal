@@ -1,0 +1,30 @@
+---
+/**
+ * The body of the 404 page, shared by all three language copies.
+ *
+ * It lives in a component rather than a route because Astro only emits the
+ * exact filename `404.html` for a page file literally named `404.astro`, and
+ * the Worker serves that file by name. So there is one file per language and
+ * one copy of the markup.
+ */
+import { im as image, SIZES } from '~/data/images';
+const im = image('apple-render-sm');
+---
+<section class="container nf">
+  <div class="nf__img" style={`background:${im.bg}`}><img src={im.src} srcset={im.srcset} sizes={im.srcset && SIZES.half} alt={im.alt} width={im.width} height={im.height} loading="eager" decoding="async" /></div>
+  <div>
+    <p class="eyebrow">404</p>
+    <h1>That page fell off the tree.</h1>
+    <p class="lead">The link is old, or the address has a typo. Everything worth eating is still here.</p>
+    <div class="cluster mt-4">
+      <a class="btn" href="/shop/">Shop all products</a>
+      <a class="btn btn--ghost" href="/">Home</a>
+    </div>
+  </div>
+</section>
+<style>
+  .nf { display: grid; gap: 2rem; align-items: center; padding-block: clamp(2rem, 6vw, 5rem); }
+  @media (min-width: 48rem) { .nf { grid-template-columns: 1fr 1fr; } }
+  .nf__img { border-radius: var(--r-xl); overflow: clip; }
+  .nf__img img { width: 100%; height: auto; display: block; }
+</style>
