@@ -2,6 +2,13 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { site } from '~/data/site';
+
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
 ---
 <Base title="Thank you" description="We received your order request." canonical="/order/thank-you/" noindex>
   <section class="container ty">

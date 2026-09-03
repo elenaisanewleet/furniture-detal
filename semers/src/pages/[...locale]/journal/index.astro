@@ -8,6 +8,13 @@ import { formatThreshold } from '~/data/products';
 import { article as articleSchema } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
 const origin = originOf(Astro.site);
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 

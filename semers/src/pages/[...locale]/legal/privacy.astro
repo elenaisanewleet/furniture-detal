@@ -4,6 +4,13 @@ import Icon from '~/components/Icon.astro';
 import { site } from '~/data/site';
 import { originOf } from '~/lib/origin';
 
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
 const origin = originOf(Astro.site);
 const path = '/legal/privacy/';
 const updated = 'September 2026';

@@ -1,12 +1,17 @@
 ---
+import { localePath, stripLocale } from '~/i18n/config';
+import { t as dict } from '~/i18n/ui';
 interface Props { trail: { name: string; href: string }[] }
 const { trail } = Astro.props;
+/** Pages give English hrefs; the trail has to stay inside the locale being read. */
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = dict(locale);
 ---
-<nav class="crumbs container" aria-label="Breadcrumb">
+<nav class="crumbs container" aria-label={ui.breadcrumb}>
   <ol>
-    {trail.map((t, i) => (
+    {trail.map((c, i) => (
       <li>
-        {i < trail.length - 1 ? <a href={t.href}>{t.name}</a> : <span aria-current="page">{t.name}</span>}
+        {i < trail.length - 1 ? <a href={localePath(c.href, locale)}>{c.name}</a> : <span aria-current="page">{c.name}</span>}
       </li>
     ))}
   </ol>

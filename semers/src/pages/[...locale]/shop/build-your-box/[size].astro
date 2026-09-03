@@ -6,9 +6,10 @@
 import Base from '~/layouts/Base.astro';
 import BoxBuilder from '~/components/BoxBuilder.astro';
 import { BOX_SIZES, BOX_DEFAULT_SIZE, boxHref, productBySlug, formatPrice } from '~/data/products';
+import { withLocales } from '~/i18n/config';
 
 export function getStaticPaths() {
-  return BOX_SIZES.filter((b) => b.size !== BOX_DEFAULT_SIZE).map((b) => ({ params: { size: String(b.size) }, props: { box: b } }));
+  return withLocales(BOX_SIZES.filter((b) => b.size !== BOX_DEFAULT_SIZE).map((b) => ({ params: { size: String(b.size) }, props: { box: b } })));
 }
 const { box } = Astro.props as { box: { size: number; discount: number } };
 const siblings = BOX_SIZES.filter((b) => b.size !== box.size).map((b) => ({ size: b.size, discount: b.discount, href: boxHref(b.size) }));

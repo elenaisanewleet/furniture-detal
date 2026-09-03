@@ -5,6 +5,13 @@ import { RENDER_BG, im, SIZES } from '~/data/images';
 import { PRODUCTS, collectionByKey, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** Countries with Semers on a shelf, derived from the retailer list (Latvia + export markets). */

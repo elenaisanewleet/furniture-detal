@@ -7,9 +7,10 @@ import { site } from '~/data/site';
 import { formatThreshold } from '~/data/products';
 import { article as articleSchema } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
+import { withLocales } from '~/i18n/config';
 
 export function getStaticPaths() {
-  return ARTICLES.map((a) => ({ params: { slug: a.slug }, props: { article: a } }));
+  return withLocales(ARTICLES.map((a) => ({ params: { slug: a.slug }, props: { article: a } })));
 }
 const { article: a } = Astro.props as { article: Article };
 const origin = originOf(Astro.site);

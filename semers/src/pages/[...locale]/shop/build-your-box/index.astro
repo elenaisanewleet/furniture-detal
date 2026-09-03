@@ -6,6 +6,12 @@
 import Base from '~/layouts/Base.astro';
 import BoxBuilder from '~/components/BoxBuilder.astro';
 import { BOX_SIZES, BOX_DEFAULT_SIZE, boxHref, productBySlug, formatPrice } from '~/data/products';
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
 
 const me = BOX_SIZES.find((b) => b.size === BOX_DEFAULT_SIZE)!;
 const siblings = BOX_SIZES.filter((b) => b.size !== me.size).map((b) => ({ size: b.size, discount: b.discount, href: boxHref(b.size) }));

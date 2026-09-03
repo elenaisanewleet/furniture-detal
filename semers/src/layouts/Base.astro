@@ -13,6 +13,8 @@ import { site } from '~/data/site';
 import { organization, webSite, breadcrumbs, graph } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { imgSrc } from '~/data/images';
+import { LOCALES, LOCALE_META, DEFAULT_LOCALE, localePath, stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
 
 interface Props {
   title: string;
@@ -45,7 +47,17 @@ const {
 } = Astro.props;
 
 const origin = originOf(Astro.site);
-const canonicalUrl = new URL(canonical, origin).toString();
+/**
+ * The locale comes from the URL rather than a prop, so no page has to pass it
+ * down and a page can never disagree with the address it was served at.
+ * Pages give `canonical` as the English path; it is localised here.
+ */
+const { locale, path: enPath } = stripLocale(Astro.url.pathname);
+const enCanonical = stripLocale(canonical).path;
+const ui = t(locale);
+const canonicalUrl = new URL(localePath(enCanonical, locale), origin).toString();
+/** Every language of this page points at every other, and English is the fallback for anything else. */
+const alternates = LOCALES.map((l) => ({ lang: l, href: new URL(localePath(enCanonical, l), origin).toString() }));
 const ogSrc = ogImage.startsWith('http') || ogImage.startsWith('/') ? ogImage : imgSrc(ogImage);
 const ogUrl = ogSrc.startsWith('http') ? ogSrc : new URL(ogSrc, origin).toString();
 const fullTitle = title.includes('Semers') ? title : `${title} — Semers`;
@@ -59,7 +71,7 @@ const nodes = [
 ---
 
 <!doctype html>
-<html lang="en" prefix="og: https://ogp.me/ns#">
+<html lang={locale} prefix="og: https://ogp.me/ns#">
   <head>
     <meta charset="utf-8" />
     <script is:inline>document.documentElement.classList.add("js");</script>
@@ -67,8 +79,8 @@ const nodes = [
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
-    <link rel="alternate" hreflang="en" href={canonicalUrl} />
-    <link rel="alternate" hreflang="x-default" href={canonicalUrl} />
+    {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)}
+    <link rel="alternate" hreflang="x-default" href={alternates.find((a) => a.lang === DEFAULT_LOCALE)!.href} />
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'} />
     <meta name="theme-color" content="#faf3e4" />
     <meta name="format-detection" content="telephone=no" />
@@ -79,7 +91,8 @@ const nodes = [
 
     <meta property="og:type" content={ogType} />
     <meta property="og:site_name" content={site.brand.name} />
-    <meta property="og:locale" content="en_GB" />
+    <meta property="og:locale" content={LOCALE_META[locale].ogLocale} />
+    {LOCALES.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={LOCALE_META[l].ogLocale} />)}
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
@@ -102,12 +115,12 @@ const nodes = [
     <link rel="preconnect" href="https://d2ol7oe51mr4n9.cloudfront.net" />
 
     <script type="application/ld+json" set:html={graph(nodes)} is:inline />
-    <script is:inline set:html={`window.SEMERS=${JSON.stringify({ endpoint: site.orderEndpoint || '/api/order', freeFrom: site.shipping.freeFrom, email: site.email, whatsapp: site.whatsapp, currency: site.currency, ...site.storefront })};`} />
+    <script is:inline set:html={`window.SEMERS=${JSON.stringify({ endpoint: site.orderEndpoint || '/api/order', freeFrom: site.shipping.freeFrom, email: site.email, whatsapp: site.whatsapp, currency: site.currency, locale, intl: LOCALE_META[locale].intl, strings: ui.runtime, ...site.storefront })};`} />
     <slot name="head" />
   </head>
 
   <body class={`${heroHeader ? 'has-hero-header' : ''} ${bodyClass}`}>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href={`${localePath(enPath, locale)}#main`}>{ui.skipToContent}</a>
     {/* Filled from /api/storefront when the owner has an announcement running; stays out of the layout until then. */}
     <div class="announce" data-announce hidden><div class="container"><span data-announce-text></span></div></div>
     <Header transparent={heroHeader} />

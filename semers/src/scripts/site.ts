@@ -21,6 +21,10 @@ declare global {
       tier2Pct?: number;
       tiersOn?: boolean;
       reviewsOn?: boolean;
+      locale?: string;
+      intl?: string;
+      /** Runtime templates for the current locale; see src/i18n/ui.ts. */
+      strings?: Record<string, string>;
     };
     semersCart: Cart;
   }
@@ -40,13 +44,28 @@ const CFG = window.SEMERS || {
   tier2Pct: 0,
   tiersOn: false,
   reviewsOn: false,
+  locale: 'en',
+  intl: 'en-IE',
+  strings: {},
 };
 const $ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel);
 const $$ = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => Array.from(root.querySelectorAll<T>(sel));
-const fmt = (n: number) => new Intl.NumberFormat('en-IE', { style: 'currency', currency: CFG.currency || 'EUR' }).format(n);
+const fmt = (n: number) => new Intl.NumberFormat(CFG.intl || 'en-IE', { style: 'currency', currency: CFG.currency || 'EUR' }).format(n);
 /** Whole-euro amounts such as the free-shipping threshold read "€25" everywhere else on the site, so the drawer must not say "€25.00". */
-const fmtWhole = (n: number) => (Number.isInteger(n) ? new Intl.NumberFormat('en-IE', { style: 'currency', currency: CFG.currency || 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n) : fmt(n));
+const fmtWhole = (n: number) => (Number.isInteger(n) ? new Intl.NumberFormat(CFG.intl || 'en-IE', { style: 'currency', currency: CFG.currency || 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n) : fmt(n));
 const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+
+/**
+ * Runtime strings for the language this page was rendered in, injected by the
+ * layout. Read through S() so a key the dictionary has not filled in yet
+ * degrades to readable English rather than "undefined" in the interface.
+ */
+const STR: Record<string, string> = CFG.strings || {};
+const S = (key: string, fallback = '') => STR[key] || fallback;
+/** Substitute {placeholders} in a runtime template. */
+const interp = (tpl: string, vars: Record<string, string | number>) => tpl.replace(/\{(\w+)\}/g, (_m, k) => String(vars[k] ?? ''));
+/** Escape, then turn **text** into <strong>: the only markup a dictionary may introduce. */
+const rich = (tpl: string) => esc(tpl).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
 
 /* ------------------------------------------------------------------ toast */
 let toastTimer = 0;
@@ -231,7 +250,7 @@ function renderCart() {
     count.textContent = String(c);
     count.hidden = c === 0;
   }
-  $('#cart-open')?.setAttribute('aria-label', c ? `Open cart, ${c} item${c === 1 ? '' : 's'}` : 'Open cart, empty');
+  $('#cart-open')?.setAttribute('aria-label', c ? interp(S(c === 1 ? 'openCartOne' : 'openCartMany', 'Open cart, {n}'), { n: c }) : S('openCartEmpty', 'Open cart, empty'));
   if (n) n.textContent = c ? `· ${c} item${c === 1 ? '' : 's'}` : '';
   if (sub) sub.textContent = fmt(total);
   if (checkout) checkout.classList.toggle('is-disabled', c === 0), checkout.setAttribute('aria-disabled', String(c === 0)), (checkout.tabIndex = c === 0 ? -1 : 0);
@@ -244,11 +263,12 @@ function renderCart() {
     const free = c > 0 && shipsFree(total);
     const left = free ? 0 : Math.max(0, CFG.freeFrom - total);
     fill.style.width = free ? '100%' : `${Math.min(100, (total / CFG.freeFrom) * 100)}%`;
-    text.innerHTML = c === 0
-      ? `Free shipping on orders over <strong>${fmtWhole(CFG.freeFrom)}</strong>.`
-      : left > 0
-        ? `Add <strong>${fmt(left)}</strong> more for free shipping.`
-        : `You’ve unlocked <strong>free shipping</strong>.`;
+    text.innerHTML =
+      c === 0
+        ? rich(interp(S('freeShippingOver', 'Free shipping on orders over **{from}**.'), { from: fmtWhole(CFG.freeFrom) }))
+        : left > 0
+          ? rich(interp(S('addMoreForFree', 'Add **{amount}** more for free shipping.'), { amount: fmt(left) }))
+          : rich(S('unlockedFreeShipping', 'You’ve unlocked **free shipping**.'));
   }
 
   // Nudge toward the next volume step, the way the shipping bar nudges toward
@@ -266,7 +286,7 @@ function renderCart() {
     }
     tierText.hidden = !best;
     if (best) {
-      tierText.innerHTML = `Add <strong>${best.need}</strong> more ${esc(best.item.name)} to save <strong>${best.pct}%</strong> on that line.`;
+      tierText.innerHTML = rich(interp(S('nextTier', 'Add **{need}** more {name} to save **{pct}%** on that line.'), { need: best.need, name: best.item.name, pct: best.pct }));
     }
   }
 
@@ -329,7 +349,7 @@ function renderCart() {
   if (coBtn) coBtn.disabled = c === 0;
   if (coNote) {
     if (c === 0) {
-      coNote.textContent = 'Your box is empty — add something from the shop first.';
+      coNote.textContent = S('emptyBoxAtCheckout', 'Your box is empty — add something from the shop first.');
       coNote.hidden = false;
       coNote.classList.remove('notice--err', 'notice--ok');
       coNote.classList.add('notice');
@@ -375,7 +395,7 @@ function renderSummary(root: HTMLElement) {
       () => $<HTMLElement>('[data-summary-empty]:not([hidden]) a[href], [data-summary-checkout]', root),
     );
   if (sub) sub.textContent = fmt(total);
-  if (ship) ship.textContent = c === 0 ? '—' : quoted ? 'Quoted by e-mail' : shipping === 0 ? 'Free' : fmt(shipping);
+  if (ship) ship.textContent = c === 0 ? '—' : quoted ? S('quotedByEmail', 'Quoted by e-mail') : shipping === 0 ? S('free', 'Free') : fmt(shipping);
   if (tot) tot.textContent = quoted ? `${fmt(total)} + shipping` : fmt(total + shipping);
   const hidden = $<HTMLInputElement>('[data-cart-json]', root);
   if (hidden) hidden.value = JSON.stringify({ items: cart.items, subtotal: total, shipping, total: total + shipping });
@@ -423,8 +443,10 @@ document.addEventListener('click', (e) => {
     const it = cart.items.find((i) => i.id === id);
     if (!it) return;
     if (t.closest('[data-inc]')) cart.setQty(id, it.qty + 1), announce(`${it.name}: quantity ${it.qty}`);
-    else if (t.closest('[data-dec]')) cart.setQty(id, it.qty - 1), announce(it.qty > 0 ? `${it.name}: quantity ${it.qty}` : `Removed ${it.name}`);
-    else if (t.closest('[data-rm]')) cart.remove(id), announce(`Removed ${it.name}`);
+    else if (t.closest('[data-dec]'))
+      cart.setQty(id, it.qty - 1),
+        announce(it.qty > 0 ? interp(S('qtyAnnounce', '{name}: quantity {qty}'), { name: it.name, qty: it.qty }) : interp(S('removed', 'Removed {name}'), { name: it.name }));
+    else if (t.closest('[data-rm]')) cart.remove(id), announce(interp(S('removed', 'Removed {name}'), { name: it.name }));
   }
 });
 document.addEventListener('keydown', (e) => {
@@ -488,7 +510,7 @@ document.addEventListener('click', (e) => {
   btn.classList.add('is-done');
   window.setTimeout(() => btn.classList.remove('is-done'), 1200);
   if (btn.dataset.addOpen !== 'false') openCart();
-  else toast(`Added ${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ''} to your box`);
+  else toast(interp(S('addedToBox', 'Added {name} to your box'), { name: `${item.name}${item.variantLabel ? ` (${item.variantLabel})` : ''}` }));
   // A quick add inside the drawer hides its own row (the item is in the box now): hand focus to the next quick add, else Close.
   if (drawer && drawer.contains(btn) && btn.offsetParent === null) ($('#cart-upsell li:not([hidden]) [data-add]') || $('.drawer__close', drawer))?.focus();
 });
@@ -783,7 +805,7 @@ if (builder) {
       cart.add({
         id: `bundle:${key}`,
         slug: 'build-your-box',
-        name: `Your ${size}-piece box`,
+        name: interp(S('nPieceBox', 'Your {size}-piece box'), { size }),
         variant: 'custom',
         variantLabel: `${Math.round(discount * 100)}% bundle discount`,
         price: Math.round(full * (1 - discount) * 100) / 100,
@@ -832,17 +854,17 @@ $$<HTMLFormElement>('form[data-form]').forEach((form) => {
     const note = form.querySelector<HTMLElement>('[data-form-note]') || (form.nextElementSibling?.matches('[data-form-note]') ? (form.nextElementSibling as HTMLElement) : null);
     const data = formData(form);
     if (data.website) return; // honeypot
-    if (btn) (btn.disabled = true), (btn.dataset.label = btn.textContent || ''), (btn.textContent = 'Sending…');
+    if (btn) (btn.disabled = true), (btn.dataset.label = btn.textContent || ''), (btn.textContent = S('sending', 'Sending…'));
     try {
       await post({ type, ...data, page: location.pathname });
       form.reset();
-      const msg = form.dataset.success || 'Thanks — we’ll be in touch shortly.';
+      const msg = form.dataset.success || S('contactSuccess', 'Thanks — we’ll be in touch shortly.');
       if (note) (note.textContent = msg), note.classList.add('notice', 'notice--ok');
       toast(msg);
     } catch (err) {
       const subject = `${type} via semers.org`;
       const body = Object.entries(data).map(([k, v]) => `${k}: ${v}`).join('\n');
-      const msg = `We could not send this automatically. Opening your e-mail app instead${CFG.email ? ` — or write to ${CFG.email}` : ''}.`;
+      const msg = interp(S('mailFallback', 'We could not send this automatically. Opening your e-mail app instead{via}.'), { via: CFG.email ? ` — ${CFG.email}` : '' });
       if (note) (note.textContent = msg), note.classList.add('notice', 'notice--err');
       toast(msg, 4000);
       mailtoFallback(subject, body);
@@ -895,7 +917,7 @@ if (checkout) {
     e.preventDefault();
     if (checkout.dataset.busy) return; // one order at a time
     if (cart.count() === 0) {
-      toast('Your box is empty — add something first.');
+      toast(S('boxEmptyAdd', 'Your box is empty — add something first.'));
       return;
     }
     // The form carries `novalidate` (custom field styling), so constraint validation must be run here.
@@ -920,7 +942,7 @@ if (checkout) {
       page: location.pathname,
     };
     checkout.dataset.busy = '1';
-    if (btn) (btn.disabled = true), (btn.textContent = 'Placing order…');
+    if (btn) (btn.disabled = true), (btn.textContent = S('placingOrder', 'Placing order…'));
     try {
       const res = await post(order);
       checkout.dataset.done = '1';
@@ -936,7 +958,7 @@ if (checkout) {
       const reason = (err as { data?: { reason?: string } })?.data?.reason;
       if (reason === 'email' || reason === 'empty') {
         // The server rejected the request itself; opening a mailto here would send a broken order.
-        const msg = reason === 'email' ? 'Please check the e-mail address and try again.' : 'Your box is empty — add something first.';
+        const msg = reason === 'email' ? S('checkEmail', 'Please check the e-mail address and try again.') : S('boxEmptyAdd', 'Your box is empty — add something first.');
         if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
         toast(msg, 4000);
         restoreBtn();
@@ -982,7 +1004,7 @@ $$('[data-copy]').forEach((b) =>
   b.addEventListener('click', async () => {
     try {
       await navigator.clipboard.writeText(b.dataset.copy || '');
-      toast('Copied');
+      toast(S('copied', 'Copied'));
     } catch {
       /* ignore */
     }
@@ -1069,7 +1091,7 @@ function applyOverrideToCards(products: Record<string, StorefrontOverride>) {
     const btn = card.querySelector<HTMLButtonElement>('[data-add]');
     if (btn && o.inStock === false) {
       btn.disabled = true;
-      btn.setAttribute('aria-label', 'Sold out');
+      btn.setAttribute('aria-label', S('soldOut', 'Sold out'));
       card.classList.add('is-soldout');
     }
   });
@@ -1099,7 +1121,7 @@ function applyOverrideToPdp(pdpEl: HTMLElement, o: StorefrontOverride) {
       .filter(notCard)
       .forEach((b) => {
         b.disabled = true;
-        b.textContent = 'Sold out';
+        b.textContent = S('soldOut', 'Sold out');
       });
     // A dead button is a lost visit; ask for the e-mail instead. The ladder and
     // the promise are about buying now, so they go away with the button.
@@ -1184,7 +1206,7 @@ if (ladder) {
     b.addEventListener('click', () => {
       if (qtyIn) qtyIn.value = String(Number(b.dataset.tierQty) || 1);
       sync();
-      announce(`Quantity set to ${b.dataset.tierQty}`);
+      announce(interp(S('qtySetTo', 'Quantity set to {n}'), { n: b.dataset.tierQty || '' }));
     }),
   );
   qtyIn?.addEventListener('input', sync);
@@ -1225,20 +1247,22 @@ if (reviewsEl) {
     if (emptyNote) emptyNote.hidden = true;
     if (summary) {
       summary.hidden = false;
-      summary.innerHTML = `<span class="stars" aria-hidden="true">${stars(Math.round(data.avg))}</span> <strong>${data.avg.toFixed(1)}</strong> out of 5 · ${data.count} review${data.count === 1 ? '' : 's'}`;
+      summary.innerHTML =
+        `<span class="stars" aria-hidden="true">${stars(Math.round(data.avg))}</span> ` +
+        rich(interp(S(data.count === 1 ? 'reviewsSummaryOne' : 'reviewsSummaryMany', '**{avg}** out of 5 · {count}'), { avg: data.avg.toFixed(1), count: data.count }));
     }
     list.innerHTML = data.reviews
       .map(
         (r) => `<article class="rev">
           <div class="rev__top">
-            <span class="rev__stars" aria-label="${r.rating} out of 5">${stars(r.rating)}</span>
+            <span class="rev__stars" aria-label="${esc(interp(S('outOfFive', '{n} out of 5'), { n: r.rating }))}">${stars(r.rating)}</span>
             <span class="rev__who">${esc(r.author)}</span>
             <span class="rev__meta">${esc([r.city, r.date].filter(Boolean).join(' · '))}</span>
-            ${r.verified ? '<span class="rev__verified">Verified purchase</span>' : ''}
+            ${r.verified ? `<span class="rev__verified">${esc(S('verifiedPurchase', 'Verified purchase'))}</span>` : ''}
           </div>
           ${r.title ? `<p class="rev__title">${esc(r.title)}</p>` : ''}
           <p class="rev__body">${esc(r.body)}</p>
-          ${r.reply ? `<p class="rev__reply"><strong>Semers:</strong> ${esc(r.reply)}</p>` : ''}
+          ${r.reply ? `<p class="rev__reply"><strong>${esc(S('semersReply', 'Semers:'))}</strong> ${esc(r.reply)}</p>` : ''}
         </article>`,
       )
       .join('');
@@ -1279,7 +1303,7 @@ if (reviewsEl) {
     const btn = form.querySelector<HTMLButtonElement>('[type="submit"]');
     const data = formData(form);
     if (data.website) return;
-    if (btn) (btn.disabled = true), (btn.textContent = 'Sending…');
+    if (btn) (btn.disabled = true), (btn.dataset.label = btn.textContent || ''), (btn.textContent = S('sending', 'Sending…'));
     try {
       const res = await fetch('/api/reviews', {
         method: 'POST',
@@ -1288,12 +1312,12 @@ if (reviewsEl) {
       });
       if (!res.ok) throw new Error(String(res.status));
       form.reset();
-      if (note) (note.textContent = 'Thank you — we read every review before it appears, so give us a day.'), (note.hidden = false), note.classList.add('notice', 'notice--ok');
-      toast('Review sent for approval');
+      if (note) (note.textContent = S('reviewThanks', 'Thank you — we read every review before it appears, so give us a day.')), (note.hidden = false), note.classList.add('notice', 'notice--ok');
+      toast(S('reviewSent', 'Review sent for approval'));
     } catch {
-      if (note) (note.textContent = 'That did not send. Please try again, or e-mail us and we will add it by hand.'), (note.hidden = false), note.classList.add('notice', 'notice--err');
+      if (note) (note.textContent = S('reviewFailed', 'That did not send. Please try again, or e-mail us and we will add it by hand.')), (note.hidden = false), note.classList.add('notice', 'notice--err');
     } finally {
-      if (btn) (btn.disabled = false), (btn.textContent = 'Send review');
+      if (btn) (btn.disabled = false), (btn.textContent = btn.dataset.label || btn.textContent || '');
     }
   });
 }
@@ -1309,17 +1333,17 @@ restock?.addEventListener('submit', async (e) => {
   const data = formData(restock);
   if (data.website) return;
   const name = document.querySelector('h1')?.textContent?.trim() || location.pathname;
-  if (btn) (btn.disabled = true), (btn.textContent = 'Sending…');
+  if (btn) (btn.disabled = true), (btn.textContent = S('sending', 'Sending…'));
   try {
     // Reuses the order endpoint's contact type, so it lands in the same inbox
     // and the same admin list as everything else a customer sends.
     await post({ type: 'contact', name: 'Back-in-stock request', email: data.email, topic: `Back in stock: ${name}`, message: `Please notify me when ${name} is available again.`, page: location.pathname });
     restock.reset();
-    if (note) (note.textContent = 'Noted — we will write to you when it is back.'), (note.hidden = false), note.classList.add('notice', 'notice--ok');
+    if (note) (note.textContent = S('notifyNoted', 'Noted — we will write to you when it is back.')), (note.hidden = false), note.classList.add('notice', 'notice--ok');
   } catch {
-    if (note) (note.textContent = `That did not send. Write to ${CFG.email || 'us'} and we will add you by hand.`), (note.hidden = false), note.classList.add('notice', 'notice--err');
+    if (note) (note.textContent = interp(S('notifyFailed', 'That did not send. Write to {email} and we will add you by hand.'), { email: CFG.email || 'us' })), (note.hidden = false), note.classList.add('notice', 'notice--err');
   } finally {
-    if (btn) (btn.disabled = false), (btn.textContent = 'Notify me');
+    if (btn) (btn.disabled = false), (btn.textContent = S('notifyMe', 'Notify me'));
   }
 });
 

@@ -7,6 +7,13 @@ import { site } from '~/data/site';
 import { formatThreshold } from '~/data/products';
 import { faqPage } from '~/lib/schema';
 
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 
 /** Groups in reading order. `related` feeds the side column of each group. */

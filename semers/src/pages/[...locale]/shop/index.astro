@@ -6,6 +6,13 @@ import { PRODUCTS, COLLECTIONS, DIET_TAGS } from '~/data/products';
 import { itemList } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
 const origin = originOf(Astro.site);
 const products = [...PRODUCTS].sort((a, b) => Number(b.bestseller || 0) - Number(a.bestseller || 0) || a.order - b.order);
 const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as const;

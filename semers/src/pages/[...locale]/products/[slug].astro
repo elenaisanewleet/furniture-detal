@@ -7,9 +7,10 @@ import { img, imgSrc, im, imgSmall, imgSrcset, SIZES } from '~/data/images';
 import { productSchema, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { site } from '~/data/site';
+import { withLocales } from '~/i18n/config';
 
 export function getStaticPaths() {
-  return PRODUCTS.map((p) => ({ params: { slug: p.slug }, props: { product: p } }));
+  return withLocales(PRODUCTS.map((p) => ({ params: { slug: p.slug }, props: { product: p } })));
 }
 const { product: p } = Astro.props as { product: Product };
 const col = collectionByKey(p.collection)!;

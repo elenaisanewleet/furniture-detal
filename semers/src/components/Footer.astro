@@ -2,39 +2,52 @@
 import Logo from './Logo.astro';
 import Icon from './Icon.astro';
 import { site, footerNav } from '~/data/site';
+import { localePath, stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
 const year = new Date().getFullYear();
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const L = (href: string) => localePath(href, locale);
+const columns = [
+  { key: 'shop' as const, label: ui.footerHeadings.shop, links: footerNav.shop },
+  { key: 'learn' as const, label: ui.footerHeadings.learn, links: footerNav.learn },
+  { key: 'company' as const, label: ui.footerHeadings.company, links: footerNav.company },
+];
 ---
 <footer class="ftr">
   <div class="ftr__cta container">
     <div class="ftr__cta-inner">
-      <p class="eyebrow">By e-mail, occasionally</p>
-      <h2 class="display">Hear about the next flavour first.</h2>
-      <p class="muted">New flavours, restock alerts and the occasional recipe. No spam, no sugar.</p>
-      <form class="ftr__form" data-form="newsletter" data-success="Thanks — you’re on the list. We write rarely, and only when there is something to say.">
-        <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
-        <label class="sr-only" for="ftr-email">E-mail</label>
-        <input class="input" id="ftr-email" type="email" name="email" placeholder="you@example.com" required autocomplete="email" />
-        <button class="btn" type="submit">Subscribe <Icon name="arrow" size={18} class="arrow" /></button>
+      <p class="eyebrow">{ui.newsletterEyebrow}</p>
+      <h2 class="display">{ui.newsletterTitle}</h2>
+      <p class="muted">{ui.newsletterLead}</p>
+      <form class="ftr__form" data-form="newsletter" data-success={ui.newsletterSuccess}>
+        <div class="honey" aria-hidden="true"><label>{ui.website} <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
+        <label class="sr-only" for="ftr-email">{ui.emailLabel}</label>
+        <input class="input" id="ftr-email" type="email" name="email" placeholder={ui.emailPlaceholder} required autocomplete="email" />
+        <button class="btn" type="submit">{ui.subscribe} <Icon name="arrow" size={18} class="arrow" /></button>
       </form>
-      <p class="tiny muted" data-form-note>By subscribing you agree to our <a href="/legal/privacy/">privacy policy</a>.</p>
+      <p class="tiny muted" data-form-note>{ui.newsletterConsent} <a href={L('/legal/privacy/')}>{ui.privacyPolicy}</a>.</p>
     </div>
   </div>
   <div class="ftr__main container">
     <div class="ftr__brand">
-      <a href="/" aria-label="Semers home"><Logo size={34} /></a>
-      <p class="ftr__tag">Baked apple snacks made in Riga, Latvia. Bars, meringues and pastila that are 99% apple, with no added sugar.</p>
+      <a href={L('/')} aria-label={ui.home}><Logo size={34} /></a>
+      <p class="ftr__tag">{ui.footerTagline}</p>
       <div class="ftr__social">
-        {site.social.instagram && <a href={site.social.instagram} rel="noopener" target="_blank" aria-label="Instagram (opens in a new tab)"><Icon name="instagram" /></a>}
-        <a href={`mailto:${site.email}`} aria-label="E-mail"><Icon name="mail" /></a>
+        {site.social.instagram && <a href={site.social.instagram} rel="noopener" target="_blank" aria-label={ui.instagramAria}><Icon name="instagram" /></a>}
+        <a href={`mailto:${site.email}`} aria-label={ui.emailLabel}><Icon name="mail" /></a>
       </div>
     </div>
-    <nav aria-label="Shop"><h3>Shop</h3><ul>{footerNav.shop.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
-    <nav aria-label="Learn"><h3>Learn</h3><ul>{footerNav.learn.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
-    <nav aria-label="Company"><h3>Company</h3><ul>{footerNav.company.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul></nav>
+    {columns.map((c) => (
+      <nav aria-label={c.label}>
+        <h3>{c.label}</h3>
+        <ul>{c.links.map((l) => <li><a href={L(l.href)}>{ui.footerLinks[l.key]}</a></li>)}</ul>
+      </nav>
+    ))}
   </div>
   <div class="ftr__legal container">
     <p>© {year} {site.brand.legalName} · {site.locality}, {site.country}</p>
-    <p>Prices in EUR incl. VAT. <a href="/legal/shipping-returns/">Shipping &amp; returns</a> · <a href="/legal/terms/">Terms</a> · <a href="/legal/privacy/">Privacy</a></p>
+    <p>{ui.vatLine} <a href={L('/legal/shipping-returns/')}>{ui.footerLinks.shippingReturns}</a> · <a href={L('/legal/terms/')}>{ui.footerLinks.terms}</a> · <a href={L('/legal/privacy/')}>{ui.footerLinks.privacy}</a></p>
   </div>
 </footer>
 <style>

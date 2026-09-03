@@ -5,6 +5,13 @@ import { site } from '~/data/site';
 import { formatPrice, formatThreshold } from '~/data/products';
 import { originOf } from '~/lib/origin';
 
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
 const origin = originOf(Astro.site);
 const path = '/legal/shipping-returns/';
 const updated = 'September 2026';

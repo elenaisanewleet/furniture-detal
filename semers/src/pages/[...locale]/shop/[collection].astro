@@ -6,9 +6,10 @@ import { COLLECTIONS, productsInCollection, type Collection } from '~/data/produ
 import { img, imgSrc, im, imgSrcset, SIZES } from '~/data/images';
 import { itemList } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
+import { withLocales } from '~/i18n/config';
 
 export function getStaticPaths() {
-  return COLLECTIONS.map((c) => ({ params: { collection: c.key }, props: { collection: c } }));
+  return withLocales(COLLECTIONS.map((c) => ({ params: { collection: c.key }, props: { collection: c } })));
 }
 const { collection: c } = Astro.props as { collection: Collection };
 const products = productsInCollection(c.key);

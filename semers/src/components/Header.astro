@@ -1,34 +1,52 @@
 ---
 import Logo from './Logo.astro';
 import Icon from './Icon.astro';
-import { nav } from '~/data/site';
+import { nav, site } from '~/data/site';
+import { formatThreshold } from '~/data/products';
+import { LOCALES, LOCALE_META, localePath, stripLocale } from '~/i18n/config';
+import { t, bold } from '~/i18n/ui';
 interface Props { transparent?: boolean }
 const { transparent = false } = Astro.props;
-const path = Astro.url.pathname;
+/** Locale from the URL, so the header never needs it passed down. */
+const { locale, path } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const L = (href: string) => localePath(href, locale);
+/** The switcher stays on the page the visitor is reading rather than dropping them at the home page. */
+const languages = LOCALES.map((l) => ({ locale: l, href: localePath(path, l), native: LOCALE_META[l].native, current: l === locale }));
 ---
 <header class={`hdr ${transparent ? 'hdr--float' : ''}`} id="hdr">
   <div class="hdr__bar">
-    <span class="hdr__bar-text"><strong>Free shipping</strong> on orders over €25 · Ships from Riga in 1–2 business days · 99% apples, 0 added sugar</span>
+    <span class="hdr__bar-text" set:html={bold(ui.headerBar(formatThreshold(site.shipping.freeFrom)))} />
   </div>
   <div class="hdr__main container--wide">
-    <button class="hdr__burger" id="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label="Open menu">
+    <button class="hdr__burger" id="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label={ui.openMenu}>
       <Icon name="menu" size={24} />
     </button>
-    <a class="hdr__logo" href="/" aria-label="Semers home"><Logo size={30} /></a>
-    <nav class="hdr__nav" id="nav" aria-label="Primary">
-      <button class="hdr__nav-close" type="button" data-nav-close aria-label="Close menu"><Icon name="close" size={24} /></button>
+    <a class="hdr__logo" href={L('/')} aria-label={ui.home}><Logo size={30} /></a>
+    <nav class="hdr__nav" id="nav" aria-label={ui.primaryNav}>
+      <button class="hdr__nav-close" type="button" data-nav-close aria-label={ui.closeMenu}><Icon name="close" size={24} /></button>
       <ul>
         {nav.map((n) => (
-          <li><a href={n.href} aria-current={path.startsWith(n.href) ? 'page' : undefined}>{n.label}</a></li>
+          <li><a href={L(n.href)} aria-current={path.startsWith(n.href) ? 'page' : undefined}>{ui.nav[n.key]}</a></li>
         ))}
       </ul>
       <div class="hdr__nav-cta">
-        <a class="btn btn--block" href="/shop/">Shop all</a>
+        <a class="btn btn--block" href={L('/shop/')}>{ui.shopAll}</a>
+        <ul class="hdr__langs" aria-label={ui.language}>
+          {languages.map((l) => (
+            <li><a href={l.href} lang={l.locale} hreflang={l.locale} aria-current={l.current ? 'true' : undefined}>{l.native}</a></li>
+          ))}
+        </ul>
       </div>
     </nav>
     <div class="hdr__actions">
-      <a class="hdr__shop btn btn--sm btn--ink" href="/shop/">Shop</a>
-      <button class="hdr__cart" id="cart-open" aria-label="Open cart" aria-haspopup="dialog">
+      <div class="lang" aria-label={ui.language}>
+        {languages.map((l) => (
+          <a class="lang__a" href={l.href} lang={l.locale} hreflang={l.locale} aria-current={l.current ? 'true' : undefined}>{l.locale.toUpperCase()}</a>
+        ))}
+      </div>
+      <a class="hdr__shop btn btn--sm btn--ink" href={L('/shop/')}>{ui.shop}</a>
+      <button class="hdr__cart" id="cart-open" aria-label={ui.openCart} aria-haspopup="dialog">
         <Icon name="cart" size={24} />
         <span class="hdr__count" id="cart-count" hidden>0</span>
       </button>
@@ -43,7 +61,9 @@ const path = Astro.url.pathname;
   .hdr--float { background: transparent; border-bottom-color: transparent; }
   .hdr--float.is-stuck { background: var(--bg); border-bottom-color: var(--line); }
   .hdr__bar { background: var(--ink-900); color: var(--cream-0); font-size: var(--fs-xs); text-align: center; padding: 0.45rem var(--gutter); letter-spacing: 0.02em; }
-  .hdr__bar strong { color: var(--honey-500); }
+  /* The bar's emphasis is produced by bold() at render time, so it carries no
+     scope attribute and a plain `strong` selector would stop matching it. */
+  .hdr__bar :global(strong) { color: var(--honey-500); }
   .hdr__main { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sp-4); min-height: 4.25rem; }
   .hdr__logo { text-decoration: none; display: inline-flex; }
   .hdr__nav ul { display: flex; gap: clamp(1rem, 2.4vw, 2rem); list-style: none; margin: 0; padding: 0; justify-content: center; }
@@ -54,6 +74,12 @@ const path = Astro.url.pathname;
   .hdr__nav-close { display: none; position: absolute; top: 0.75rem; right: 0.75rem; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 50%; }
   .hdr__nav-close:hover { background: var(--bg-sunken); }
   .hdr__actions { display: flex; align-items: center; gap: var(--sp-3); }
+  /* Language is a row of codes, not a dropdown: three options are quicker to hit than a menu. */
+  .lang { display: flex; align-items: center; gap: 0.15rem; }
+  .lang__a { text-decoration: none; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.04em; color: var(--fg-3); padding: 0.3rem 0.4rem; border-radius: var(--r-sm); }
+  .lang__a:hover { color: var(--fg); background: var(--bg-sunken); }
+  .lang__a[aria-current] { color: var(--accent); background: color-mix(in oklab, var(--accent) 10%, transparent); }
+  .hdr__nav .hdr__langs { display: none; }
   .hdr__cart { position: relative; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: 50%; transition: background var(--dur-fast); }
   .hdr__cart:hover { background: var(--bg-sunken); }
   .hdr__count { position: absolute; top: 0.2rem; right: 0.1rem; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3rem; border-radius: var(--r-pill); background: var(--accent-fill); color: #fff; font-size: 0.7rem; font-weight: 700; display: grid; place-items: center; animation: pop var(--dur) var(--ease-spring); }
@@ -76,5 +102,12 @@ const path = Astro.url.pathname;
     .hdr__nav a { display: block; padding: 1rem 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; }
     .hdr__nav a::after { display: none; }
     .hdr__nav-cta { display: block; margin-top: 1.5rem; }
+    /* On a phone the codes in the top bar are too small a target, so the drawer
+       gets the language names in full and the bar drops them. */
+    .lang { display: none; }
+    .hdr__nav .hdr__langs { display: flex; flex-direction: row; gap: 1rem; list-style: none; margin: 1.5rem 0 0; padding: 0; }
+    .hdr__nav .hdr__langs li { border-bottom: 0; }
+    .hdr__nav .hdr__langs a { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; padding: 0.35rem 0; }
+    .hdr__nav .hdr__langs a[aria-current] { color: var(--accent); }
   }
 </style>

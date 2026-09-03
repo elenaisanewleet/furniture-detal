@@ -5,8 +5,14 @@
  */
 import Icon from './Icon.astro';
 import { site } from '~/data/site';
-import { PRODUCTS, FLAVORS, formatPrice } from '~/data/products';
+import { PRODUCTS, FLAVORS, formatPrice, formatThreshold } from '~/data/products';
 import { imgSmall } from '~/data/images';
+import { localePath, stripLocale } from '~/i18n/config';
+import { t, bold } from '~/i18n/ui';
+
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const L = (href: string) => localePath(href, locale);
 
 /** One-tap adds under the free-shipping bar: the cheapest single-piece products, hidden once they are in the box. */
 const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
@@ -20,7 +26,7 @@ const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
       price: formatPrice(v0.price ?? p.price),
       image: imgSmall(p.images[0]),
       add: JSON.stringify({ slug: p.slug, name: p.title, variant: v0.key, variantLabel: FLAVORS[v0.key].label, price: v0.price ?? p.price, image: imgSmall(p.images[0]), weight: p.weightGrams, url: `/products/${p.slug}/` }),
-      label: `Add ${p.title} to your box`,
+      label: ui.addToBoxAria(p.title),
     };
   });
 ---
@@ -28,15 +34,15 @@ const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
   <div class="drawer__scrim" data-cart-close></div>
   <aside class="drawer__panel">
     <header class="drawer__head">
-      <h2 id="cart-title">Your box <span class="drawer__n" id="cart-n"></span></h2>
-      <button class="drawer__close" type="button" data-cart-close aria-label="Close cart"><Icon name="close" /></button>
+      <h2 id="cart-title">{ui.yourBox} <span class="drawer__n" id="cart-n"></span></h2>
+      <button class="drawer__close" type="button" data-cart-close aria-label={ui.closeCart}><Icon name="close" /></button>
     </header>
     <div class="drawer__ship" id="cart-ship" data-free-from={site.shipping.freeFrom}>
       <div class="drawer__bar" aria-hidden="true"><span id="cart-ship-fill"></span></div>
-      <p id="cart-ship-text">Free shipping on orders over €{site.shipping.freeFrom}.</p>
+      <p id="cart-ship-text" set:html={bold(ui.freeShippingOver(formatThreshold(site.shipping.freeFrom)))} />
       {/* Filled by the cart when one more of something reaches the next volume step. */}
       <p class="drawer__tier" id="cart-tier-text" hidden></p>
-      <ul class="drawer__upsell" id="cart-upsell" aria-label="Quick adds" hidden>
+      <ul class="drawer__upsell" id="cart-upsell" aria-label={ui.quickAdds} hidden>
         {upsell.map((u) => (
           <li class="up" data-up-slug={u.slug}>
             <img class="up__img" src={u.image} alt="" width="44" height="44" loading="lazy" decoding="async" />
@@ -49,14 +55,14 @@ const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
     <ul class="drawer__items" id="cart-items"></ul>
     <div class="drawer__empty" id="cart-empty">
       <Icon name="box" size={40} />
-      <p><strong>Your box is empty.</strong><br />Fill it with baked apples.</p>
-      <a class="btn" href="/shop/" data-cart-close>Shop bestsellers</a>
+      <p><strong>{ui.boxEmpty}</strong><br />{ui.fillItWith}</p>
+      <a class="btn" href={L('/shop/')} data-cart-close>{ui.shopBestsellers}</a>
     </div>
     <footer class="drawer__foot">
-      <div class="drawer__row"><span>Subtotal</span><strong id="cart-subtotal" class="num">€0.00</strong></div>
-      <p class="tiny muted" style="margin:0">Shipping is calculated at checkout.</p>
-      <a class="btn btn--lg btn--block" href="/checkout/" id="cart-checkout">Checkout <Icon name="arrow" size={18} class="arrow" /></a>
-      <button class="btn btn--ghost btn--block" type="button" data-cart-close>Keep shopping</button>
+      <div class="drawer__row"><span>{ui.subtotal}</span><strong id="cart-subtotal" class="num">{formatPrice(0)}</strong></div>
+      <p class="tiny muted" style="margin:0">{ui.shippingAtCheckout}</p>
+      <a class="btn btn--lg btn--block" href={L('/checkout/')} id="cart-checkout">{ui.checkout} <Icon name="arrow" size={18} class="arrow" /></a>
+      <button class="btn btn--ghost btn--block" type="button" data-cart-close>{ui.keepShopping}</button>
     </footer>
   </aside>
 </div>

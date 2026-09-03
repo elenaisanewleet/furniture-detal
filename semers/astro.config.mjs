@@ -2,6 +2,7 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import localizeLinks from './scripts/localize-links.mjs';
 
 /**
  * Canonical site URL. One place for canonical/OG/sitemap/robots/JSON-LD.
@@ -40,9 +41,15 @@ export default defineConfig({
   build: { format: 'directory', inlineStylesheets: 'auto' },
   prefetch: { prefetchAll: true, defaultStrategy: 'hover' },
   integrations: [
+    // Runs after the build and prefixes internal links inside /ru/ and /lv/.
+    localizeLinks({ locales: ['ru', 'lv'] }),
     sitemap({
       changefreq: 'weekly',
-      filter: (page) => !/\/(cart|checkout|order|admin)\//.test(page),
+      // 404 has no business in a sitemap, and neither do the pages that only
+      // make sense mid-purchase or behind a password.
+      filter: (page) => !/\/(cart|checkout|order|admin|404)\//.test(page),
+      // Emits xhtml:link alternates so each URL declares its other languages.
+      i18n: { defaultLocale: 'en', locales: { en: 'en', ru: 'ru', lv: 'lv' } },
       serialize(item) {
         const path = new URL(item.url).pathname;
         const hit = PRIORITY.find(([re]) => re.test(path));

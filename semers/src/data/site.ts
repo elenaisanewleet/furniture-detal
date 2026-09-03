@@ -86,39 +86,44 @@ export const site = {
   },
 } as const;
 
+/** `key` indexes the nav labels in src/i18n/ui.ts; `href` is always the English path. */
 export const nav = [
-  { label: 'Shop', href: '/shop/' },
-  { label: 'Why pastila', href: '/why-pastila/' },
-  { label: 'How it’s made', href: '/how-its-made/' },
-  { label: 'Our story', href: '/story/' },
-  { label: 'Journal', href: '/journal/' },
-  { label: 'Wholesale', href: '/wholesale/' },
+  { key: 'shop', href: '/shop/' },
+  { key: 'whyPastila', href: '/why-pastila/' },
+  { key: 'howItsMade', href: '/how-its-made/' },
+  { key: 'story', href: '/story/' },
+  { key: 'journal', href: '/journal/' },
+  { key: 'wholesale', href: '/wholesale/' },
 ] as const;
 
+/**
+ * Footer columns. `key` indexes footerLinks (or nav) in src/i18n/ui.ts and
+ * `href` is always the English path, localised where it is rendered.
+ */
 export const footerNav = {
   shop: [
-    { label: 'All products', href: '/shop/' },
-    { label: 'Apple bars', href: '/shop/apple-bars/' },
-    { label: 'Flourless bars', href: '/shop/flourless-bars/' },
-    { label: 'Apple meringues', href: '/shop/meringues/' },
-    { label: 'Belyov pastila', href: '/shop/pastila/' },
-    { label: 'Zephyr', href: '/shop/zephyr/' },
-    { label: 'Gift sets', href: '/shop/gift-sets/' },
-    { label: 'Build your box', href: '/shop/build-your-box/' },
+    { key: 'allProducts', href: '/shop/' },
+    { key: 'appleBars', href: '/shop/apple-bars/' },
+    { key: 'flourlessBars', href: '/shop/flourless-bars/' },
+    { key: 'meringues', href: '/shop/meringues/' },
+    { key: 'pastila', href: '/shop/pastila/' },
+    { key: 'zephyr', href: '/shop/zephyr/' },
+    { key: 'giftSets', href: '/shop/gift-sets/' },
+    { key: 'buildYourBox', href: '/shop/build-your-box/' },
   ],
   learn: [
-    { label: 'Why pastila', href: '/why-pastila/' },
-    { label: 'How it’s made', href: '/how-its-made/' },
-    { label: 'Our story', href: '/story/' },
-    { label: 'Journal', href: '/journal/' },
-    { label: 'FAQ', href: '/faq/' },
+    { key: 'whyPastila', href: '/why-pastila/' },
+    { key: 'howItsMade', href: '/how-its-made/' },
+    { key: 'story', href: '/story/' },
+    { key: 'journal', href: '/journal/' },
+    { key: 'faq', href: '/faq/' },
   ],
   company: [
-    { label: 'Where to buy', href: '/where-to-buy/' },
-    { label: 'Wholesale', href: '/wholesale/' },
-    { label: 'Contact', href: '/contact/' },
-    { label: 'Shipping & returns', href: '/legal/shipping-returns/' },
-    { label: 'Privacy', href: '/legal/privacy/' },
-    { label: 'Terms', href: '/legal/terms/' },
+    { key: 'whereToBuy', href: '/where-to-buy/' },
+    { key: 'wholesale', href: '/wholesale/' },
+    { key: 'contact', href: '/contact/' },
+    { key: 'shippingReturns', href: '/legal/shipping-returns/' },
+    { key: 'privacy', href: '/legal/privacy/' },
+    { key: 'terms', href: '/legal/terms/' },
   ],
 } as const;

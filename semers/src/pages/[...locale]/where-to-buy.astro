@@ -7,6 +7,13 @@ import { formatThreshold } from '~/data/products';
 import { FAQS } from '~/data/faq';
 import { faqPage } from '~/lib/schema';
 
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 const suggestHref = `mailto:${site.email}?subject=${encodeURIComponent('Store suggestion for Semers')}`;
 

@@ -1,6 +1,12 @@
 ---
 import Base from '~/layouts/Base.astro';
 import { im as image, SIZES } from '~/data/images';
+
+/*
+ * Stays outside [...locale] on purpose: Astro only emits dist/404.html for a
+ * static route, and that exact filename is what the Worker serves for a path
+ * that matched nothing — in any language.
+ */
 const im = image('apple-render-sm');
 ---
 <Base title="Page not found" description="That page fell off the tree." canonical="/404/" noindex>

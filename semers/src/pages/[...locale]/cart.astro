@@ -4,6 +4,13 @@ import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
 import { PRODUCTS, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
+
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
 const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 3);
 ---
 <Base title="Your box" description="Review the apple snacks in your box before checkout." canonical="/cart/" noindex>

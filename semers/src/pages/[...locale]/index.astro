@@ -9,6 +9,12 @@ import { FAQS } from '~/data/faq';
 import { site } from '~/data/site';
 import { itemList, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
+import { localeParams, type Locale } from '~/i18n/config';
+
+export function getStaticPaths() {
+  return localeParams();
+}
+const { locale } = Astro.props as { locale: Locale };
 
 const origin = originOf(Astro.site);
 const best = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 4);
