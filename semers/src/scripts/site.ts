@@ -1101,8 +1101,13 @@ function applyOverrideToPdp(pdpEl: HTMLElement, o: StorefrontOverride) {
         b.disabled = true;
         b.textContent = 'Sold out';
       });
-    const note = $('[data-guarantee]');
-    if (note) note.textContent = 'This one is out of stock right now — write to us and we will tell you when the next batch is ready.';
+    // A dead button is a lost visit; ask for the e-mail instead. The ladder and
+    // the promise are about buying now, so they go away with the button.
+    const form = $('[data-restock]');
+    if (form) form.hidden = false;
+    $('[data-tiers]')?.setAttribute('hidden', '');
+    const promise = $('[data-guarantee]');
+    if (promise) promise.hidden = true;
   }
 }
 
@@ -1292,5 +1297,30 @@ if (reviewsEl) {
     }
   });
 }
+
+/* ------------------------------------------------------- pdp: back in stock */
+
+const restock = $<HTMLFormElement>('[data-restock]');
+restock?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!restock.reportValidity()) return;
+  const note = $('[data-restock-note]', restock);
+  const btn = restock.querySelector<HTMLButtonElement>('[type="submit"]');
+  const data = formData(restock);
+  if (data.website) return;
+  const name = document.querySelector('h1')?.textContent?.trim() || location.pathname;
+  if (btn) (btn.disabled = true), (btn.textContent = 'Sending…');
+  try {
+    // Reuses the order endpoint's contact type, so it lands in the same inbox
+    // and the same admin list as everything else a customer sends.
+    await post({ type: 'contact', name: 'Back-in-stock request', email: data.email, topic: `Back in stock: ${name}`, message: `Please notify me when ${name} is available again.`, page: location.pathname });
+    restock.reset();
+    if (note) (note.textContent = 'Noted — we will write to you when it is back.'), (note.hidden = false), note.classList.add('notice', 'notice--ok');
+  } catch {
+    if (note) (note.textContent = `That did not send. Write to ${CFG.email || 'us'} and we will add you by hand.`), (note.hidden = false), note.classList.add('notice', 'notice--err');
+  } finally {
+    if (btn) (btn.disabled = false), (btn.textContent = 'Notify me');
+  }
+});
 
 syncStorefront();

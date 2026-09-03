@@ -477,6 +477,35 @@ async function sendEmail(env, subject, text, replyTo) {
   return r.ok;
 }
 
+async function sendWelcome(env, email) {
+  const key = env.RESEND_API_KEY;
+  if (!key || !EMAIL_RE.test(email)) return false;
+  const from = env.ORDER_FROM_EMAIL || 'Semers Shop <shop@semers.org>';
+  const site = env.SITE_URL || 'https://semers-store.higgsfield.app';
+  const lines = [
+    'Thank you for subscribing.',
+    '',
+    'Here is what you have signed up for, and nothing else: a note when a new flavour',
+    'lands, a note when something you liked is back in stock, and now and then a recipe.',
+    'A few times a month at most, and one click unsubscribes.',
+    '',
+    'While you are here, the three people usually start with:',
+    `· App'Lite Apple Bar — 99% baked apple, egg white, nothing else: ${site}/products/apple-bar-35g/`,
+    `· Apple Meringue — the same apple, whipped and dried crisp: ${site}/products/apple-meringue-35g/`,
+    `· Tasting Box — one of everything, so you can decide in one order: ${site}/products/tasting-box/`,
+    '',
+    `Or build your own box and take 10% off: ${site}/shop/build-your-box/`,
+    '',
+    '— Semers, Riga',
+  ].join('\n');
+  const r = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ from, to: [email], subject: 'Welcome to Semers', text: lines }),
+  });
+  return r.ok;
+}
+
 async function sendCustomerReceipt(env, body, id, text) {
   const key = env.RESEND_API_KEY;
   const email = s(body?.customer?.email);
@@ -564,6 +593,7 @@ async function handleOrder(request, env) {
   const [tg, mail] = await Promise.all([sendTelegram(env, text).catch(() => false), sendEmail(env, subject, text, email).catch(() => false)]);
   if (!tg && !mail && !stored) return json(503, { ok: false, reason: 'not-configured' });
   if (type === 'order') await sendCustomerReceipt(env, body, id, text).catch(() => false);
+  if (type === 'newsletter') await sendWelcome(env, email).catch(() => false);
   return json(200, { ok: true, ref: id });
 }
 

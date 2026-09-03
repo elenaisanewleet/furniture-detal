@@ -236,9 +236,18 @@
 
 /* ---------- Product gallery ---------- */
 .gal { display: grid; gap: 0.75rem; }
-.gal__main { position: relative; aspect-ratio: 4 / 5; border-radius: var(--r-xl); overflow: clip; background: var(--gal-accent, var(--bg-sunken)); }
+/* min-width:0 matters on both children of .gal. On .gal__main the aspect-ratio
+   combines with min-width:auto to give the box an automatic minimum width taken
+   from its own height (358px wide x 5/4 = 447.5px), which forced the grid column
+   74px past the viewport and scrolled every six-image product page sideways on a
+   phone. On .gal__thumbs it is what lets overflow-x actually scroll the strip. */
+.gal__main { position: relative; aspect-ratio: 4 / 5; border-radius: var(--r-xl); overflow: clip; background: var(--gal-accent, var(--bg-sunken)); min-width: 0; }
 .gal__main img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.gal__thumbs { display: flex; gap: 0.5rem; overflow-x: auto; scrollbar-width: none; }
+/* min-width:0 is what makes overflow-x actually scroll here: .gal is a grid, a
+   grid item defaults to min-width:auto, so a row of six fixed-width thumbnails
+   stretched the column past the viewport and the whole product page scrolled
+   sideways on a phone. */
+.gal__thumbs { display: flex; gap: 0.5rem; overflow-x: auto; scrollbar-width: none; min-width: 0; }
 .gal__thumbs button { flex: none; width: 4.5rem; aspect-ratio: 1; border-radius: var(--r-md); overflow: hidden; border: 2px solid transparent; background: var(--bg-sunken); }
 .gal__thumbs button[aria-pressed="true"] { border-color: var(--ink-900); }
 .gal__thumbs img { width: 100%; height: 100%; object-fit: cover; }
@@ -335,3 +344,10 @@
 .is-soldout { opacity: 0.62; }
 .is-soldout .pc__add { cursor: not-allowed; }
 .drawer__tier { margin: 0.35rem 0 0; font-size: var(--fs-xs); color: var(--fg-2); }
+
+/* Back-in-stock capture, shown in place of the buy row when a product is out. */
+.restock { margin: 1.25rem 0 0; padding: 1rem; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-raised); display: grid; gap: 0.6rem; }
+.restock__t { margin: 0; font-size: var(--fs-sm); }
+.restock__row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.restock__row input { flex: 1 1 12rem; min-width: 0; }
+.restock__note { margin: 0; font-size: var(--fs-sm); }

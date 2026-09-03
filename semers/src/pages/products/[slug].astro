@@ -170,6 +170,18 @@ const rows: [string, string][] = [
           </button>
         </div>
 
+        {/* Revealed by the storefront sync when an override marks this product out of stock. */}
+        <form class="restock" data-restock hidden>
+          <p class="restock__t"><strong>Out of stock right now.</strong> Leave your e-mail and we will write to you the day the next batch is ready — nothing else.</p>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
+          <div class="restock__row">
+            <label class="sr-only" for="restock-email">E-mail</label>
+            <input id="restock-email" type="email" name="email" required maxlength="160" autocomplete="email" placeholder="you@example.com" />
+            <button class="btn" type="submit">Notify me</button>
+          </div>
+          <p class="restock__note" data-restock-note hidden></p>
+        </form>
+
         {site.storefront.guaranteeOn && (
           <p class="pdp__promise" data-guarantee>
             <Icon name="shield" size={18} /> <span data-guarantee-text>{site.storefront.guarantee}</span>

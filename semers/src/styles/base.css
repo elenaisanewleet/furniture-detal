@@ -6,6 +6,11 @@
 *::before,
 *::after { box-sizing: border-box; }
 
+/* The hidden attribute has to beat a component's own display value. Without
+   this, `el.hidden = true` silently does nothing to anything laid out with flex
+   or grid — which is most things here — and the element keeps rendering. */
+[hidden] { display: none !important; }
+
 html {
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
