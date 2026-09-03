@@ -12,6 +12,9 @@ import Icon from './Icon.astro';
 import { productBySlug, FLAVORS, formatPrice, formatThreshold } from '~/data/products';
 import { img, imgSrc, imgSmall } from '~/data/images';
 import { site } from '~/data/site';
+import { stripLocale } from '~/i18n/config';
+import { localizedProduct } from '~/data/copy';
+import { t } from '~/i18n/ui';
 
 interface Props {
   size: number;
@@ -21,11 +24,16 @@ interface Props {
 }
 const { size, discount, siblings } = Astro.props;
 
-const sources = ['apple-bar-35g', 'flourless-apple-bar-50g', 'apple-meringue-35g'].map((s) => productBySlug(s)!).filter(Boolean);
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const sources = ['apple-bar-35g', 'flourless-apple-bar-50g', 'apple-meringue-35g']
+  .map((s) => productBySlug(s)!)
+  .filter(Boolean)
+  .map((p) => localizedProduct(p, locale));
 const items = sources.flatMap((p) =>
   p.variants.map((v) => ({
     id: `${p.slug}:${v.key}`,
-    name: `${p.name} ${FLAVORS[v.key].label}`,
+    name: `${p.name} ${ui.flavours[v.key]}`,
     sub: `${p.weightGrams} g · ${p.kcalPerUnit} kcal · ${formatPrice(v.price ?? p.price)}`,
     price: v.price ?? p.price,
     image: imgSmall(p.images[0]),
@@ -44,20 +52,20 @@ const pct = Math.round(discount * 100);
 <section class="container builder" data-builder data-size={size} data-discount={discount} data-image={boxImg.src}>
   <div class="builder__list">
     {siblings.length > 0 && (
-      <div class="boxsizes" role="group" aria-label="Box size">
-        <span class="boxsizes__label">Box size</span>
+      <div class="boxsizes" role="group" aria-label={ui.boxSize}>
+        <span class="boxsizes__label">{ui.boxSize}</span>
         {[{ size, discount, href: '' }, ...siblings]
           .sort((a, b) => a.size - b.size)
           .map((s) =>
             s.href ? (
               <a class="boxsize" href={s.href}>
-                <b>{s.size} pcs</b>
-                <span>save {Math.round(s.discount * 100)}%</span>
+                <b>{ui.pieces(s.size)}</b>
+                <span>{ui.savePct(Math.round(s.discount * 100))}</span>
               </a>
             ) : (
               <span class="boxsize is-on" aria-current="page">
-                <b>{s.size} pcs</b>
-                <span>save {pct}%</span>
+                <b>{ui.pieces(s.size)}</b>
+                <span>{ui.savePct(pct)}</span>
               </span>
             ),
           )}
@@ -75,7 +83,7 @@ const pct = Math.round(discount * 100);
                 <div class="bi__name"><span class="bi__dot" style={`--sw:${i.color}`}></span>{i.name}</div>
                 <div class="bi__sub">{i.sub}</div>
               </div>
-              <button class="btn btn--sm btn--ink" type="button" data-builder-pick data-id={i.id} data-name={i.name} data-price={i.price} data-image={i.image} data-weight={i.weight} aria-label={`Add ${i.name} to the box`}><Icon name="plus" size={16} /> Add</button>
+              <button class="btn btn--sm btn--ink" type="button" data-builder-pick data-id={i.id} data-name={i.name} data-price={i.price} data-image={i.image} data-weight={i.weight} aria-label={ui.addToBoxAria(i.name)}><Icon name="plus" size={16} /> {ui.add}</button>
             </div>
           ))}
         </div>
@@ -85,14 +93,14 @@ const pct = Math.round(discount * 100);
 
   <aside class="builder__aside">
     <div class="builder__box">
-      <div class="co__row"><h2>Your box</h2><strong data-builder-count>0 / {size}</strong></div>
+      <div class="co__row"><h2>{ui.yourBox}</h2><strong data-builder-count>0 / {size}</strong></div>
       <div class="builder__slots" aria-live="polite">
         {Array.from({ length: size }).map(() => <div class="builder__slot" data-builder-slot></div>)}
       </div>
       <ul class="builder__picked small" data-builder-list></ul>
-      <div class="co__row co__total"><span>Box price</span><span><s class="muted small" data-builder-was></s> <span class="num" data-builder-price>€0.00</span></span></div>
-      <button class="btn btn--lg btn--block" type="button" data-builder-add disabled>Add box to cart</button>
-      <p class="tiny muted">{pct}% off the individual prices — from {formatPrice(minPrice)}, about {formatPrice(minPrice / size)} a piece. Ships as one parcel; free over {formatThreshold(site.shipping.freeFrom)}.</p>
+      <div class="co__row co__total"><span>{ui.boxPrice}</span><span><s class="muted small" data-builder-was></s> <span class="num" data-builder-price>{formatPrice(0)}</span></span></div>
+      <button class="btn btn--lg btn--block" type="button" data-builder-add disabled>{ui.addBoxToCart}</button>
+      <p class="tiny muted">{ui.boxNote(pct, formatPrice(minPrice), formatPrice(minPrice / size), formatThreshold(site.shipping.freeFrom))}</p>
     </div>
   </aside>
 </section>

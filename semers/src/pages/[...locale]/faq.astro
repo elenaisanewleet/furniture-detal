@@ -8,11 +8,16 @@ import { formatThreshold } from '~/data/products';
 import { faqPage } from '~/lib/schema';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedFaqs } from '~/data/copy';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
+const { locale } = Astro.props as { locale: Locale };
+/** Answers in the language the page is being read in. */
+const LOCAL_FAQS = localizedFaqs(FAQS, locale);
 
 const freeFrom = formatThreshold(site.shipping.freeFrom);
 
@@ -83,7 +88,7 @@ const GROUPS: Group[] = [
 const groups = GROUPS.map((g, i) => ({
   ...g,
   n: String(i + 1).padStart(2, '0'),
-  items: FAQS.filter((f) => f.group === g.key),
+  items: LOCAL_FAQS.filter((f) => f.group === g.key),
 })).filter((g) => g.items.length !== 0);
 
 /** One deeper link under an answer, where a longer page exists. Keyed by question. */
@@ -106,7 +111,7 @@ const reading = [
   { href: '/journal/', title: 'The journal', text: 'Pastila history, Antonovka apples, how to read a snack label.' },
 ];
 
-const total = FAQS.length;
+const total = LOCAL_FAQS.length;
 const topics = groups.length;
 const hero = im('pastila-slices');
 ---
@@ -116,7 +121,7 @@ const hero = im('pastila-slices');
   canonical="/faq/"
   ogImage="pastila-slices"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'FAQ', href: '/faq/' }]}
-  schema={[faqPage(FAQS)]}
+  schema={[faqPage(LOCAL_FAQS)]}
 >
   <!-- ============================== HERO ============================== -->
   <section class="page-hero container faq-hero" aria-labelledby="page-title">

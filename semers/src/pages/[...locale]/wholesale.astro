@@ -1,18 +1,22 @@
 ---
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
-import { PRODUCTS, FLAVORS, DIET_TAGS } from '~/data/products';
+import { PRODUCTS } from '~/data/products';
 import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
 import { FAQS } from '~/data/faq';
 import { faqPage } from '~/lib/schema';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
+const { locale } = Astro.props as { locale: Locale };
+const ui = t(locale);
 
 
 /** Export markets are whatever site.ts lists outside the home market. */
@@ -28,8 +32,8 @@ const formats = PRODUCTS.filter((p) => p.collection !== 'gift-sets')
     title: p.title,
     brand: p.brand,
     weight: `${p.weightGrams} g`,
-    flavours: p.variants.map((v) => FLAVORS[v.key].label),
-    claims: p.diet.filter((d) => d === 'no-added-sugar' || d === 'gluten-free').map((d) => DIET_TAGS[d]),
+    flavours: p.variants.map((v) => ui.flavours[v.key]),
+    claims: p.diet.filter((d) => d === 'no-added-sugar' || d === 'gluten-free').map((d) => ui.diet[d]),
     shelf: `${p.shelfLifeMonths} months`,
   }));
 const skuCount = formats.reduce((n, f) => n + f.flavours.length, 0);

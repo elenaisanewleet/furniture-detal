@@ -7,13 +7,16 @@ import { img, imgSrc, im, imgSrcset, SIZES } from '~/data/images';
 import { itemList } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { withLocales } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedCollection, localizedCollections } from '~/data/copy';
 
 export function getStaticPaths() {
   return withLocales(COLLECTIONS.map((c) => ({ params: { collection: c.key }, props: { collection: c } })));
 }
-const { collection: c } = Astro.props as { collection: Collection };
-const products = productsInCollection(c.key);
-const others = COLLECTIONS.filter((x) => x.key !== c.key);
+const { collection: rawCollection, locale } = Astro.props as { collection: Collection; locale: Locale };
+const c = localizedCollection(rawCollection, locale);
+const products = productsInCollection(rawCollection.key);
+const others = localizedCollections(COLLECTIONS.filter((x) => x.key !== rawCollection.key), locale);
 const origin = originOf(Astro.site);
 const hero = im(c.image);
 const isZephyr = c.key === 'zephyr';

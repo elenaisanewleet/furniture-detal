@@ -2,16 +2,21 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
-import { PRODUCTS, COLLECTIONS, DIET_TAGS } from '~/data/products';
+import { PRODUCTS, COLLECTIONS } from '~/data/products';
 import { itemList } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
 import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedCollections } from '~/data/copy';
+import { t } from '~/i18n/ui';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
+const { locale } = Astro.props as { locale: Locale };
+const ui = t(locale);
 
 const origin = originOf(Astro.site);
 const products = [...PRODUCTS].sort((a, b) => Number(b.bestseller || 0) - Number(a.bestseller || 0) || a.order - b.order);
@@ -34,7 +39,7 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
     <div class="shop__bar">
       <div class="pills" role="group" aria-label="Collection">
         <button class="pill" type="button" data-filter-collection="all" aria-pressed="true">All</button>
-        {COLLECTIONS.map((c) => <button class="pill" type="button" data-filter-collection={c.key} aria-pressed="false">{c.name}</button>)}
+        {localizedCollections(COLLECTIONS, locale).map((c) => <button class="pill" type="button" data-filter-collection={c.key} aria-pressed="false">{c.name}</button>)}
       </div>
       <div class="shop__tools">
         <form class="shop__search" role="search" action="/shop/" method="get">
@@ -56,7 +61,7 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
     </div>
     <div class="shop__bar shop__bar--sub">
       <div class="pills" role="group" aria-label="Dietary filters">
-        {dietKeys.map((k) => <button class="pill pill--sm" type="button" data-filter-diet={k} aria-pressed="false">{DIET_TAGS[k]}</button>)}
+        {dietKeys.map((k) => <button class="pill pill--sm" type="button" data-filter-diet={k} aria-pressed="false">{ui.diet[k]}</button>)}
       </div>
       <p class="small muted" data-shop-count aria-live="polite">{products.length} products</p>
     </div>

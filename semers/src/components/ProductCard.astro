@@ -4,30 +4,37 @@
  * the "+" adds the first flavour straight to the box.
  */
 import Icon from './Icon.astro';
-import { FLAVORS, DIET_TAGS, formatPrice, unitPrice, type Product } from '~/data/products';
+import { FLAVORS, formatPrice, unitPrice, type Product } from '~/data/products';
 import { img, imgSrc, imgSrcset, SIZES } from '~/data/images';
+import { stripLocale } from '~/i18n/config';
+import { localizedProduct } from '~/data/copy';
+import { t } from '~/i18n/ui';
 
 interface Props {
   product: Product;
   loading?: 'lazy' | 'eager';
   compact?: boolean;
 }
-const { product: p, loading = 'lazy', compact = false } = Astro.props;
+const { product: raw, loading = 'lazy', compact = false } = Astro.props;
+/** The card is rendered inside a locale, so its words come from that locale. */
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const p = localizedProduct(raw, locale);
 const image = img(p.images[0]);
 const v0 = p.variants[0];
 const add = JSON.stringify({
   slug: p.slug,
   name: p.title,
   variant: v0.key,
-  variantLabel: FLAVORS[v0.key].label,
+  variantLabel: ui.flavours[v0.key],
   price: v0.price ?? p.price,
   image: imgSrc(p.images[0]),
   weight: p.weightGrams,
   url: `/products/${p.slug}/`,
   tier: p.collection !== 'gift-sets',
 });
-const flavours = p.variants.map((v) => FLAVORS[v.key].label).join(', ');
-const badge = p.badge || (p.bestseller ? 'Bestseller' : p.new ? 'New' : '');
+const flavours = p.variants.map((v) => ui.flavours[v.key]).join(', ');
+const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
 ---
 <article
   class={`pc ${compact ? 'pc--compact' : ''}`}
@@ -55,7 +62,7 @@ const badge = p.badge || (p.bestseller ? 'Bestseller' : p.new ? 'New' : '');
     <p class="pc__hook">{p.hook}</p>
     <div class="pc__meta">
       {p.kcalPerUnit > 0 && <span>{p.kcalPerUnit} kcal</span>}
-      {p.diet.slice(0, 2).map((d) => <span>{DIET_TAGS[d]}</span>)}
+      {p.diet.slice(0, 2).map((d) => <span>{ui.diet[d]}</span>)}
     </div>
     <div class="pc__foot">
       <div>
@@ -71,7 +78,7 @@ const badge = p.badge || (p.bestseller ? 'Bestseller' : p.new ? 'New' : '');
           {p.variants.length > 5 && <span class="pc__more">+{p.variants.length - 5}</span>}
         </div>
       )}
-      <button class="pc__add" type="button" data-add={add} data-add-open="false" aria-label={`Add ${p.title} to your box`}>
+      <button class="pc__add" type="button" data-add={add} data-add-open="false" aria-label={ui.addToBoxAria(p.title)}>
         <Icon name="plus" size={20} />
       </button>
     </div>

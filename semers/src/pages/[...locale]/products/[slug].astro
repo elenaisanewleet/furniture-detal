@@ -2,18 +2,23 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
-import { PRODUCTS, FLAVORS, DIET_TAGS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, formatThreshold } from '~/data/products';
+import { PRODUCTS, FLAVORS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, formatThreshold } from '~/data/products';
 import { img, imgSrc, im, imgSmall, imgSrcset, SIZES } from '~/data/images';
 import { productSchema, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { site } from '~/data/site';
 import { withLocales } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedProduct, localizedCollection } from '~/data/copy';
+import { t } from '~/i18n/ui';
 
 export function getStaticPaths() {
   return withLocales(PRODUCTS.map((p) => ({ params: { slug: p.slug }, props: { product: p } })));
 }
-const { product: p } = Astro.props as { product: Product };
-const col = collectionByKey(p.collection)!;
+const { product: rawProduct, locale } = Astro.props as { product: Product; locale: Locale };
+const ui = t(locale);
+const p = localizedProduct(rawProduct, locale);
+const col = localizedCollection(collectionByKey(rawProduct.collection)!, locale);
 const origin = originOf(Astro.site);
 const gallery = p.images.map((k) => ({ key: k, ...im(k), small: imgSmall(k) }));
 const first = p.variants[0];
@@ -21,7 +26,7 @@ const addPayload = JSON.stringify({
   slug: p.slug,
   name: p.title,
   variant: first.key,
-  variantLabel: FLAVORS[first.key].label,
+  variantLabel: ui.flavours[first.key],
   price: first.price ?? p.price,
   image: gallery[0].src,
   weight: p.weightGrams,
@@ -102,7 +107,7 @@ const rows: [string, string][] = [
             <img data-gal-main src={gallery[0].src} alt={gallery[0].alt} width={gallery[0].width} height={gallery[0].height} loading="eager" fetchpriority="high" decoding="async" />
           </div>
           {gallery.length > 1 && (
-            <div class="gal__thumbs" role="group" aria-label="Product images">
+            <div class="gal__thumbs" role="group" aria-label={ui.productImages}>
               {gallery.map((g, i) => (
                 <button type="button" data-gal-thumb data-src={g.src} data-alt={g.alt} data-fit={g.fit || 'cover'} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Image ${i + 1} of ${gallery.length}`}>
                   <img src={g.small} alt="" width="72" height="72" loading="lazy" decoding="async" />
@@ -124,28 +129,28 @@ const rows: [string, string][] = [
           <span class="pdp__unit">{p.pack > 1 ? `${formatPrice((first.price ?? p.price) / p.pack)} per piece · ` : ''}{unitPrice(p)} · incl. VAT</span>
         </div>
 
-        <ul class="pdp__facts" aria-label="Key facts">
+        <ul class="pdp__facts" aria-label={ui.keyFacts}>
           {hasKcal && <li><Icon name="apple" size={18} /> {kcalLine}</li>}
-          {p.diet.slice(0, 3).map((d) => <li><Icon name="check" size={18} /> {DIET_TAGS[d]}</li>)}
+          {p.diet.slice(0, 3).map((d) => <li><Icon name="check" size={18} /> {ui.diet[d]}</li>)}
         </ul>
 
         {multi && (
           <fieldset class="pdp__vars">
-            <legend>Flavour: <strong data-variant-name>{FLAVORS[first.key].label}</strong></legend>
+            <legend>{ui.flavour}: <strong data-variant-name>{ui.flavours[first.key]}</strong></legend>
             <div class="vars">
               {p.variants.map((v, i) => (
                 <label class="var">
-                  <input type="radio" name="flavour" value={v.key} data-variant data-price={v.price ?? p.price} data-label={FLAVORS[v.key].label} data-gtin={v.gtin || ''} checked={i === 0} disabled={v.inStock === false} />
-                  <span><i style={`--sw:${FLAVORS[v.key].color}`}></i>{FLAVORS[v.key].label}</span>
+                  <input type="radio" name="flavour" value={v.key} data-variant data-price={v.price ?? p.price} data-label={ui.flavours[v.key]} data-gtin={v.gtin || ''} checked={i === 0} disabled={v.inStock === false} />
+                  <span><i style={`--sw:${FLAVORS[v.key].color}`}></i>{ui.flavours[v.key]}</span>
                 </label>
               ))}
             </div>
-            <p class="tiny muted pdp__varnote">{p.variants.map((v) => `${FLAVORS[v.key].label}: ${FLAVORS[v.key].note}`).join(' · ')}</p>
+            <p class="tiny muted pdp__varnote">{p.variants.map((v) => `${ui.flavours[v.key]}: ${ui.flavourNotes[v.key]}`).join(' · ')}</p>
           </fieldset>
         )}
 
         {site.storefront.tiersOn && !isBundle && (
-          <div class="tiers" data-tiers role="group" aria-label="Quantity discounts">
+          <div class="tiers" data-tiers role="group" aria-label={ui.quantityDiscounts}>
             {[
               { qty: 1, pct: 0 },
               { qty: site.storefront.tier1Qty, pct: site.storefront.tier1Pct },
@@ -161,10 +166,10 @@ const rows: [string, string][] = [
         )}
 
         <div class="pdp__cta" data-buy-anchor>
-          <div class="qty" role="group" aria-label="Quantity">
-            <button type="button" data-qty-dec aria-label="Decrease quantity">−</button>
+          <div class="qty" role="group" aria-label={ui.quantity}>
+            <button type="button" data-qty-dec aria-label={ui.decreaseShort}>−</button>
             <input data-qty-input type="number" min="1" max="99" value="1" inputmode="numeric" aria-label="Quantity" />
-            <button type="button" data-qty-inc aria-label="Increase quantity">+</button>
+            <button type="button" data-qty-inc aria-label={ui.increaseShort}>+</button>
           </div>
           <button class="btn btn--lg pdp__add" type="button" data-add={addPayload}>
             <Icon name="cart" size={20} /> Add to box
@@ -178,7 +183,7 @@ const rows: [string, string][] = [
           <div class="restock__row">
             <label class="sr-only" for="restock-email">E-mail</label>
             <input id="restock-email" type="email" name="email" required maxlength="160" autocomplete="email" placeholder="you@example.com" />
-            <button class="btn" type="submit">Notify me</button>
+            <button class="btn" type="submit">{ui.notifyMe}</button>
           </div>
           <p class="restock__note" data-restock-note hidden></p>
         </form>
@@ -202,18 +207,18 @@ const rows: [string, string][] = [
 
         <div class="acc">
           <details open>
-            <summary>Ingredients &amp; allergens</summary>
+            <summary>{ui.ingredientsAllergens}</summary>
             <div class="acc__body">
-              <p><strong>Ingredients:</strong> {p.ingredients}</p>
-              <p><strong>Allergens:</strong> {p.allergens}</p>
+              <p><strong>{ui.ingredients}</strong> {p.ingredients}</p>
+              <p><strong>{ui.allergens}</strong> {p.allergens}</p>
               {multi && <p class="small muted">EAN for the selected flavour: <span data-gtin translate="no">{first.gtin || '—'}</span></p>}
             </div>
           </details>
           <details>
-            <summary>Nutrition per 100 g</summary>
+            <summary>{ui.nutritionPer100}</summary>
             <div class="acc__body">
               <table class="nutri">
-                <thead><tr><th>Typical values</th><th>per 100 g</th></tr></thead>
+                <thead><tr><th>{ui.typicalValues}</th><th>{ui.per100g}</th></tr></thead>
                 <tbody>
                   {rows.map(([k, v]) => <tr class={k.startsWith('of which') ? 'sub' : ''}><td>{k}</td><td>{v}</td></tr>)}
                 </tbody>
@@ -222,15 +227,15 @@ const rows: [string, string][] = [
             </div>
           </details>
           <details>
-            <summary>Shipping &amp; returns</summary>
+            <summary>{ui.shippingReturnsTitle}</summary>
             <div class="acc__body">
               <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.slice(0, 3).join(', ')} and the rest of the EU.</p>
-              <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">Full policy</a>.</p>
+              <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">{ui.fullPolicy}</a>.</p>
             </div>
           </details>
           {isBundle && (
             <details>
-              <summary>What’s in the box</summary>
+              <summary>{ui.whatsInTheBox}</summary>
               <div class="acc__body"><p>{p.summary}</p></div>
             </details>
           )}
@@ -241,13 +246,13 @@ const rows: [string, string][] = [
     {site.storefront.reviewsOn && (
       <section class="pdp__reviews section--tight" data-reviews aria-labelledby="pdp-reviews-title">
         <div class="pdp__revhead">
-          <h2 id="pdp-reviews-title">What people say</h2>
+          <h2 id="pdp-reviews-title">{ui.reviewsTitle}</h2>
           <p class="pdp__revsum" data-review-summary hidden></p>
         </div>
         <div data-review-list></div>
         <p class="muted" data-review-empty hidden>No reviews yet. If you have tried {p.name}, yours would be the first.</p>
         <details class="revform">
-          <summary>Write a review</summary>
+          <summary>{ui.writeReview}</summary>
           <form data-review-form novalidate>
             <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
             <div class="revform__row">
@@ -261,11 +266,11 @@ const rows: [string, string][] = [
                   <option value="1">1 — bad</option>
                 </select>
               </label>
-              <label>Your name<input type="text" name="author" required maxlength="60" autocomplete="name" /></label>
+              <label>{ui.yourName}<input type="text" name="author" required maxlength="60" autocomplete="name" /></label>
               <label>City <span class="muted">(optional)</span><input type="text" name="city" maxlength="60" /></label>
             </div>
             <label>Headline <span class="muted">(optional)</span><input type="text" name="title" maxlength="120" /></label>
-            <label>Your review<textarea name="body" required minlength="10" maxlength="2000" rows="4"></textarea></label>
+            <label>{ui.yourReview}<textarea name="body" required minlength="10" maxlength="2000" rows="4"></textarea></label>
             <label>E-mail <span class="muted">(not published — only so we can reply)</span><input type="email" name="email" maxlength="160" autocomplete="email" /></label>
             <p class="tiny muted">We read every review before it appears, so it will not show up straight away.</p>
             <button class="btn" type="submit">Send review</button>
@@ -337,7 +342,7 @@ const rows: [string, string][] = [
   <div class="sticky-buy" data-sticky-buy>
     <div class="sticky-buy__in container">
       <img class="sticky-buy__img" src={gallery[0].small} alt="" width="48" height="48" loading="lazy" />
-      <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price)}</span> · <span data-variant-name>{FLAVORS[first.key].label}</span></span></div>
+      <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price)}</span> · <span data-variant-name>{ui.flavours[first.key]}</span></span></div>
       <button class="btn" type="button" data-add={addPayload}>Add to box</button>
     </div>
   </div>

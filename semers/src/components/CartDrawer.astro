@@ -5,9 +5,10 @@
  */
 import Icon from './Icon.astro';
 import { site } from '~/data/site';
-import { PRODUCTS, FLAVORS, formatPrice, formatThreshold } from '~/data/products';
+import { PRODUCTS, formatPrice, formatThreshold } from '~/data/products';
 import { imgSmall } from '~/data/images';
 import { localePath, stripLocale } from '~/i18n/config';
+import { localizedProducts } from '~/data/copy';
 import { t, bold } from '~/i18n/ui';
 
 const { locale } = stripLocale(Astro.url.pathname);
@@ -15,7 +16,8 @@ const ui = t(locale);
 const L = (href: string) => localePath(href, locale);
 
 /** One-tap adds under the free-shipping bar: the cheapest single-piece products, hidden once they are in the box. */
-const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
+const upsell = localizedProducts(PRODUCTS, locale)
+  .filter((p) => p.pack === 1 && p.price < 3)
   .sort((a, b) => a.price - b.price)
   .slice(0, 3)
   .map((p) => {
@@ -25,7 +27,7 @@ const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
       name: p.name,
       price: formatPrice(v0.price ?? p.price),
       image: imgSmall(p.images[0]),
-      add: JSON.stringify({ slug: p.slug, name: p.title, variant: v0.key, variantLabel: FLAVORS[v0.key].label, price: v0.price ?? p.price, image: imgSmall(p.images[0]), weight: p.weightGrams, url: `/products/${p.slug}/` }),
+      add: JSON.stringify({ slug: p.slug, name: p.title, variant: v0.key, variantLabel: ui.flavours[v0.key], price: v0.price ?? p.price, image: imgSmall(p.images[0]), weight: p.weightGrams, url: `/products/${p.slug}/` }),
       label: ui.addToBoxAria(p.title),
     };
   });

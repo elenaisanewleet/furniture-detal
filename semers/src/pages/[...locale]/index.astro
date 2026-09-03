@@ -10,6 +10,7 @@ import { site } from '~/data/site';
 import { itemList, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { localeParams, type Locale } from '~/i18n/config';
+import { localizedCollections, localizedFaqs } from '~/data/copy';
 
 export function getStaticPaths() {
   return localeParams();
@@ -18,8 +19,8 @@ const { locale } = Astro.props as { locale: Locale };
 
 const origin = originOf(Astro.site);
 const best = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 4);
-const homeFaqs = FAQS.filter((f) => ['product', 'nutrition', 'orders'].includes(f.group)).slice(0, 5);
-const tiles = COLLECTIONS.filter((c) => c.key !== 'applite');
+const homeFaqs = localizedFaqs(FAQS.filter((f) => ['product', 'nutrition', 'orders'].includes(f.group)).slice(0, 5), locale);
+const tiles = localizedCollections(COLLECTIONS.filter((c) => c.key !== 'applite'), locale);
 const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a bar', 'Made in Riga', 'Recipe from 1888', 'Ships across the EU', 'Egg white, nothing else'];
 ---
 <Base
