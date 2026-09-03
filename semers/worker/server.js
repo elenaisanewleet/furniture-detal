@@ -634,6 +634,17 @@ async function adminOrders(request, env) {
   return json(200, { ok: true, orders: (rows.results || []).map(orderRow) });
 }
 
+/**
+ * Orders are a record and normally only ever change status, but a test row or a
+ * spam submission has to be removable or the list stops being trustworthy.
+ */
+async function adminOrderDelete(env, id) {
+  const res = await db(env).prepare(`DELETE FROM orders WHERE id = ?`).bind(s(id, 40)).run();
+  if (!res.meta || !res.meta.changes) return json(404, { ok: false, reason: 'not-found' });
+  await audit(env, 'order.delete', String(id));
+  return json(200, { ok: true });
+}
+
 async function adminOrderPatch(request, env, id) {
   const body = await readJson(request);
   const sets = [];
@@ -802,6 +813,7 @@ async function handleAdmin(request, env, path) {
   if (head === 'orders') {
     if (request.method === 'GET' && !id) return adminOrders(request, env);
     if (request.method === 'PATCH' && id) return adminOrderPatch(request, env, id);
+    if (request.method === 'DELETE' && id) return adminOrderDelete(env, id);
   }
   if (head === 'reviews') {
     if (request.method === 'GET' && !id) return adminReviews(request, env);

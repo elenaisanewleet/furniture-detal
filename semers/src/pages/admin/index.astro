@@ -511,7 +511,10 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
                 <select id="st-${esc(o.id)}" data-order-status>${Object.entries(STATUS_RU).map(([k, v]) => `<option value="${k}"${k === o.status ? ' selected' : ''}>${v}</option>`).join('')}</select></div>
               <div style="flex:3 1 16rem"><label for="an-${esc(o.id)}">Заметка для себя</label>
                 <input id="an-${esc(o.id)}" type="text" data-order-note value="${esc(o.admin_note)}" placeholder="Счёт выставлен, ждём оплату…" /></div>
-              <div class="adm-shrink"><button class="adm-btn" type="button" data-order-save>Сохранить</button></div>
+              <div class="adm-shrink" style="display:flex;gap:.4rem">
+                <button class="adm-btn" type="button" data-order-save>Сохранить</button>
+                <button class="adm-btn adm-btn--ghost" type="button" data-order-delete title="Удалить запись — для тестовых и спама">Удалить</button>
+              </div>
             </div>
           </div>
         </details>`;
@@ -802,6 +805,21 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
             if (row) (row.status = status), (row.admin_note = admin_note);
           } catch (err) {
             toast(`Не сохранилось: ${(err as Error).message}`);
+          }
+          return;
+        }
+
+        const delOrder = t.closest<HTMLElement>('[data-order-delete]');
+        if (delOrder) {
+          const box = delOrder.closest<HTMLElement>('[data-order]')!;
+          const id = box.dataset.order!;
+          if (!confirm(`Удалить запись ${id} навсегда? Это для тестовых заявок и спама — настоящий заказ лучше отменить статусом.`)) return;
+          try {
+            await api(`orders/${encodeURIComponent(id)}`, { method: 'DELETE' });
+            toast(`${id} удалён`);
+            await loadTab();
+          } catch (err) {
+            toast(`Не получилось: ${(err as Error).message}`);
           }
           return;
         }
