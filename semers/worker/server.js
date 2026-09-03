@@ -284,8 +284,20 @@ function cookie(request, name) {
 const SESSION_COOKIE = 'sm_admin';
 const setCookie = (value, maxAge) => `${SESSION_COOKIE}=${value}; Path=/; Max-Age=${maxAge}; HttpOnly; Secure; SameSite=Strict`;
 
+/**
+ * The bucket the login rate limit counts against.
+ *
+ * Only cf-connecting-ip is trusted: the edge sets it and a client cannot. An
+ * x-forwarded-for fallback would be worse than none — the header is
+ * attacker-controlled, so anyone hitting the limit could simply pick a new
+ * value and carry on, and a bucket the attacker chooses is not a limit at all.
+ *
+ * Without the edge header everything shares one bucket. That is the safe
+ * direction to fail: guesses are throttled harder, never less, and the window
+ * is fifteen minutes rather than a lockout.
+ */
 function clientIp(request) {
-  return s(request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown', 60);
+  return s(request.headers.get('cf-connecting-ip') || 'no-edge-ip', 60);
 }
 
 /**

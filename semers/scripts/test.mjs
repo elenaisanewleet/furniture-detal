@@ -166,6 +166,79 @@ group('order notifications');
   globalThis.fetch = realFetch;
 }
 
+/* ------------------------------------------------------------ admin login */
+group('admin login');
+/*
+ * The login rate limit counts failures per client IP. If the bucket could be
+ * chosen by the caller, it would not be a limit — so this proves that rotating
+ * a client-set header does not get a fresh allowance, while the edge-set header
+ * still separates two genuinely different callers.
+ */
+{
+  const rows = [];
+  const fakeDb = {
+    prepare(sql) {
+      return {
+        bind: (...args) => ({
+          run: async () => {
+            if (/^INSERT INTO login_attempts/.test(sql)) rows.push(args[0]);
+            if (/^DELETE FROM login_attempts WHERE ip/.test(sql)) for (let i = rows.length - 1; i >= 0; i--) if (rows[i] === args[0]) rows.splice(i, 1);
+            return {};
+          },
+          first: async () => (/COUNT\(\*\) AS c FROM login_attempts/.test(sql) ? { c: rows.filter((r) => r === args[0]).length } : null),
+          all: async () => ({ results: [] }),
+        }),
+        run: async () => ({}),
+        first: async () => null,
+        all: async () => ({ results: [] }),
+      };
+    },
+  };
+  const env = { ADMIN_PASSWORD: 'correct horse', ADMIN_SESSION_SECRET: 'k', DB: fakeDb };
+  const tryLogin = (headers) =>
+    worker.default.fetch(
+      new Request('https://x.test/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json', ...headers }, body: JSON.stringify({ password: 'wrong' }) }),
+      env,
+    );
+
+  // Eight failures from one edge IP, then the ninth is refused.
+  let last;
+  for (let i = 0; i < 9; i++) last = await tryLogin({ 'cf-connecting-ip': '1.2.3.4' });
+  is('the ninth failure from one address is refused', last.status, 429);
+
+  // A caller rotating x-forwarded-for gets no new allowance.
+  const spoofed = await tryLogin({ 'cf-connecting-ip': '1.2.3.4', 'x-forwarded-for': '9.9.9.9' });
+  is('a client-set header cannot buy a fresh allowance', spoofed.status, 429);
+
+  // A genuinely different caller is unaffected.
+  const other = await tryLogin({ 'cf-connecting-ip': '5.6.7.8' });
+  is('another address still gets its own tries', other.status, 401);
+
+  // The right password clears the record and issues a session.
+  const good = await worker.default.fetch(
+    new Request('https://x.test/api/admin/login', { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '5.6.7.8' }, body: JSON.stringify({ password: 'correct horse' }) }),
+    env,
+  );
+  is('the right password is accepted', good.status, 200);
+  const setCookie = good.headers.get('set-cookie') || '';
+  is('the session cookie is not readable by script', /HttpOnly/.test(setCookie), true);
+  is('nor sent over plain http', /Secure/.test(setCookie), true);
+  is('nor sent cross-site', /SameSite=Strict/.test(setCookie), true);
+
+  // A mutation needs the session and our own header; the cookie alone is not enough.
+  const token = /sm_admin=([^;]+)/.exec(setCookie)?.[1] || '';
+  const noHeader = await worker.default.fetch(
+    new Request('https://x.test/api/admin/settings', { method: 'PUT', headers: { cookie: `sm_admin=${token}`, 'content-type': 'application/json' }, body: '{}' }),
+    env,
+  );
+  is('a cross-site post without our header is refused', noHeader.status, 403);
+  const tampered = await worker.default.fetch(
+    new Request('https://x.test/api/admin/settings', { method: 'PUT', headers: { cookie: `sm_admin=${token.replace(/.$/, (c) => (c === 'a' ? 'b' : 'a'))}`, 'x-semers-admin': '1', 'content-type': 'application/json' }, body: '{}' }),
+    env,
+  );
+  is('a tampered signature is refused', tampered.status, 401);
+}
+
 /* ------------------------------------------------------------ schema */
 group('database schema');
 /*
