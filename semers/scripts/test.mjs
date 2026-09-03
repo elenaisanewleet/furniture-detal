@@ -81,6 +81,18 @@ is('an identity memory changes nothing', applyProse(doc, { 'Baked apples, nothin
 is('a translation is spliced in place', applyProse(doc, { 'Baked apples, nothing else.': 'Печёные яблоки.' }).html, '<p>Печёные яблоки.</p><img alt="A pack of bars">');
 is('an attribute translation is escaped', applyProse('<img alt="Bars">', { Bars: 'A "quoted" name' }).html, '<img alt="A &quot;quoted&quot; name">');
 is('a text translation is escaped', applyProse('<p>Bars</p>', { Bars: 'Fruit & fibre' }).html, '<p>Fruit &amp; fibre</p>');
+/*
+ * The scanner reports text as it appears in the source, entities and all, so a
+ * key can be "Shipping &amp; returns" and a translation is written in that same
+ * space. Escaping every ampersand would turn an entity the translator kept into
+ * &amp;amp;, which renders as the literal characters "&amp;".
+ */
+is('an entity the translator kept is left alone', applyProse('<h2>Shipping &amp; returns</h2>', { 'Shipping &amp; returns': 'Доставка &amp; возврат' }).html, '<h2>Доставка &amp; возврат</h2>');
+is('a numeric entity is left alone', applyProse('<p>Bars</p>', { Bars: 'Caf&#233;' }).html, '<p>Caf&#233;</p>');
+is('a hex entity is left alone', applyProse('<p>Bars</p>', { Bars: 'Caf&#xE9;' }).html, '<p>Caf&#xE9;</p>');
+is('a lone ampersand is still escaped', applyProse('<p>Bars</p>', { Bars: 'R&D' }).html, '<p>R&amp;D</p>');
+is('a translation cannot introduce markup', applyProse('<p>Bars</p>', { Bars: 'a <b>tag</b>' }).html, '<p>a &lt;b&gt;tag&lt;/b&gt;</p>');
+is('nor break out of an attribute', applyProse('<img alt="Bars">', { Bars: '" onerror="x' }).html, '<img alt="&quot; onerror=&quot;x">');
 is('an unknown string stays English', applyProse('<p>Bars</p>', {}).html, '<p>Bars</p>');
 
 /* --------------------------------------------------- admin-driven settings */

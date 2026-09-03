@@ -117,6 +117,16 @@ export function scanProse(html, onRun) {
  * memory are left alone, so an untranslated string stays readable English
  * rather than becoming a blank or a key.
  */
+/**
+ * An ampersand that does not already begin a character reference. The scanner
+ * reports text as it appears in the source, entities and all — "Shipping &amp;
+ * returns" is the key — so a translation is written in that same space. Escaping
+ * every `&` would turn an entity the translator kept into `&amp;amp;`, which
+ * renders as the literal text "&amp;"; escaping none would let a bare `&` break
+ * the markup. Only the bare ones are escaped.
+ */
+const BARE_AMP = /&(?![a-zA-Z][a-zA-Z0-9]*;|#\d+;|#[xX][0-9a-fA-F]+;)/g;
+
 export function applyProse(html, memory) {
   const runs = [];
   scanProse(html, (r) => {
@@ -128,9 +138,11 @@ export function applyProse(html, memory) {
   let out = html;
   for (let i = runs.length - 1; i >= 0; i--) {
     const r = runs[i];
-    // An attribute value cannot contain a bare double quote, and text cannot
-    // contain a bare < or &; the memory is ours, but escape anyway.
-    const safe = r.attr ? r.hit.replace(/&/g, '&amp;').replace(/"/g, '&quot;') : r.hit.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // A translation carries words, never markup: an attribute value must not
+    // close its own quote, and text must not open a tag. The memory is ours,
+    // but it is data, so it is escaped rather than trusted.
+    const amp = r.hit.replace(BARE_AMP, '&amp;');
+    const safe = r.attr ? amp.replace(/"/g, '&quot;') : amp.replace(/</g, '&lt;').replace(/>/g, '&gt;');
     out = out.slice(0, r.start) + safe + out.slice(r.end);
   }
   return { html: out, applied: runs.length };
