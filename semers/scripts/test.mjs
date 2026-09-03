@@ -154,6 +154,56 @@ group('order notifications');
   globalThis.fetch = realFetch;
 }
 
+/* ------------------------------------------------------------ schema */
+group('database schema');
+/*
+ * The live database predates the reviews.locale column, and CREATE TABLE IF NOT
+ * EXISTS leaves an existing table exactly as it is. So the column has to arrive
+ * by ALTER TABLE, and SQLite has no ADD COLUMN IF NOT EXISTS — meaning the
+ * second deploy must survive the error the first one's success guarantees.
+ * A fake D1 records what was run and can be told to fail the way SQLite does.
+ */
+{
+  const fakeDb = (onAlter) => {
+    const ran = [];
+    return {
+      ran,
+      d1: {
+        prepare(sql) {
+          return {
+            bind: () => ({ run: async () => ({}), first: async () => null, all: async () => ({ results: [] }) }),
+            run: async () => {
+              ran.push(sql);
+              if (/^ALTER TABLE/.test(sql)) onAlter?.(sql);
+              return {};
+            },
+            first: async () => null,
+            all: async () => ({ results: [] }),
+          };
+        },
+      },
+    };
+  };
+
+  // A fresh module per case: the worker caches "schema is ready" in a module
+  // variable, so the same source has to be imported as a different module.
+  let nth = 0;
+  const src = await readFile(new URL('../worker/server.js', import.meta.url), 'utf-8');
+  const freshWorker = () => import('data:text/javascript;base64,' + Buffer.from(`${src}\n// instance ${nth++}`).toString('base64'));
+
+  const first = fakeDb();
+  const w1 = await freshWorker();
+  await w1.default.fetch(new Request('https://x.test/api/reviews?slug=apple-bar-35g'), { DB: first.d1 });
+  is('a new database is given the column', first.ran.some((q) => /ALTER TABLE reviews ADD COLUMN locale/.test(q)), true);
+  is('the tables are created too', first.ran.some((q) => /CREATE TABLE IF NOT EXISTS reviews/.test(q)), true);
+
+  // Second deploy: the column is there, so SQLite rejects the ALTER.
+  const again = fakeDb((sql) => { throw new Error(`duplicate column name: ${/COLUMN (\w+)/.exec(sql)[1]}`); });
+  const w2 = await freshWorker();
+  const res = await w2.default.fetch(new Request('https://x.test/api/reviews?slug=apple-bar-35g'), { DB: again.d1 });
+  is('a duplicate column does not break the request', res.status, 200);
+}
+
 /* ------------------------------------------------------------ worker 404 */
 group('worker 404');
 const PAGES = ['/404.html', '/ru/404/', '/lv/404/'];
