@@ -118,9 +118,44 @@ is('an external link is left alone', localeHref('https://maxima.lv/', 'ru'), 'ht
 is('the back office is left alone', localeHref('/admin/', 'ru'), '/admin/');
 is('a file is left alone', localeHref('/robots.txt', 'ru'), '/robots.txt');
 
+const worker = await import('data:text/javascript;base64,' + Buffer.from(await readFile(new URL('../worker/server.js', import.meta.url), 'utf-8')).toString('base64'));
+
+/* -------------------------------------------------------- order notifications */
+group('order notifications');
+/*
+ * The owner reads these in Telegram and answers by hand, so the language the
+ * customer was reading has to be in the message. A bogus value must not be able
+ * to invent a fourth language, or to put anything into the text that the reader
+ * did not type.
+ */
+{
+  let text = '';
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, init) => {
+    try { text = JSON.parse(init.body).text; } catch { /* not the notification call */ }
+    return new Response('{"ok":true}', { status: 200 });
+  };
+  const env = { TELEGRAM_BOT_TOKEN: 't', TELEGRAM_CHAT_ID: '1' };
+  const notify = async (body) => {
+    text = '';
+    await worker.default.fetch(new Request('https://x.test/api/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env);
+    return text;
+  };
+  const said = (t) => /Language: (\w+)/.exec(t)?.[1];
+
+  is('a russian order', said(await notify({ type: 'order', customer: { name: 'A', email: 'a@b.co' }, items: [{ qty: 1, name: 'Bar', total: 1.45 }], locale: 'ru' })), 'RU');
+  is('a latvian message', said(await notify({ type: 'contact', name: 'B', email: 'b@c.co', message: 'Sveiki', locale: 'lv' })), 'LV');
+  is('a wholesale enquiry', said(await notify({ type: 'wholesale', company: 'Co', name: 'C', email: 'c@d.co', country: 'LV', kind: 'shop', locale: 'lv' })), 'LV');
+  is('a newsletter signup', said(await notify({ type: 'newsletter', email: 'e@f.co', locale: 'ru' })), 'RU');
+  is('nothing sent means english', said(await notify({ type: 'contact', name: 'D', email: 'd@e.co', message: 'Hi' })), 'EN');
+  is('a bogus value cannot invent a language', said(await notify({ type: 'contact', name: 'E', email: 'e@f.co', message: 'Hi', locale: '<script>x</script>' })), 'EN');
+  is('and cannot smuggle text into the message', (await notify({ type: 'contact', name: 'F', email: 'f@g.co', message: 'Hi', locale: '<script>x</script>' })).includes('script'), false);
+
+  globalThis.fetch = realFetch;
+}
+
 /* ------------------------------------------------------------ worker 404 */
 group('worker 404');
-const worker = await import('data:text/javascript;base64,' + Buffer.from(await readFile(new URL('../worker/server.js', import.meta.url), 'utf-8')).toString('base64'));
 const PAGES = ['/404.html', '/ru/404/', '/lv/404/'];
 const served = async (path, present = PAGES) => {
   const asked = [];

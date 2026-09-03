@@ -484,6 +484,8 @@ function render(type, body, id) {
     lines.push(`Message: ${multi(body.message, 2000)}`);
   }
   if (s(body.page)) lines.push(`Page: ${s(body.page, 200)}`);
+  // The language they were reading is the language to answer in.
+  lines.push(`Language: ${locale(body.locale).toUpperCase()}`);
   return lines.join('\n');
 }
 

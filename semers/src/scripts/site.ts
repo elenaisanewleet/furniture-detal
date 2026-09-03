@@ -856,7 +856,7 @@ $$<HTMLFormElement>('form[data-form]').forEach((form) => {
     if (data.website) return; // honeypot
     if (btn) (btn.disabled = true), (btn.dataset.label = btn.textContent || ''), (btn.textContent = S('sending', 'Sending…'));
     try {
-      await post({ type, ...data, page: location.pathname });
+      await post({ type, ...data, page: location.pathname, locale: CFG.locale || 'en' });
       form.reset();
       const msg = form.dataset.success || S('contactSuccess', 'Thanks — we’ll be in touch shortly.');
       if (note) (note.textContent = msg), note.classList.add('notice', 'notice--ok');
@@ -939,7 +939,7 @@ if (checkout) {
       shippingNote: quoted ? 'EU courier rate to be quoted by e-mail' : undefined,
       total: Math.round((total + shipping) * 100) / 100,
       currency: CFG.currency,
-      page: location.pathname,
+      page: location.pathname, locale: CFG.locale || 'en',
     };
     checkout.dataset.busy = '1';
     if (btn) (btn.disabled = true), (btn.textContent = S('placingOrder', 'Placing order…'));
@@ -1375,7 +1375,7 @@ restock?.addEventListener('submit', async (e) => {
   try {
     // Reuses the order endpoint's contact type, so it lands in the same inbox
     // and the same admin list as everything else a customer sends.
-    await post({ type: 'contact', name: 'Back-in-stock request', email: data.email, topic: `Back in stock: ${name}`, message: `Please notify me when ${name} is available again.`, page: location.pathname });
+    await post({ type: 'contact', name: 'Back-in-stock request', email: data.email, topic: `Back in stock: ${name}`, message: `Please notify me when ${name} is available again.`, page: location.pathname, locale: CFG.locale || 'en' });
     restock.reset();
     if (note) (note.textContent = S('notifyNoted', 'Noted — we will write to you when it is back.')), (note.hidden = false), note.classList.add('notice', 'notice--ok');
   } catch {
