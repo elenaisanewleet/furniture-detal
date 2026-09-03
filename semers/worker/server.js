@@ -35,6 +35,10 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{0,63}$/;
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
 /** Single-line field: control characters and line breaks are collapsed so a value cannot pose as one of our own lines. */
+/** The site's languages. Anything else is English, so a bad value cannot create a fourth. */
+const LOCALES = new Set(['en', 'ru', 'lv']);
+const locale = (v) => (LOCALES.has(v) ? v : 'en');
+
 const s = (v, max = 400) => (typeof v === 'string' ? v.replace(/[\0-\x1f\x7f\u2028\u2029]+/g, ' ').trim().slice(0, max) : '');
 /** Free-text field: keeps its line breaks, indented under the label for the same reason. */
 const multi = (v, max) => (typeof v === 'string' ? v.replace(/\r\n?/g, '\n').replace(/[\0-\x09\x0b-\x1f\x7f\u2028\u2029]+/g, ' ').trim().slice(0, max).split('\n').join('\n    ') : '');
@@ -85,6 +89,9 @@ function db(env) {
  * Create the tables if the deploy has not run migrations yet. Every statement is
  * IF NOT EXISTS, so this is safe to call against a database that already has data.
  */
+/** [table, column, definition] for columns that postdate the first schema. */
+const ADDED_COLUMNS = [['reviews', 'locale', `TEXT NOT NULL DEFAULT 'en'`]];
+
 async function ensureSchema(env) {
   const d = db(env);
   if (!d || schemaReady) return d;
@@ -104,7 +111,7 @@ async function ensureSchema(env) {
       id INTEGER PRIMARY KEY AUTOINCREMENT, created_at TEXT NOT NULL, slug TEXT NOT NULL, rating INTEGER NOT NULL,
       author TEXT NOT NULL, city TEXT NOT NULL DEFAULT '', title TEXT NOT NULL DEFAULT '', body TEXT NOT NULL,
       email TEXT NOT NULL DEFAULT '', status TEXT NOT NULL DEFAULT 'pending', verified INTEGER NOT NULL DEFAULT 0,
-      reply TEXT NOT NULL DEFAULT '')`,
+      reply TEXT NOT NULL DEFAULT '', locale TEXT NOT NULL DEFAULT 'en')`,
     `CREATE INDEX IF NOT EXISTS reviews_slug ON reviews (slug, status, created_at DESC)`,
     `CREATE INDEX IF NOT EXISTS reviews_status ON reviews (status, created_at DESC)`,
     `CREATE TABLE IF NOT EXISTS product_overrides (
@@ -117,6 +124,19 @@ async function ensureSchema(env) {
     `CREATE INDEX IF NOT EXISTS audit_at ON audit (at DESC)`,
   ];
   for (const q of stmts) await d.prepare(q).run();
+  /*
+   * Columns added after a database already exists. CREATE TABLE IF NOT EXISTS
+   * leaves an older table alone, so each one is added separately and the error
+   * from "it is already there" is the expected outcome, not a failure. SQLite
+   * has no ADD COLUMN IF NOT EXISTS.
+   */
+  for (const [table, column, def] of ADDED_COLUMNS) {
+    try {
+      await d.prepare(`ALTER TABLE ${table} ADD COLUMN ${column} ${def}`).run();
+    } catch {
+      /* already present */
+    }
+  }
   schemaReady = true;
   return d;
 }
@@ -349,9 +369,20 @@ async function handleReviewsGet(request, env) {
   if (!SLUG_RE.test(slug)) return json(400, { ok: false, reason: 'slug' });
   const d = await ensureSchema(env);
   if (!d) return json(200, { ok: true, slug, count: 0, avg: 0, reviews: [] });
+  /*
+   * A shop this size cannot afford to hide reviews from a reader just because
+   * they were written in another language — three languages would mean three
+   * near-empty product pages. So every approved review is served, the reader's
+   * own language first, and each one carries the language it was written in so
+   * the page can mark it up honestly.
+   */
+  const want = locale(url.searchParams.get('locale'));
   const rows = await d
-    .prepare(`SELECT id, created_at, rating, author, city, title, body, verified, reply FROM reviews WHERE slug = ? AND status = 'approved' ORDER BY created_at DESC LIMIT 50`)
-    .bind(slug)
+    .prepare(
+      `SELECT id, created_at, rating, author, city, title, body, verified, reply, locale FROM reviews
+       WHERE slug = ? AND status = 'approved' ORDER BY (locale = ?) DESC, created_at DESC LIMIT 50`,
+    )
+    .bind(slug, want)
     .all();
   const list = (rows.results || []).map((r) => ({
     id: r.id,
@@ -361,6 +392,7 @@ async function handleReviewsGet(request, env) {
     city: r.city || '',
     title: r.title || '',
     body: r.body,
+    locale: locale(r.locale),
     verified: !!r.verified,
     reply: r.reply || '',
   }));
@@ -395,10 +427,10 @@ async function handleReviewPost(request, env) {
   if (dupe) return json(200, { ok: true, pending: true });
 
   await d
-    .prepare(`INSERT INTO reviews (created_at, slug, rating, author, city, title, body, email, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')`)
-    .bind(nowIso(), slug, rating, author, s(body.city, 60), s(body.title, 120), review, EMAIL_RE.test(email) ? email : '')
+    .prepare(`INSERT INTO reviews (created_at, slug, rating, author, city, title, body, email, status, locale) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?)`)
+    .bind(nowIso(), slug, rating, author, s(body.city, 60), s(body.title, 120), review, EMAIL_RE.test(email) ? email : '', locale(body.locale))
     .run();
-  await audit(env, 'review.new', `${slug} ${rating}★`);
+  await audit(env, 'review.new', `${slug} ${rating}★ ${locale(body.locale)}`);
   await sendTelegram(env, `⭐ New review awaiting approval\n${slug} — ${rating}/5 by ${author}\n\n${review.slice(0, 500)}`).catch(() => false);
   return json(200, { ok: true, pending: true });
 }
@@ -679,7 +711,7 @@ async function adminReviews(request, env) {
   const url = new URL(request.url);
   const status = s(url.searchParams.get('status'), 20);
   const where = REVIEW_STATUSES.has(status) ? `WHERE status = ?` : '';
-  const stmt = db(env).prepare(`SELECT id, created_at, slug, rating, author, city, title, body, email, status, verified, reply FROM reviews ${where} ORDER BY created_at DESC LIMIT 200`);
+  const stmt = db(env).prepare(`SELECT id, created_at, slug, rating, author, city, title, body, email, status, verified, reply, locale FROM reviews ${where} ORDER BY created_at DESC LIMIT 200`);
   const rows = await (where ? stmt.bind(status) : stmt).all();
   return json(200, { ok: true, reviews: rows.results || [] });
 }
@@ -725,10 +757,10 @@ async function adminReviewCreate(request, env) {
   if (!(rating >= 1 && rating <= 5)) return json(422, { ok: false, reason: 'rating' });
   if (author.length < 2 || review.length < 10) return json(422, { ok: false, reason: 'fields' });
   await db(env)
-    .prepare(`INSERT INTO reviews (created_at, slug, rating, author, city, title, body, email, status, verified) VALUES (?, ?, ?, ?, ?, ?, ?, '', 'approved', ?)`)
-    .bind(nowIso(), slug, rating, author, s(body.city, 60), s(body.title, 120), review, body.verified ? 1 : 0)
+    .prepare(`INSERT INTO reviews (created_at, slug, rating, author, city, title, body, email, status, verified, locale) VALUES (?, ?, ?, ?, ?, ?, ?, '', 'approved', ?, ?)`)
+    .bind(nowIso(), slug, rating, author, s(body.city, 60), s(body.title, 120), review, body.verified ? 1 : 0, locale(body.locale))
     .run();
-  await audit(env, 'review.create', `${slug} ${rating}★`);
+  await audit(env, 'review.create', `${slug} ${rating}★ ${locale(body.locale)}`);
   return json(200, { ok: true });
 }
 

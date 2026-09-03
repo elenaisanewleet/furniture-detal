@@ -324,6 +324,11 @@
 .rev__who { font-weight: 600; }
 .rev__meta { font-size: var(--fs-xs); color: var(--fg-3); }
 .rev__verified { font-size: var(--fs-xs); color: var(--ok, #3f7d54); font-weight: 600; }
+/* Shown only on a review written in a language other than the page's. */
+.rev__lang {
+  font-size: var(--fs-xs); color: var(--fg-3); border: 1px solid var(--line);
+  border-radius: var(--r-sm); padding: 0.05em 0.4em; line-height: 1.5;
+}
 .rev__title { margin: 0.35rem 0 0.15rem; font-weight: 600; }
 .rev__body { margin: 0.15rem 0 0; white-space: pre-line; }
 .rev__reply { margin: 0.5rem 0 0 0; padding-left: 0.85rem; border-left: 2px solid var(--line); font-size: var(--fs-sm); color: var(--fg-2); }

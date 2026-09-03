@@ -1267,7 +1267,7 @@ if (reviewsEl) {
   const emptyNote = $('[data-review-empty]', reviewsEl);
   const stars = (r: number) => '★★★★★'.slice(0, r) + '☆☆☆☆☆'.slice(0, 5 - r);
 
-  const paint = (data: { count: number; avg: number; reviews: { date: string; rating: number; author: string; city: string; title: string; body: string; verified: boolean; reply: string }[] }) => {
+  const paint = (data: { count: number; avg: number; reviews: { date: string; rating: number; author: string; city: string; title: string; body: string; verified: boolean; reply: string; locale?: string }[] }) => {
     if (!data.count) {
       if (emptyNote) emptyNote.hidden = false;
       return;
@@ -1279,20 +1279,30 @@ if (reviewsEl) {
         `<span class="stars" aria-hidden="true">${stars(Math.round(data.avg))}</span> ` +
         rich(interp(S(data.count === 1 ? 'reviewsSummaryOne' : 'reviewsSummaryMany', '**{avg}** out of 5 · {count}'), { avg: data.avg.toFixed(1), count: data.count }));
     }
+    /*
+     * A review written in another language is still shown — three languages
+     * would otherwise mean three near-empty product pages — but it is marked as
+     * what it is. The lang attribute is the honest way to do that: a screen
+     * reader switches voice for it, and a browser offers to translate it.
+     */
+    const LANG_NAME: Record<string, string> = { en: 'English', ru: 'Русский', lv: 'Latviski' };
     list.innerHTML = data.reviews
-      .map(
-        (r) => `<article class="rev">
+      .map((r) => {
+        const lang = r.locale || 'en';
+        const foreign = lang !== (CFG.locale || 'en');
+        return `<article class="rev"${foreign ? ` lang="${esc(lang)}"` : ''}>
           <div class="rev__top">
             <span class="rev__stars" aria-label="${esc(interp(S('outOfFive', '{n} out of 5'), { n: r.rating }))}">${stars(r.rating)}</span>
             <span class="rev__who">${esc(r.author)}</span>
             <span class="rev__meta">${esc([r.city, r.date].filter(Boolean).join(' · '))}</span>
             ${r.verified ? `<span class="rev__verified">${esc(S('verifiedPurchase', 'Verified purchase'))}</span>` : ''}
+            ${foreign ? `<span class="rev__lang" lang="${esc(lang)}">${esc(LANG_NAME[lang] || lang)}</span>` : ''}
           </div>
           ${r.title ? `<p class="rev__title">${esc(r.title)}</p>` : ''}
           <p class="rev__body">${esc(r.body)}</p>
           ${r.reply ? `<p class="rev__reply"><strong>${esc(S('semersReply', 'Semers:'))}</strong> ${esc(r.reply)}</p>` : ''}
-        </article>`,
-      )
+        </article>`;
+      })
       .join('');
 
     // Structured data for the rating is only ever emitted from reviews that
@@ -1315,7 +1325,7 @@ if (reviewsEl) {
     const noReviews = () => {
       if (emptyNote) emptyNote.hidden = false;
     };
-    fetch(`/api/reviews?slug=${encodeURIComponent(slug)}`)
+    fetch(`/api/reviews?slug=${encodeURIComponent(slug)}&locale=${encodeURIComponent(CFG.locale || 'en')}`)
       .then((r) => (r.ok ? r.json() : null))
       // A missing endpoint and an empty product read the same to a shopper:
       // there is nothing to show yet, and the invitation to be first still stands.
@@ -1336,7 +1346,7 @@ if (reviewsEl) {
       const res = await fetch('/api/reviews', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ ...data, slug, rating: Number(data.rating) }),
+        body: JSON.stringify({ ...data, slug, rating: Number(data.rating), locale: CFG.locale || 'en' }),
       });
       if (!res.ok) throw new Error(String(res.status));
       form.reset();

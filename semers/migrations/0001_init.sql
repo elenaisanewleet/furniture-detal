@@ -53,7 +53,11 @@ CREATE TABLE IF NOT EXISTS reviews (
   email      TEXT NOT NULL DEFAULT '',
   status     TEXT NOT NULL DEFAULT 'pending',
   verified   INTEGER NOT NULL DEFAULT 0,
-  reply      TEXT NOT NULL DEFAULT ''
+  reply      TEXT NOT NULL DEFAULT '',
+  -- The language the review was written in. Every approved review is shown on
+  -- every language of the product page — three languages would otherwise mean
+  -- three near-empty pages — so the page marks up each one honestly instead.
+  locale     TEXT NOT NULL DEFAULT 'en'
 );
 CREATE INDEX IF NOT EXISTS reviews_slug   ON reviews (slug, status, created_at DESC);
 CREATE INDEX IF NOT EXISTS reviews_status ON reviews (status, created_at DESC);
