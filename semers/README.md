@@ -76,6 +76,8 @@ There is one set of pages, rendered three times. The words come from three place
 
 The legal pages are translated too, and each translated one carries a note saying the English version governs if the two disagree.
 
+Where a translator had to choose between two defensible renderings — «контролёр» or «оператор персональных данных» for the GDPR controller, «постамат» or «пакомат» for a parcel locker — the choice and the reasoning are in `docs/translation-notes.md`, keyed by the English sentence so they can be found and changed. Nothing in that file is a known error: every number, date, deadline and allergen statement was checked against the English before it was committed.
+
 ## SEO
 
 Canonical + hreflang (reciprocal, with `x-default`), Open Graph, JSON-LD (`Organization`, `WebSite` with SearchAction, `BreadcrumbList`, `Product`/`ProductGroup` with `Offer` + `gtin13`, `ItemList`, `FAQPage`, `Article`, `HowTo`), sitemap with priorities and `xhtml:link` alternates, `robots.txt`, semantic HTML. The structured data is localised with the page: URLs, breadcrumbs and variant names follow the locale, while `Organization` and `WebSite` keep one identity across all three languages. Add your Search Console token via `PUBLIC_GOOGLE_VERIFICATION`.
