@@ -113,7 +113,7 @@ const rows: [string, string][] = [
       </div>
 
       <div class="pdp__buy">
-        <p class="eyebrow">{showBrand && <Fragment>{p.brand} · </Fragment>}<a href={`/shop/${col.key}/`}>{col.name}</a></p>
+        <p class="eyebrow">{showBrand && <Fragment><span translate="no">{p.brand}</span> · </Fragment>}<a href={`/shop/${col.key}/`}>{col.name}</a></p>
         <h1 class="pdp__title">{p.name} <span class="pdp__w">{p.weightGrams} g{p.pack > 1 ? ` · ${p.pack} pcs` : ''}</span></h1>
         <p class="pdp__hook">{p.hook}</p>
 
@@ -193,7 +193,7 @@ const rows: [string, string][] = [
             <div class="acc__body">
               <p><strong>Ingredients:</strong> {p.ingredients}</p>
               <p><strong>Allergens:</strong> {p.allergens}</p>
-              {multi && <p class="small muted">EAN for the selected flavour: <span data-gtin>{first.gtin || '—'}</span></p>}
+              {multi && <p class="small muted">EAN for the selected flavour: <span data-gtin translate="no">{first.gtin || '—'}</span></p>}
             </div>
           </details>
           <details>

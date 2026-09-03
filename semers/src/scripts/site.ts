@@ -251,6 +251,25 @@ function renderCart() {
         : `You’ve unlocked <strong>free shipping</strong>.`;
   }
 
+  // Nudge toward the next volume step, the way the shipping bar nudges toward
+  // free delivery: name the item, the number of packs and what it saves. Only
+  // the closest one is shown — a list of every possible saving is noise.
+  const tierText = $('#cart-tier-text');
+  if (tierText) {
+    let best: { item: CartItem; need: number; pct: number } | null = null;
+    for (const i of cart.items) {
+      if (i.tier === false) continue;
+      const nextStep = TIERS.find(([minQty]) => i.qty < minQty);
+      if (!nextStep) continue;
+      const need = nextStep[0] - i.qty;
+      if (!best || need < best.need) best = { item: i, need, pct: nextStep[1] };
+    }
+    tierText.hidden = !best;
+    if (best) {
+      tierText.innerHTML = `Add <strong>${best.need}</strong> more ${esc(best.item.name)} to save <strong>${best.pct}%</strong> on that line.`;
+    }
+  }
+
   // cart-page suggestions never repeat something already in the box
   const inBoxNow = new Set(cart.items.map((i) => i.slug));
   $$<HTMLElement>('[data-cart-suggest] [data-product-card]').forEach((card) => {

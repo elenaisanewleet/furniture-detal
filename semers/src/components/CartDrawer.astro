@@ -34,6 +34,8 @@ const upsell = PRODUCTS.filter((p) => p.pack === 1 && p.price < 3)
     <div class="drawer__ship" id="cart-ship" data-free-from={site.shipping.freeFrom}>
       <div class="drawer__bar" aria-hidden="true"><span id="cart-ship-fill"></span></div>
       <p id="cart-ship-text">Free shipping on orders over €{site.shipping.freeFrom}.</p>
+      {/* Filled by the cart when one more of something reaches the next volume step. */}
+      <p class="drawer__tier" id="cart-tier-text" hidden></p>
       <ul class="drawer__upsell" id="cart-upsell" aria-label="Quick adds" hidden>
         {upsell.map((u) => (
           <li class="up" data-up-slug={u.slug}>

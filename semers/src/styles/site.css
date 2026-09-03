@@ -334,3 +334,4 @@
 .ci__save { display: block; font-size: var(--fs-xs); font-weight: 600; color: var(--accent); }
 .is-soldout { opacity: 0.62; }
 .is-soldout .pc__add { cursor: not-allowed; }
+.drawer__tier { margin: 0.35rem 0 0; font-size: var(--fs-xs); color: var(--fg-2); }
