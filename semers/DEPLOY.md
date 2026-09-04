@@ -134,6 +134,46 @@ to be reported as a wrong password, which sends the owner to type it again —
 eight more times, until the login limiter locks them out of a door that was
 never locked.
 
+## Security check
+
+`npm run check:security` (part of `npm run verify`) drives the Worker's own
+`fetch` over a real SQLite file standing in for D1 — so what passes is the code
+that ships, not a description of it. It tries the locks rather than reading
+them: an oversized body (declared and streamed), four kinds of forged cookie,
+four writes without the header a cross-site form cannot set, nine wrong
+passwords, a shop with no `ADMIN_PASSWORD` at all, six banner links including
+`javascript:`, a database that throws on every statement, and thirty-one
+submissions in an hour.
+
+Two things it asserts are worth knowing about before an upgrade:
+
+* **Signing out ends the session.** Every issued session is a row in `sessions`,
+  and `/api/admin/logout` deletes it. A signature on its own could never be
+  taken back — clearing the cookie only affected the device that asked, so a
+  token copied off a laptop kept working for the rest of its twelve hours.
+  Deploying this **signs the owner out once**: sessions issued before it have no
+  row, so the next admin request lands on the login screen. That is the only
+  visible effect.
+* **The banner link is filtered.** `announcementHref` keeps only a path,
+  `https://`, `mailto:` or `tel:`. It is the one owner-typed value that becomes
+  a live `href` on every page a visitor loads, so a `javascript:` there would
+  turn one admin write into script in every reader's browser. The Worker drops
+  it on write and the storefront script drops it again on read.
+
+`/admin/` also refuses to be framed. It is a static file that the Worker never
+sees, so there is no response to hang `X-Frame-Options` on: the page hides
+itself until it can prove it is the top window, and `npm run check:admin` frames
+it both ways to prove that it does.
+
+**The two order endpoints are not the same code.** `worker/server.js` is what
+runs today; `api/order.js` is the Vercel function that would run if the project
+in step 1 is ever created. Both are rate limited now — the Worker counts in D1,
+the function in the instance's memory, which is weaker but is the difference
+between thirty an hour and as many as a sender cares to send. One gap remains:
+the function still sends the shop's own English notification as the customer's
+receipt, where the Worker sends a receipt written in the customer's language.
+Fix that before pointing semers.org at Vercel.
+
 ## Structured-data check
 
 `npm run check:schema` (part of `npm run verify`) reads the JSON-LD out of the

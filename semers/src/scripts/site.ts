@@ -1101,7 +1101,19 @@ function localeHref(href: string): string {
   return `/${CFG.locale}${href}`;
 }
 
-function applyAnnouncement(text: string, href: string, on: boolean) {
+/**
+ * The banner href arrives over the network, so it is checked here as well as in
+ * the Worker that stores it. Setting `a.href` to a `javascript:` URL is script
+ * execution, and a cached response or a second writer is enough to make that
+ * matter — the check costs one line and does not depend on the other one.
+ */
+function safeHref(href: string): string {
+  if (!href || href.startsWith('//')) return '';
+  if (href.startsWith('/')) return href;
+  return /^(https?:\/\/|mailto:|tel:)/i.test(href) ? href : '';
+}
+
+function applyAnnouncement(text: string, rawHref: string, on: boolean) {
   const bar = $('[data-announce]');
   const slot = $('[data-announce-text]');
   if (!bar || !slot) return;
@@ -1109,6 +1121,7 @@ function applyAnnouncement(text: string, href: string, on: boolean) {
   bar.hidden = !show;
   if (!show) return;
   slot.textContent = '';
+  const href = safeHref(rawHref);
   if (href) {
     const a = document.createElement('a');
     a.href = localeHref(href);

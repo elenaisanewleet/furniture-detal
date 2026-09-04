@@ -20,6 +20,22 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
     <meta name="robots" content="noindex, nofollow" />
     <title>Semers — админка</title>
     <link rel="icon" href="/favicon.svg" />
+    <meta name="referrer" content="same-origin" />
+    <!--
+      The back office must not be framed. A transparent overlay on someone
+      else's page turns the owner's clicks into approvals, price changes and
+      deletions, and this page is served as a static file by a Worker that never
+      sees the request — so there is no response to hang an X-Frame-Options
+      header on. The page refuses on its own instead: hidden until it can prove
+      it is the top window, and if it cannot navigate out of the frame it simply
+      stays blank rather than becoming a control someone else can aim.
+    -->
+    <style is:inline>html{display:none}</style>
+    <noscript><style is:inline>html{display:block}</style></noscript>
+    <script is:inline>
+      if (window.self === window.top) document.documentElement.style.display = 'block';
+      else try { window.top.location = window.self.location; } catch (e) { /* sandboxed: stay blank */ }
+    </script>
   </head>
   <body>
     <!--

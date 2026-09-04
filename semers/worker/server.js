@@ -65,11 +65,40 @@ function ref() {
   return `SM-${ymd}-${rnd}`;
 }
 
+/** Refused with its own status rather than as a parse failure, so a caller can say which it was. */
+function tooLarge() {
+  return Object.assign(new Error('body too large'), { status: 413, reason: 'too-large' });
+}
+
+/**
+ * The body is read against the limit rather than after it. `request.text()`
+ * buffers whatever was sent before anything measures it, so a 64 KB cap
+ * enforced on the result is not a cap: one request could spend the isolate's
+ * whole memory allowance getting to the line that rejects it.
+ */
 async function readJson(request) {
   const asObject = (b) => (b && typeof b === 'object' && !Array.isArray(b) ? b : {});
-  const raw = await request.text();
-  if (raw.length > MAX_BODY) throw new Error('body too large');
-  return asObject(raw ? JSON.parse(raw) : {});
+  const declared = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > MAX_BODY) throw tooLarge();
+  if (!request.body) return {};
+  const reader = request.body.getReader();
+  const chunks = [];
+  let size = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_BODY) {
+      await reader.cancel();
+      throw tooLarge();
+    }
+    chunks.push(value);
+  }
+  if (!size) return {};
+  const buf = new Uint8Array(size);
+  let at = 0;
+  for (const c of chunks) buf.set(c, at), (at += c.byteLength);
+  return asObject(JSON.parse(new TextDecoder().decode(buf)));
 }
 
 const json = (status, data, extraHeaders) =>
@@ -121,6 +150,7 @@ async function ensureSchema(env) {
       badge TEXT, batch TEXT, note TEXT, updated_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS subscribers (email TEXT PRIMARY KEY, created_at TEXT NOT NULL, source TEXT NOT NULL DEFAULT '')`,
     `CREATE TABLE IF NOT EXISTS login_attempts (ip TEXT NOT NULL, at TEXT NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS sessions (nonce TEXT PRIMARY KEY, exp INTEGER NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS rate (bucket TEXT NOT NULL, at TEXT NOT NULL)`,
     `CREATE INDEX IF NOT EXISTS rate_bucket ON rate (bucket, at)`,
     `CREATE INDEX IF NOT EXISTS login_attempts_ip ON login_attempts (ip, at)`,
@@ -187,6 +217,20 @@ const SETTING_DEFAULTS = {
   reviewsOn: true,
 };
 
+/**
+ * The banner link is the one thing the owner types that becomes a live href on
+ * every page a visitor loads. A `javascript:` there would turn a single admin
+ * write — or one stolen session — into script running in every reader's
+ * browser, so only the shapes a shop banner actually needs get through.
+ */
+function safeHref(v) {
+  const h = s(v, 300);
+  if (!h) return '';
+  if (h.startsWith('//')) return '';
+  if (h.startsWith('/')) return h;
+  return /^(https?:\/\/|mailto:|tel:)/i.test(h) ? h : '';
+}
+
 function coerceSettings(raw) {
   const out = { ...SETTING_DEFAULTS };
   for (const [k, def] of Object.entries(SETTING_DEFAULTS)) {
@@ -194,7 +238,7 @@ function coerceSettings(raw) {
     const v = raw[k];
     if (typeof def === 'boolean') out[k] = v === true || v === 'true' || v === 1 || v === '1';
     else if (typeof def === 'number') out[k] = Number.isFinite(Number(v)) ? Number(v) : def;
-    else out[k] = s(v, 300);
+    else out[k] = k === 'announcementHref' ? safeHref(v) : s(v, 300);
   }
   // A discount ladder that goes backwards would quietly overcharge the larger box.
   if (out.tier2Qty <= out.tier1Qty) out.tier2Qty = out.tier1Qty + 1;
@@ -260,20 +304,51 @@ function sessionSecret(env) {
   return env.ADMIN_SESSION_SECRET || env.ADMIN_PASSWORD || '';
 }
 
+/**
+ * A signature alone cannot be taken back. Every issued session is also a row, so
+ * signing out actually ends the session instead of only clearing the cookie on
+ * the one device that asked — which is the difference between "I logged out" and
+ * "a token copied off this laptop works for the next twelve hours".
+ *
+ * Without a database there is no table to check and the signature is all there
+ * is; the admin API already refuses to serve anything in that state.
+ */
 async function issueSession(env) {
   const exp = Math.floor(Date.now() / 1000) + SESSION_TTL_S;
   const nonce = [...crypto.getRandomValues(new Uint8Array(12))].map((b) => b.toString(16).padStart(2, '0')).join('');
   const body = `${exp}.${nonce}`;
+  const d = await ensureSchema(env);
+  if (d) {
+    await d.prepare(`DELETE FROM sessions WHERE exp < ?`).bind(Math.floor(Date.now() / 1000)).run();
+    await d.prepare(`INSERT OR REPLACE INTO sessions (nonce, exp) VALUES (?, ?)`).bind(nonce, exp).run();
+  }
   return `${body}.${await hmac(sessionSecret(env), body)}`;
 }
 
-async function validSession(env, token) {
-  if (!token || !sessionSecret(env)) return false;
+/** The signed parts of a token, or null when it is not ours or has expired. */
+async function readSession(env, token) {
+  if (!token || !sessionSecret(env)) return null;
   const parts = String(token).split('.');
-  if (parts.length !== 3) return false;
+  if (parts.length !== 3) return null;
   const [exp, nonce, sig] = parts;
-  if (!/^\d+$/.test(exp) || Number(exp) < Math.floor(Date.now() / 1000)) return false;
-  return timingSafeEqual(sig, await hmac(sessionSecret(env), `${exp}.${nonce}`));
+  if (!/^\d+$/.test(exp) || Number(exp) < Math.floor(Date.now() / 1000)) return null;
+  if (!timingSafeEqual(sig, await hmac(sessionSecret(env), `${exp}.${nonce}`))) return null;
+  return { exp: Number(exp), nonce };
+}
+
+async function validSession(env, token) {
+  const claim = await readSession(env, token);
+  if (!claim) return false;
+  const d = await ensureSchema(env);
+  if (!d) return true;
+  const row = await d.prepare(`SELECT nonce FROM sessions WHERE nonce = ? AND exp >= ?`).bind(claim.nonce, Math.floor(Date.now() / 1000)).first();
+  return !!row;
+}
+
+async function endSession(env, token) {
+  const claim = await readSession(env, token);
+  const d = claim ? await ensureSchema(env) : null;
+  if (d) await d.prepare(`DELETE FROM sessions WHERE nonce = ?`).bind(claim.nonce).run();
 }
 
 function cookie(request, name) {
@@ -360,8 +435,8 @@ async function handleLogin(request, env) {
   let body;
   try {
     body = await readJson(request);
-  } catch {
-    return json(400, { ok: false, reason: 'bad-json' });
+  } catch (e) {
+    return json(e?.status || 400, { ok: false, reason: e?.reason || 'bad-json' });
   }
   // Both sides are hashed first so the comparison is over fixed-length strings
   // whatever the password lengths are.
@@ -468,8 +543,8 @@ async function handleReviewPost(request, env) {
   let body;
   try {
     body = await readJson(request);
-  } catch {
-    return json(400, { ok: false, reason: 'bad-json' });
+  } catch (e) {
+    return json(e?.status || 400, { ok: false, reason: e?.reason || 'bad-json' });
   }
   if (s(body.website)) return json(200, { ok: true }); // honeypot
   // Reviews are moderated, so spam costs the owner time rather than reaching a
@@ -845,8 +920,8 @@ async function handleOrder(request, env) {
   let body;
   try {
     body = await readJson(request);
-  } catch {
-    return json(400, { ok: false, reason: 'bad-json' });
+  } catch (e) {
+    return json(e?.status || 400, { ok: false, reason: e?.reason || 'bad-json' });
   }
 
   const type = s(body.type, 20);
@@ -1094,7 +1169,12 @@ async function adminStats(request, env) {
 
 async function handleAdmin(request, env, path) {
   if (path === 'login') return handleLogin(request, env);
-  if (path === 'logout') return json(200, { ok: true }, { 'set-cookie': setCookie('', 0) });
+  if (path === 'logout') {
+    // Signing out has to end the session server-side too; an expired cookie on
+    // this device does nothing about a copy of the token anywhere else.
+    await endSession(env, cookie(request, SESSION_COOKIE)).catch(() => {});
+    return json(200, { ok: true }, { 'set-cookie': setCookie('', 0) });
+  }
   if (path === 'session') {
     if (!env.ADMIN_PASSWORD) return json(200, { ok: false, configured: false });
     const live = await validSession(env, cookie(request, SESSION_COOKIE));
@@ -1165,8 +1245,12 @@ export default {
       if (path.startsWith('/api/')) return json(404, { ok: false, reason: 'unknown-route' });
     } catch (err) {
       // A thrown handler must not return the platform's HTML error page to a
-      // fetch() that is expecting JSON.
-      return json(500, { ok: false, reason: 'server-error', detail: String((err && err.message) || err).slice(0, 200) });
+      // fetch() that is expecting JSON. What it must also not return is the
+      // message: a D1 error names the table and the column it failed on, and
+      // the caller here is the public internet.
+      if (err && err.status) return json(err.status, { ok: false, reason: err.reason || 'bad-request' });
+      console.error('semers worker', (err && err.stack) || err);
+      return json(500, { ok: false, reason: 'server-error' });
     }
     return notFound(request, env);
   },

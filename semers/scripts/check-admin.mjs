@@ -183,6 +183,54 @@ for (const [status, reason, expect, what] of DOORS) {
 }
 console.log(`  the login screen names all ${DOORS.length} reasons it can fail`);
 
+/* ------------------------------------------------ and it refuses to be framed */
+
+/*
+ * A transparent frame over someone else's page turns the owner's clicks into
+ * approvals, price changes and deletions. The page is a static file served by a
+ * Worker that never sees the request, so there is no response to hang
+ * X-Frame-Options on: it has to refuse on its own.
+ *
+ * Two outcomes are safe and the page must reach one of them. Framed normally it
+ * navigates the top window to itself, which throws the probe away with the
+ * attacker's page. Framed inside a sandbox that forbids that, it cannot
+ * navigate — so it stays hidden instead of quietly becoming a control somebody
+ * else is aiming.
+ *
+ * The parent has to be same-origin or `contentDocument` is null whatever the
+ * page does, and a check that cannot see into the frame passes on anything.
+ */
+for (const [sandbox, what] of [
+  [null, 'in a plain frame it navigates the top window away'],
+  ['allow-scripts allow-same-origin', 'in a sandbox that forbids that, it stays blank'],
+]) {
+  const page = await browser.newPage({ viewport: { width: 900, height: 700 } });
+  await stub(page);
+  await page.goto(`${BASE}/shop/`, { waitUntil: 'domcontentloaded' });
+  const framed = await page
+    .evaluate(async ([src, sb]) => {
+      const f = document.createElement('iframe');
+      f.src = src;
+      f.width = '800';
+      f.height = '600';
+      if (sb !== null) f.setAttribute('sandbox', sb);
+      document.body.appendChild(f);
+      await new Promise((r) => setTimeout(r, 900));
+      const d = f.contentDocument;
+      if (!d) return { blind: true };
+      return { display: getComputedStyle(d.documentElement).display, text: (d.body?.innerText || '').trim().slice(0, 40) };
+    }, [`${BASE}/admin/`, sandbox])
+    // The probe dying with its own page is the loud version of a pass: the
+    // frame navigated the top window, taking the evaluate context with it.
+    .catch(() => ({ bustedOut: true }));
+  await page.waitForTimeout(300);
+  const left = !new URL(page.url()).pathname.startsWith('/shop');
+  if (framed.blind) note(`${what}: could not see into the frame, so nothing was proved`);
+  else if (!framed.bustedOut && !left && framed.display !== 'none') note(`framed with sandbox="${sandbox}", the back office renders anyway ("${framed.text}")`);
+  await page.close();
+  console.log(`  ${what}`);
+}
+
 await browser.close();
 console.log(problems.length ? `\n${problems.length} problems:` : '\nthe back office works, and says what went wrong when it does not');
 problems.forEach((p) => console.log('  -', p));

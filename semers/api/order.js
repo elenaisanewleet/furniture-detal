@@ -37,8 +37,55 @@ const escapeHtml = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<
 function ref() {
   const d = new Date();
   const ymd = d.toISOString().slice(2, 10).replace(/-/g, '');
-  const rnd = Math.random().toString(36).slice(2, 6).toUpperCase();
+  // The alphabet drops the characters that get misread aloud or in handwriting
+  // (0/O, 1/I), and the bytes are drawn the same way the Worker draws them so
+  // the two deployments hand out references of the same shape.
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = globalThis.crypto.getRandomValues(new Uint8Array(4));
+  const rnd = Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
   return `SM-${ymd}-${rnd}`;
+}
+
+/* ------------------------------------------------------------- rate limiting */
+
+/** Form submissions allowed from one caller per hour, and from one instance. */
+const SUBMIT_MAX = 30;
+const SUBMIT_WINDOW_MS = 60 * 60 * 1000;
+const INSTANCE_MAX = 300;
+/** ip -> timestamps inside the window. Bounded below so a spray cannot grow it. */
+const hits = new Map();
+
+/**
+ * Only x-real-ip is trusted: Vercel sets it and a client cannot. x-forwarded-for
+ * is appended to, not replaced, so its left-hand end is whatever the caller
+ * wrote — a bucket the attacker picks is not a limit. Without the header
+ * everything shares one bucket, which throttles harder rather than less.
+ */
+const clientIp = (req) => s(req.headers['x-real-ip'], 60) || 'no-edge-ip';
+
+/**
+ * The window lives in the instance's memory, because a serverless function has
+ * no database to count against: a warm instance remembers, a cold one starts
+ * empty. That is weaker than the Worker's D1 counter, and it is still the
+ * difference between thirty an hour and as many as the sender cares to send —
+ * this endpoint e-mails a receipt to whatever address it is handed, so an
+ * unlimited one is a mail relay with the shop's domain on the envelope.
+ */
+function overLimit(ip) {
+  const now = Date.now();
+  if (hits.size > 5000) hits.clear();
+  let total = 0;
+  for (const [k, times] of hits) {
+    const live = times.filter((t) => now - t < SUBMIT_WINDOW_MS);
+    if (live.length) hits.set(k, live);
+    else hits.delete(k);
+    total += live.length;
+  }
+  const mine = hits.get(ip) || [];
+  if (mine.length >= SUBMIT_MAX || total >= INSTANCE_MAX) return true;
+  mine.push(now);
+  hits.set(ip, mine);
+  return false;
 }
 
 async function readJson(req) {
@@ -167,7 +214,11 @@ export default async function handler(req, res) {
   const type = s(body.type, 20);
   if (!TYPES.has(type)) return res.status(400).json({ ok: false, reason: 'bad-type' });
   // Honeypot: pretend success. The checkout posts its fields under `customer`, the lead forms at the top level.
+  // It answers before the limit is consulted, so a bot that trips it never
+  // spends the allowance a real shopper might need.
   if (s(body.website) || s(body.customer?.website)) return res.status(200).json({ ok: true, ref: 'HP' });
+
+  if (overLimit(clientIp(req))) return res.status(429).json({ ok: false, reason: 'too-many' });
 
   const email = s(type === 'order' ? body.customer?.email : body.email);
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return res.status(422).json({ ok: false, reason: 'email' });

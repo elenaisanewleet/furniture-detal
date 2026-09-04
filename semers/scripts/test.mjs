@@ -176,6 +176,9 @@ group('admin login');
  */
 {
   const rows = [];
+  // Sessions are rows too, so signing out can end one. A stub that forgets them
+  // would answer "expired" to a cookie the Worker had just issued.
+  const live = new Set();
   const fakeDb = {
     prepare(sql) {
       return {
@@ -183,9 +186,15 @@ group('admin login');
           run: async () => {
             if (/^INSERT INTO login_attempts/.test(sql)) rows.push(args[0]);
             if (/^DELETE FROM login_attempts WHERE ip/.test(sql)) for (let i = rows.length - 1; i >= 0; i--) if (rows[i] === args[0]) rows.splice(i, 1);
+            if (/^INSERT OR REPLACE INTO sessions/.test(sql)) live.add(args[0]);
+            if (/^DELETE FROM sessions WHERE nonce/.test(sql)) live.delete(args[0]);
             return {};
           },
-          first: async () => (/COUNT\(\*\) AS c FROM login_attempts/.test(sql) ? { c: rows.filter((r) => r === args[0]).length } : null),
+          first: async () => {
+            if (/COUNT\(\*\) AS c FROM login_attempts/.test(sql)) return { c: rows.filter((r) => r === args[0]).length };
+            if (/FROM sessions WHERE nonce/.test(sql)) return live.has(args[0]) ? { nonce: args[0] } : null;
+            return null;
+          },
           all: async () => ({ results: [] }),
         }),
         run: async () => ({}),
@@ -237,6 +246,15 @@ group('admin login');
     env,
   );
   is('a tampered signature is refused', tampered.status, 401);
+
+  // Signing out ends the session for everyone holding the token, not just for
+  // the browser that cleared its own cookie.
+  await worker.default.fetch(
+    new Request('https://x.test/api/admin/logout', { method: 'POST', headers: { cookie: `sm_admin=${token}`, 'x-semers-admin': '1' } }),
+    env,
+  );
+  const afterLogout = await worker.default.fetch(new Request('https://x.test/api/admin/orders', { headers: { cookie: `sm_admin=${token}` } }), env);
+  is('a signed-out session is refused', afterLogout.status, 401);
 }
 
 /* --------------------------------------------------------- submission limit */
