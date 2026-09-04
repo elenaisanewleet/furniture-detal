@@ -12,7 +12,7 @@ import Breadcrumbs from '~/components/Breadcrumbs.astro';
 import { site } from '~/data/site';
 import { organization, webSite, breadcrumbs, graph } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
-import { imgSrc } from '~/data/images';
+import { img, imgSrc } from '~/data/images';
 import { LOCALES, LOCALE_META, DEFAULT_LOCALE, localePath, stripLocale } from '~/i18n/config';
 import { t, crumbName } from '~/i18n/ui';
 
@@ -59,6 +59,13 @@ const canonicalUrl = new URL(localePath(enCanonical, locale), origin).toString()
 /** Every language of this page points at every other, and English is the fallback for anything else. */
 const alternates = LOCALES.map((l) => ({ lang: l, href: new URL(localePath(enCanonical, l), origin).toString() }));
 const ogSrc = ogImage.startsWith('http') || ogImage.startsWith('/') ? ogImage : imgSrc(ogImage);
+/*
+ * og:image:alt describes the picture, not the page — a social card read aloud
+ * should say what is in the photo, and the page description is already the
+ * card's own text. A caller passing its own URL has no catalogue entry to take
+ * an alt from, so it falls back to the description as before.
+ */
+const ogAlt = ogImage.startsWith('http') || ogImage.startsWith('/') ? description : img(ogImage).alt;
 const ogUrl = ogSrc.startsWith('http') ? ogSrc : new URL(ogSrc, origin).toString();
 const fullTitle = title.includes('Semers') ? title : `${title} — Semers`;
 
@@ -114,7 +121,7 @@ const nodes = [
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={ogUrl} />
-    <meta property="og:image:alt" content={description} />
+    <meta property="og:image:alt" content={ogAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
