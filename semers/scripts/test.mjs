@@ -393,5 +393,168 @@ is('an unknown latvian path', await served('/lv/products/nope/'), { status: 404,
 is('an unknown language falls back', await served('/de/nope/'), { status: 404, page: '/404.html' });
 is('a missing localised page falls back', await served('/ru/nope/', ['/404.html']), { status: 404, page: '/404.html' });
 
+/* ------------------------------------------------------ two attributes, one tag */
+group('attribute substitution');
+/*
+ * Attributes are reported in the order ATTRS lists them, not the order they
+ * appear in the tag, so a tag carrying two of them hands the substituter a list
+ * that runs backwards. Splicing that list in the order given writes the second
+ * value at an offset the first has already moved.
+ */
+{
+  const two = '<button data-alt="A hand reaching" aria-label="Image 4 of 4"></button>';
+  const mem = { 'A hand reaching': 'Roka sniedzas', 'Image 4 of 4': '4. attēls no 4' };
+  is('two attributes on one tag both land', applyProse(two, mem).html, '<button data-alt="Roka sniedzas" aria-label="4. attēls no 4"></button>');
+  is('and the tag still parses', /^<button( [\w-]+="[^"]*")+><\/button>$/.test(applyProse(two, mem).html), true);
+  // The same in the other order, so the fix is not the new order by luck.
+  const flipped = '<button aria-label="Image 4 of 4" data-alt="A hand reaching"></button>';
+  is('either order works', applyProse(flipped, mem).html, '<button aria-label="4. attēls no 4" data-alt="Roka sniedzas"></button>');
+  is('a mobile table label is prose', applyProse('<td data-label="Shelf life">x</td>', { 'Shelf life': 'Срок годности' }).html, '<td data-label="Срок годности">x</td>');
+}
+
+/* ------------------------------------------------------- runtime dictionary */
+group('runtime dictionary');
+/*
+ * The strings the browser needs are shipped in window.SEMERS.strings, and a key
+ * the dictionary never filled in falls back to the English written at the call
+ * site — silently, in the middle of a Russian page. So every key the script
+ * asks for has to exist in all three languages, and a plural has to exist in
+ * every form its own language can select. Both sides are read out of the
+ * TypeScript by pattern rather than by import, because neither file is
+ * loadable from here without a compiler.
+ */
+{
+  const ui = await readFile(new URL('../src/i18n/ui.ts', import.meta.url), 'utf-8');
+  const script = await readFile(new URL('../src/scripts/site.ts', import.meta.url), 'utf-8');
+
+  // The three `runtime: { … }` blocks, in dictionary order: en, ru, lv.
+  const blocks = [...ui.matchAll(/\n  runtime: \{\n([\s\S]*?)\n  \}/g)].map((m) =>
+    new Set([...m[1].matchAll(/^\s{4}([A-Za-z_]\w*):/gm)].map((k) => k[1])),
+  );
+  is('three dictionaries carry runtime strings', blocks.length, 3);
+  const [enK, ruK, lvK] = blocks;
+  const has = (k) => [enK.has(k), ruK.has(k), lvK.has(k)];
+
+  const asked = [...new Set([...script.matchAll(/\bS\('([\w]+)'/g)].map((m) => m[1]))];
+  // A pattern that quietly stops matching would let every assertion below pass
+  // on an empty list, so the count is asserted before the contents.
+  is('the script does ask for strings', asked.length > 30, true);
+  is('the dictionaries are not empty', enK.size > 30, true);
+  const missing = asked.filter((k) => !enK.has(k) || !ruK.has(k) || !lvK.has(k));
+  is('every key the script asks for is translated', missing, []);
+
+  // Only the forms a language actually selects: Russian never says "other" for
+  // a whole number, and Latvian has no "few" at all.
+  const FORMS = { 0: ['en-IE', enK], 1: ['ru-RU', ruK], 2: ['lv-LV', lvK] };
+  const gaps = [];
+  const bases = [...new Set([...script.matchAll(/\bP\('([\w]+)'/g)].map((m) => m[1]))];
+  is('the counts on the page are plurals', bases.length, 4);
+  for (const base of bases) {
+    for (const [intl, keys] of Object.values(FORMS)) {
+      const rules = new Intl.PluralRules(intl);
+      for (const n of [0, 1, 2, 5, 11, 21, 101]) {
+        const form = rules.select(n);
+        if (!keys.has(`${base}_${form}`)) gaps.push(`${intl} ${base}_${form}`);
+      }
+    }
+  }
+  is('every plural has the forms its language selects', [...new Set(gaps)], []);
+
+  // The pairs these replaced must be gone, or a stale key reads as translated.
+  is('the old one/many pairs are retired', [...enK].filter((k) => /(One|Many)$/.test(k)), []);
+  is('the cart count is a plural family', has('cartCount_one'), [true, true, true]);
+}
+
+/* ------------------------------------------------------------ plural forms */
+group('plural forms');
+/*
+ * The rule is Intl's, not ours; what is asserted here is that each dictionary
+ * lists the forms its language needs, so the fallback never has to guess. The
+ * numbers are the ones that change the answer: Latvian takes the singular at
+ * 21 and 101 and a genitive plural at 0 and 11, Russian changes again at 5.
+ */
+{
+  const pick = (intl, n, forms) => forms[new Intl.PluralRules(intl).select(n)] ?? forms.other ?? forms.many ?? forms.one;
+  const RU = { one: 'товар', few: 'товара', many: 'товаров' };
+  const LV = { zero: 'preču', one: 'prece', other: 'preces' };
+  is('russian counts', [1, 2, 5, 21, 22, 25].map((n) => pick('ru-RU', n, RU)), ['товар', 'товара', 'товаров', 'товар', 'товара', 'товаров']);
+  is('russian zero', pick('ru-RU', 0, RU), 'товаров');
+  is('latvian counts', [0, 1, 2, 11, 21, 101].map((n) => pick('lv-LV', n, LV)), ['preču', 'prece', 'preces', 'preču', 'prece', 'prece']);
+  is('english counts', [0, 1, 2].map((n) => pick('en-IE', n, { one: 'item', other: 'items' })), ['items', 'item', 'items']);
+  is('a missing form falls back rather than blanking', pick('ru-RU', 5, { one: 'товар' }), 'товар');
+}
+
+/* -------------------------------------------------------- customer e-mail */
+group('customer e-mail');
+/*
+ * Two of the four e-mails are addressed to the shopper: the order receipt and
+ * the newsletter welcome. The shop's own notification stays English, but a
+ * receipt that arrives in English after someone read the whole site in Latvian
+ * is a different shop's e-mail — so these assert the language, the money format
+ * the page used, and that the internal lines of the owner's copy stay out of
+ * the customer's.
+ */
+{
+  const realFetch = globalThis.fetch;
+  let sent = [];
+  globalThis.fetch = async (url, init) => {
+    if (String(url).includes('api.resend.com')) sent.push(JSON.parse(init.body));
+    return new Response('{"ok":true}', { status: 200 });
+  };
+  const env = { RESEND_API_KEY: 'k', ORDER_TO_EMAIL: 'shop@semers.org', ORDER_FROM_EMAIL: 'Semers <shop@semers.org>', SITE_URL: 'https://semers.org' };
+  const post = async (body) => {
+    sent = [];
+    await worker.default.fetch(new Request('https://x.test/api/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) }), env);
+    return sent;
+  };
+  const order = (locale, extra = {}) => ({
+    type: 'order',
+    customer: { name: 'A', email: 'buyer@example.com', address: 'Iela 1', city: 'Rīga', postcode: 'LV-1010', country: 'Latvia' },
+    items: [{ qty: 2, name: 'Apple Bar', total: 2.9 }],
+    subtotal: 2.9, shipping: 3.9, total: 6.8, locale, ...extra,
+  });
+  const toBuyer = (msgs) => msgs.find((m) => m.to[0] === 'buyer@example.com');
+  const toShop = (msgs) => msgs.find((m) => m.to[0] === 'shop@semers.org');
+
+  const ru = toBuyer(await post(order('ru')));
+  is('the shop and the buyer both get one', (await post(order('ru'))).length, 2);
+  is('a russian buyer gets a russian subject', /Ваш заказ SM-/.test(ru.subject), true);
+  is('and russian labels', ru.text.includes('Итого:'), true);
+  // The site writes 6,80 € on a Russian page, so the receipt has to as well.
+  is('and money the way the page wrote it', ru.text.includes('6,80'), true);
+  is('with the euro sign after the amount', /6,80 ?€/.test(ru.text), true);
+  is('the shop still reads english', /NEW ORDER REQUEST/.test(toShop(await post(order('ru'))).text), true);
+
+  const lv = toBuyer(await post(order('lv')));
+  is('a latvian buyer gets a latvian subject', /Jūsu pasūtījums SM-/.test(lv.subject), true);
+  is('and latvian labels', lv.text.includes('Kopā:'), true);
+
+  const en = toBuyer(await post(order('en')));
+  is('an english buyer keeps the symbol first', /€6\.80/.test(en.text), true);
+  is('an unknown language is english, not blank', /We have your order SM-/.test(toBuyer(await post(order('de'))).subject), true);
+
+  // The owner's copy carries the page and the language; the customer's must not.
+  is('the receipt drops the internal lines', /\bPage:|\bLanguage:/.test(ru.text), false);
+  is('and does not repeat their own address back as a field', ru.text.includes('E-mail: buyer@example.com'), false);
+  is('but does confirm where it is going', ru.text.includes('Адрес доставки: Iela 1, Rīga, LV-1010, Latvia'), true);
+
+  const quoted = toBuyer(await post(order('lv', { shipping: 0, shippingQuote: true, shippingNote: 'EU courier rate to be quoted by e-mail', total: 2.9 })));
+  is('a shipping quote is not english prose', quoted.text.includes('ES kurjera tarifs'), true);
+  is('and the english note stays with the shop', /EU courier rate/.test(quoted.text), false);
+
+  const welcome = async (locale) => {
+    sent = [];
+    await worker.default.fetch(new Request('https://x.test/api/order', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'newsletter', email: 'buyer@example.com', locale }) }), env);
+    return toBuyer(sent);
+  };
+  const wLv = await welcome('lv');
+  is('the welcome is in their language', wLv.subject, 'Laipni lūdzam Semers');
+  is('and links into it', wLv.text.includes('https://semers.org/lv/products/apple-bar-35g/'), true);
+  is('an english subscriber gets the plain path', (await welcome('en')).text.includes('https://semers.org/products/apple-bar-35g/'), true);
+  is('every pick is linked', [...(await welcome('ru')).text.matchAll(/https:\/\/semers\.org\/ru\/products\//g)].length, 3);
+
+  globalThis.fetch = realFetch;
+}
+
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

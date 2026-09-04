@@ -62,6 +62,15 @@ const esc = (s: unknown) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '
  */
 const STR: Record<string, string> = CFG.strings || {};
 const S = (key: string, fallback = '') => STR[key] || fallback;
+/**
+ * A count needs the noun in the form its language uses for that number, and
+ * the three languages disagree about which numbers those are. The dictionary
+ * ships one string per form the language has, named `{base}_{form}`, and the
+ * browser's own rule picks between them.
+ */
+const PLURAL = new Intl.PluralRules(CFG.intl || 'en-IE');
+const P = (base: string, n: number, fallback = '') =>
+  STR[`${base}_${PLURAL.select(n)}`] || STR[`${base}_other`] || STR[`${base}_many`] || STR[`${base}_one`] || fallback;
 /** Substitute {placeholders} in a runtime template. */
 const interp = (tpl: string, vars: Record<string, string | number>) => tpl.replace(/\{(\w+)\}/g, (_m, k) => String(vars[k] ?? ''));
 /** Escape, then turn **text** into <strong>: the only markup a dictionary may introduce. */
@@ -250,8 +259,8 @@ function renderCart() {
     count.textContent = String(c);
     count.hidden = c === 0;
   }
-  $('#cart-open')?.setAttribute('aria-label', c ? interp(S(c === 1 ? 'openCartOne' : 'openCartMany', 'Open cart, {n}'), { n: c }) : S('openCartEmpty', 'Open cart, empty'));
-  if (n) n.textContent = c ? `· ${c} item${c === 1 ? '' : 's'}` : '';
+  $('#cart-open')?.setAttribute('aria-label', c ? interp(P('openCart', c, 'Open cart, {n}'), { n: c }) : S('openCartEmpty', 'Open cart, empty'));
+  if (n) n.textContent = c ? interp(P('cartCount', c, '· {n} items'), { n: c }) : '';
   if (sub) sub.textContent = fmt(total);
   if (checkout) checkout.classList.toggle('is-disabled', c === 0), checkout.setAttribute('aria-disabled', String(c === 0)), (checkout.tabIndex = c === 0 ? -1 : 0);
   if (empty) empty.hidden = c > 0;
@@ -322,12 +331,12 @@ function renderCart() {
           <div class="ci__name"><a href="${esc(i.url)}">${esc(i.name)}</a></div>
           <div class="ci__var">${esc(i.variantLabel)}${i.note ? ` · ${esc(i.note)}` : ''}</div>
           <div class="ci__ctl">
-            <div class="qty" role="group" aria-label="Quantity of ${esc(i.name)}">
-              <button type="button" data-dec aria-label="Decrease quantity of ${esc(i.name)}">−</button>
-              <output aria-label="Quantity">${i.qty}</output>
-              <button type="button" data-inc aria-label="Increase quantity of ${esc(i.name)}">+</button>
+            <div class="qty" role="group" aria-label="${esc(interp(S('qtyOf', 'Quantity of {name}'), { name: i.name }))}">
+              <button type="button" data-dec aria-label="${esc(interp(S('qtyDec', 'Decrease quantity of {name}'), { name: i.name }))}">−</button>
+              <output aria-label="${esc(S('qtyLabel', 'Quantity'))}">${i.qty}</output>
+              <button type="button" data-inc aria-label="${esc(interp(S('qtyInc', 'Increase quantity of {name}'), { name: i.name }))}">+</button>
             </div>
-            <button type="button" class="ci__rm" data-rm aria-label="Remove ${esc(i.name)}">Remove</button>
+            <button type="button" class="ci__rm" data-rm aria-label="${esc(interp(S('removeItem', 'Remove {name}'), { name: i.name }))}">${esc(S('remove', 'Remove'))}</button>
           </div>
         </div>
         <div class="ci__price">${fmt(lineOf(i))}${tierPct(i) ? `<span class="ci__save">−${tierPct(i)}%</span>` : ''}</div>
@@ -386,7 +395,7 @@ function renderSummary(root: HTMLElement) {
             (i) => `<li class="ci" data-id="${esc(i.id)}">
         <a class="ci__img" href="${esc(i.url)}" aria-label="${esc(i.name)}"><img src="${esc(i.image)}" alt="" width="72" height="72" loading="lazy" /></a>
         <div><div class="ci__name">${esc(i.name)}</div><div class="ci__var">${esc(i.variantLabel)}${i.note ? ` · ${esc(i.note)}` : ''}</div>
-        <div class="ci__ctl"><div class="qty" role="group" aria-label="Quantity of ${esc(i.name)}"><button type="button" data-dec aria-label="Decrease quantity of ${esc(i.name)}">−</button><output aria-label="Quantity">${i.qty}</output><button type="button" data-inc aria-label="Increase quantity of ${esc(i.name)}">+</button></div><button type="button" class="ci__rm" data-rm aria-label="Remove ${esc(i.name)}">Remove</button></div></div>
+        <div class="ci__ctl"><div class="qty" role="group" aria-label="${esc(interp(S('qtyOf', 'Quantity of {name}'), { name: i.name }))}"><button type="button" data-dec aria-label="${esc(interp(S('qtyDec', 'Decrease quantity of {name}'), { name: i.name }))}">−</button><output aria-label="${esc(S('qtyLabel', 'Quantity'))}">${i.qty}</output><button type="button" data-inc aria-label="${esc(interp(S('qtyInc', 'Increase quantity of {name}'), { name: i.name }))}">+</button></div><button type="button" class="ci__rm" data-rm aria-label="${esc(interp(S('removeItem', 'Remove {name}'), { name: i.name }))}">${esc(S('remove', 'Remove'))}</button></div></div>
         <div class="ci__price">${fmt(lineOf(i))}${tierPct(i) ? `<span class="ci__save">−${tierPct(i)}%</span>` : ''}</div></li>`,
           )
           .join('');
@@ -396,7 +405,7 @@ function renderSummary(root: HTMLElement) {
     );
   if (sub) sub.textContent = fmt(total);
   if (ship) ship.textContent = c === 0 ? '—' : quoted ? S('quotedByEmail', 'Quoted by e-mail') : shipping === 0 ? S('free', 'Free') : fmt(shipping);
-  if (tot) tot.textContent = quoted ? `${fmt(total)} + shipping` : fmt(total + shipping);
+  if (tot) tot.textContent = quoted ? interp(S('totalPlusShipping', '{total} + shipping'), { total: fmt(total) }) : fmt(total + shipping);
   const hidden = $<HTMLInputElement>('[data-cart-json]', root);
   if (hidden) hidden.value = JSON.stringify({ items: cart.items, subtotal: total, shipping, total: total + shipping });
 }
@@ -442,7 +451,7 @@ document.addEventListener('click', (e) => {
     const id = row.dataset.id!;
     const it = cart.items.find((i) => i.id === id);
     if (!it) return;
-    if (t.closest('[data-inc]')) cart.setQty(id, it.qty + 1), announce(`${it.name}: quantity ${it.qty}`);
+    if (t.closest('[data-inc]')) cart.setQty(id, it.qty + 1), announce(interp(S('qtyAnnounce', '{name}: quantity {qty}'), { name: it.name, qty: it.qty }));
     else if (t.closest('[data-dec]'))
       cart.setQty(id, it.qty - 1),
         announce(it.qty > 0 ? interp(S('qtyAnnounce', '{name}: quantity {qty}'), { name: it.name, qty: it.qty }) : interp(S('removed', 'Removed {name}'), { name: it.name }));
@@ -711,7 +720,7 @@ if (shop) {
       if (show) visible++;
       grid?.appendChild(c);
     });
-    if (countEl) countEl.textContent = `${visible} product${visible === 1 ? '' : 's'}`;
+    if (countEl) countEl.textContent = interp(P('productCount', visible, '{n} products'), { n: visible });
     if (emptyEl) emptyEl.hidden = visible > 0;
     $$('[data-filter-collection]', shop).forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filterCollection === state.collection)));
     $$('[data-filter-diet]', shop).forEach((b) => b.setAttribute('aria-pressed', String(state.diet.has(b.dataset.filterDiet!))));
@@ -779,7 +788,7 @@ if (builder) {
     if (addBtn) addBtn.disabled = picks.length !== size;
     if (listEl)
       listEl.innerHTML = picks
-        .map((p, i) => `<li>${esc(p.name)} <button type="button" class="ci__rm" data-builder-rm="${i}" aria-label="Remove ${esc(p.name)}">remove</button></li>`)
+        .map((p, i) => `<li>${esc(p.name)} <button type="button" class="ci__rm" data-builder-rm="${i}" aria-label="${esc(interp(S('removeItem', 'Remove {name}'), { name: p.name }))}">${esc(S('removeSmall', 'remove'))}</button></li>`)
         .join('');
     $$('[data-builder-pick]', builder).forEach((b) => ((b as HTMLButtonElement).disabled = picks.length >= size));
   };
@@ -807,7 +816,7 @@ if (builder) {
         slug: 'build-your-box',
         name: interp(S('nPieceBox', 'Your {size}-piece box'), { size }),
         variant: 'custom',
-        variantLabel: `${Math.round(discount * 100)}% bundle discount`,
+        variantLabel: interp(S('bundleDiscount', '{pct}% bundle discount'), { pct: Math.round(discount * 100) }),
         price: Math.round(full * (1 - discount) * 100) / 100,
         image: builder.dataset.image || picks[0].image,
         weight: picks.reduce((n, p) => n + p.weight, 0),
@@ -933,10 +942,19 @@ if (checkout) {
     const order = {
       type: 'order',
       customer: data,
-      items: cart.items.map((i) => ({ id: i.id, name: i.name, variant: [i.variantLabel, tierPct(i) ? `−${tierPct(i)}% for ${i.qty}` : ''].filter(Boolean).join(' · '), note: i.note, qty: i.qty, price: unitOf(i), total: lineOf(i) })),
+      items: cart.items.map((i) => ({
+        id: i.id,
+        name: i.name,
+        variant: [i.variantLabel, tierPct(i) ? interp(S('tierLine', '−{pct}% for {qty}'), { pct: tierPct(i), qty: i.qty }) : ''].filter(Boolean).join(' · '),
+        note: i.note,
+        qty: i.qty,
+        price: unitOf(i),
+        total: lineOf(i),
+      })),
       subtotal: Math.round(total * 100) / 100,
       shipping,
       shippingNote: quoted ? 'EU courier rate to be quoted by e-mail' : undefined,
+      shippingQuote: quoted,
       total: Math.round((total + shipping) * 100) / 100,
       currency: CFG.currency,
       page: location.pathname, locale: CFG.locale || 'en',
@@ -975,12 +993,17 @@ if (checkout) {
         `Total: ${fmt(order.total)}${quoted ? ' + shipping' : ''}`,
         '',
         ...Object.entries(data).filter(([k, v]) => k !== 'website' && String(v).trim()).map(([k, v]) => `${k}: ${v}`),
+        // The shop reads this draft, so it is written in English — but the
+        // language the customer was reading is the language to reply in.
+        `Language: ${(CFG.locale || 'en').toUpperCase()}`,
       ].join('\n');
-      const via = CFG.email ? ` (if nothing opened, write to ${CFG.email})` : '';
-      const msg =
+      const via = CFG.email ? interp(S('mailtoVia', ' (if nothing opened, write to {email})'), { email: CFG.email }) : '';
+      const msg = interp(
         reason === 'not-configured'
-          ? `Online ordering is not live yet — we opened an e-mail with your order instead${via}. Your box is saved; we reply within one business day.`
-          : `We could not place the order automatically — we opened an e-mail with your order instead${via}. Your box is saved; we reply within one business day.`;
+          ? S('orderMailNotLive', 'Online ordering is not live yet — we opened an e-mail with your order instead{via}. Your box is saved; we reply within one business day.')
+          : S('orderMailFailed', 'We could not place the order automatically — we opened an e-mail with your order instead{via}. Your box is saved; we reply within one business day.'),
+        { via },
+      );
       if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
       toast(msg, 5000);
       mailtoFallback('Order request via semers.org', body);
@@ -1277,7 +1300,7 @@ if (reviewsEl) {
       summary.hidden = false;
       summary.innerHTML =
         `<span class="stars" aria-hidden="true">${stars(Math.round(data.avg))}</span> ` +
-        rich(interp(S(data.count === 1 ? 'reviewsSummaryOne' : 'reviewsSummaryMany', '**{avg}** out of 5 · {count}'), { avg: data.avg.toFixed(1), count: data.count }));
+        rich(interp(P('reviewsSummary', data.count, '**{avg}** out of 5 · {count} reviews'), { avg: data.avg.toFixed(1), count: data.count }));
     }
     /*
      * A review written in another language is still shown — three languages

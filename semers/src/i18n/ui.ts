@@ -9,6 +9,20 @@
  */
 import { DEFAULT_LOCALE, type Locale } from './config';
 
+/**
+ * One count, one noun, but not one rule: English changes the word at two,
+ * Russian changes it again at five and back at twenty-one, Latvian changes it
+ * at zero and at every number ending in one except eleven. Intl knows all
+ * three, so each dictionary lists the forms its language has and none of them
+ * carries the arithmetic. A form the language never selects can be left out.
+ */
+const RULES = new Map<string, Intl.PluralRules>();
+function pick(intl: string, n: number, forms: Partial<Record<Intl.LDMLPluralRule, string>>): string {
+  let r = RULES.get(intl);
+  if (!r) RULES.set(intl, (r = new Intl.PluralRules(intl)));
+  return forms[r.select(n)] ?? forms.other ?? forms.many ?? forms.one ?? '';
+}
+
 const en = {
   /* ---- chrome ---- */
   skipToContent: 'Skip to content',
@@ -16,7 +30,7 @@ const en = {
   openMenu: 'Open menu',
   closeMenu: 'Close menu',
   openCart: 'Open cart',
-  openCartN: (n: number) => `Open cart, ${n} item${n === 1 ? '' : 's'}`,
+  openCartN: (n: number) => `Open cart, ${n} ${pick('en-IE', n, { one: 'item', other: 'items' })}`,
   openCartEmpty: 'Open cart, empty',
   closeCart: 'Close cart',
   primaryNav: 'Primary',
@@ -83,7 +97,7 @@ const en = {
 
   /* ---- cart ---- */
   yourBox: 'Your box',
-  items: (n: number) => `· ${n} item${n === 1 ? '' : 's'}`,
+  items: (n: number) => `· ${n} ${pick('en-IE', n, { one: 'item', other: 'items' })}`,
   freeShippingOver: (from: string) => `Free shipping on orders over **${from}**.`,
   addMoreForFree: (amount: string) => `Add **${amount}** more for free shipping.`,
   unlockedFreeShipping: 'You’ve unlocked **free shipping**.',
@@ -140,7 +154,7 @@ const en = {
 
   /* ---- reviews ---- */
   reviewsTitle: 'What people say',
-  reviewsSummary: (avg: string, count: number) => `**${avg}** out of 5 · ${count} review${count === 1 ? '' : 's'}`,
+  reviewsSummary: (avg: string, count: number) => `**${avg}** out of 5 · ${count} ${pick('en-IE', count, { one: 'review', other: 'reviews' })}`,
   noReviewsYet: (name: string) => `No reviews yet. If you have tried ${name}, yours would be the first.`,
   writeReview: 'Write a review',
   rating: 'Rating',
@@ -166,7 +180,7 @@ const en = {
   backInStockThanks: 'Thank you — we will write as soon as it is back.',
 
   /* ---- shop ---- */
-  productCount: (n: number) => `${n} product${n === 1 ? '' : 's'}`,
+  productCount: (n: number) => `${n} ${pick('en-IE', n, { one: 'product', other: 'products' })}`,
   boxSize: 'Box size',
   pieces: (n: number) => `${n} pcs`,
   savePct: (pct: number) => `save ${pct}%`,
@@ -230,9 +244,13 @@ const en = {
    * ** ** marks emphasis, turned into <strong> after escaping.
    */
   runtime: {
-    openCartOne: 'Open cart, {n} item',
-    openCartMany: 'Open cart, {n} items',
+    openCart_one: 'Open cart, {n} item',
+    openCart_other: 'Open cart, {n} items',
     openCartEmpty: 'Open cart, empty',
+    cartCount_one: '· {n} item',
+    cartCount_other: '· {n} items',
+    productCount_one: '{n} product',
+    productCount_other: '{n} products',
     freeShippingOver: 'Free shipping on orders over **{from}**.',
     addMoreForFree: 'Add **{amount}** more for free shipping.',
     unlockedFreeShipping: 'You’ve unlocked **free shipping**.',
@@ -260,15 +278,26 @@ const en = {
     reviewFailed: 'That did not send. Please try again, or e-mail us and we will add it by hand.',
     reviewSent: 'Review sent for approval',
     noReviewsYet: 'No reviews yet. If you have tried {name}, yours would be the first.',
-    reviewsSummaryOne: '**{avg}** out of 5 · {count} review',
-    reviewsSummaryMany: '**{avg}** out of 5 · {count} reviews',
+    reviewsSummary_one: '**{avg}** out of 5 · {count} review',
+    reviewsSummary_other: '**{avg}** out of 5 · {count} reviews',
     verifiedPurchase: 'Verified purchase',
     outOfFive: '{n} out of 5',
     semersReply: 'Semers:',
     notifyNoted: 'Noted — we will write to you when it is back.',
     notifyFailed: 'That did not send. Write to {email} and we will add you by hand.',
     notifyMe: 'Notify me',
-  },
+    qtyOf: 'Quantity of {name}',
+    qtyDec: 'Decrease quantity of {name}',
+    qtyInc: 'Increase quantity of {name}',
+    qtyLabel: 'Quantity',
+    removeItem: 'Remove {name}',
+    remove: 'Remove',
+    removeSmall: 'remove',
+    totalPlusShipping: '{total} + shipping',
+    bundleDiscount: '{pct}% bundle discount',
+    tierLine: '−{pct}% for {qty}',
+    mailtoVia: ' (if nothing opened, write to {email})',
+  } as Record<string, string>,
 };
 // No `as const`: English is the shape, so its values must widen to string, or a
 // translation would fail to typecheck against the English literal it replaces.
@@ -277,13 +306,17 @@ type Dict = typeof en;
 /** Every other locale may fill in as much or as little as it has. */
 type Partialised = { [K in keyof Dict]?: Dict[K] extends object ? Partial<Dict[K]> : Dict[K] };
 
+/** Nominative singular, then the form after 2–4, then the genitive plural after 5. */
+const RU_ITEM = { one: 'товар', few: 'товара', many: 'товаров' };
+const RU_REVIEW = { one: 'отзыв', few: 'отзыва', many: 'отзывов' };
+
 const ru: Partialised = {
   skipToContent: 'К содержанию',
   home: 'Semers — на главную',
   openMenu: 'Открыть меню',
   closeMenu: 'Закрыть меню',
   openCart: 'Открыть корзину',
-  openCartN: (n: number) => `Открыть корзину, ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'товар' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'товара' : 'товаров'}`,
+  openCartN: (n: number) => `Открыть корзину, ${n} ${pick('ru-RU', n, RU_ITEM)}`,
   openCartEmpty: 'Открыть корзину, пусто',
   closeCart: 'Закрыть корзину',
   primaryNav: 'Основная навигация',
@@ -346,7 +379,7 @@ const ru: Partialised = {
   instagramAria: 'Instagram (откроется в новой вкладке)',
 
   yourBox: 'Ваша коробка',
-  items: (n: number) => `· ${n} ${n % 10 === 1 && n % 100 !== 11 ? 'товар' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'товара' : 'товаров'}`,
+  items: (n: number) => `· ${n} ${pick('ru-RU', n, RU_ITEM)}`,
   freeShippingOver: (from: string) => `Доставка бесплатно при заказе от **${from}**.`,
   addMoreForFree: (amount: string) => `Добавьте ещё на **${amount}** — и доставка бесплатно.`,
   unlockedFreeShipping: 'Доставка **бесплатная**.',
@@ -401,7 +434,7 @@ const ru: Partialised = {
   labelSaysSo: 'С сахаром и агаром — и это написано на упаковке',
 
   reviewsTitle: 'Что говорят покупатели',
-  reviewsSummary: (avg: string, count: number) => `**${avg}** из 5 · ${count} ${count % 10 === 1 && count % 100 !== 11 ? 'отзыв' : count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20) ? 'отзыва' : 'отзывов'}`,
+  reviewsSummary: (avg: string, count: number) => `**${avg}** из 5 · ${count} ${pick('ru-RU', count, RU_REVIEW)}`,
   noReviewsYet: (name: string) => `Отзывов пока нет. Если вы пробовали «${name}», ваш будет первым.`,
   writeReview: 'Написать отзыв',
   rating: 'Оценка',
@@ -425,7 +458,7 @@ const ru: Partialised = {
   notifyMe: 'Сообщить мне',
   backInStockThanks: 'Спасибо — напишем, как только появится.',
 
-  productCount: (n: number) => `${n} ${n % 10 === 1 && n % 100 !== 11 ? 'товар' : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 10 || n % 100 >= 20) ? 'товара' : 'товаров'}`,
+  productCount: (n: number) => `${n} ${pick('ru-RU', n, RU_ITEM)}`,
   boxSize: 'Размер коробки',
   pieces: (n: number) => `${n} шт.`,
   savePct: (pct: number) => `выгода ${pct}%`,
@@ -479,9 +512,16 @@ const ru: Partialised = {
     'high-fibre': 'Источник клетчатки',
   },
   runtime: {
-    openCartOne: 'Открыть корзину, {n} товар',
-    openCartMany: 'Открыть корзину, {n} товаров',
+    openCart_one: 'Открыть корзину, {n} товар',
+    openCart_few: 'Открыть корзину, {n} товара',
+    openCart_many: 'Открыть корзину, {n} товаров',
     openCartEmpty: 'Открыть корзину, пусто',
+    cartCount_one: '· {n} товар',
+    cartCount_few: '· {n} товара',
+    cartCount_many: '· {n} товаров',
+    productCount_one: '{n} товар',
+    productCount_few: '{n} товара',
+    productCount_many: '{n} товаров',
     freeShippingOver: 'Доставка бесплатно при заказе от **{from}**.',
     addMoreForFree: 'Добавьте ещё на **{amount}** — и доставка бесплатно.',
     unlockedFreeShipping: 'Доставка **бесплатная**.',
@@ -509,16 +549,32 @@ const ru: Partialised = {
     reviewFailed: 'Не отправилось. Попробуйте ещё раз или напишите нам, и мы добавим отзыв руками.',
     reviewSent: 'Отзыв отправлен на модерацию',
     noReviewsYet: 'Отзывов пока нет. Если вы пробовали «{name}», ваш будет первым.',
-    reviewsSummaryOne: '**{avg}** из 5 · {count} отзыв',
-    reviewsSummaryMany: '**{avg}** из 5 · {count} отзывов',
+    reviewsSummary_one: '**{avg}** из 5 · {count} отзыв',
+    reviewsSummary_few: '**{avg}** из 5 · {count} отзыва',
+    reviewsSummary_many: '**{avg}** из 5 · {count} отзывов',
     verifiedPurchase: 'Покупка подтверждена',
     outOfFive: '{n} из 5',
     semersReply: 'Semers:',
     notifyNoted: 'Записали — напишем, когда снова будет в наличии.',
     notifyFailed: 'Не отправилось. Напишите на {email}, и мы добавим вас вручную.',
     notifyMe: 'Сообщить мне',
+    qtyOf: 'Количество: {name}',
+    qtyDec: 'Уменьшить количество: {name}',
+    qtyInc: 'Увеличить количество: {name}',
+    qtyLabel: 'Количество',
+    removeItem: 'Убрать «{name}»',
+    remove: 'Убрать',
+    removeSmall: 'убрать',
+    totalPlusShipping: '{total} + доставка',
+    bundleDiscount: 'скидка {pct}% за набор',
+    tierLine: '−{pct}% за {qty} шт.',
+    mailtoVia: ' (если ничего не открылось, напишите на {email})',
   },
 };
+
+/** Latvian takes the singular on every number ending in one except eleven, and the genitive plural on nothing at all. */
+const LV_ITEM = { zero: 'preču', one: 'prece', other: 'preces' };
+const LV_REVIEW = { zero: 'atsauksmju', one: 'atsauksme', other: 'atsauksmes' };
 
 const lv: Partialised = {
   skipToContent: 'Pāriet pie satura',
@@ -526,7 +582,7 @@ const lv: Partialised = {
   openMenu: 'Atvērt izvēlni',
   closeMenu: 'Aizvērt izvēlni',
   openCart: 'Atvērt grozu',
-  openCartN: (n: number) => `Atvērt grozu, ${n} ${n === 1 ? 'prece' : 'preces'}`,
+  openCartN: (n: number) => `Atvērt grozu, ${n} ${pick('lv-LV', n, LV_ITEM)}`,
   openCartEmpty: 'Atvērt grozu, tukšs',
   closeCart: 'Aizvērt grozu',
   primaryNav: 'Galvenā navigācija',
@@ -589,7 +645,7 @@ const lv: Partialised = {
   instagramAria: 'Instagram (atveras jaunā cilnē)',
 
   yourBox: 'Jūsu kaste',
-  items: (n: number) => `· ${n} ${n === 1 ? 'prece' : 'preces'}`,
+  items: (n: number) => `· ${n} ${pick('lv-LV', n, LV_ITEM)}`,
   freeShippingOver: (from: string) => `Bezmaksas piegāde pasūtījumiem no **${from}**.`,
   addMoreForFree: (amount: string) => `Pievienojiet vēl **${amount}**, lai piegāde būtu bez maksas.`,
   unlockedFreeShipping: 'Piegāde ir **bez maksas**.',
@@ -644,7 +700,7 @@ const lv: Partialised = {
   labelSaysSo: 'Ar cukuru un agaru — un tas ir rakstīts uz iepakojuma',
 
   reviewsTitle: 'Ko saka pircēji',
-  reviewsSummary: (avg: string, count: number) => `**${avg}** no 5 · ${count} ${count === 1 ? 'atsauksme' : 'atsauksmes'}`,
+  reviewsSummary: (avg: string, count: number) => `**${avg}** no 5 · ${count} ${pick('lv-LV', count, LV_REVIEW)}`,
   noReviewsYet: (name: string) => `Atsauksmju vēl nav. Ja esat garšojis “${name}”, jūsu būs pirmā.`,
   writeReview: 'Rakstīt atsauksmi',
   rating: 'Vērtējums',
@@ -668,7 +724,7 @@ const lv: Partialised = {
   notifyMe: 'Paziņot man',
   backInStockThanks: 'Paldies — uzrakstīsim, tiklīdz prece būs atpakaļ.',
 
-  productCount: (n: number) => `${n} ${n === 1 ? 'prece' : 'preces'}`,
+  productCount: (n: number) => `${n} ${pick('lv-LV', n, LV_ITEM)}`,
   boxSize: 'Kastes izmērs',
   pieces: (n: number) => `${n} gab.`,
   savePct: (pct: number) => `ietaupījums ${pct}%`,
@@ -722,8 +778,15 @@ const lv: Partialised = {
     'high-fibre': 'Šķiedrvielu avots',
   },
   runtime: {
-    openCartOne: 'Atvērt grozu, {n} prece',
-    openCartMany: 'Atvērt grozu, {n} preces',
+    openCart_zero: 'Atvērt grozu, {n} preču',
+    openCart_one: 'Atvērt grozu, {n} prece',
+    openCart_other: 'Atvērt grozu, {n} preces',
+    cartCount_zero: '· {n} preču',
+    cartCount_one: '· {n} prece',
+    cartCount_other: '· {n} preces',
+    productCount_zero: '{n} preču',
+    productCount_one: '{n} prece',
+    productCount_other: '{n} preces',
     openCartEmpty: 'Atvērt grozu, tukšs',
     freeShippingOver: 'Bezmaksas piegāde pasūtījumiem no **{from}**.',
     addMoreForFree: 'Pievienojiet vēl **{amount}**, lai piegāde būtu bez maksas.',
@@ -752,14 +815,26 @@ const lv: Partialised = {
     reviewFailed: 'Nosūtīt neizdevās. Mēģiniet vēlreiz vai rakstiet mums, un mēs pievienosim to manuāli.',
     reviewSent: 'Atsauksme nosūtīta apstiprināšanai',
     noReviewsYet: 'Atsauksmju vēl nav. Ja esat garšojis “{name}”, jūsu būs pirmā.',
-    reviewsSummaryOne: '**{avg}** no 5 · {count} atsauksme',
-    reviewsSummaryMany: '**{avg}** no 5 · {count} atsauksmes',
+    reviewsSummary_zero: '**{avg}** no 5 · {count} atsauksmju',
+    reviewsSummary_one: '**{avg}** no 5 · {count} atsauksme',
+    reviewsSummary_other: '**{avg}** no 5 · {count} atsauksmes',
     verifiedPurchase: 'Pirkums apstiprināts',
     outOfFive: '{n} no 5',
     semersReply: 'Semers:',
     notifyNoted: 'Pierakstīts — uzrakstīsim, kad prece būs atpakaļ.',
     notifyFailed: 'Nosūtīt neizdevās. Rakstiet uz {email}, un mēs pievienosim jūs manuāli.',
     notifyMe: 'Paziņot man',
+    qtyOf: 'Daudzums: {name}',
+    qtyDec: 'Samazināt daudzumu: {name}',
+    qtyInc: 'Palielināt daudzumu: {name}',
+    qtyLabel: 'Daudzums',
+    removeItem: 'Noņemt: {name}',
+    remove: 'Noņemt',
+    removeSmall: 'noņemt',
+    totalPlusShipping: '{total} + piegāde',
+    bundleDiscount: '{pct}% atlaide komplektam',
+    tierLine: '−{pct}% par {qty} gab.',
+    mailtoVia: ' (ja nekas neatvērās, rakstiet uz {email})',
   },
 };
 

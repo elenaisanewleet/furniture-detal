@@ -49,6 +49,8 @@ const money = (v, cur = 'EUR') => `${n(v).toFixed(2)} ${cur}`;
 /** Only an ISO-4217 code goes into the notification text; anything else the client sent falls back to EUR. */
 const currency = (v) => (/^[A-Z]{3}$/.test(String(v || '')) ? v : 'EUR');
 const escapeHtml = (t) => String(t).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]);
+/** Substitute {placeholders} in a template from the mail dictionary. */
+const fill = (tpl, vars) => String(tpl).replace(/\{(\w+)\}/g, (_m, k) => String(vars[k] ?? ''));
 const nowIso = () => new Date().toISOString();
 /** Optional numeric override: an empty field clears it, so undefined and '' must both become NULL rather than 0. */
 const numOrNull = (v) => (v === null || v === undefined || v === '' ? null : Number.isFinite(Number(v)) ? Math.round(Number(v) * 100) / 100 : null);
@@ -551,6 +553,168 @@ function render(type, body, id) {
   return lines.join('\n');
 }
 
+/* ------------------------------------------------------------ customer mail */
+
+/**
+ * Four e-mails leave this Worker and two of them are addressed to the customer
+ * rather than to the shop: the order receipt and the newsletter welcome. The
+ * shop reads one language, so its own notification stays English — but a
+ * receipt that arrives in English after someone has read the whole site in
+ * Latvian is a different shop's e-mail. Every submission reports the language
+ * the page was in, so the customer's two are written in it.
+ *
+ * A missing key falls back to English, the same rule the site's own dictionary
+ * follows, so a half-translated language sends a readable letter.
+ */
+const MAIL = {
+  en: {
+    intl: 'en-IE',
+    prefix: '',
+    receiptSubject: 'We have your order {id}',
+    receiptOpen: 'Thank you. Your order {id} has reached us. We will confirm what is in stock and send a payment link within one business day.',
+    orderLine: 'Your order',
+    subtotal: 'Subtotal',
+    shipping: 'Shipping',
+    quoted: 'EU courier rate, quoted by e-mail',
+    free: 'Free',
+    total: 'Total',
+    deliverTo: 'Delivery address',
+    delivery: 'Delivery',
+    phone: 'Phone',
+    note: 'Your note',
+    gift: 'Gift message',
+    reply: 'Reply to this e-mail if anything needs changing — the order is not final until we confirm it.',
+    signoff: '— Semers, Riga',
+    welcomeSubject: 'Welcome to Semers',
+    welcomeOpen: 'Thank you for subscribing.',
+    welcomeWhat: [
+      'Here is what you have signed up for, and nothing else: a note when a new flavour',
+      'lands, a note when something you liked is back in stock, and now and then a recipe.',
+      'A few times a month at most, and one click unsubscribes.',
+    ],
+    welcomeStart: 'While you are here, the three people usually start with:',
+    picks: [
+      "App'Lite Apple Bar — 99% baked apple, egg white, nothing else",
+      'Apple Meringue — the same apple, whipped and dried crisp',
+      'Tasting Box — one of everything, so you can decide in one order',
+    ],
+    welcomeBox: 'Or build your own box and take 10% off:',
+  },
+  ru: {
+    intl: 'ru-RU',
+    prefix: '/ru',
+    receiptSubject: 'Ваш заказ {id} у нас',
+    receiptOpen: 'Спасибо! Заказ {id} получен. В течение рабочего дня подтвердим наличие и пришлём ссылку на оплату.',
+    orderLine: 'Ваш заказ',
+    subtotal: 'Товары',
+    shipping: 'Доставка',
+    quoted: 'Тариф курьера по ЕС — посчитаем в письме',
+    free: 'Бесплатно',
+    total: 'Итого',
+    deliverTo: 'Адрес доставки',
+    delivery: 'Способ доставки',
+    phone: 'Телефон',
+    note: 'Ваш комментарий',
+    gift: 'Текст для открытки',
+    reply: 'Если что-то нужно поменять — просто ответьте на это письмо: заказ не окончательный, пока мы его не подтвердили.',
+    signoff: '— Semers, Рига',
+    welcomeSubject: 'Добро пожаловать в Semers',
+    welcomeOpen: 'Спасибо за подписку.',
+    welcomeWhat: [
+      'Вот что вы будете получать — и ничего сверх этого: письмо, когда появится новый вкус,',
+      'письмо, когда снова будет в наличии то, что вам понравилось, и время от времени рецепт.',
+      'Не чаще нескольких раз в месяц, отписаться можно в один клик.',
+    ],
+    welcomeStart: 'Раз уж вы здесь — вот три вещи, с которых обычно начинают:',
+    picks: [
+      "App'Lite Apple Bar — 99% печёного яблока, яичный белок и больше ничего",
+      'Яблочное безе — то же яблоко, взбитое и высушенное до хруста',
+      'Дегустационная коробка — по одной каждого, чтобы выбрать за один заказ',
+    ],
+    welcomeBox: 'Или соберите свою коробку со скидкой 10%:',
+  },
+  lv: {
+    intl: 'lv-LV',
+    prefix: '/lv',
+    receiptSubject: 'Jūsu pasūtījums {id} ir saņemts',
+    receiptOpen: 'Paldies! Pasūtījums {id} ir pie mums. Vienas darbdienas laikā apstiprināsim pieejamību un atsūtīsim maksājuma saiti.',
+    orderLine: 'Jūsu pasūtījums',
+    subtotal: 'Preces',
+    shipping: 'Piegāde',
+    quoted: 'ES kurjera tarifs — aprēķināsim e-pastā',
+    free: 'Bez maksas',
+    total: 'Kopā',
+    deliverTo: 'Piegādes adrese',
+    delivery: 'Piegādes veids',
+    phone: 'Tālrunis',
+    note: 'Jūsu piezīme',
+    gift: 'Teksts dāvanu kartītei',
+    reply: 'Ja kaut kas jāmaina, vienkārši atbildiet uz šo vēstuli — pasūtījums nav galīgs, kamēr to neesam apstiprinājuši.',
+    signoff: '— Semers, Rīga',
+    welcomeSubject: 'Laipni lūdzam Semers',
+    welcomeOpen: 'Paldies, ka pierakstījāties.',
+    welcomeWhat: [
+      'Lūk, kam jūs pierakstījāties, un neko vairāk: vēstule, kad parādās jauna garša,',
+      'vēstule, kad atkal ir pieejams kaut kas, kas jums patika, un ik pa laikam recepte.',
+      'Ne biežāk kā dažas reizes mēnesī, un atrakstīties var ar vienu klikšķi.',
+    ],
+    welcomeStart: 'Un, ja jau esat šeit, trīs lietas, ar kurām parasti sāk:',
+    picks: [
+      "App'Lite ābolu batoniņš — 99% cepta ābola, olas baltums un nekā vairāk",
+      'Ābolu bezē — tas pats ābols, saputots un izkaltēts kraukšķīgs',
+      'Degustācijas kaste — pa vienam no katra, lai izvēlētos vienā pasūtījumā',
+    ],
+    welcomeBox: 'Vai salieciet savu kasti ar 10% atlaidi:',
+  },
+};
+
+/** The customer's language, with English filling anything it has not translated. */
+const mail = (loc) => ({ ...MAIL.en, ...(MAIL[locale(loc)] || {}) });
+
+/**
+ * The site writes "€1.45" in English and "1,45 €" in Russian and Latvian, so
+ * the receipt has to as well — a letter that formats money the way the page did
+ * not is the first thing that reads as machine-generated.
+ */
+function customerMoney(v, cur, intl) {
+  try {
+    return new Intl.NumberFormat(intl, { style: 'currency', currency: cur }).format(n(v));
+  } catch {
+    return money(v, cur);
+  }
+}
+
+/**
+ * The customer's copy of their order. Not the same text as the shop's: it drops
+ * the reference page, the language line and the e-mail address they just typed,
+ * and it names each field in their language.
+ */
+function customerSummary(body, id, loc) {
+  const m = mail(loc);
+  const cur = currency(body.currency);
+  const c = body.customer && typeof body.customer === 'object' ? body.customer : {};
+  const items = Array.isArray(body.items) ? body.items.slice(0, MAX_ITEMS) : [];
+  const lines = [fill(m.receiptOpen, { id }), '', `${m.orderLine}:`];
+  for (const it of items) {
+    if (!it || typeof it !== 'object') continue;
+    const v = s(it.variant, 80);
+    const note = s(it.note, 300);
+    lines.push(`  ${n(it.qty)} × ${s(it.name, 120)}${v ? ` (${v})` : ''}${note ? ` — ${note}` : ''} = ${customerMoney(it.total, cur, m.intl)}`);
+  }
+  lines.push('');
+  lines.push(`${m.subtotal}: ${customerMoney(body.subtotal, cur, m.intl)}`);
+  lines.push(`${m.shipping}: ${body.shippingQuote ? m.quoted : n(body.shipping) ? customerMoney(body.shipping, cur, m.intl) : m.free}`);
+  lines.push(`${m.total}: ${customerMoney(body.total, cur, m.intl)}`);
+  const address = [s(c.address), s(c.city), s(c.postcode), s(c.country)].filter(Boolean).join(', ');
+  if (address) lines.push('', `${m.deliverTo}: ${address}`);
+  if (s(c.delivery)) lines.push(`${m.delivery}: ${s(c.delivery)}`);
+  if (s(c.phone)) lines.push(`${m.phone}: ${s(c.phone)}`);
+  if (multi(c.note, 1000)) lines.push(`${m.note}: ${multi(c.note, 1000)}`);
+  if (s(c.gift)) lines.push(`${m.gift}: ${s(c.gift, 300)}`);
+  lines.push('', m.reply, '', m.signoff);
+  return lines.join('\n');
+}
+
 async function sendTelegram(env, text) {
   const token = env.TELEGRAM_BOT_TOKEN;
   const chat = env.TELEGRAM_CHAT_ID;
@@ -583,48 +747,51 @@ async function sendEmail(env, subject, text, replyTo) {
   return r.ok;
 }
 
-async function sendWelcome(env, email) {
+const WELCOME_PICKS = ['apple-bar-35g', 'apple-meringue-35g', 'tasting-box'];
+
+async function sendWelcome(env, email, loc) {
   const key = env.RESEND_API_KEY;
   if (!key || !EMAIL_RE.test(email)) return false;
   const from = env.ORDER_FROM_EMAIL || 'Semers Shop <shop@semers.org>';
   const site = env.SITE_URL || 'https://semers-store.higgsfield.app';
+  const m = mail(loc);
+  // Every link goes to the page in the language they were reading, not to the
+  // English one with a language switcher on it.
+  const url = (path) => `${site}${m.prefix}${path}`;
   const lines = [
-    'Thank you for subscribing.',
+    m.welcomeOpen,
     '',
-    'Here is what you have signed up for, and nothing else: a note when a new flavour',
-    'lands, a note when something you liked is back in stock, and now and then a recipe.',
-    'A few times a month at most, and one click unsubscribes.',
+    ...m.welcomeWhat,
     '',
-    'While you are here, the three people usually start with:',
-    `· App'Lite Apple Bar — 99% baked apple, egg white, nothing else: ${site}/products/apple-bar-35g/`,
-    `· Apple Meringue — the same apple, whipped and dried crisp: ${site}/products/apple-meringue-35g/`,
-    `· Tasting Box — one of everything, so you can decide in one order: ${site}/products/tasting-box/`,
+    m.welcomeStart,
+    ...m.picks.map((p, i) => `· ${p}: ${url(`/products/${WELCOME_PICKS[i]}/`)}`),
     '',
-    `Or build your own box and take 10% off: ${site}/shop/build-your-box/`,
+    `${m.welcomeBox} ${url('/shop/build-your-box/')}`,
     '',
-    '— Semers, Riga',
+    m.signoff,
   ].join('\n');
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ from, to: [email], subject: 'Welcome to Semers', text: lines }),
+    body: JSON.stringify({ from, to: [email], subject: m.welcomeSubject, text: lines }),
   });
   return r.ok;
 }
 
-async function sendCustomerReceipt(env, body, id, text) {
+async function sendCustomerReceipt(env, body, id) {
   const key = env.RESEND_API_KEY;
   const email = s(body?.customer?.email);
   if (!key || !email || !EMAIL_RE.test(email)) return false;
   const from = env.ORDER_FROM_EMAIL || 'Semers Shop <shop@semers.org>';
+  const m = mail(body.locale);
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from,
       to: [email],
-      subject: `We received your order request ${id}`,
-      text: `Thank you. We have your order request ${id}. We will confirm availability and send a payment link within one business day.\n\n${text}\n\n— Semers, Riga`,
+      subject: fill(m.receiptSubject, { id }),
+      text: customerSummary(body, id, body.locale),
     }),
   });
   return r.ok;
@@ -707,8 +874,8 @@ async function handleOrder(request, env) {
   const stored = await persist(env, type, body, id).catch(() => false);
   const [tg, mail] = await Promise.all([sendTelegram(env, text).catch(() => false), sendEmail(env, subject, text, email).catch(() => false)]);
   if (!tg && !mail && !stored) return json(503, { ok: false, reason: 'not-configured' });
-  if (type === 'order') await sendCustomerReceipt(env, body, id, text).catch(() => false);
-  if (type === 'newsletter') await sendWelcome(env, email).catch(() => false);
+  if (type === 'order') await sendCustomerReceipt(env, body, id).catch(() => false);
+  if (type === 'newsletter') await sendWelcome(env, email, body.locale).catch(() => false);
   return json(200, { ok: true, ref: id });
 }
 

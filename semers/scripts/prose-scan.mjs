@@ -17,7 +17,14 @@
 /** Elements whose text is code or markup, never prose. */
 export const OPAQUE = new Set(['script', 'style', 'code', 'pre', 'svg', 'noscript', 'template']);
 /** Attributes that hold a sentence a reader will see or hear. */
-export const ATTRS = ['alt', 'title', 'placeholder', 'aria-label', 'data-success'];
+/*
+ * `data-alt` is the alt text the gallery swaps in when you pick another photo,
+ * and `data-label` is what the responsive tables print in front of each cell
+ * once the columns stack on a phone — both are read by someone, so both are
+ * prose. They are the reason this list is not simply the HTML attributes that
+ * happen to hold text.
+ */
+export const ATTRS = ['alt', 'title', 'placeholder', 'aria-label', 'data-success', 'data-alt', 'data-label'];
 /** Only these meta names carry prose; the rest are machine values. */
 export const META_OK = /^(description|og:title|og:description|og:image:alt|twitter:title|twitter:description)$/;
 const VOID = new Set(['br', 'img', 'input', 'meta', 'link', 'hr', 'source', 'area', 'col', 'wbr', 'base', 'embed', 'track', 'param']);
@@ -134,10 +141,23 @@ export function applyProse(html, memory) {
     if (hit && hit !== r.text) runs.push({ ...r, hit });
   });
   if (!runs.length) return { html, applied: 0 };
-  // Spliced back to front so earlier offsets stay valid.
+  /*
+   * Spliced back to front so earlier offsets stay valid — which means the list
+   * has to be in offset order, and it is not: a tag's attributes are read in
+   * the order ATTRS lists them, so `alt` is reported before a `data-alt` that
+   * sits in front of it in the markup. Splicing those two in the reported order
+   * writes the second translation at an offset the first one has already moved,
+   * which lands it inside the neighbouring value and breaks the tag.
+   */
+  runs.sort((a, b) => a.start - b.start);
   let out = html;
+  let next = html.length;
   for (let i = runs.length - 1; i >= 0; i--) {
     const r = runs[i];
+    // Two runs cannot share a range, but a bad scan is worse than a missed
+    // translation, so an overlap is dropped rather than spliced.
+    if (r.end > next) continue;
+    next = r.start;
     // A translation carries words, never markup: an attribute value must not
     // close its own quote, and text must not open a tag. The memory is ours,
     // but it is data, so it is escaped rather than trusted.
