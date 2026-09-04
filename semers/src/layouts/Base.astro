@@ -136,8 +136,11 @@ const nodes = [
 
     {/* A Russian page never reads a byte of the Latin subsets, and an English one never reads the Cyrillic. */}
     {FONT_PRELOAD[locale].map((href) => <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />)}
-    <!-- Images are fetched without CORS, so the warm connection must be non-crossorigin to be reused. -->
-    <link rel="preconnect" href="https://d2ol7oe51mr4n9.cloudfront.net" />
+    {/*
+      No preconnect: once `npm run localize-images` has run, every image is
+      served from this origin, and warming a connection to a host the page never
+      calls costs a DNS lookup and a TLS handshake for nothing.
+    */}
 
     <script type="application/ld+json" set:html={graph(nodes)} is:inline />
     <script is:inline set:html={`window.SEMERS=${JSON.stringify({ endpoint: site.orderEndpoint || '/api/order', freeFrom: site.shipping.freeFrom, email: site.email, whatsapp: site.whatsapp, currency: site.currency, locale, intl: LOCALE_META[locale].intl, strings: ui.runtime, ...site.storefront })};`} />

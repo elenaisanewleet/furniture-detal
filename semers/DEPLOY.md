@@ -69,9 +69,20 @@ any of them breaks the deploy rather than the page:
 | `app/scripts/pack.mjs` | rearranges the Astro output into `dist/client` + `dist/server/server.js`; it exists only there |
 | `app/src/app-meta.json` | the Open Graph and marketplace card for the hosting platform |
 | `app/app.manifest.json` | declares `"db": true`, which is what binds the D1 database |
+| `app/public/logo-semers.svg` | the official Semers mark. **It exists nowhere else** — not in this repository, not in any build — so a copy that overwrites `public/` destroys it |
+| `app/src/components/Logo.astro` | renders that file. The version in this repository draws a placeholder apple instead |
+| `app/public/favicon.svg`, `favicon.ico`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png` | cut from the official mark. `scripts/make-icons.mjs` regenerates the **placeholder**, not these |
+| `app/public/img/` | the photographs, ~110 files. Regenerable — `npm run localize-images` re-fetches them from the CDN and rewrites `images.ts` — but only while those CDN URLs still resolve |
 
 `app/package.json` also stays as it is: it builds with `bun --bun astro build && bun
 scripts/pack.mjs`, and this repository's build script is a different one.
+
+This list is not paperwork: copying over it has already cost the site its logo
+once. Commit 4c81e5e replaced `public/` wholesale from here, and the official
+mark, every icon cut from it and all 72 photographs went with it — the shop ran
+a drawn-apple placeholder in its header and favicon for days before anyone
+looked. Restore from the last commit that had them (`76c1e18`) if it happens
+again.
 
 The old flat `src/pages/*.astro` must be **deleted**, not merged: the localised tree
 routes through `src/pages/[...locale]/`, and leaving both in place collides on every
