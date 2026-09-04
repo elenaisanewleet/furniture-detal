@@ -42,6 +42,8 @@ a:hover { text-decoration-color: var(--accent); }
 hr { border: 0; border-top: 1px solid var(--line); margin: var(--sp-6) 0; }
 
 :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; border-radius: 4px; }
+/* main only takes focus so the skip link can hand it over; ringing the whole page would be alarming. */
+main:focus, main:focus-visible { outline: none; }
 
 ::selection { background: var(--apple-100); color: var(--ink-900); }
 

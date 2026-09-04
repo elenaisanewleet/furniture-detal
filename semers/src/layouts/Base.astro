@@ -150,7 +150,13 @@ const nodes = [
     <div class="announce" data-announce hidden><div class="container"><span data-announce-text></span></div></div>
     <Header transparent={heroHeader} />
     {trail.length > 1 && <Breadcrumbs trail={trail} />}
-    <main id="main">
+    {/*
+      tabindex="-1" is what makes the skip link work. Chrome and Safari scroll to
+      a fragment without moving focus unless its target can take focus, so
+      without this the next Tab carries on from the skip link — back into the
+      header the reader just asked to skip.
+    */}
+    <main id="main" tabindex="-1">
       <slot />
     </main>
     <Footer />

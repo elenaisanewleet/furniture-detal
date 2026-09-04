@@ -98,6 +98,22 @@ Three languages rather than one because length moves layout: the overlap that
 put the add-to-box button on top of the quantity stepper's "+" existed only on
 the Russian product page at 390 px.
 
+## Purchase-path check
+
+`npm run check:flow` walks the path a customer walks — product, add to box,
+drawer, cart, checkout, submit, thank-you — in all three languages at a desktop
+and a phone width, against a stubbed endpoint so nothing is sent anywhere. It
+asserts the arithmetic the customer sees (lines add to the subtotal, subtotal
+plus shipping is the total), that the order reports the language it was placed
+in, that the reference comes back onto the thank-you page and that the box is
+emptied afterwards.
+
+The second half is the keyboard: the skip link hands focus to `<main>` rather
+than only scrolling to it, every Tab stop shows a ring, the drawer takes focus
+and holds it, and Escape closes it and gives focus back to the button that
+opened it. Same requirements as the audit above — a browser, and not part of
+`npm run verify`.
+
 ## Fonts
 
 Four families, self-hosted, no request to Google at runtime. `npm run fonts`
