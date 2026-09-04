@@ -361,7 +361,8 @@ const lines = site.brand.lines.map((brand) => {
   .journey__note { max-width: 34ch; }
   .journey .timeline li::before { box-shadow: 0 0 0 4px var(--bg-sunken); }
   .journey .timeline li:last-child { padding-bottom: 0; }
-  .tl__k { display: block; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; color: var(--accent); letter-spacing: -0.01em; line-height: 1.1; }
+  /* At 390px this lands at 20px, and 600 is not bold enough to count as large text, so it needs the readable red rather than the signal one. */
+  .tl__k { display: block; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; color: var(--accent-ink); letter-spacing: -0.01em; line-height: 1.1; }
   .journey .timeline h3 { font-size: var(--fs-lg); margin-top: 0.3rem; }
   .journey .timeline p { max-width: 46ch; }
 

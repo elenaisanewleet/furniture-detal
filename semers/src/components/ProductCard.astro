@@ -72,8 +72,9 @@ const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
         </div>
         <div class="pc__unit">{unitPrice(p, locale)} {ui.per100g}</div>
       </div>
+      {/* A row of colour dots standing in for the flavour list. Without a role the label is ignored and a screen reader announces nothing at all. */}
       {p.variants.length > 1 && (
-        <div class="pc__swatches" title={flavours} aria-label={`${p.variants.length} flavours: ${flavours}`}>
+        <div class="pc__swatches" role="img" title={flavours} aria-label={`${p.variants.length} flavours: ${flavours}`}>
           {p.variants.slice(0, 5).map((v) => <span class="pc__swatch" style={`--sw:${FLAVORS[v.key].color}`}></span>)}
           {p.variants.length > 5 && <span class="pc__more">+{p.variants.length - 5}</span>}
         </div>

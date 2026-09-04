@@ -84,6 +84,20 @@ Vercel project → Settings → Domains → add `semers.org` and `www.semers.org
 - [ ] `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` set on the hosting project (see above). Until `ADMIN_PASSWORD` exists, `/admin/` cannot be logged into at all.
 - [x] Order receipts and the newsletter welcome go out in the language the customer was reading, with the money formatted the way that language writes it and every link pointing into that language. The shop's own notification stays English on purpose — one person reads them all — and carries a `Language:` line saying which language to reply in. `MAIL` in `worker/server.js` holds the wording; a key a language has not translated falls back to English rather than sending a blank.
 
+## Accessibility check
+
+`npm run check:a11y` runs axe over a real render of every template, in all three
+languages, at 1440 px and 390 px, against WCAG 2.2 AA. It needs a browser and
+the rules engine, which the build does not — `npm i -D playwright axe-core &&
+npx playwright install chromium`, then `npm run preview` in another terminal —
+so it is not part of `npm run verify`; it skips with a message rather than
+failing when playwright is absent. Point `PLAYWRIGHT` at an install elsewhere if
+this project does not carry its own.
+
+Three languages rather than one because length moves layout: the overlap that
+put the add-to-box button on top of the quantity stepper's "+" existed only on
+the Russian product page at 390 px.
+
 ## Fonts
 
 Four families, self-hosted, no request to Google at runtime. `npm run fonts`

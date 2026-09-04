@@ -192,6 +192,8 @@ a:hover .frame .zoom, .frame:hover .zoom { transform: scale(1.04); }
 .table th { font-weight: 600; color: var(--fg-2); }
 .table td.num, .table th.num { text-align: right; font-variant-numeric: tabular-nums; }
 .table-wrap { overflow-x: auto; }
+/* It takes focus only so a keyboard can scroll it, so the ring is the same one every other focusable thing gets. */
+.table-wrap:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
 /* ---- Details / accordion --------------------------------------------- */
 .acc { border-top: 1px solid var(--line); }

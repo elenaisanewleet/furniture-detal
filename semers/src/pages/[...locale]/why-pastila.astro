@@ -170,9 +170,10 @@ const ideas = [
       </div>
       <p class="muted" style="max-width:38ch">Typical values for the mainstream product in each category. Ours are for one App’Lite Apple Bar; the full table is on every product page.</p>
     </div>
-    <div class="cmp-wrap table-wrap" data-reveal>
+    {/* Scrolls sideways when the columns do not fit, which a mouse can do and a keyboard cannot — unless the box itself can take focus. Named from the table's own caption, not the heading above it: the section already carries that heading as its name, and two landmarks with one name are two landmarks a screen reader cannot tell apart. */}
+    <div class="cmp-wrap table-wrap" data-reveal tabindex="0" role="region" aria-labelledby="cmp-caption">
       <table class="cmp">
-        <caption class="sr-only">Energy, added sugar and ingredient count of a 35 g Apple Bar compared with typical snacks</caption>
+        <caption class="sr-only" id="cmp-caption">Energy, added sugar and ingredient count of a 35 g Apple Bar compared with typical snacks</caption>
         <thead>
           <tr>
             <th scope="col">Snack</th>

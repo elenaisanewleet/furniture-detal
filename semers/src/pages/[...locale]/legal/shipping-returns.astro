@@ -117,7 +117,8 @@ const webPage = {
 
       <h2 id="zones">Where we ship and what it costs</h2>
       <p>We ship consumer orders to Latvia, Lithuania, Estonia and every other member state of the European Union. Shipping is free on orders over {freeFrom}. Below that, the Baltics pay a flat {flatRate}, and for the rest of the EU we quote the courier rate in the confirmation e-mail before you pay, so there are no surprises.</p>
-      <div class="table-wrap">
+      {/* Scrolls sideways when the columns do not fit, which a mouse can do and a keyboard cannot — unless the box itself can take focus. Named from the heading above it, so the name is translated with the page. */}
+      <div class="table-wrap" tabindex="0" role="region" aria-labelledby="zones">
         <table class="table legal__zones">
           <thead><tr><th>Zone</th><th>Countries</th><th>How it ships</th><th>Cost</th><th>Typical delivery</th></tr></thead>
           <tbody>

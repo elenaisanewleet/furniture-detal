@@ -169,7 +169,8 @@ const webPage = {
       <p>Some of the providers above run their infrastructure outside the European Economic Area, mainly in the United States. Where that happens we rely on the safeguards the GDPR allows: an adequacy decision of the European Commission, such as the EU–US Data Privacy Framework for certified companies, or the Commission’s standard contractual clauses together with any additional measures needed. Ask us if you would like details of the safeguards used for a specific provider.</p>
 
       <h2 id="retention">How long we keep it</h2>
-      <div class="table-wrap">
+      {/* Scrolls sideways when the columns do not fit, which a mouse can do and a keyboard cannot — unless the box itself can take focus. Named from the heading above it, so the name is translated with the page. */}
+      <div class="table-wrap" tabindex="0" role="region" aria-labelledby="retention">
         <table class="table">
           <thead><tr><th>Data</th><th>Kept for</th></tr></thead>
           <tbody>

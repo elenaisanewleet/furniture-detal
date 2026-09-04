@@ -305,7 +305,7 @@
 .tier:hover { border-color: var(--fg-3); }
 .tier.is-on { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 8%, var(--bg-raised)); }
 .tier b { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-3); font-weight: 600; }
-.tier.is-on b { color: var(--accent); }
+.tier.is-on b { color: var(--accent-ink); }
 .tier__unit { font-weight: 700; font-size: var(--fs-md); }
 .tier__note { font-size: var(--fs-xs); color: var(--fg-3); }
 

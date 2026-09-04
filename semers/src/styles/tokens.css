@@ -78,6 +78,14 @@
   --line-strong: var(--ink-900);
 
   --accent: var(--apple-500);
+  /*
+   * The same red, dark enough to be read at 12px. --accent is a signal colour
+   * chosen against white and large type: on the tinted grounds it makes for
+   * itself it lands at 3.3:1, under the 4.5:1 small text needs. Anywhere the
+   * accent IS the text — a pill, a chip, a highlighted number — this is the one
+   * to use; --accent stays the fill, the border and the large display red.
+   */
+  --accent-ink: #b82d1a;
   --accent-fill: var(--apple-600);
   --accent-fill-hover: var(--apple-700);
   --accent-on: #ffffff;

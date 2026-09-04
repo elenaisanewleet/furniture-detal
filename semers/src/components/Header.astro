@@ -78,7 +78,7 @@ const languages = LOCALES.map((l) => ({ locale: l, href: localePath(path, l), na
   .lang { display: flex; align-items: center; gap: 0.15rem; }
   .lang__a { text-decoration: none; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.04em; color: var(--fg-3); padding: 0.3rem 0.4rem; border-radius: var(--r-sm); }
   .lang__a:hover { color: var(--fg); background: var(--bg-sunken); }
-  .lang__a[aria-current] { color: var(--accent); background: color-mix(in oklab, var(--accent) 10%, transparent); }
+  .lang__a[aria-current] { color: var(--accent-ink); background: color-mix(in oklab, var(--accent) 10%, transparent); }
   .hdr__nav .hdr__langs { display: none; }
   .hdr__cart { position: relative; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: 50%; transition: background var(--dur-fast); }
   .hdr__cart:hover { background: var(--bg-sunken); }
