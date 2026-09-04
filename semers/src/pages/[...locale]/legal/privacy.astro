@@ -1,0 +1,272 @@
+---
+import Base from '~/layouts/Base.astro';
+import GoverningLanguage from '~/components/GoverningLanguage.astro';
+import Icon from '~/components/Icon.astro';
+import { site } from '~/data/site';
+import { originOf } from '~/lib/origin';
+
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const origin = originOf(Astro.site);
+const path = '/legal/privacy/';
+const updated = 'September 2026';
+const title = 'Privacy policy: how we handle your data';
+const description =
+  'How SIA Semers Group in Riga handles your data when you order, write to us or subscribe: what we keep, why, for how long, and your rights under the GDPR.';
+
+/** Booleans are computed here so the template stays free of comparisons. */
+const analyticsOn = site.analytics.plausibleDomain.length > 0;
+
+const legalNav = [
+  { href: '/legal/privacy/', label: 'Privacy policy' },
+  { href: '/legal/terms/', label: 'Terms of sale' },
+  { href: '/legal/shipping-returns/', label: 'Shipping & returns' },
+].map((l) => ({ ...l, active: l.href === path }));
+
+const sections = [
+  { id: 'summary', label: 'The short version' },
+  { id: 'controller', label: 'Who is responsible' },
+  { id: 'data', label: 'What we collect and why' },
+  { id: 'recipients', label: 'Who we share it with' },
+  { id: 'transfers', label: 'Data outside the EEA' },
+  { id: 'retention', label: 'How long we keep it' },
+  { id: 'rights', label: 'Your rights' },
+  { id: 'cookies', label: 'Cookies and local storage' },
+  { id: 'children', label: 'Children' },
+  { id: 'security', label: 'Security' },
+  { id: 'changes', label: 'Changes to this policy' },
+  { id: 'contact', label: 'Contact' },
+];
+
+const retention: [string, string][] = [
+  ['Orders, invoices and payment confirmations', 'Five years after the end of the financial year in which you ordered, as Latvian accounting law requires.'],
+  ['Order requests that are never confirmed or paid', 'Ninety days, then deleted.'],
+  ['Contact and wholesale messages', 'While the conversation is open, then up to two years in case you come back to it.'],
+  ['Newsletter address', 'Until you unsubscribe. We then keep only a note that you unsubscribed, so we never e-mail you again by mistake.'],
+  ['Copies in our team notification channel', 'Deleted once the order or message has been dealt with.'],
+  ['Technical server logs', 'Up to thirty days.'],
+  ['Your cart', 'In your own browser until you empty it or clear site data. It is not sent to us until you place an order.'],
+];
+
+const webPage = {
+  '@type': 'WebPage',
+  '@id': `${origin}${path}#webpage`,
+  url: `${origin}${path}`,
+  name: 'Privacy policy',
+  description,
+  inLanguage: 'en',
+  isPartOf: { '@id': `${origin}/#website` },
+  about: { '@id': `${origin}/#org` },
+  dateModified: '2026-09-01',
+};
+---
+<Base
+  title={title}
+  description={description}
+  canonical={path}
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Privacy policy', href: path }]}
+  schema={[webPage]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container" aria-labelledby="page-title">
+    <p class="eyebrow">Legal · {site.brand.legalName}</p>
+    <h1 id="page-title" class="legal-title">A privacy policy <em>you can actually read.</em></h1>
+    <p class="lead">This privacy policy explains what SIA Semers Group collects when you order apple bars and pastila from semers.org, write to us or subscribe to our e-mails: why we collect it, how long we keep it, and the rights the GDPR gives you.</p>
+    <p class="legal__updated"><Icon name="clock" size={16} /> Last updated: {updated}</p>
+    <GoverningLanguage />
+  </section>
+
+  <!-- ============================== BODY ============================== -->
+  <div class="container legal">
+    <aside class="legal__aside" data-reveal>
+      <nav class="legal__nav" aria-label="Legal pages">
+        <p class="eyebrow">Legal</p>
+        <div class="pills legal__pills">
+          {legalNav.map((l) => (
+            <a class={`pill${l.active ? ' is-active' : ''}`} href={l.href} aria-current={l.active ? 'page' : undefined}>{l.label}</a>
+          ))}
+        </div>
+      </nav>
+      <nav class="legal__toc" aria-label="On this page">
+        <p class="eyebrow">On this page</p>
+        <ol>
+          {sections.map((s) => <li><a href={`#${s.id}`}>{s.label}</a></li>)}
+        </ol>
+      </nav>
+      <div class="legal__help">
+        <p class="small"><strong>Questions about your data?</strong> Write to <a href={`mailto:${site.email}`}>{site.email}</a>. A person in Riga replies within one business day.</p>
+      </div>
+    </aside>
+
+    <div class="prose max-prose legal__body" data-reveal>
+      <div class="legal__summary" id="summary">
+        <h2>The short version</h2>
+        <ul class="ticks">
+          <li><Icon name="check" size={18} /> We collect only what an order, a reply or a newsletter needs.</li>
+          <li><Icon name="check" size={18} /> We never sell your data and use no advertising trackers.</li>
+          <li><Icon name="check" size={18} /> No tracking cookies, so no cookie banner. Your cart lives in your own browser.</li>
+          <li><Icon name="check" size={18} /> One e-mail gets you a copy of your data, a correction, or deletion.</li>
+        </ul>
+      </div>
+
+      <h2 id="controller">Who is responsible</h2>
+      <p>The controller of your personal data is <strong>{site.brand.legalName}</strong>, a company registered in Latvia with its seat in {site.locality}.</p>
+      <!-- TODO Semers: add the company registration number (Reģ. Nr.) and VAT number here as visible text. -->
+      <!-- TODO Semers: add the registered street address here as visible text. -->
+      <p>You can reach us about anything in this policy at <a href={`mailto:${site.email}`}>{site.email}</a>. We are a small company and do not have a separate data protection officer; write to the same address and the person who runs the shop will answer.</p>
+
+      <h2 id="data">What we collect and why</h2>
+      <p>We collect personal data in four situations. For each one, here is what we take, what we do with it, and the legal basis under Article 6 of the GDPR.</p>
+
+      <h3>When you place an order</h3>
+      <p>Your name, e-mail address, phone number (optional, for the courier), delivery address or parcel locker, country, the items and quantities in your box, any gift message or note, and whether you ticked the newsletter box. We use this to check stock, send you a confirmation with a payment link, deliver the parcel, answer questions about the order, and keep the accounting records the law requires.</p>
+      <p><strong>Legal basis:</strong> performance of a contract with you, including the steps before it, under Article 6(1)(b); and compliance with our legal obligations under Article 6(1)(c) for the invoicing and accounting side.</p>
+      <p><strong>Payment.</strong> When online card payment goes live, you will enter card details on the payment provider’s pages, not on ours. We receive a confirmation that payment succeeded and a reference, never your full card number.</p>
+
+      <h3>When you write to us</h3>
+      <p>Through the <a href="/contact/">contact form</a>, the <a href="/wholesale/">wholesale form</a> or plain e-mail: your name, e-mail address, company name if you give one, the topic and your message. We use it to reply and to keep track of the conversation.</p>
+      <p><strong>Legal basis:</strong> steps towards a contract under Article 6(1)(b) when your message is about an order or a wholesale supply; otherwise our legitimate interest in answering people who write to us, under Article 6(1)(f).</p>
+
+      <h3>When you subscribe to our e-mails</h3>
+      <p>Your e-mail address and the date you subscribed. We use it to send occasional e-mails about new flavours, restocks and offers. No more than that, and not often.</p>
+      <p><strong>Legal basis:</strong> your consent under Article 6(1)(a). You can withdraw it at any time with the unsubscribe link in every e-mail, or by writing to us. Withdrawing consent does not affect the lawfulness of anything we did before.</p>
+
+      <h3>When you browse the site</h3>
+      <p>Our hosting provider records technical logs: your IP address, the time, the page requested, your browser type and the referring page. These are needed to serve the site, keep it secure and diagnose faults. Product images are delivered from a content delivery network, which sees your IP address in order to send you the file.</p>
+      {analyticsOn ? (
+        <p>We use Plausible Analytics, a privacy-friendly service that counts page views in aggregate. It sets no cookies, does not store your IP address and does not build a profile of you.</p>
+      ) : (
+        <p>We do not run analytics at the moment. If we add it, we will use a cookieless, privacy-friendly tool that counts page views in aggregate without identifying you, and we will update this section.</p>
+      )}
+      <p><strong>Legal basis:</strong> our legitimate interest in running a secure, working website, under Article 6(1)(f).</p>
+
+      <h3>What we do not do</h3>
+      <ul>
+        <li>No profiling and no automated decisions that affect you legally.</li>
+        <li>No selling, renting or trading of personal data.</li>
+        <li>No advertising trackers, no social media pixels, no retargeting.</li>
+      </ul>
+
+      <h2 id="recipients">Who we share it with</h2>
+      <p>We share personal data only with providers that help us run the shop, and only as much as each one needs to do its job.</p>
+      <ul>
+        <li><strong>Hosting and serverless functions.</strong> The site, and the small function that receives order requests and form messages, run on a cloud hosting platform. It processes the data you submit and keeps short-lived technical logs.</li>
+        <li><strong>E-mail delivery.</strong> A transactional e-mail service sends our order confirmations and delivers your form messages to our inbox.</li>
+        <li><strong>Team notifications.</strong> New orders and messages are also relayed to an internal messaging channel, so that a person in Riga sees them quickly.</li>
+        <li><strong>Parcel carriers.</strong> Your name, address, phone number and e-mail go to the carrier that delivers your parcel, for example Omniva, DPD or DHL depending on where you live, so they can deliver it and send you locker codes or delivery notices. Carriers also process this data under their own privacy policies.</li>
+        <li><strong>Payment provider.</strong> Once online payment is live, your payment data will go directly to the payment provider, which acts as an independent controller for its own fraud prevention. We will name the provider here when it goes live.</li>
+        <!-- TODO Semers: name the payment provider (and its privacy policy link) here once online payment is live. -->
+        <li><strong>Accountants and authorities.</strong> Our accountant sees invoices and order records. Tax and other authorities receive data when the law obliges us to provide it.</li>
+      </ul>
+      <p>Each provider is bound by a data processing agreement or by law. We do not share your data with anyone else, and we do not share it with the retailers who sell our products in shops.</p>
+
+      <h2 id="transfers">Data outside the EEA</h2>
+      <p>Some of the providers above run their infrastructure outside the European Economic Area, mainly in the United States. Where that happens we rely on the safeguards the GDPR allows: an adequacy decision of the European Commission, such as the EU–US Data Privacy Framework for certified companies, or the Commission’s standard contractual clauses together with any additional measures needed. Ask us if you would like details of the safeguards used for a specific provider.</p>
+
+      <h2 id="retention">How long we keep it</h2>
+      {/* Scrolls sideways when the columns do not fit, which a mouse can do and a keyboard cannot — unless the box itself can take focus. Named from the heading above it, so the name is translated with the page. */}
+      <div class="table-wrap" tabindex="0" role="region" aria-labelledby="retention">
+        <table class="table">
+          <thead><tr><th>Data</th><th>Kept for</th></tr></thead>
+          <tbody>
+            {retention.map(([k, v]) => <tr><td>{k}</td><td>{v}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+      <p>When a period ends we delete the data, or anonymise it so that it can no longer be linked to you.</p>
+
+      <h2 id="rights">Your rights</h2>
+      <p>Under the GDPR you can ask us, at any time, to:</p>
+      <ul>
+        <li><strong>Access</strong> the data we hold about you, and receive a copy.</li>
+        <li><strong>Rectify</strong> data that is inaccurate or incomplete.</li>
+        <li><strong>Erase</strong> data we no longer need to keep. Accounting records must stay for the legal period; everything else goes.</li>
+        <li><strong>Restrict</strong> processing while a question about it is being resolved.</li>
+        <li><strong>Port</strong> the data you gave us, in a common machine-readable format.</li>
+        <li><strong>Object</strong> to processing based on legitimate interest, and to direct marketing at any time, no reason needed.</li>
+        <li><strong>Withdraw consent</strong> to the newsletter, without affecting earlier processing.</li>
+      </ul>
+      <p>To use any of these rights, e-mail <a href={`mailto:${site.email}`}>{site.email}</a> from the address you used with us, or tell us how we can confirm it is you. We answer within one month. If a request is complex we may take up to two further months, and we will tell you why. There is no charge, unless a request is manifestly unfounded or excessive.</p>
+      <p>If you think we have handled your data wrongly, we would like to hear it from you first. You also have the right to complain to a supervisory authority. For us that is the Data State Inspectorate of Latvia (<span lang="lv">Datu valsts inspekcija</span>, <a href="https://www.dvi.gov.lv/" rel="noopener">dvi.gov.lv</a>). You may also complain to the authority in the EU country where you live.</p>
+
+      <h2 id="cookies">Cookies and local storage</h2>
+      <p>This site sets no tracking or advertising cookies, which is why there is no cookie banner. What we do use in your browser:</p>
+      <ul>
+        <li><strong>Local storage for your cart.</strong> The items you add are saved in your browser’s local storage under our domain, so your box survives a page reload. Nothing is sent to us until you place an order. Clearing the site data in your browser empties the cart.</li>
+        <li><strong>Strictly necessary storage.</strong> Our hosting platform, or a future payment provider during checkout, may set a cookie that is essential for security or to complete a payment. Such cookies need no consent under the ePrivacy rules. We will list them here if and when they appear.</li>
+        {analyticsOn && <li><strong>Analytics.</strong> Plausible works without cookies and without storing personal data.</li>}
+      </ul>
+      <p>If we ever add a cookie that needs your consent, we will ask for it first, and you will be able to say no.</p>
+
+      <h2 id="children">Children</h2>
+      <p>Our snacks are for everyone; our shop is for adults. We do not knowingly collect personal data from children and we do not market to them. If you believe a child has given us personal data, write to us and we will delete it.</p>
+
+      <h2 id="security">Security</h2>
+      <p>The site is served over HTTPS. Order data travels encrypted to our providers, access to our inbox and tools is limited to the people who need it, and we hold no card data at all. No system is perfectly secure. If a breach ever affects your data, we will tell you and the supervisory authority as the GDPR requires.</p>
+
+      <h2 id="changes">Changes to this policy</h2>
+      <p>We will update this policy when our processes or the law change; the date at the top tells you when. For changes that matter, such as a new purpose or a new kind of data, we will let you know by e-mail if we have your address, or with a notice on the site.</p>
+
+      <h2 id="contact">Contact</h2>
+      <p>{site.brand.legalName}, {site.locality}, {site.country}<br />
+      <a href={`mailto:${site.email}`}>{site.email}</a></p>
+      <!-- TODO Semers: repeat the registration number and street address here as visible text. -->
+      <p>Prefer a form? Use the <a href="/contact/">contact page</a>. Curious about our shipping? See <a href="/legal/shipping-returns/">shipping &amp; returns</a> and the <a href="/legal/terms/">terms of sale</a>.</p>
+    </div>
+  </div>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container section--tight" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">That is all of it</p>
+      <h2 id="cta-title">Two ingredients in the bar. Not much more in the data.</h2>
+      <p>Apple bars, meringues and Belyov pastila, shipped from Riga across the EU. Free shipping over €25.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/shop/">Shop the range <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost legal__ghost" href="/contact/">Ask a question</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legal-title { max-width: 14ch; }
+  .legal-title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .legal__updated { display: inline-flex; align-items: center; gap: 0.4em; margin-top: 1.25rem; font-size: var(--fs-sm); color: var(--fg-3); }
+  .legal__updated svg { color: var(--accent); }
+
+  .legal { display: grid; gap: var(--sp-6); align-items: start; padding-block: var(--sp-4) clamp(2rem, 5vw, 4rem); }
+  @media (min-width: 60rem) {
+    .legal { grid-template-columns: 15rem minmax(0, 1fr); gap: var(--sp-8); }
+    .legal__aside { position: sticky; top: 6rem; }
+    .legal__pills { flex-direction: column; align-items: stretch; }
+    .legal__pills .pill { text-align: left; }
+  }
+  .legal__aside { display: grid; gap: var(--sp-5); }
+  .legal__aside .eyebrow { margin-bottom: 0.6rem; }
+  .legal__toc { display: none; }
+  @media (min-width: 60rem) { .legal__toc { display: block; } }
+  .legal__toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; border-left: 2px solid var(--line); font-size: var(--fs-sm); }
+  .legal__toc a { display: block; padding: 0.2rem 0 0.2rem 0.9rem; color: var(--fg-2); text-decoration: none; border-left: 2px solid transparent; margin-left: -2px; transition: color var(--dur-fast), border-color var(--dur-fast); }
+  .legal__toc a:hover { color: var(--fg); border-color: var(--accent); }
+  .legal__help { padding: 1rem 1.1rem; border-radius: var(--r-md); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .legal__help p { margin: 0; color: var(--fg-2); }
+
+  .legal__body { min-width: 0; }
+  .legal__body h2 { scroll-margin-top: 6rem; font-size: var(--fs-2xl); }
+  .legal__body h3 { font-size: var(--fs-lg); }
+  .legal__body li strong { color: var(--fg); }
+  .legal__body .table-wrap { margin: 0 0 1.5rem; }
+  .legal__body .table td:first-child { font-weight: 600; width: 40%; }
+  .legal__summary { padding: 1.4rem 1.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); margin-bottom: 1rem; }
+  .legal__summary h2 { margin: 0 0 0.9rem; font-size: var(--fs-xl); }
+  .legal__summary .ticks { font-size: var(--fs-sm); }
+
+  .legal__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .legal__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+</style>

@@ -1,0 +1,737 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, COLLECTIONS, formatThreshold } from '~/data/products';
+import { img, imgSrc, RENDER_BG, im, imgSrcset, SIZES } from '~/data/images';
+import { ARTICLES_SORTED } from '~/data/journal';
+import { FAQS } from '~/data/faq';
+import { site } from '~/data/site';
+import { itemList, faqPage } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { localeParams, type Locale } from '~/i18n/config';
+import { localizedCollections, localizedFaqs } from '~/data/copy';
+import { FONT_PRELOAD_ITALIC } from '~/data/fonts';
+import { FORGE_LAST } from '~/data/forge';
+
+export function getStaticPaths() {
+  return localeParams();
+}
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const best = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 4);
+const homeFaqs = localizedFaqs(FAQS.filter((f) => ['product', 'nutrition', 'orders'].includes(f.group)).slice(0, 5), locale);
+const tiles = localizedCollections(COLLECTIONS.filter((c) => c.key !== 'applite'), locale);
+const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a bar', 'Made in Riga', 'Recipe from 1888', 'Ships across the EU', 'Egg white, nothing else'];
+---
+<Base
+  title="Semers — Apple bars & pastila. 99% apples, no added sugar"
+  description="Baked apple snacks from Riga: Apple Bars, Flourless Bars, meringues and Belyov pastila. 99% apples, egg white, no added sugar, about 97 kcal a bar."
+  canonical="/"
+  ogImage="hero-bars"
+  schema={[itemList(origin, best), faqPage(homeFaqs)]}
+  bodyClass="home"
+>
+  <Fragment slot="head">
+    <!-- The hero headline sets "99% apple." in the display italic; without a preload the file is only discovered after the CSS parses. Which file that is depends on the script the headline is written in. -->
+    <link rel="preload" href={FONT_PRELOAD_ITALIC[locale]} as="font" type="font/woff2" crossorigin />
+  </Fragment>
+  <!-- ============================== HERO ============================== -->
+  <section class="hero hero--home bg-grain" aria-labelledby="hero-title">
+    <div class="bg-blob bg-blob--mint" style="width:38rem;height:38rem;right:-8rem;top:-10rem"></div>
+    <div class="bg-blob bg-blob--coral" style="width:26rem;height:26rem;right:22rem;bottom:-8rem;opacity:.45"></div>
+    <div class="container hero__grid">
+      <div>
+        <p class="eyebrow">Baked apple snacks · Riga, Latvia</p>
+        <h1 class="hero__title" id="hero-title">A snack bar that is <em>99% apple.</em></h1>
+        <p class="hero__lead">Antonovka apples baked, whipped with egg white and slowly dried the Belyov way. No added sugar, no flour, no nonsense. About 97 kcal a bar.</p>
+        <div class="hero__cta">
+          <a class="btn btn--lg" href="/shop/">Shop the bars <Icon name="arrow" size={20} class="arrow" /></a>
+          <a class="btn btn--lg btn--ghost" href="/why-pastila/">Why pastila?</a>
+        </div>
+        <div class="hero__proof">
+          <span><Icon name="check" size={16} /> No added sugar</span>
+          <span><Icon name="check" size={16} /> Gluten free</span>
+          <span><Icon name="check" size={16} /> Free EU shipping over {formatThreshold(site.shipping.freeFrom, locale)}</span>
+        </div>
+      </div>
+      <div class="hero__media">
+        <div class="hero__stage" aria-hidden="true">
+          <img class="hero__pack hero__pack--b" src={im("packshot-berry").src} srcset={im("packshot-berry").srcset} sizes={im("packshot-berry").srcset && SIZES.half} alt="" width="2000" height="2000" loading="eager" decoding="async" />
+          <img class="hero__pack hero__pack--a" src={im("packshot-classic").src} srcset={im("packshot-classic").srcset} sizes={im("packshot-classic").srcset && SIZES.half} alt={im("packshot-classic").alt} width="2000" height="2000" loading="eager" fetchpriority="high" decoding="async" />
+        </div>
+        <div class="hero__float hero__float--a"><strong>97 kcal</strong><span>per 35 g bar</span></div>
+        <div class="hero__float hero__float--b"><strong>2</strong><span>ingredients: apples, egg white</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHO IT'S FOR ============================== -->
+  <!--
+    What the bars are for, before the shop pitches them. A photograph reads
+    before any headline does, and the line under it answers the one thing a
+    parent checks first.
+  -->
+  <section class="famband" aria-labelledby="famband-title" data-reveal>
+    <img
+      class="famband__img"
+      src={im('family-kitchen').src}
+      srcset={im('family-kitchen').srcset}
+      sizes="100vw"
+      alt={im('family-kitchen').alt}
+      width="1376"
+      height="768"
+      loading="lazy"
+      decoding="async"
+    />
+    <div class="famband__say">
+      <h2 class="famband__title" id="famband-title">Two ingredients, and a snack you can hand a child without reading the label twice.</h2>
+      <p class="famband__lead">Baked apples and egg white. Nothing added, nothing to explain.</p>
+    </div>
+  </section>
+
+  <!-- The lean wrapper is separate from the track so the reader's nudge and the tape's own loop can ride on different transforms. -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__lean" data-marquee-lean>
+      <div class="marquee__track">
+        {[...tape, ...tape].map((t) => <span class="marquee__item">{t}</span>)}
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================== BESTSELLERS ============================== -->
+  <section class="section container" aria-labelledby="best-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Bestsellers</p>
+        <h2 id="best-title">Start with the ones everyone starts with.</h2>
+      </div>
+      <a class="link" href="/shop/">Shop all products</a>
+    </div>
+    <div class="grid grid--4" data-stagger>
+      {best.map((p, i) => <ProductCard product={p} loading={i < 2 ? 'eager' : 'lazy'} />)}
+    </div>
+  </section>
+
+  <!-- ============================== APPLE RENDER ============================== -->
+  <section class="render" style={`--render-bg:${RENDER_BG}`} aria-labelledby="render-title">
+    <div class="container render__grid">
+      <div class="render__copy" data-reveal>
+        <p class="eyebrow">What pastila is</p>
+        <h2 id="render-title" class="render__title">It’s an apple. <em>Inside, it’s pastila.</em></h2>
+        <p>Take a sour northern apple, bake it until the sugars caramelise, whip the purée with egg white until it holds air, then spread it thin and dry it for hours. What you get is a soft, fibrous loaf that tastes like the concentrated heart of an apple — and nothing else was added to make it so.</p>
+        <p>We cut that loaf into bars, bake it into meringues and press it into desserts. Same two ingredients every time.</p>
+        <div class="cluster mt-4">
+          <a class="btn btn--paper" href="/how-its-made/">How it’s made</a>
+          <a class="link render__link" href="/shop/pastila/">Shop pastila</a>
+        </div>
+      </div>
+      <div class="render__media" data-reveal>
+        <img src={im('apple-split').src} srcset={im('apple-split').srcset} sizes={im('apple-split').srcset && SIZES.half} alt={im('apple-split').alt} width={im('apple-split').width} height={im('apple-split').height} loading="lazy" decoding="async" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== THE FORGE ============================== -->
+  <!--
+    The one thing a shop selling pastila has to get across: an apple goes in,
+    and a bar comes out, with nothing added on the way. Told as a scroll rather
+    than a paragraph, because the transformation IS the product.
+
+    The silhouette is one path with 96 points, morphed between five key shapes
+    that were authored as ordinary SVG outlines and resampled by arc length at
+    load. Colour, steam, air bubbles and the wrapper ride the same progress
+    value. The drawing is aria-hidden on purpose: the five steps beside it say
+    the same thing in words, and a reader who cannot see the apple should get
+    the sentences rather than a description of an animation.
+  -->
+  <section class="forge bg-grain" aria-labelledby="forge-title" data-forge>
+    <div class="forge__sticky">
+      <div class="container forge__inner">
+        <div class="forge__art">
+          <svg class="forge__svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="forge-body" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" data-forge-stop="1" stop-color="#e2452f" />
+                <stop offset="1" data-forge-stop="2" stop-color="#9e2617" />
+              </linearGradient>
+              <radialGradient id="forge-shine" cx="0.34" cy="0.3" r="0.45">
+                <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
+                <stop offset="1" stop-color="#fff" stop-opacity="0" />
+              </radialGradient>
+              <clipPath id="forge-clip"><path data-forge-clip d={FORGE_LAST} /></clipPath>
+            </defs>
+
+            <g data-forge-steam fill="none" stroke-width="3" stroke-linecap="round" opacity="0">
+              <path d="M 78 46 c -6 -12 6 -16 0 -28" />
+              <path d="M 100 38 c -6 -12 6 -16 0 -28" />
+              <path d="M 122 46 c -6 -12 6 -16 0 -28" />
+            </g>
+
+            <g data-forge-stem opacity="0">
+              <path d="M 100 46 C 100 30 100 24 98 14" stroke="#6b4a2a" stroke-width="5" fill="none" stroke-linecap="round" />
+              <path class="forge__leaf" d="M 100 26 C 116 12 138 14 142 22 C 134 36 112 36 100 26 Z" />
+            </g>
+
+            <path data-forge-shape d={FORGE_LAST} fill="url(#forge-body)" />
+
+            <g clip-path="url(#forge-clip)">
+              <ellipse data-forge-gloss cx="76" cy="80" rx="34" ry="42" fill="url(#forge-shine)" opacity="0" />
+              <g data-forge-foam opacity="0">
+                <circle cx="78" cy="86" r="7" opacity="0.55" /><circle cx="112" cy="72" r="5" opacity="0.45" />
+                <circle cx="132" cy="98" r="9" opacity="0.5" /><circle cx="66" cy="118" r="6" opacity="0.4" />
+                <circle cx="104" cy="120" r="8" opacity="0.45" /><circle cx="150" cy="76" r="4" opacity="0.4" />
+              </g>
+              <g data-forge-wrap>
+                <rect class="forge__sleeve" x="58" y="72" width="84" height="56" />
+                <rect class="forge__seam" x="58" y="72" width="84" height="5" opacity="0.55" />
+                <text class="forge__mark" x="100" y="105" text-anchor="middle" font-size="11" letter-spacing="1">APP&apos;LITE</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <div class="forge__say">
+          <p class="eyebrow">From orchard to wrapper</p>
+          <h2 class="forge__title" id="forge-title">What twelve hours do to <em>one apple.</em></h2>
+          <ol class="forge__steps" data-forge-steps>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">01</b><h3>One Antonovka apple.</h3><p>Tart, aromatic and full of pectin. Nothing has been added to it yet, and nothing will be.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">02</b><h3>Baked whole, until it collapses.</h3><p>Hours in a low oven. The sugars caramelise on their own — that is where all the sweetness comes from.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">03</b><h3>Whipped with egg white.</h3><p>Beaten until it triples in volume and holds the air. That is the entire second ingredient.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">04</b><h3>Spread thin, dried slowly.</h3><p>Twelve hours at low heat turn the foam into a fibrous sheet you can lift in one piece. That sheet is pastila.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">05</b><h3>Cut into a 35 g bar.</h3><p>About 97 kcal, two ingredients, sealed the same day it is cut.</p></li>
+          </ol>
+          <div class="forge__rail" aria-hidden="true">
+            <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
+            <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
+          </div>
+          <a class="btn btn--paper forge__cta" href="/shop/applite/">Shop the bars <Icon name="arrow" size={18} class="arrow" /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== INGREDIENTS ============================== -->
+  <section class="section container" aria-labelledby="ing-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">The whole ingredient list</p>
+        <h2 id="ing-title">Apples. Egg white. Sometimes berries.</h2>
+      </div>
+      <p class="muted" style="max-width:36ch">If it isn’t grown in an orchard or laid by a hen, it isn’t in the pack.</p>
+    </div>
+    <div class="trio" data-stagger>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes={im('apples-orchard').srcset && SIZES.third} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" /></div>
+        <h3>Antonovka apples <span class="muted">99%</span></h3>
+        <p>A tart, aromatic northern apple with lots of pectin. That is what lets the purée set without gelatine and taste like fruit rather than sugar.</p>
+      </article>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('process-oven').src} srcset={im('process-oven').srcset} sizes={im('process-oven').srcset && SIZES.third} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" /></div>
+        <h3>Egg white <span class="muted">1%</span></h3>
+        <p>Whipped into the purée to trap air. It is why pastila is light and springy instead of a dense fruit leather.</p>
+      </article>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('flourless-bar').src} srcset={im('flourless-bar').srcset} sizes={im('flourless-bar').srcset && SIZES.third} alt={im('flourless-bar').alt} width={im('flourless-bar').width} height={im('flourless-bar').height} loading="lazy" decoding="async" /></div>
+        <h3>Berries &amp; spice <span class="muted">optional</span></h3>
+        <p>Blueberry, cranberry, cherry, lingonberry, black currant, cinnamon, pine nuts. Whole fruit, not “natural flavouring”.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================== COMPARISON ============================== -->
+  <section class="section band" aria-labelledby="vs-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Honest maths</p>
+          <h2 id="vs-title">Same craving. Less than half the calories.</h2>
+        </div>
+      </div>
+      <div class="vs" data-reveal>
+        <div class="vs__col vs__col--win">
+          <p class="eyebrow">App’Lite Apple Bar · 35 g</p>
+          <div class="vs__kcal"><b data-count="97">97</b> <span class="muted small">kcal</span></div>
+          <div class="vs__meter" aria-hidden="true"><i style="--w:0.404"></i></div>
+          <ul class="vs__list">
+            <li class="yes"><Icon name="check" size={18} /> 0 g added sugar — sweetness from the apple</li>
+            <li class="yes"><Icon name="check" size={18} /> 2 ingredients</li>
+            <li class="yes"><Icon name="check" size={18} /> 0 g fat, no flour, no gluten</li>
+            <li class="yes"><Icon name="check" size={18} /> Source of fibre</li>
+          </ul>
+        </div>
+        <div class="vs__vs">vs</div>
+        <div class="vs__col">
+          <p class="eyebrow">Typical milk chocolate bar · 45 g</p>
+          <div class="vs__kcal"><b data-count="240" data-count-prefix="~">~240</b> <span class="muted small">kcal</span></div>
+          <div class="vs__meter vs__meter--rival" aria-hidden="true"><i style="--w:1"></i></div>
+          <ul class="vs__list">
+            <li class="no"><Icon name="close" size={18} /> ~24 g sugar, mostly added</li>
+            <li class="no"><Icon name="close" size={18} /> 8–12 ingredients incl. emulsifiers</li>
+            <li class="no"><Icon name="close" size={18} /> ~13 g fat</li>
+            <li class="no"><Icon name="close" size={18} /> No meaningful fibre</li>
+          </ul>
+        </div>
+      </div>
+      <p class="tiny muted mt-4">Chocolate figures are typical values for a mainstream 45 g milk chocolate bar; Apple Bar values are per pack. Full nutrition on every product page.</p>
+    </div>
+  </section>
+
+  <!-- ============================== COLLECTIONS ============================== -->
+  <section class="section container" aria-labelledby="col-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Shop by shape</p>
+        <h2 id="col-title">One apple, six ways to eat it.</h2>
+      </div>
+      <a class="link" href="/shop/">See everything</a>
+    </div>
+    <div class="grid grid--3 tiles" data-stagger>
+      {tiles.map((c) => (
+        <a class="ct" href={`/shop/${c.key}/`} style={`--ct-accent:${c.accent}`}>
+          <img src={imgSrc(c.image)} srcset={imgSrcset(c.image)} sizes={imgSrcset(c.image) && SIZES.tile} alt="" width={img(c.image).width} height={img(c.image).height} loading="lazy" decoding="async" />
+          <div class="ct__body"><h3>{c.name}</h3><p>{c.description.split('.')[0]}.</p></div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================== HOW IT'S MADE ============================== -->
+  <section class="section container" aria-labelledby="how-title">
+    <div class="split">
+      <div class="frame frame--4x5 rounded" data-reveal>
+        <img src={im('pastila-texture').src} srcset={im('pastila-texture').srcset} sizes={im('pastila-texture').srcset && SIZES.third} alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">How it’s made</p>
+        <h2 id="how-title">Twelve hours, four steps, zero shortcuts.</h2>
+        <div class="steps steps--col mt-4">
+          <div class="step"><h3>Bake</h3><p>Whole Antonovka apples go into the oven until soft and caramel-edged.</p></div>
+          <div class="step"><h3>Whip</h3><p>The purée is beaten with egg white until it triples in volume.</p></div>
+          <div class="step"><h3>Layer &amp; dry</h3><p>Thin sheets dry slowly at low heat, then are stacked and pressed.</p></div>
+          <div class="step"><h3>Cut &amp; pack</h3><p>Bars, squares and loaves are cut by hand and sealed the same day.</p></div>
+        </div>
+        <a class="btn btn--ghost mt-4" href="/how-its-made/">The full process</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHERE TO BUY / B2B ============================== -->
+  <section class="section container" aria-labelledby="buy-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Also on shelves</p>
+      <h2 id="buy-title">Find Semers at Maxima, on Barbora and in stores across Europe.</h2>
+      <p>Retailer, café, office or distributor? We ship pallets as happily as parcels, and we do private label.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/where-to-buy/">Where to buy</a>
+        <a class="btn btn--ghost cta-band__ghost" href="/wholesale/">Wholesale &amp; B2B</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== JOURNAL ============================== -->
+  <section class="section container section--tight" aria-labelledby="jr-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Journal</p>
+        <h2 id="jr-title">Reading for the kettle to boil.</h2>
+      </div>
+      <a class="link" href="/journal/">All articles</a>
+    </div>
+    <div class="grid grid--3" data-stagger>
+      {ARTICLES_SORTED.slice(0, 3).map((a) => (
+        <a class="jc" href={`/journal/${a.slug}/`}>
+          <div class="frame frame--3x2"><img src={imgSrc(a.image)} srcset={imgSrcset(a.image)} sizes={imgSrcset(a.image) && SIZES.third} alt="" width={img(a.image).width} height={img(a.image).height} loading="lazy" decoding="async" /></div>
+          <div class="jc__meta">{a.readMinutes} min read</div>
+          <h3>{a.title}</h3>
+          <p>{a.description}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================== FAQ ============================== -->
+  <section class="section container" aria-labelledby="faq-title">
+    <div class="faq-grid">
+      <div>
+        <p class="eyebrow">Questions</p>
+        <h2 id="faq-title">Things people ask before their first box.</h2>
+        <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+      </div>
+      <div class="acc" data-reveal>
+        {homeFaqs.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  /**
+   * The apple becoming a bar.
+   *
+   * Everything is driven by one number: how far the reader has scrolled through
+   * the tall section, 0 to 1. The five silhouettes are resampled once to the
+   * same number of equally spaced points, after which a frame is a linear blend
+   * of two point arrays — no path-command matching, and a shape can be redrawn
+   * in an editor without touching this file.
+   *
+   * Work is done on a scroll, not on a clock: a rAF is scheduled only when the
+   * page has actually moved and only while the section is on screen, so a
+   * reader who stops scrolling costs nothing and one who never reaches the
+   * section costs a single IntersectionObserver.
+   */
+  import { FORGE_SHAPES, FORGE_COLOURS } from '~/data/forge';
+
+  const section = document.querySelector<HTMLElement>('[data-forge]');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (section && !reduced.matches) {
+    section.classList.add('forge--live');
+    const svg = section.querySelector('svg')!;
+    const shape = section.querySelector<SVGPathElement>('[data-forge-shape]')!;
+    const clip = section.querySelector<SVGPathElement>('[data-forge-clip]')!;
+    const stops = [...section.querySelectorAll<SVGStopElement>('[data-forge-stop]')];
+    const steps = [...section.querySelectorAll<HTMLElement>('.forge__step')];
+    const ticks = [...section.querySelectorAll<HTMLElement>('.forge__tick i')];
+    const layer = (name: string) => section.querySelector<SVGElement>(`[data-forge-${name}]`);
+    const stem = layer('stem'), steam = layer('steam'), gloss = layer('gloss'), foam = layer('foam'), wrap = layer('wrap');
+
+    /** How many points each silhouette is cut into. Enough that the curve reads smooth at 26rem. */
+    const N = 96;
+    /*
+     * getPointAtLength needs a path in the document, and this one must never be
+     * seen: it is a measuring tape, not a drawing.
+     */
+    const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    svg.appendChild(probe);
+    const frames = FORGE_SHAPES.map((d) => {
+      probe.setAttribute('d', d);
+      const len = probe.getTotalLength();
+      const pts: number[] = [];
+      for (let i = 0; i < N; i++) {
+        const pt = probe.getPointAtLength((i / N) * len);
+        pts.push(pt.x, pt.y);
+      }
+      return pts;
+    });
+    probe.remove();
+
+    const clamp = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    /** Which pair of stages `t` falls between, and how far across that pair it is. */
+    const span = (t: number) => {
+      const s = Math.min(frames.length - 1.0001, clamp(t) * (frames.length - 1));
+      const i = Math.floor(s);
+      return [i, s - i] as const;
+    };
+    /** 1 while `t` is inside [b, c], ramping up from a and back down to d. */
+    const window_ = (t: number, a: number, b: number, c: number, d: number) =>
+      Math.min(clamp((t - a) / (b - a)), clamp((d - t) / (d - c)));
+
+    /*
+     * A closed Catmull-Rom spline through the blended points. Straight segments
+     * between 96 samples are visibly faceted on the apple's shoulders; the same
+     * points read as one continuous curve once each is given tangents.
+     */
+    const toPath = (p: number[]) => {
+      const at = (i: number) => {
+        const j = ((i % N) + N) % N;
+        return [p[j * 2], p[j * 2 + 1]] as const;
+      };
+      let d = `M ${at(0)[0].toFixed(2)} ${at(0)[1].toFixed(2)}`;
+      for (let i = 0; i < N; i++) {
+        const [x0, y0] = at(i - 1), [x1, y1] = at(i), [x2, y2] = at(i + 1), [x3, y3] = at(i + 2);
+        d += ` C ${(x1 + (x2 - x0) / 6).toFixed(2)} ${(y1 + (y2 - y0) / 6).toFixed(2)}`
+          + ` ${(x2 - (x3 - x1) / 6).toFixed(2)} ${(y2 - (y3 - y1) / 6).toFixed(2)}`
+          + ` ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+      }
+      return `${d} Z`;
+    };
+
+    const blend = new Array(N * 2);
+    let shown = -1;
+
+    const draw = () => {
+      const box = section.getBoundingClientRect();
+      const travel = section.offsetHeight - window.innerHeight;
+      const t = travel > 0 ? clamp(-box.top / travel) : 0;
+
+      const [i, f] = span(t);
+      const a = frames[i], b = frames[i + 1] || a;
+      for (let k = 0; k < N * 2; k++) blend[k] = a[k] + (b[k] - a[k]) * f;
+      const d = toPath(blend);
+      shape.setAttribute('d', d);
+      clip.setAttribute('d', d);
+
+      const ca = FORGE_COLOURS[i], cb = FORGE_COLOURS[i + 1] || ca;
+      stops.forEach((stop, s) => {
+        const [r, g, bl] = ca[s].map((v, c) => Math.round(v + (cb[s][c] - v) * f));
+        stop.setAttribute('stop-color', `rgb(${r} ${g} ${bl})`);
+      });
+
+      // Each layer belongs to one part of the story and is only paid for there.
+      if (stem) stem.style.opacity = String(window_(t, -1, 0, 0.05, 0.15));
+      if (gloss) gloss.style.opacity = String(window_(t, -1, 0, 0.1, 0.3));
+      if (steam) steam.style.opacity = String(window_(t, 0.12, 0.22, 0.34, 0.46));
+      if (foam) foam.style.opacity = String(window_(t, 0.38, 0.5, 0.66, 0.78));
+      if (wrap) wrap.style.opacity = String(window_(t, 0.9, 0.99, 9, 10));
+
+      const step = Math.min(steps.length - 1, Math.floor(t * steps.length * 0.9999));
+      if (step !== shown) {
+        steps.forEach((el, k) => el.classList.toggle('is-on', k === step));
+        shown = step;
+      }
+      ticks.forEach((el, k) => el.style.setProperty('--f', String(clamp(t * ticks.length - k))));
+    };
+
+    let queued = false;
+    const schedule = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        draw();
+      });
+    };
+
+    let watching = false;
+    const onScroll = () => watching && schedule();
+    new IntersectionObserver(
+      ([entry]) => {
+        watching = entry.isIntersecting;
+        schedule();
+      },
+      { rootMargin: '10% 0px' },
+    ).observe(section);
+
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', schedule, { passive: true });
+    draw();
+  }
+  /**
+   * The two calorie numbers count up as the comparison arrives.
+   *
+   * The final text is put back verbatim rather than reformatted: "~240" carries
+   * a tilde that means "about", and a counter that rounded it away would be
+   * making a stronger claim than the page does.
+   */
+  if (!reduced.matches) {
+    const counters = [...document.querySelectorAll<HTMLElement>('[data-count]')];
+    if (counters.length && 'IntersectionObserver' in window) {
+      const run = (el: HTMLElement) => {
+        const target = Number(el.dataset.count);
+        const prefix = el.dataset.countPrefix || '';
+        const settled = el.textContent || '';
+        if (!Number.isFinite(target)) return;
+        const started = performance.now();
+        const step = (now: number) => {
+          const k = Math.min(1, (now - started) / 900);
+          // The same curve the CSS uses, so the number and its bar arrive together.
+          const eased = 1 - Math.pow(1 - k, 3);
+          el.textContent = k < 1 ? prefix + Math.round(target * eased) : settled;
+          if (k < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      };
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (!entry.isIntersecting) continue;
+            io.unobserve(entry.target);
+            run(entry.target as HTMLElement);
+          }
+        },
+        { threshold: 0.6 },
+      );
+      counters.forEach((el) => io.observe(el));
+    }
+  }
+  /**
+   * The ingredient tape leans the way the reader is going.
+   *
+   * The strip keeps its own steady loop; this adds a nudge on top of it and
+   * lets it spring back, so scrolling feels like it is dragging the tape rather
+   * than playing next to it. Two transforms on two elements, because one
+   * element cannot hold an animation and a live value in the same property.
+   */
+  if (!reduced.matches) {
+    const lean = document.querySelector<HTMLElement>('[data-marquee-lean]');
+    if (lean) {
+      let offset = 0;
+      let previous = window.scrollY;
+      let running = false;
+      const settle = () => {
+        // Springs back to nothing, so a reader who stops sees a tape that is
+        // simply running again rather than one parked at an angle.
+        offset *= 0.9;
+        if (Math.abs(offset) < 0.4) offset = 0;
+        lean.style.setProperty('--lean', `${offset.toFixed(1)}px`);
+        running = offset !== 0;
+        if (running) requestAnimationFrame(settle);
+      };
+      addEventListener(
+        'scroll',
+        () => {
+          const delta = window.scrollY - previous;
+          previous = window.scrollY;
+          offset = Math.max(-90, Math.min(90, offset + delta * 0.55));
+          if (!running) {
+            running = true;
+            requestAnimationFrame(settle);
+          }
+        },
+        { passive: true },
+      );
+    }
+  }
+</script>
+
+<style>
+  /* hero */
+  .hero--home { background: var(--bg); }
+
+  /* who it's for */
+  .famband { margin: clamp(3rem, 6vw, 5.5rem) 0; }
+  .famband__img { display: block; width: 100%; height: clamp(17rem, 40vw, 30rem); object-fit: cover; }
+  .famband__say { max-width: 44rem; margin: clamp(1.4rem, 3vw, 2rem) auto 0; padding: 0 1.25rem; text-align: center; }
+  .famband__title { font-size: var(--fs-2xl); text-wrap: balance; }
+  .famband__lead { margin-top: 0.6rem; color: var(--fg-2); }
+  .hero__stage { position: relative; aspect-ratio: 1; max-width: 34rem; margin-inline: auto; }
+  .hero__stage::before { content: ''; position: absolute; inset: 6% 4%; border-radius: 48% 52% 46% 54% / 52% 44% 56% 48%; background: radial-gradient(circle at 30% 30%, var(--mint-100), var(--cream-2) 70%); }
+  .hero__pack { position: absolute; width: 78%; height: auto; filter: drop-shadow(0 30px 40px rgb(27 22 18 / 0.28)); }
+  .hero__pack--a { left: 2%; bottom: 4%; transform: rotate(-6deg); animation: float 7s ease-in-out infinite; }
+  .hero__pack--b { right: -2%; top: 0; width: 66%; transform: rotate(9deg); opacity: 0.95; animation: float 7s ease-in-out -3.5s infinite; }
+  @media (prefers-reduced-motion: reduce) { .hero__pack, .hero__float { animation: none; } }
+
+  /* ---------------------------------------------------------- the forge */
+  /*
+   * The flat version is the default and the pinned one is opted into, not the
+   * other way round. A reader with no JavaScript would otherwise get three
+   * screens of scroll holding one frozen apple and four paragraphs at opacity
+   * zero — the section is only worth its height once something is driving it,
+   * so `forge--live` is added by the script and by nothing else.
+   */
+  .forge { position: relative; background: var(--bg-sunken); padding-block: clamp(3rem, 7vw, 6rem); }
+  .forge__inner { display: grid; gap: clamp(1.4rem, 3vw, 2.5rem); align-items: center; }
+  .forge__art { justify-self: center; width: min(34rem, 46vw); }
+  .forge__svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 18px 26px rgb(27 22 18 / 0.16)); }
+  /*
+   * The drawing's colours live here rather than on the SVG elements: var() in a
+   * presentation attribute is not something every engine resolves, and these
+   * are the shop's own tokens rather than numbers invented for one picture.
+   */
+  [data-forge-steam] { stroke: var(--ink-300); }
+  [data-forge-foam] { fill: var(--cream-0); }
+  .forge__leaf { fill: var(--leaf-500); }
+  .forge__sleeve { fill: var(--mint-500); }
+  .forge__seam { fill: var(--mint-600); }
+  .forge__mark { font-family: var(--font-sans); font-weight: 700; fill: var(--cream-0); }
+
+  .forge__title { font-size: var(--fs-3xl); line-height: var(--lh-tight); letter-spacing: -0.03em; max-width: 15ch; }
+  .forge__title em { font-style: italic; font-weight: 400; color: var(--accent-ink); }
+
+  .forge__steps { list-style: none; margin: clamp(1.4rem, 3.5vw, 2.2rem) 0 0; padding: 0; display: grid; gap: 1.5rem; }
+  .forge__n { display: block; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.16em; color: var(--accent-ink); }
+  .forge__step h3 { font-size: var(--fs-2xl); margin: 0.3rem 0 0.55rem; letter-spacing: -0.02em; line-height: var(--lh-snug); }
+  .forge__step p { color: var(--fg-2); max-width: 40ch; margin: 0; font-size: var(--fs-lg); }
+  .forge__rail { display: none; }
+  .forge__cta { margin-top: clamp(1.2rem, 3vw, 1.8rem); }
+
+  /*
+   * Pinned. The height IS the timeline: five stages need room to be read, and a
+   * phone gets a shorter one because a thumb covers ground faster than a wheel.
+   * All five steps sit in the same box so the block cannot change height as the
+   * reader scrolls — a stage that resizes its own container drags the pinned
+   * artwork up and down with it.
+   */
+  .forge--live { height: 320vh; padding-block: 0; }
+  .forge--live .forge__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; align-items: center; overflow: clip; }
+  .forge--live .forge__steps { position: relative; display: block; min-height: 13.5rem; }
+  .forge--live .forge__step { position: absolute; inset: 0; opacity: 0; transform: translateY(12px); transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+  .forge--live .forge__step.is-on { opacity: 1; transform: none; }
+  .forge--live .forge__rail { display: flex; gap: 0.35rem; margin-top: 0.4rem; }
+  .forge__tick { flex: 1; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+  .forge__tick i { display: block; height: 100%; background: var(--accent); transform: scaleX(var(--f, 0)); transform-origin: left; }
+
+  @media (min-width: 56rem) {
+    .forge__inner { grid-template-columns: 1.05fr 0.95fr; gap: clamp(2rem, 5vw, 4.5rem); }
+  }
+  @media (max-width: 55.99rem) {
+    .forge--live { height: 280vh; }
+    .forge__art { width: min(17rem, 54vw); }
+    .forge--live .forge__steps { min-height: 14rem; }
+  }
+
+  /* ------------------------------------------------------------- the tape */
+  .marquee__lean { transform: translate3d(var(--lean, 0px), 0, 0) skewX(calc(var(--lean, 0px) * 0.02deg)); will-change: transform; }
+  @media (prefers-reduced-motion: reduce) { .marquee__lean { transform: none; } }
+
+  /* ------------------------------------------------- the honest-maths meters */
+  /*
+   * The claim was two numbers in a row and a reader had to do the division
+   * themselves. Drawn to scale against the same 240 kcal, the gap is the first
+   * thing seen and the last thing argued with. Both bars grow from nothing when
+   * the block arrives, on the class the reveal observer already sets.
+   */
+  .vs__meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; margin-top: -0.35rem; }
+  .vs__meter i { display: block; height: 100%; border-radius: inherit; background: var(--leaf-500); transform: scaleX(0); transform-origin: left; transition: transform 1.1s var(--ease-out) 0.15s; }
+  .vs__meter--rival i { background: var(--ink-300); }
+  [data-reveal].is-in .vs__meter i { transform: scaleX(var(--w, 1)); }
+  .vs__kcal b { font-weight: inherit; font-variant-numeric: tabular-nums; }
+  @media (prefers-reduced-motion: reduce) { .vs__meter i { transition: none; transform: scaleX(var(--w, 1)); } }
+
+  /* --------------------------------------------------- a hero that catches light */
+  /*
+   * One slow highlight travelling across the packs, the way a light does over
+   * foil on a shelf. soft-light keeps it on the packaging rather than washing
+   * the paper behind it.
+   */
+  .hero__stage::after {
+    content: ''; position: absolute; inset: -20%; pointer-events: none; mix-blend-mode: soft-light;
+    background: linear-gradient(76deg, transparent 38%, rgb(255 255 255 / 0.85) 47%, transparent 56%);
+    transform: translateX(-60%); animation: sheen 9s var(--ease-in-out) 1.5s infinite;
+  }
+  @keyframes sheen { 0% { transform: translateX(-60%); } 55%, 100% { transform: translateX(60%); } }
+  @media (prefers-reduced-motion: reduce) { .hero__stage::after { animation: none; opacity: 0; } }
+
+  /* dark render band */
+  .render { background: var(--render-bg); color: var(--cream-0); overflow: clip; }
+  .render__grid { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: center; padding-block: clamp(3rem, 7vw, 6rem); }
+  @media (min-width: 56rem) { .render__grid { grid-template-columns: 0.9fr 1.1fr; } }
+  .render .eyebrow { color: var(--honey-500); }
+  .render .eyebrow::before { background: var(--honey-500); }
+  .render__title { color: inherit; font-size: var(--fs-4xl); letter-spacing: -0.03em; line-height: 1; margin-bottom: 1rem; }
+  .render__title em { font-style: italic; font-weight: 400; color: var(--honey-500); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .render__copy p { color: rgb(250 243 228 / 0.82); max-width: 52ch; }
+  .render__link { color: var(--cream-0); border-color: var(--honey-500); }
+  .render__media img { width: 100%; height: auto; display: block; border-radius: var(--r-lg); }
+  @media (min-width: 56rem) { .render__media { margin-right: calc(-1 * var(--gutter)); } .render__media img { transform: scale(1.06); } }
+
+  /* ingredient trio with images */
+  .feat--img { padding: 0; overflow: clip; }
+  .feat--img .frame { border-radius: 0; }
+  .feat--img h3, .feat--img p { padding-inline: 1.4rem; }
+  .feat--img h3 { padding-top: 1.2rem; }
+  .feat--img p { padding-bottom: 1.4rem; }
+  .feat--img h3 .muted { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; margin-left: 0.3em; }
+
+  /* steps stacked next to image */
+  .steps--col { grid-template-columns: 1fr 1fr; gap: 1.25rem 2rem; }
+  @media (max-width: 30rem) { .steps--col { grid-template-columns: 1fr; } }
+
+  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+
+  /* six collection tiles: two-up on phones instead of six full-width 4:5 tiles */
+  @media (max-width: 40rem) {
+    .tiles { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .tiles .ct__body { padding: 0.8rem; padding-top: 2.5rem; }
+    .tiles .ct__body h3 { font-size: var(--fs-lg); }
+    .tiles .ct__body p { display: none; }
+  }
+
+  .faq-grid { display: grid; gap: 2rem; }
+  @media (min-width: 56rem) { .faq-grid { grid-template-columns: 1fr 1.4fr; gap: 4rem; } }
+</style>

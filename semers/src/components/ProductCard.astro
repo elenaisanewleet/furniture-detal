@@ -1,0 +1,87 @@
+---
+/**
+ * Product card for grids. Whole card is a link (stretched from the title);
+ * the "+" adds the first flavour straight to the box.
+ */
+import Icon from './Icon.astro';
+import { FLAVORS, formatPrice, unitPrice, type Product } from '~/data/products';
+import { img, imgSrc, imgSrcset, SIZES } from '~/data/images';
+import { stripLocale } from '~/i18n/config';
+import { localizedProduct } from '~/data/copy';
+import { t } from '~/i18n/ui';
+
+interface Props {
+  product: Product;
+  loading?: 'lazy' | 'eager';
+  compact?: boolean;
+}
+const { product: raw, loading = 'lazy', compact = false } = Astro.props;
+/** The card is rendered inside a locale, so its words come from that locale. */
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const p = localizedProduct(raw, locale);
+const image = img(p.images[0]);
+const v0 = p.variants[0];
+const add = JSON.stringify({
+  slug: p.slug,
+  name: p.title,
+  variant: v0.key,
+  variantLabel: ui.flavours[v0.key],
+  price: v0.price ?? p.price,
+  image: imgSrc(p.images[0]),
+  weight: p.weightGrams,
+  url: `/products/${p.slug}/`,
+  tier: p.collection !== 'gift-sets',
+});
+const flavours = p.variants.map((v) => ui.flavours[v.key]).join(', ');
+const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
+---
+<article
+  class={`pc ${compact ? 'pc--compact' : ''}`}
+  style={`--pc-accent:${p.accent}`}
+  data-product-card
+  data-slug={p.slug}
+  data-collection={p.collection}
+  data-diet={p.diet.join(' ')}
+  data-price={p.price}
+  data-order={p.order}
+  data-name={p.title}
+  data-best={p.bestseller ? '1' : '0'}
+  data-kcal={p.kcalPerUnit}
+  data-flavours={flavours}
+  data-hook={p.hook}
+>
+  <div class={`pc__media ${image.fit === 'contain' ? 'is-contain' : ''}`}>
+    {badge && <span class="badge">{badge}</span>}
+    <img src={imgSrc(p.images[0])} srcset={imgSrcset(p.images[0])} sizes={imgSrcset(p.images[0]) && SIZES.card} alt={image.alt} width={image.width} height={image.height} loading={loading} decoding="async" />
+  </div>
+  <div class="pc__body">
+    <h3 class="pc__name">
+      <a href={`/products/${p.slug}/`}>{p.name} <span class="muted small nowrap">{p.weightGrams} g</span></a>
+    </h3>
+    <p class="pc__hook">{p.hook}</p>
+    <div class="pc__meta">
+      {p.kcalPerUnit > 0 && <span>{p.kcalPerUnit} kcal</span>}
+      {p.diet.slice(0, 2).map((d) => <span>{ui.diet[d]}</span>)}
+    </div>
+    <div class="pc__foot">
+      <div>
+        <div class="pc__price">
+          <span data-card-price>{formatPrice(p.price, locale)}</span>
+          <s data-card-compare hidden={!p.compareAt}>{p.compareAt ? formatPrice(p.compareAt, locale) : ''}</s>
+        </div>
+        <div class="pc__unit">{unitPrice(p, locale)} {ui.per100g}</div>
+      </div>
+      {/* A row of colour dots standing in for the flavour list. Without a role the label is ignored and a screen reader announces nothing at all. */}
+      {p.variants.length > 1 && (
+        <div class="pc__swatches" role="img" title={flavours} aria-label={`${p.variants.length} flavours: ${flavours}`}>
+          {p.variants.slice(0, 5).map((v) => <span class="pc__swatch" style={`--sw:${FLAVORS[v.key].color}`}></span>)}
+          {p.variants.length > 5 && <span class="pc__more">+{p.variants.length - 5}</span>}
+        </div>
+      )}
+      <button class="pc__add" type="button" data-add={add} data-add-open="false" aria-label={ui.addToBoxAria(p.title)}>
+        <Icon name="plus" size={20} />
+      </button>
+    </div>
+  </div>
+</article>

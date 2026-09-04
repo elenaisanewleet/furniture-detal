@@ -1,0 +1,374 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { RENDER_BG, im, SIZES } from '~/data/images';
+import { FAQS } from '~/data/faq';
+import { site } from '~/data/site';
+import { formatThreshold } from '~/data/products';
+import { faqPage } from '~/lib/schema';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+
+/** Five nutrition / product questions from the shared FAQ, in the order a first-time reader asks them. */
+const pick = [
+  'Is there really no added sugar?',
+  'How many calories?',
+  'Is it gluten free?',
+  'Is it suitable for vegetarians, vegans, kids?',
+  'How long does it keep and how should I store it?',
+];
+const faqs = pick.flatMap((q) => {
+  const f = FAQS.find((x) => x.q === q);
+  return f ? [f] : [];
+});
+
+/** Typical values for the mainstream product in each category. Apple Bar values are per 35 g bar. */
+const rows = [
+  { name: "App’Lite Apple Bar", size: '35 g · per bar', kcal: '97', sugar: '0 g', n: '2', note: 'Baked apples and egg white. About 1.8 g fibre from the whole fruit; the sweetness is the apple’s own.', ours: true },
+  { name: 'Milk chocolate bar', size: '45 g · typical', kcal: '~240', sugar: '~24 g', n: '8–12', note: 'Nearly all of its sugar is added. It is usually the first word on the label.', ours: false },
+  { name: 'Granola bar', size: '40 g · typical', kcal: '~180', sugar: '~10 g', n: '10 or more', note: 'Oats need syrup or honey to hold together, and oil to stay soft.', ours: false },
+  { name: 'Dried apple', size: '30 g · typical', kcal: '~90', sugar: '0 g', n: '1–2', note: 'The closest rival. Often treated with sulphites to keep it pale; check the label.', ours: false },
+];
+
+const who = [
+  { icon: 'box', title: 'Lunchbox parents', text: 'A sweet that is, in fact, a baked apple. Sealed, survives a school bag, leaves no crumbs.' },
+  { icon: 'clock', title: 'Desk snackers', text: 'The four o’clock moment, answered with 97 kcal instead of whatever the vending machine had left.' },
+  { icon: 'globe', title: 'Hikers and runners', text: 'Weighs 35 g, lies flat in a jersey pocket, does not melt, and keeps for months without a fridge.' },
+  { icon: 'shield', title: 'People cutting added sugar', text: 'Read the label once and stop reading labels. Two ingredients, both of which you could buy at a market.' },
+  { icon: 'star', title: 'Gift-givers', text: 'A loaf of pastila is unusual enough to be a story and good enough to be finished. Boxes ship from Riga with a card if you ask.' },
+] as const;
+
+const ideas = [
+  { title: 'With tea', text: 'The original way. A thick slice of Belyov pastila beside strong black tea, no sugar in either.' },
+  { title: 'On porridge', text: 'Crumble a bar over morning oats or yoghurt instead of honey. It softens into the warm bowl.' },
+  { title: 'In a lunchbox', text: 'One bar in the corner of the box. It does not leak, melt or crumble, and it is still good at three.' },
+  { title: 'After a run', text: 'Something sweet and light before the proper meal. Chase it with water.' },
+  { title: 'With cheese', text: 'Slice the 180 g loaf thin and lay it on a board with an aged hard cheese. Tart apple, salty cheese, done.' },
+];
+---
+<Base
+  title="Why pastila? The apple snack with no added sugar"
+  description="Why baked-apple pastila beats the snack bar: 99% Antonovka apples, egg white, no added sugar, about 97 kcal. Honest numbers, who it suits, how to eat it."
+  canonical="/why-pastila/"
+  ogImage="apple-split"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Why pastila', href: '/why-pastila/' }]}
+  schema={[faqPage(faqs)]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container" aria-labelledby="page-title">
+    <p class="eyebrow">Why pastila</p>
+    <h1 id="page-title">Why pastila beats the snack bar <em>you’re holding.</em></h1>
+    <p class="lead">Pastila is a baked-apple snack with two ingredients: Antonovka apples and egg white. No added sugar, no flour, no gluten, about 97 kcal a bar. Here is what it is, why it needs nothing else, and how the numbers stack up against the usual suspects.</p>
+    <div class="hero-cta">
+      <a class="btn btn--lg" href="/shop/apple-bars/">Shop apple bars <Icon name="arrow" size={20} class="arrow" /></a>
+      <a class="btn btn--lg btn--ghost" href="/how-its-made/">How it’s made</a>
+    </div>
+    <div class="hero-media" data-reveal>
+      <div class="frame frame--16x9">
+        <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.half} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+      </div>
+    </div>
+    <div class="trust" data-reveal>
+      <div><Icon name="apple" size={22} /><div><strong>99% apples</strong><span>Antonovka, baked and whipped</span></div></div>
+      <div><Icon name="check" size={22} /><div><strong>0 g added sugar</strong><span>Sweet from the fruit alone</span></div></div>
+      <div><Icon name="clock" size={22} /><div><strong>12 months</strong><span>No fridge, no preservatives</span></div></div>
+      <div><Icon name="truck" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Parcels leave Riga in 1–2 business days</span></div></div>
+    </div>
+  </section>
+
+  <!-- ============================== WHAT PASTILA IS ============================== -->
+  <section class="section container" aria-labelledby="what-title">
+    <div class="split">
+      <div class="frame frame--1x1 rounded" data-reveal>
+        <img src={im('pastila-macro').src} srcset={im('pastila-macro').srcset} sizes={im('pastila-macro').srcset && SIZES.third} alt={im('pastila-macro').alt} width={im('pastila-macro').width} height={im('pastila-macro').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">What pastila is</p>
+        <h2 id="what-title">A baked apple, whipped with air and dried into a loaf.</h2>
+        <div class="prose mt-4">
+          <p>Pastila is a traditional confection from the town of Belyov, first made commercially in 1888 by the merchant Amvrosy Prokhorov. The method has barely changed since. Sour Antonovka apples are baked whole until their sugars caramelise. The purée is whipped with egg white until it holds air, spread in thin sheets and dried for hours at low heat. The sheets are stacked, pressed and dried again.</p>
+          <p>What comes out is neither a fruit leather nor a cake. It is soft, fibrous and slightly springy, and it tastes of baked apple and very little else. The loaf becomes a bar when we cut it, a meringue when we bake it, a dessert square when we press it thicker. The ingredient list does not change on the way.</p>
+        </div>
+        <div class="cluster mt-4">
+          <a class="btn btn--paper" href="/shop/pastila/">Shop Belyov pastila</a>
+          <a class="link" href="/story/">Read the story</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHY NO SUGAR ============================== -->
+  <section class="section band" aria-labelledby="sugar-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Why it needs no sugar</p>
+          <h2 id="sugar-title">Three things happen in the oven. None of them involves a sugar bowl.</h2>
+        </div>
+        <p class="muted" style="max-width:38ch">Most “no added sugar” bars get there with syrups, sweeteners or fruit concentrate. Pastila gets there by physics.</p>
+      </div>
+      <div class="trio" data-reveal>
+        <article class="feat">
+          <div class="feat__icon"><Icon name="apple" size={22} /></div>
+          <h3>Baking concentrates the fruit</h3>
+          <p>An Antonovka apple is mostly water. Bake it slowly and the water leaves while the apple’s own fructose stays, so the purée tastes sweeter than the fruit that went in, without a gram of anything added.</p>
+        </article>
+        <article class="feat" style="--feat-bg:var(--leaf-100);--feat-fg:var(--leaf-600)">
+          <div class="feat__icon"><Icon name="leaf" size={22} /></div>
+          <h3>Pectin sets it</h3>
+          <p>Antonovka is unusually rich in pectin, the fibre that makes jam set. As the whipped purée dries, that pectin holds the structure, so there is no gelatine, no starch and no flour in the recipe.</p>
+        </article>
+        <article class="feat" style="--feat-bg:var(--honey-100);--feat-fg:var(--bar-700)">
+          <div class="feat__icon"><Icon name="egg" size={22} /></div>
+          <h3>Egg white lifts it</h3>
+          <p>Whipped egg white traps thousands of tiny air pockets in the purée. That is why pastila is light and springy rather than dense and sticky, and why a 35 g bar feels like more than it weighs.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== THE WHOLE LABEL (dark) ============================== -->
+  <section class="dark" style={`--dark-bg:${RENDER_BG}`} aria-labelledby="label-title">
+    <div class="container dark__grid">
+      <div class="dark__media" data-reveal>
+        <img src={im('apple-split').src} srcset={im('apple-split').srcset} sizes={im('apple-split').srcset && SIZES.half} alt={im('apple-split').alt} width={im('apple-split').width} height={im('apple-split').height} loading="lazy" decoding="async" />
+      </div>
+      <div class="dark__copy" data-reveal>
+        <p class="eyebrow">The whole label</p>
+        <h2 id="label-title">Baked apples. Egg white. Read it again, it does not get longer.</h2>
+        <p>There is nothing to decode on a Semers pack. No “natural flavouring”, no sweeteners with numbers for names, no oil to keep things soft. Slow drying does the preserving, which is why a bar keeps for twelve months in a drawer.</p>
+        <div class="stats">
+          <div class="stat"><strong>99%</strong><span>apples</span></div>
+          <div class="stat"><strong>2</strong><span>ingredients</span></div>
+          <div class="stat"><strong>0 g</strong><span>added sugar</span></div>
+          <div class="stat"><strong>12</strong><span>months, no fridge</span></div>
+        </div>
+        <div class="cluster mt-6">
+          <a class="btn btn--paper" href="/shop/">Shop all products</a>
+          <a class="link dark__link" href="/products/apple-bar-35g/">The 35 g Apple Bar</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== HONEST NUMBERS ============================== -->
+  <section class="section container" aria-labelledby="numbers-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Honest numbers</p>
+        <h2 id="numbers-title">One bar next to the things it replaces.</h2>
+      </div>
+      <p class="muted" style="max-width:38ch">Typical values for the mainstream product in each category. Ours are for one App’Lite Apple Bar; the full table is on every product page.</p>
+    </div>
+    {/* Scrolls sideways when the columns do not fit, which a mouse can do and a keyboard cannot — unless the box itself can take focus. Named from the table's own caption, not the heading above it: the section already carries that heading as its name, and two landmarks with one name are two landmarks a screen reader cannot tell apart. */}
+    <div class="cmp-wrap table-wrap" data-reveal tabindex="0" role="region" aria-labelledby="cmp-caption">
+      <table class="cmp">
+        <caption class="sr-only" id="cmp-caption">Energy, added sugar and ingredient count of a 35 g Apple Bar compared with typical snacks</caption>
+        <thead>
+          <tr>
+            <th scope="col">Snack</th>
+            <th scope="col">Energy</th>
+            <th scope="col">Added sugar</th>
+            <th scope="col">Ingredients</th>
+            <th scope="col">Worth knowing</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr class={r.ours ? 'is-ours' : ''}>
+              <th scope="row">{r.name}{r.ours && <em class="cmp__tag">ours</em>}<span>{r.size}</span></th>
+              <td class="cmp__num" data-label="Energy">{r.kcal} <small>kcal</small></td>
+              <td class="cmp__num" data-label="Added sugar">{r.sugar}</td>
+              <td class="cmp__num" data-label="Ingredients">{r.n}</td>
+              <td class="cmp__note" data-label="Worth knowing">{r.note}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="tiny muted mt-4">Chocolate, granola and dried-apple figures are typical values for mainstream products in each category, rounded. An Apple Bar still contains about 20 g of sugars, all of them the apple’s own; we would rather you knew. Apple Bar values are typical for the recipe; see the pack for the batch label. More on reading labels in the <a href="/journal/healthy-snacks-no-added-sugar/">journal</a>.</p>
+  </section>
+
+  <!-- ============================== WHO IT'S FOR ============================== -->
+  <section class="section band--honey" aria-labelledby="who-title">
+    <div class="container who">
+      <div class="frame frame--1x1 rounded" data-reveal>
+        <img src={im('flatlay-lunchbox').src} srcset={im('flatlay-lunchbox').srcset} sizes={im('flatlay-lunchbox').srcset && SIZES.third} alt={im('flatlay-lunchbox').alt} width={im('flatlay-lunchbox').width} height={im('flatlay-lunchbox').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Who it’s for</p>
+        <h2 id="who-title">Anyone who wants something sweet and would rather not think about it.</h2>
+        <ul class="who__list">
+          {who.map((w) => (
+            <li class="who__item">
+              <div class="who__icon"><Icon name={w.icon} size={22} /></div>
+              <div>
+                <h3>{w.title}</h3>
+                <p>{w.text}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+        <div class="cluster mt-4">
+          <a class="link" href="/shop/gift-sets/">Gift sets and boxes</a>
+          <a class="link" href="/products/apple-bar-12-pack/">Box of 12 bars</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== HOW TO EAT IT ============================== -->
+  <section class="section container" aria-labelledby="eat-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">How to eat it</p>
+        <h2 id="eat-title">Straight from the pack works. So do these.</h2>
+      </div>
+      <a class="link" href="/shop/">Shop all products</a>
+    </div>
+    <div class="ways">
+      <div class="frame frame--4x5 rounded" data-reveal>
+        <img src={im('pastila-slices').src} srcset={im('pastila-slices').srcset} sizes={im('pastila-slices').srcset && SIZES.third} alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div>
+        <ol class="ideas" data-reveal>
+          {ideas.map((i) => (
+            <li class="idea">
+              <h3>{i.title}</h3>
+              <p>{i.text}</p>
+            </li>
+          ))}
+        </ol>
+        <p class="small muted mt-4">For the plate rather than the pocket: the <a href="/products/applite-baked-apple-dessert-50g/">App’Lite Dessert</a> and the <a href="/products/belyov-apple-pastila-180g/">180 g Belyov loaf</a>.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FAQ ============================== -->
+  <section class="section band" aria-labelledby="faq-title">
+    <div class="container faq-grid">
+      <div>
+        <p class="eyebrow">Questions</p>
+        <h2 id="faq-title">The questions that come before the first bite.</h2>
+        <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+      </div>
+      <div class="acc" data-reveal>
+        {faqs.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Try it</p>
+      <h2 id="cta-title">Start with a bar. The loaf can wait.</h2>
+      <p>App’Lite Apple Bars leave Riga in 1–2 business days and ship free on orders over {freeFrom}. Prefer a shelf? We are also at Maxima and on Barbora — see <a class="cta-band__a" href="/where-to-buy/">where to buy</a>.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/shop/apple-bars/">Shop apple bars <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost cta-band__ghost" href="/products/tasting-box/">Try the Tasting Box</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .page-hero h1 { max-width: 18ch; }
+  .page-hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .hero-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1.75rem; }
+  .hero-media { margin-top: clamp(2rem, 5vw, 3.5rem); }
+  .hero-media .frame { border-radius: var(--r-xl); box-shadow: var(--shadow-2); }
+  .trust { margin-top: clamp(1.5rem, 4vw, 2.5rem); border-bottom: 0; }
+
+  /* dark label band on the render background */
+  .dark { background: var(--dark-bg); color: var(--cream-0); overflow: clip; }
+  .dark__grid { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: center; padding-block: clamp(3rem, 7vw, 6rem); }
+  @media (min-width: 56rem) { .dark__grid { grid-template-columns: 1.1fr 0.9fr; } }
+  .dark .eyebrow { color: var(--honey-500); }
+  .dark .eyebrow::before { background: var(--honey-500); }
+  .dark h2 { color: inherit; letter-spacing: -0.02em; margin: 0.5rem 0 1rem; }
+  .dark__copy p { color: rgb(250 243 228 / 0.82); max-width: 52ch; }
+  .dark .stats { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid rgb(250 243 228 / 0.18); grid-template-columns: repeat(auto-fit, minmax(7rem, 1fr)); }
+  .dark .stat strong { color: var(--cream-0); }
+  .dark .stat span { color: rgb(250 243 228 / 0.72); }
+  .dark__link { color: var(--cream-0); border-color: var(--honey-500); }
+  .dark__link:hover { border-color: var(--cream-0); }
+  .dark__media img { width: 100%; height: auto; display: block; border-radius: var(--r-lg); }
+  @media (min-width: 56rem) { .dark__media { margin-left: calc(-1 * var(--gutter)); } .dark__media img { transform: scale(1.06); } }
+
+  /* comparison table */
+  .cmp-wrap { padding: 0.5rem 1.25rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .cmp { width: 100%; min-width: 46rem; border-collapse: separate; border-spacing: 0; font-size: var(--fs-sm); }
+  .cmp th, .cmp td { padding: 1rem 0.75rem; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .cmp thead th { padding-top: 0.9rem; padding-bottom: 0.6rem; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-3); }
+  .cmp tbody tr:last-child th, .cmp tbody tr:last-child td { border-bottom: 0; }
+  .cmp tbody th { font-weight: 600; color: var(--fg); min-width: 12rem; }
+  .cmp tbody th span { display: block; margin-top: 0.15rem; font-size: var(--fs-xs); font-weight: 500; color: var(--fg-3); }
+  .cmp__tag { display: inline-block; margin-left: 0.5em; padding: 0.1em 0.55em; border-radius: var(--r-pill); background: var(--leaf-500); color: var(--cream-0); font-family: var(--font-display); font-style: italic; font-size: var(--fs-xs); vertical-align: middle; }
+  .cmp__num { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; letter-spacing: -0.02em; line-height: 1.1; white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .cmp__num small { font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 500; color: var(--fg-3); letter-spacing: 0; }
+  .cmp__note { color: var(--fg-2); max-width: 30ch; }
+  .cmp tr.is-ours th, .cmp tr.is-ours td { background: var(--mint-100); }
+  .cmp tr.is-ours th:first-child { border-radius: var(--r-md) 0 0 var(--r-md); }
+  .cmp tr.is-ours td:last-child { border-radius: 0 var(--r-md) var(--r-md) 0; }
+  .cmp tr.is-ours .cmp__num { color: var(--leaf-600); }
+  /* Phones: each snack becomes a card (name, the three numbers with labels, the note) instead of a 46rem horizontal scroller. */
+  @media (max-width: 40rem) {
+    .cmp-wrap { padding: 0.25rem 0.5rem; }
+    .cmp, .cmp tbody { display: block; min-width: 0; width: 100%; }
+    .cmp thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .cmp tbody tr { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.7rem 0.5rem; padding: 1rem 0.75rem; border-bottom: 1px solid var(--line); }
+    .cmp tbody tr:last-child { border-bottom: 0; }
+    .cmp th, .cmp td { padding: 0; border: 0; }
+    .cmp tbody th { grid-column: 1 / -1; min-width: 0; }
+    .cmp__num { font-size: var(--fs-lg); }
+    .cmp__num::before { content: attr(data-label); display: block; margin-bottom: 0.2rem; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); white-space: normal; }
+    .cmp__note { grid-column: 1 / -1; max-width: none; }
+    .cmp tr.is-ours { background: var(--mint-100); border-radius: var(--r-md); border-bottom: 0; }
+    .cmp tr.is-ours th, .cmp tr.is-ours td { background: transparent; border-radius: 0; }
+  }
+
+  /* who it's for */
+  .who { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: center; }
+  @media (min-width: 56rem) { .who { grid-template-columns: 0.85fr 1.15fr; } }
+  .who h2 { margin-top: 0.5rem; }
+  .who__list { list-style: none; margin: 1.5rem 0 0; padding: 0; display: grid; }
+  .who__item { display: grid; grid-template-columns: 3rem 1fr; gap: 1rem; align-items: start; padding: 1rem 0; border-top: 1px solid var(--line); }
+  .who__icon { width: 3rem; height: 3rem; display: grid; place-items: center; border-radius: 50%; background: var(--bg-raised); box-shadow: var(--shadow-1); color: var(--accent); }
+  .who__item h3 { font-size: var(--fs-lg); }
+  .who__item p { margin: 0.2rem 0 0; color: var(--fg-2); font-size: var(--fs-sm); max-width: 48ch; }
+
+  /* how to eat it */
+  .ways { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: start; }
+  @media (min-width: 56rem) { .ways { grid-template-columns: 0.8fr 1.2fr; } .ways .frame { position: sticky; top: 6rem; } }
+  .ideas { counter-reset: idea; list-style: none; margin: 0; padding: 0; display: grid; gap: 1rem; }
+  @media (min-width: 40rem) { .ideas { grid-template-columns: 1fr 1fr; } .idea:last-child { grid-column: 1 / -1; } }
+  .idea { counter-increment: idea; display: grid; gap: 0.35rem; align-content: start; padding: 1.25rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .idea::before { content: counter(idea, decimal-leading-zero); font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; color: var(--accent); letter-spacing: -0.03em; }
+  .idea h3 { font-size: var(--fs-lg); }
+  .idea p { margin: 0; color: var(--fg-2); font-size: var(--fs-sm); }
+  .idea:last-child { background: var(--honey-100); }
+
+  /* faq */
+  .faq-grid { display: grid; gap: 2rem; }
+  @media (min-width: 56rem) { .faq-grid { grid-template-columns: 1fr 1.4fr; gap: 4rem; } }
+  .faq-grid h2 { margin-top: 0.5rem; }
+
+  /* cta */
+  .cta-band__a { color: var(--cream-0); }
+  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+</style>

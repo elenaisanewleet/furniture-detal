@@ -1,0 +1,90 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { COLLECTIONS, productsInCollection, type Collection } from '~/data/products';
+import { img, imgSrc, im, imgSrcset, SIZES } from '~/data/images';
+import { itemList } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { withLocales } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedCollection, localizedCollections } from '~/data/copy';
+
+export function getStaticPaths() {
+  return withLocales(COLLECTIONS.map((c) => ({ params: { collection: c.key }, props: { collection: c } })));
+}
+const { collection: rawCollection, locale } = Astro.props as { collection: Collection; locale: Locale };
+const c = localizedCollection(rawCollection, locale);
+const products = productsInCollection(rawCollection.key);
+const others = localizedCollections(COLLECTIONS.filter((x) => x.key !== rawCollection.key), locale);
+const origin = originOf(Astro.site);
+const hero = im(c.image);
+const isZephyr = c.key === 'zephyr';
+/** Shelf life differs by format (zephyr 3 months, meringues 9), so the tick reads from the catalogue. */
+const months = products.map((p) => p.shelfLifeMonths);
+const shelfLine =
+  months.length === 0
+    ? 'Keeps for months without a fridge'
+    : Math.min(...months) === Math.max(...months)
+      ? `Keeps ${months[0]} months without a fridge`
+      : `Keeps ${Math.min(...months)}–${Math.max(...months)} months without a fridge`;
+---
+<Base
+  title={c.title}
+  description={c.description}
+  canonical={`/shop/${c.key}/`}
+  ogImage={c.image}
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: c.name, href: `/shop/${c.key}/` }]}
+  schema={[itemList(origin, products)]}
+>
+  <section class="container col-hero" style={`--col-accent:${c.accent}`}>
+    <div class="col-hero__copy">
+      <p class="eyebrow">Collection</p>
+      <h1>{c.name}</h1>
+      <p class="lead">{c.intro}</p>
+    </div>
+    <div class={`col-hero__media ${hero.fit === 'contain' ? 'is-contain' : ''}`}>
+      <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.half} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" />
+    </div>
+  </section>
+
+  <section class="container" data-shop data-collection={c.key}>
+    <div class="pills col-nav" role="navigation" aria-label="Other collections">
+      <a class="pill is-active" href={`/shop/${c.key}/`} aria-current="page">{c.name}</a>
+      {others.map((o) => <a class="pill" href={`/shop/${o.key}/`}>{o.name}</a>)}
+    </div>
+    <h2 class="sr-only">Products</h2>
+    <div class="grid grid--4 col-grid mt-4" data-shop-grid>
+      {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+    </div>
+    {products.length === 0 && <p class="muted">Nothing here yet — <a href="/shop/">see all products</a>.</p>}
+  </section>
+
+  <section class="section container">
+    <div class="split">
+      <div>
+        <p class="eyebrow">Good to know</p>
+        <h2>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
+        <p class="lead">{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
+        <ul class="ticks mt-4">
+          <li><Icon name="check" /> {shelfLine}</li>
+          <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
+          <li><Icon name="check" /> Free shipping over €25</li>
+        </ul>
+      </div>
+      <div class="frame frame--4x5 rounded"><img src={imgSrc('pastila-texture')} srcset={imgSrcset('pastila-texture')} sizes={imgSrcset('pastila-texture') && SIZES.half} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" /></div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .col-hero { display: grid; gap: 2rem; align-items: center; padding-block: clamp(2rem, 5vw, 4rem) 2rem; }
+  @media (min-width: 56rem) { .col-hero { grid-template-columns: 1.1fr 0.9fr; } }
+  .col-hero h1 { font-size: var(--fs-4xl); margin: 0.5rem 0 1rem; }
+  .col-hero__media { aspect-ratio: 4 / 3; border-radius: var(--r-xl); overflow: clip; background: var(--col-accent, var(--bg-sunken)); }
+  .col-hero__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .col-hero__media.is-contain img { object-fit: contain; padding: 6%; }
+  .col-nav { padding-top: 1rem; border-top: 1px solid var(--line); }
+  /* Most collections hold 1-3 products: cap at three columns so a lone product reads as a feature, not a stamp. */
+  .col-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, max(18rem, calc((100% - 2 * var(--sp-5)) / 3))), 1fr)); }
+</style>

@@ -1,0 +1,241 @@
+---
+import Base from '~/layouts/Base.astro';
+import GoverningLanguage from '~/components/GoverningLanguage.astro';
+import Icon from '~/components/Icon.astro';
+import { site } from '~/data/site';
+import { formatPrice, formatThreshold } from '~/data/products';
+import { originOf } from '~/lib/origin';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const path = '/legal/shipping-returns/';
+const updated = 'September 2026';
+const title = 'Shipping & returns: costs, times, damaged parcels';
+const description =
+  'Semers shipping and returns: free delivery over €25, €3.90 flat in the Baltics, dispatch from Riga in 1–2 business days, tracking, damage and returns.';
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+/** Flat Baltic rate; mirrors data-shipping="3.9" on the checkout page. */
+const flatRate = formatPrice(3.9, locale);
+
+const legalNav = [
+  { href: '/legal/privacy/', label: 'Privacy policy' },
+  { href: '/legal/terms/', label: 'Terms of sale' },
+  { href: '/legal/shipping-returns/', label: 'Shipping & returns' },
+].map((l) => ({ ...l, active: l.href === path }));
+
+const sections = [
+  { id: 'glance', label: 'At a glance' },
+  { id: 'zones', label: 'Where we ship and what it costs' },
+  { id: 'dispatch', label: 'Dispatch from Riga' },
+  { id: 'times', label: 'Delivery times' },
+  { id: 'pickup', label: 'Pick up in Riga' },
+  { id: 'tracking', label: 'Tracking your parcel' },
+  { id: 'damaged', label: 'Damaged, wrong or missing' },
+  { id: 'cancel', label: 'Cancelling before dispatch' },
+  { id: 'returns', label: 'Returns' },
+  { id: 'contact', label: 'Contact' },
+];
+
+const zones = [
+  { zone: 'Baltics', where: 'Latvia, Lithuania, Estonia', how: 'Parcel locker (Omniva, DPD) or courier to the door', cost: `Free over ${freeFrom}, otherwise ${flatRate}`, eta: '1–3 business days' },
+  { zone: 'Rest of the EU', where: 'All other EU member states', how: 'Courier to the door (DPD, DHL)', cost: `Free over ${freeFrom}, otherwise quoted in the confirmation e-mail`, eta: '2–5 business days' },
+  { zone: 'Riga', where: 'Collect in person', how: 'By arrangement, address sent with your confirmation', cost: 'Free', eta: 'Usually the next business day after payment' },
+  { zone: 'Outside the EU', where: 'United Kingdom, Switzerland, Norway and beyond', how: 'Not offered in the shop yet', cost: 'Write to us for a quote', eta: '—' },
+];
+
+const webPage = {
+  '@type': 'WebPage',
+  '@id': `${origin}${path}#webpage`,
+  url: `${origin}${path}`,
+  name: 'Shipping & returns',
+  description,
+  inLanguage: 'en',
+  isPartOf: { '@id': `${origin}/#website` },
+  about: { '@id': `${origin}/#org` },
+  dateModified: '2026-09-01',
+};
+---
+<Base
+  title={title}
+  description={description}
+  canonical={path}
+  ogImage="gift-box"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shipping & returns', href: path }]}
+  schema={[webPage]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container" aria-labelledby="page-title">
+    <p class="eyebrow">Legal · {site.brand.legalName}</p>
+    <h1 id="page-title" class="legal-title">Shipping &amp; returns, <em>from Riga to your door.</em></h1>
+    <p class="lead">Everything about shipping and returns for orders from the Semers web shop: what delivery costs, how fast a parcel leaves Riga, how long it takes to reach you in the Baltics or elsewhere in the EU, and what to do if a box arrives damaged or you change your mind.</p>
+    <p class="legal__updated"><Icon name="clock" size={16} /> Last updated: {updated}</p>
+    <GoverningLanguage />
+  </section>
+
+  <!-- ============================== BODY ============================== -->
+  <div class="container legal">
+    <aside class="legal__aside" data-reveal>
+      <nav class="legal__nav" aria-label="Legal pages">
+        <p class="eyebrow">Legal</p>
+        <div class="pills legal__pills">
+          {legalNav.map((l) => (
+            <a class={`pill${l.active ? ' is-active' : ''}`} href={l.href} aria-current={l.active ? 'page' : undefined}>{l.label}</a>
+          ))}
+        </div>
+      </nav>
+      <nav class="legal__toc" aria-label="On this page">
+        <p class="eyebrow">On this page</p>
+        <ol>
+          {sections.map((s) => <li><a href={`#${s.id}`}>{s.label}</a></li>)}
+        </ol>
+      </nav>
+      <div class="legal__help">
+        <p class="small"><strong>Where is my parcel?</strong> Write to <a href={`mailto:${site.email}`}>{site.email}</a> with your order reference. A person in Riga replies within one business day.</p>
+      </div>
+    </aside>
+
+    <div class="prose max-prose legal__body" data-reveal>
+      <div class="legal__summary" id="glance">
+        <h2>At a glance</h2>
+        <div class="stats legal__stats">
+          <div class="stat"><strong>{freeFrom}</strong><span>free shipping above this, across the EU</span></div>
+          <div class="stat"><strong>{flatRate}</strong><span>flat rate below it in the Baltics</span></div>
+          <div class="stat"><strong>1–2 days</strong><span>for a parcel to leave Riga</span></div>
+          <div class="stat"><strong>14 days</strong><span>to return sealed products</span></div>
+        </div>
+      </div>
+
+      <h2 id="zones">Where we ship and what it costs</h2>
+      <p>We ship consumer orders to Latvia, Lithuania, Estonia and every other member state of the European Union. Shipping is free on orders over {freeFrom}. Below that, the Baltics pay a flat {flatRate}, and for the rest of the EU we quote the courier rate in the confirmation e-mail before you pay, so there are no surprises.</p>
+      {/* Scrolls sideways when the columns do not fit, which a mouse can do and a keyboard cannot — unless the box itself can take focus. Named from the heading above it, so the name is translated with the page. */}
+      <div class="table-wrap" tabindex="0" role="region" aria-labelledby="zones">
+        <table class="table legal__zones">
+          <thead><tr><th>Zone</th><th>Countries</th><th>How it ships</th><th>Cost</th><th>Typical delivery</th></tr></thead>
+          <tbody>
+            {zones.map((z) => (
+              <tr><td data-label="Zone">{z.zone}</td><td data-label="Countries">{z.where}</td><td data-label="How it ships">{z.how}</td><td data-label="Cost">{z.cost}</td><td data-label="Delivery">{z.eta}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>Prefer a shop? In Latvia you will find us at Maxima and on Barbora, and in selected stores across Europe; see <a href="/where-to-buy/">where to buy</a>. Businesses order by the case through <a href="/wholesale/">wholesale</a>.</p>
+
+      <h2 id="dispatch">Dispatch from Riga</h2>
+      <p>Orders leave our Riga kitchen within <strong>1–2 business days</strong> after we receive your payment. Business days are Monday to Friday, excluding Latvian public holidays, so an order paid on a Friday afternoon usually leaves on Monday or Tuesday. Because payment currently happens through a link in our confirmation e-mail, the clock starts when that payment arrives, not when you send the order request.</p>
+      <p>Everything is packed in a sturdy box with paper padding. Pastila does not need a fridge: it keeps for up to 12 months at room temperature, so there are no ice packs and no cold-chain worries, in July or in January. Zephyr has a shorter shelf life and is shipped from fresh stock, with the date printed on the box.</p>
+
+      <h2 id="times">Delivery times</h2>
+      <ul>
+        <li><strong>Baltics, parcel locker:</strong> usually 1–3 business days after dispatch. Omniva and DPD lockers are open around the clock, and you get an SMS with the door code.</li>
+        <li><strong>Baltics, courier to the door:</strong> 1–3 business days after dispatch.</li>
+        <li><strong>Rest of the EU, courier:</strong> 2–5 business days after dispatch, depending on the country and the carrier’s network.</li>
+      </ul>
+      <p>These are the carriers’ estimates, not promises. The odd parcel takes longer around public holidays and in the December rush. If yours is seriously late, write to us and we will chase it or send a replacement.</p>
+
+      <h2 id="pickup">Pick up in Riga</h2>
+      <p>If you are in Riga, you can collect your order and skip the shipping cost. Choose “Pick up in Riga” at checkout; we reply with the address and the times that work, usually the next business day after payment. Bring your order reference.</p>
+      <!-- TODO Semers: add the pickup address and collection hours here as visible text. -->
+
+      <h2 id="tracking">Tracking your parcel</h2>
+      <p>Every parcel is sent with tracking. As soon as it leaves, we e-mail you the tracking number and a link. Parcel-locker deliveries also send an SMS with the locker location and door code, which is why we ask for a phone number at checkout. Most lockers hold a parcel for a limited number of days before returning it, so please collect promptly.</p>
+      <p>If tracking shows “delivered” but there is no parcel, check with neighbours, the building’s reception and the locker, then write to us within 48 hours. We will open a trace with the carrier and, if the parcel does not turn up, send a replacement.</p>
+
+      <h2 id="damaged">Damaged, wrong or missing</h2>
+      <p>Send a photo of the parcel and the product, with your order reference, to <a href={`mailto:${site.email}`}>{site.email}</a> within <strong>48 hours</strong> of delivery. We replace the affected items or refund them, including any shipping you paid; your choice. You do not need to send damaged food back unless we ask.</p>
+      <p>If the box is visibly crushed when the courier hands it over, you can refuse it or ask the courier to note the damage; either one helps us claim from the carrier. Wrong item or something missing from the box? Same e-mail, same fix.</p>
+
+      <h2 id="cancel">Cancelling before dispatch</h2>
+      <p>Changed your mind? Before we ship, e-mail your order reference and we cancel the request. If you have already paid, we refund the full amount to the same payment method within a few days. Because we dispatch quickly, write as soon as you can; once the parcel has left, a cancellation becomes a return, below.</p>
+
+      <h2 id="returns">Returns</h2>
+      <p>You may return products within <strong>14 days</strong> of receiving them, no reason needed, as long as they are unopened and still sealed. Food that has been opened cannot be returned, for hygiene reasons, and products with a short remaining shelf life may be excluded. This follows the legal exceptions for sealed goods and perishable goods in the EU Consumer Rights Directive; the full wording is in our <a href="/legal/terms/#withdrawal">terms of sale</a>.</p>
+      <ol>
+        <li>E-mail us within 14 days of delivery with your order reference and what you are returning.</li>
+        <li>We reply with the return address and a reference to write on the parcel.</li>
+        <li>Send the goods back, well packed, within 14 days of your e-mail. You pay the return postage unless the return is because of our mistake.</li>
+        <li>We refund the price and the standard outbound shipping within 14 days of your notice, to the same payment method. We may wait until the goods arrive or you show proof of posting.</li>
+      </ol>
+      <!-- TODO Semers: add the return address here as visible text once confirmed. -->
+      <p>Gift boxes and bundles, such as the <a href="/products/tasting-box/">Tasting Box</a>, can be returned whole and unopened, but not in parts.</p>
+
+      <h2 id="contact">Contact</h2>
+      <p>{site.brand.legalName}, {site.locality}, {site.country}<br />
+      <a href={`mailto:${site.email}`}>{site.email}</a></p>
+      <p>Prefer a form? Use the <a href="/contact/">contact page</a>. Quick answers about storage, calories and ingredients are in the <a href="/faq/">FAQ</a>; how we handle your data is in the <a href="/legal/privacy/">privacy policy</a>.</p>
+    </div>
+  </div>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container section--tight" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Ready when you are</p>
+      <h2 id="cta-title">Fill a box. We’ll have it on its way in a day or two.</h2>
+      <p>Apple bars, meringues and Belyov pastila, made in Riga and shipped across the EU. Free shipping over {freeFrom}.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/shop/">Shop the range <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost legal__ghost" href="/shop/gift-sets/">Gift sets &amp; boxes</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legal-title { max-width: 14ch; }
+  .legal-title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .legal__updated { display: inline-flex; align-items: center; gap: 0.4em; margin-top: 1.25rem; font-size: var(--fs-sm); color: var(--fg-3); }
+  .legal__updated svg { color: var(--accent); }
+
+  .legal { display: grid; gap: var(--sp-6); align-items: start; padding-block: var(--sp-4) clamp(2rem, 5vw, 4rem); }
+  @media (min-width: 60rem) {
+    .legal { grid-template-columns: 15rem minmax(0, 1fr); gap: var(--sp-8); }
+    .legal__aside { position: sticky; top: 6rem; }
+    .legal__pills { flex-direction: column; align-items: stretch; }
+    .legal__pills .pill { text-align: left; }
+  }
+  .legal__aside { display: grid; gap: var(--sp-5); }
+  .legal__aside .eyebrow { margin-bottom: 0.6rem; }
+  .legal__toc { display: none; }
+  @media (min-width: 60rem) { .legal__toc { display: block; } }
+  .legal__toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; border-left: 2px solid var(--line); font-size: var(--fs-sm); }
+  .legal__toc a { display: block; padding: 0.2rem 0 0.2rem 0.9rem; color: var(--fg-2); text-decoration: none; border-left: 2px solid transparent; margin-left: -2px; transition: color var(--dur-fast), border-color var(--dur-fast); }
+  .legal__toc a:hover { color: var(--fg); border-color: var(--accent); }
+  .legal__help { padding: 1rem 1.1rem; border-radius: var(--r-md); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .legal__help p { margin: 0; color: var(--fg-2); }
+
+  .legal__body { min-width: 0; }
+  .legal__body h2 { scroll-margin-top: 6rem; font-size: var(--fs-2xl); }
+  .legal__body h3 { font-size: var(--fs-lg); }
+  .legal__body li strong { color: var(--fg); }
+  .legal__body .table-wrap { margin: 0 0 1.5rem; }
+  .legal__zones { min-width: 40rem; }
+  .legal__zones td:first-child { font-weight: 600; white-space: nowrap; }
+  /* Phones: the five-column table becomes a stack of labelled rows, so cost and delivery time are never off-screen. */
+  @media (max-width: 40rem) {
+    .legal__zones, .legal__zones tbody { display: block; min-width: 0; width: 100%; }
+    .legal__zones thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .legal__zones tr { display: grid; gap: 0.35rem; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+    .legal__zones td { display: grid; grid-template-columns: 7rem 1fr; gap: 0.5rem; padding: 0; border: 0; font-size: var(--fs-sm); }
+    .legal__zones td::before { content: attr(data-label); padding-top: 0.25em; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+    .legal__zones td:first-child { display: block; font-size: var(--fs-md); white-space: normal; }
+    .legal__zones td:first-child::before { display: none; }
+  }
+  .legal__summary { padding: 1.4rem 1.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); margin-bottom: 1rem; }
+  .legal__summary h2 { margin: 0 0 1rem; font-size: var(--fs-xl); }
+  .legal__stats { grid-template-columns: repeat(2, 1fr); gap: 1rem 1.5rem; }
+  @media (min-width: 40rem) { .legal__stats { grid-template-columns: repeat(4, 1fr); } }
+  .legal__stats .stat strong { font-size: var(--fs-2xl); white-space: nowrap; }
+  .legal__stats .stat span { font-size: var(--fs-xs); }
+
+  .legal__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .legal__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+</style>

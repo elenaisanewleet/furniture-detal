@@ -1,0 +1,243 @@
+---
+import Base from '~/layouts/Base.astro';
+import GoverningLanguage from '~/components/GoverningLanguage.astro';
+import Icon from '~/components/Icon.astro';
+import { site } from '~/data/site';
+import { formatPrice, formatThreshold } from '~/data/products';
+import { originOf } from '~/lib/origin';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const path = '/legal/terms/';
+const updated = 'September 2026';
+const title = 'Terms and conditions of sale';
+const description =
+  'Terms of sale for the Semers web shop: ordering and payment, delivery, the 14-day right of withdrawal, damaged goods, allergens and Latvian consumer law.';
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+/** Flat Baltic rate; mirrors data-shipping="3.9" on the checkout page. */
+const flatRate = formatPrice(3.9, locale);
+
+const legalNav = [
+  { href: '/legal/privacy/', label: 'Privacy policy' },
+  { href: '/legal/terms/', label: 'Terms of sale' },
+  { href: '/legal/shipping-returns/', label: 'Shipping & returns' },
+].map((l) => ({ ...l, active: l.href === path }));
+
+const sections = [
+  { id: 'summary', label: 'In plain words' },
+  { id: 'parties', label: 'Who we are and what these terms cover' },
+  { id: 'products', label: 'Products and images' },
+  { id: 'prices', label: 'Prices' },
+  { id: 'ordering', label: 'How ordering works' },
+  { id: 'delivery', label: 'Delivery' },
+  { id: 'withdrawal', label: 'Right of withdrawal' },
+  { id: 'defects', label: 'Damaged or defective goods' },
+  { id: 'allergens', label: 'Allergens and food information' },
+  { id: 'liability', label: 'Liability' },
+  { id: 'law', label: 'Governing law and disputes' },
+  { id: 'changes', label: 'Changes to these terms' },
+  { id: 'contact', label: 'Contact' },
+];
+
+const webPage = {
+  '@type': 'WebPage',
+  '@id': `${origin}${path}#webpage`,
+  url: `${origin}${path}`,
+  name: 'Terms and conditions of sale',
+  description,
+  inLanguage: 'en',
+  isPartOf: { '@id': `${origin}/#website` },
+  about: { '@id': `${origin}/#org` },
+  dateModified: '2026-09-01',
+};
+---
+<Base
+  title={title}
+  description={description}
+  canonical={path}
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Terms of sale', href: path }]}
+  schema={[webPage]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container" aria-labelledby="page-title">
+    <p class="eyebrow">Legal · {site.brand.legalName}</p>
+    <h1 id="page-title" class="legal-title">Terms of sale, <em>in plain language.</em></h1>
+    <p class="lead">These terms and conditions of sale govern every order placed with SIA Semers Group through the web shop at semers.org. They explain how ordering and payment work, when a contract is concluded, how delivery and the 14-day right of withdrawal work, and what happens if something arrives damaged.</p>
+    <p class="legal__updated"><Icon name="clock" size={16} /> Last updated: {updated}</p>
+    <GoverningLanguage />
+  </section>
+
+  <!-- ============================== BODY ============================== -->
+  <div class="container legal">
+    <aside class="legal__aside" data-reveal>
+      <nav class="legal__nav" aria-label="Legal pages">
+        <p class="eyebrow">Legal</p>
+        <div class="pills legal__pills">
+          {legalNav.map((l) => (
+            <a class={`pill${l.active ? ' is-active' : ''}`} href={l.href} aria-current={l.active ? 'page' : undefined}>{l.label}</a>
+          ))}
+        </div>
+      </nav>
+      <nav class="legal__toc" aria-label="On this page">
+        <p class="eyebrow">On this page</p>
+        <ol>
+          {sections.map((s) => <li><a href={`#${s.id}`}>{s.label}</a></li>)}
+        </ol>
+      </nav>
+      <div class="legal__help">
+        <p class="small"><strong>Something unclear?</strong> Write to <a href={`mailto:${site.email}`}>{site.email}</a>. A person in Riga replies within one business day.</p>
+      </div>
+    </aside>
+
+    <div class="prose max-prose legal__body" data-reveal>
+      <div class="legal__summary" id="summary">
+        <h2>In plain words</h2>
+        <ul class="ticks">
+          <li><Icon name="check" size={18} /> You send an order request; we confirm by e-mail with the total and a payment link; the contract is concluded when you pay.</li>
+          <li><Icon name="check" size={18} /> Prices are in euro and include VAT. Shipping is free over {freeFrom}.</li>
+          <li><Icon name="check" size={18} /> You may withdraw within 14 days of receiving your parcel, for products that are still sealed.</li>
+          <li><Icon name="check" size={18} /> Arrived damaged? A photo within 48 hours gets you a replacement or a refund.</li>
+          <li><Icon name="check" size={18} /> Everything we make contains egg white.</li>
+        </ul>
+      </div>
+
+      <h2 id="parties">Who we are and what these terms cover</h2>
+      <p>These terms apply to purchases made by consumers through the web shop at semers.org (“the shop”), operated by <strong>{site.brand.legalName}</strong>, {site.locality}, {site.country} (“Semers”, “we”).</p>
+      <!-- TODO Semers: add the company registration number (Reģ. Nr.) and VAT number here as visible text. -->
+      <!-- TODO Semers: add the registered street address here as visible text. -->
+      <p>A consumer is a natural person acting for purposes outside their trade, business or profession. If you are a retailer, café, office or distributor, please go through our <a href="/wholesale/">wholesale page</a>; those sales are governed by a separate supply agreement, not by these terms.</p>
+      <p>By placing an order you accept these terms. The version published at the time of your order is the one that applies to it. Nothing in these terms limits the rights you have under the Latvian Consumer Rights Protection Law or under mandatory consumer law in the EU country where you live.</p>
+
+      <h2 id="products">Products and images</h2>
+      <p>We sell food: baked-apple bars, apple meringues, Belyov pastila, zephyr and boxes that combine them, made in Riga from Antonovka apples and egg white. Because it is a natural product, colour, texture and exact weight vary a little from batch to batch, and the colour on your screen will never be quite the colour in your hand. Photographs are illustrative; the weights, pack sizes and flavour lists on each product page describe what you are buying.</p>
+      <p>Ingredient lists, allergen statements and typical nutrition values are published on every product page, for example the <a href="/products/apple-bar-35g/">App’Lite Apple Bar</a>. The label on the pack you receive is the definitive source: if the pack and the website ever differ, the pack is right, and we would like to know about it. Every product carries a printed best-before date and keeps for months at room temperature; storage advice is on the pack.</p>
+
+      <h2 id="prices">Prices</h2>
+      <p>All prices are shown in euro (EUR) and include Latvian value added tax at the applicable rate. Shipping is charged separately and shown in the cart, at checkout and in our confirmation e-mail: free for orders over {freeFrom}, otherwise a flat {flatRate} in Latvia, Lithuania and Estonia, and for other EU countries a courier rate that we quote in the confirmation. Full details are on the <a href="/legal/shipping-returns/">shipping &amp; returns</a> page, which forms part of these terms.</p>
+      <p>We may change prices at any time. The price shown when you place your order request, and confirmed in our e-mail, is the price you pay. If a price on the site is obviously wrong, a typing slip rather than a discount, we will tell you before confirming, and you can cancel the request at no cost.</p>
+
+      <h2 id="ordering">How ordering works</h2>
+      <p>The shop takes order requests. No payment is collected on the site itself, and no account is needed. The sequence is:</p>
+      <ol class="steps legal__steps">
+        <li class="step"><h3>Fill your box</h3><p>Add products to your cart and go to checkout. You can change quantities and flavours right up to the moment you send the request.</p></li>
+        <li class="step"><h3>Send an order request</h3><p>Enter your delivery details and send the request. You receive an automatic e-mail with an order reference. This is your offer to buy; it is not yet a contract, and nothing is charged.</p></li>
+        <li class="step"><h3>We confirm</h3><p>Within one business day we check stock and shipping and send a confirmation e-mail with the final total and a secure payment link. If something cannot be supplied, we say so and offer an alternative or leave that item out.</p></li>
+        <li class="step"><h3>You pay, we ship</h3><p>The contract of sale is concluded when your payment reaches us. The parcel then leaves Riga within 1–2 business days. If the payment link is not used within seven days, the request lapses quietly and nothing is owed.</p></li>
+      </ol>
+      <p>We may decline or limit an order in a few cases: quantities that look like resale rather than a family’s snack drawer (please write to <a href="/wholesale/">wholesale</a> instead), an address our carriers cannot reach, or suspected fraud. We will always tell you why.</p>
+      <p>Once online card payment is live, you will pay on the payment provider’s pages during checkout, and the contract will be concluded when that payment succeeds. We will update this section when it changes.</p>
+      <!-- TODO Semers: revise this section when online card payment goes live (provider name, moment of contract). -->
+
+      <h2 id="delivery">Delivery</h2>
+      <p>We ship to Latvia, Lithuania, Estonia and the rest of the European Union, from Riga, within 1–2 business days of receiving payment. Estimated delivery times, costs, carriers and the option to collect in Riga are set out on the <a href="/legal/shipping-returns/">shipping &amp; returns</a> page. Delivery estimates are estimates, not guaranteed dates. If a parcel is seriously late, write to us: we will chase the carrier or send a replacement.</p>
+      <p>The risk of loss of or damage to the goods passes to you when you, or a person you have nominated, take physical possession of them. For a parcel locker, that is when you collect the parcel. If a parcel comes back to us because the address was incomplete or it was not collected from the locker in time, we will contact you; sending it again is charged at the standard shipping rate.</p>
+
+      <h2 id="withdrawal">Right of withdrawal</h2>
+      <p>As a consumer in the EU, you may withdraw from the contract within <strong>14 days</strong> of the day on which you, or a person you nominated other than the carrier, received the goods, without giving any reason. For an order delivered in several parcels the period runs from the last parcel. This right comes from Directive 2011/83/EU on consumer rights and the Latvian rules that implement it.</p>
+      <h3>Exceptions that matter for food</h3>
+      <p>Under the same rules, the right of withdrawal does not apply to:</p>
+      <ul>
+        <li>sealed goods which are not suitable for return for health protection or hygiene reasons and were unsealed after delivery; and</li>
+        <li>goods that are liable to deteriorate or expire rapidly.</li>
+      </ul>
+      <p>In practice: you can return products that are still sealed and in the condition in which you received them. An opened bar, bag, box or loaf cannot be returned. Products with a short remaining shelf life may fall under the second exception; we will tell you if that is the case.</p>
+      <h3>How to withdraw</h3>
+      <p>Send us a clear statement before the 14 days end, by e-mail to <a href={`mailto:${site.email}`}>{site.email}</a>, with your order reference. You are welcome to use this wording:</p>
+      <blockquote class="legal__form">To {site.brand.legalName}, {site.locality}, {site.country}, {site.email}: I hereby give notice that I withdraw from my contract of sale of the following goods: [products]. Ordered on [date], received on [date], order reference [SM-…]. Name, address, date.</blockquote>
+      <p>Then send the goods back within 14 days of telling us, well packed, to the return address we give you in our reply. You bear the direct cost of returning the goods, unless the return is the result of our mistake. You are liable for any diminished value of the goods resulting from handling beyond what is needed to establish their nature and characteristics; for sealed food, that means keeping the seal intact.</p>
+      <p>We refund the price of the goods and the standard outbound shipping, but not any premium delivery option you chose, within 14 days of receiving your notice, using the same payment method you used. We may hold the refund until the goods are back with us or you have shown proof of sending them, whichever comes first.</p>
+
+      <h2 id="defects">Damaged or defective goods</h2>
+      <p>You are entitled to goods that conform to the contract, under the Latvian Consumer Rights Protection Law and EU law. If something arrives damaged, spoiled, wrong or missing, e-mail us a photo of the parcel and the product, together with your order reference, within <strong>48 hours</strong> of delivery. We then send a replacement or refund the affected items, including any shipping you paid, whichever you prefer. You do not need to send damaged food back unless we ask.</p>
+      <p>Reporting within 48 hours lets us claim from the carrier, which is why we ask for it. It is not a deadline for your statutory rights, which do not depend on this window.</p>
+
+      <h2 id="allergens">Allergens and food information</h2>
+      <p>Every product we make contains <strong>egg white</strong>; it is what makes pastila light. The Pine Nut pastila contains nuts, and all our products may contain traces of nuts because they are made in the same facility. The chocolate-covered zephyr contains soy and may contain milk. The full allergen statement is on each product page and on the pack.</p>
+      <p>If you have an allergy or intolerance, please read the label before eating and write to us if anything is unclear. We are makers of apple snacks, not medical advisers: nothing on this site is dietary or medical advice. “No added sugar” means exactly that, and no more: the sugars naturally present in apples remain.</p>
+
+      <h2 id="liability">Liability</h2>
+      <p>We are liable, as the law requires, for damage caused intentionally or through gross negligence, for death or personal injury caused by our fault, and for defective products under product liability law. Beyond that, our liability for a consumer order is limited to the value of that order, and we are not liable for indirect or unforeseeable loss, or for delays and failures caused by events outside our reasonable control, such as carrier strikes, extreme weather or border delays. Nothing in this section limits rights that cannot be limited under the law of the country where you live.</p>
+
+      <h2 id="law">Governing law and disputes</h2>
+      <p>These terms and every contract concluded under them are governed by the law of the Republic of Latvia. If you are a consumer living in another EU country, you also keep the protection of the mandatory rules there.</p>
+      <p>Disputes: talk to us first. Most things are solved with one e-mail. If we cannot agree, consumers in Latvia can turn to the Consumer Rights Protection Centre (<span lang="lv">Patērētāju tiesību aizsardzības centrs</span>, <a href="https://www.ptac.gov.lv/" rel="noopener">ptac.gov.lv</a>) and the Consumer Dispute Resolution Commission that works alongside it. Consumers in other EU countries can get help with a cross-border complaint from their national European Consumer Centre (ECC-Net). The European Commission’s online dispute resolution (ODR) platform was discontinued in July 2025 and no longer accepts new complaints.</p>
+      <p>The courts of Latvia have jurisdiction, without prejudice to a consumer’s right under EU law to bring or defend a claim in the courts of their home country.</p>
+
+      <h2 id="changes">Changes to these terms</h2>
+      <p>We may update these terms from time to time. The version published when you place your order applies to that order. The current version is always at this address, with the date at the top.</p>
+
+      <h2 id="contact">Contact</h2>
+      <p>{site.brand.legalName}, {site.locality}, {site.country}<br />
+      <a href={`mailto:${site.email}`}>{site.email}</a></p>
+      <!-- TODO Semers: repeat the registration number and street address here as visible text. -->
+      <p>Prefer a form? Use the <a href="/contact/">contact page</a>. For how we handle your data, see the <a href="/legal/privacy/">privacy policy</a>. Most practical questions are answered in the <a href="/faq/">FAQ</a>.</p>
+    </div>
+  </div>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container section--tight" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Ready when you are</p>
+      <h2 id="cta-title">The terms are long. The ingredient list isn’t.</h2>
+      <p>Apple bars, meringues and Belyov pastila, made in Riga and shipped across the EU. Free shipping over {freeFrom}.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/shop/">Shop the range <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost legal__ghost" href="/shop/apple-bars/">Start with the bars</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .legal-title { max-width: 14ch; }
+  .legal-title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .legal__updated { display: inline-flex; align-items: center; gap: 0.4em; margin-top: 1.25rem; font-size: var(--fs-sm); color: var(--fg-3); }
+  .legal__updated svg { color: var(--accent); }
+
+  .legal { display: grid; gap: var(--sp-6); align-items: start; padding-block: var(--sp-4) clamp(2rem, 5vw, 4rem); }
+  @media (min-width: 60rem) {
+    .legal { grid-template-columns: 15rem minmax(0, 1fr); gap: var(--sp-8); }
+    .legal__aside { position: sticky; top: 6rem; }
+    .legal__pills { flex-direction: column; align-items: stretch; }
+    .legal__pills .pill { text-align: left; }
+  }
+  .legal__aside { display: grid; gap: var(--sp-5); }
+  .legal__aside .eyebrow { margin-bottom: 0.6rem; }
+  .legal__toc { display: none; }
+  @media (min-width: 60rem) { .legal__toc { display: block; } }
+  .legal__toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; border-left: 2px solid var(--line); font-size: var(--fs-sm); }
+  .legal__toc a { display: block; padding: 0.2rem 0 0.2rem 0.9rem; color: var(--fg-2); text-decoration: none; border-left: 2px solid transparent; margin-left: -2px; transition: color var(--dur-fast), border-color var(--dur-fast); }
+  .legal__toc a:hover { color: var(--fg); border-color: var(--accent); }
+  .legal__help { padding: 1rem 1.1rem; border-radius: var(--r-md); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .legal__help p { margin: 0; color: var(--fg-2); }
+
+  .legal__body { min-width: 0; }
+  .legal__body h2 { scroll-margin-top: 6rem; font-size: var(--fs-2xl); }
+  .legal__body h3 { font-size: var(--fs-lg); }
+  .legal__body li strong { color: var(--fg); }
+  .legal__summary { padding: 1.4rem 1.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); margin-bottom: 1rem; }
+  .legal__summary h2 { margin: 0 0 0.9rem; font-size: var(--fs-xl); }
+  .legal__summary .ticks { font-size: var(--fs-sm); }
+
+  /* Ordered steps inside the reading column: two across, never four. */
+  .legal__steps { list-style: none; padding: 0; margin: 1.5rem 0 1.5rem; grid-template-columns: 1fr; gap: 1.25rem 2rem; }
+  @media (min-width: 40rem) { .legal__steps { grid-template-columns: 1fr 1fr; } }
+  .legal__steps .step { margin: 0; }
+  .legal__steps h3 { margin: 0; }
+  .legal__steps p { font-size: var(--fs-sm); }
+
+  .legal__form { margin: 1rem 0 1.25rem; padding: 1rem 1.2rem; border-left: 3px solid var(--accent); background: var(--bg-raised); border-radius: 0 var(--r-md) var(--r-md) 0; font-family: var(--font-sans); font-style: normal; font-size: var(--fs-sm); font-weight: 400; color: var(--ink-700); }
+
+  .legal__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .legal__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+</style>

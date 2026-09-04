@@ -1,0 +1,178 @@
+---
+import '~/styles/fonts.css';
+import '~/styles/tokens.css';
+import '~/styles/base.css';
+import '~/styles/site.css';
+
+import Header from '~/components/Header.astro';
+import Footer from '~/components/Footer.astro';
+import CartDrawer from '~/components/CartDrawer.astro';
+import Breadcrumbs from '~/components/Breadcrumbs.astro';
+
+import { site } from '~/data/site';
+import { organization, webSite, breadcrumbs, graph } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { img, imgSrc } from '~/data/images';
+import { FONT_PRELOAD } from '~/data/fonts';
+import { LOCALES, LOCALE_META, DEFAULT_LOCALE, localePath, stripLocale } from '~/i18n/config';
+import { t, crumbName } from '~/i18n/ui';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Path only, e.g. "/shop/". Canonical is built from it. */
+  canonical?: string;
+  noindex?: boolean;
+  breadcrumb?: { name: string; href: string }[];
+  /** Extra schema.org nodes for this page. */
+  schema?: unknown[];
+  /** Image key or absolute URL for Open Graph. */
+  ogImage?: string;
+  ogType?: 'website' | 'product' | 'article';
+  /** Header becomes transparent over the hero. */
+  heroHeader?: boolean;
+  bodyClass?: string;
+}
+
+const {
+  title,
+  description,
+  canonical = Astro.url.pathname,
+  noindex = false,
+  breadcrumb = [],
+  schema = [],
+  ogImage = 'hero-wide',
+  ogType = 'website',
+  heroHeader = false,
+  bodyClass = '',
+} = Astro.props;
+
+const origin = originOf(Astro.site);
+/**
+ * The locale comes from the URL rather than a prop, so no page has to pass it
+ * down and a page can never disagree with the address it was served at.
+ * Pages give `canonical` as the English path; it is localised here.
+ */
+const { locale, path: enPath } = stripLocale(Astro.url.pathname);
+const enCanonical = stripLocale(canonical).path;
+const ui = t(locale);
+const canonicalUrl = new URL(localePath(enCanonical, locale), origin).toString();
+/** Every language of this page points at every other, and English is the fallback for anything else. */
+const alternates = LOCALES.map((l) => ({ lang: l, href: new URL(localePath(enCanonical, l), origin).toString() }));
+const ogSrc = ogImage.startsWith('http') || ogImage.startsWith('/') ? ogImage : imgSrc(ogImage);
+/*
+ * og:image:alt describes the picture, not the page — a social card read aloud
+ * should say what is in the photo, and the page description is already the
+ * card's own text. A caller passing its own URL has no catalogue entry to take
+ * an alt from, so it falls back to the description as before.
+ */
+const ogAlt = ogImage.startsWith('http') || ogImage.startsWith('/') ? description : img(ogImage).alt;
+const ogUrl = ogSrc.startsWith('http') ? ogSrc : new URL(ogSrc, origin).toString();
+const fullTitle = title.includes('Semers') ? title : `${title} — Semers`;
+
+/*
+ * Resolved once, so the trail a reader sees and the trail Google reads are the
+ * same words. The hrefs stay English here; the build's link pass moves them
+ * into the locale, the same way it moves every other link on the page.
+ */
+const trail = breadcrumb.map((c) => ({ ...c, name: crumbName(locale, c.name) }));
+
+const nodes = [
+  organization(origin),
+  webSite(origin),
+  trail.length > 1 ? breadcrumbs(origin, trail) : null,
+  ...schema,
+];
+---
+
+<!doctype html>
+<html lang={locale} prefix="og: https://ogp.me/ns#">
+  <head>
+    <meta charset="utf-8" />
+    <script is:inline>document.documentElement.classList.add("js");</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    {/*
+      * A noindex page has nothing to canonicalise and nothing to offer as an
+      * alternate: the cart, the checkout and the 404 are states, not documents.
+      * Emitting both is a contradiction — "do not index this" next to "and here
+      * is the one true URL for it" — so the pair is dropped together.
+      */}
+    {!noindex && (
+      <Fragment>
+        <link rel="canonical" href={canonicalUrl} />
+        {alternates.map((a) => <link rel="alternate" hreflang={a.lang} href={a.href} />)}
+        <link rel="alternate" hreflang="x-default" href={alternates.find((a) => a.lang === DEFAULT_LOCALE)!.href} />
+      </Fragment>
+    )}
+    <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'} />
+    <meta name="theme-color" content="#faf3e4" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="author" content={site.brand.legalName} />
+
+    {site.verify.google && <meta name="google-site-verification" content={site.verify.google} />}
+    {site.verify.bing && <meta name="msvalidate.01" content={site.verify.bing} />}
+
+    <meta property="og:type" content={ogType} />
+    <meta property="og:site_name" content={site.brand.name} />
+    <meta property="og:locale" content={LOCALE_META[locale].ogLocale} />
+    {LOCALES.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={LOCALE_META[l].ogLocale} />)}
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={ogUrl} />
+    <meta property="og:image:alt" content={ogAlt} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogUrl} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    {/* A Russian page never reads a byte of the Latin subsets, and an English one never reads the Cyrillic. */}
+    {FONT_PRELOAD[locale].map((href) => <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />)}
+    {/*
+      No preconnect: once `npm run localize-images` has run, every image is
+      served from this origin, and warming a connection to a host the page never
+      calls costs a DNS lookup and a TLS handshake for nothing.
+    */}
+
+    <script type="application/ld+json" set:html={graph(nodes)} is:inline />
+    <script is:inline set:html={`window.SEMERS=${JSON.stringify({ endpoint: site.orderEndpoint || '/api/order', freeFrom: site.shipping.freeFrom, email: site.email, whatsapp: site.whatsapp, currency: site.currency, locale, intl: LOCALE_META[locale].intl, strings: ui.runtime, ...site.storefront })};`} />
+    <slot name="head" />
+  </head>
+
+  <body class={`${heroHeader ? 'has-hero-header' : ''} ${bodyClass}`}>
+    <a class="skip-link" href={`${localePath(enPath, locale)}#main`}>{ui.skipToContent}</a>
+    {/* Filled from /api/storefront when the owner has an announcement running; stays out of the layout until then. */}
+    <div class="announce" data-announce hidden><div class="container"><span data-announce-text></span></div></div>
+    <Header transparent={heroHeader} />
+    {trail.length > 1 && <Breadcrumbs trail={trail} />}
+    {/*
+      tabindex="-1" is what makes the skip link work. Chrome and Safari scroll to
+      a fragment without moving focus unless its target can take focus, so
+      without this the next Tab carries on from the skip link — back into the
+      header the reader just asked to skip.
+    */}
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer />
+    <CartDrawer />
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <div class="sr-only" id="cart-live" role="status" aria-live="polite"></div>
+
+    <script>
+      import '~/scripts/site';
+    </script>
+
+    {site.analytics.plausibleDomain && (
+      <script defer data-domain={site.analytics.plausibleDomain} src="https://plausible.io/js/script.js" is:inline></script>
+    )}
+  </body>
+</html>

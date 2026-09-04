@@ -1,0 +1,260 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { im, SIZES } from '~/data/images';
+import { site } from '~/data/site';
+import { formatThreshold } from '~/data/products';
+import { FAQS } from '~/data/faq';
+import { faqPage } from '~/lib/schema';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+const suggestHref = `mailto:${site.email}?subject=${encodeURIComponent('Store suggestion for Semers')}`;
+
+/** Retailers from site.ts, grouped by country in order of first appearance. */
+interface Retailer { name: string; country: string; note: string; url?: string }
+interface CountryGroup { country: string; flag: string; home: boolean; retailers: Retailer[] }
+const RETAILERS: readonly Retailer[] = site.retailers;
+const FLAGS: Record<string, string> = {
+  Latvia: '🇱🇻', Lithuania: '🇱🇹', Estonia: '🇪🇪', Germany: '🇩🇪', Poland: '🇵🇱', Austria: '🇦🇹', Bulgaria: '🇧🇬',
+};
+const countries = RETAILERS.reduce<CountryGroup[]>((acc, r) => {
+  let g = acc.find((x) => x.country === r.country);
+  if (!g) {
+    g = { country: r.country, flag: FLAGS[r.country] ?? '', home: r.country === site.country, retailers: [] };
+    acc.push(g);
+  }
+  g.retailers.push(r);
+  return acc;
+}, []);
+const countryCount = countries.length;
+const exportCount = countries.filter((c) => !c.home).length;
+const exportNames = countries.filter((c) => !c.home).map((c) => c.country);
+const exportList = exportNames.length > 1 ? `${exportNames.slice(0, -1).join(', ')} and ${exportNames[exportNames.length - 1]}` : exportNames.join('');
+const isOnline = (r: Retailer) => /online/i.test(r.note);
+
+/** Questions that matter before a shop trip, from the shared FAQ. */
+const pick = ['Where can I buy in a shop?', 'Where do you ship?', 'How do I pay?'];
+const faqs = pick.flatMap((q) => {
+  const f = FAQS.find((x) => x.q === q);
+  return f ? [f] : [];
+});
+---
+<Base
+  title="Where to buy Semers apple bars & pastila"
+  description="Where to buy Semers: apple bars and Belyov pastila at Maxima and on Barbora in Latvia, in selected stores across Europe, or online with EU-wide shipping."
+  canonical="/where-to-buy/"
+  ogImage="hero-bars"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Where to buy', href: '/where-to-buy/' }]}
+  schema={[faqPage(faqs)]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container wtb-hero" aria-labelledby="page-title">
+    <p class="eyebrow">Where to buy · {site.locality} and across Europe</p>
+    <h1 id="page-title">Find Semers <em>near you.</em></h1>
+    <p class="lead">Here is where to buy Semers apple bars, meringues and Belyov pastila: on the shelves at Maxima across Latvia, in your Barbora basket, and with selected retailers in {exportList}. Not near any of them? Our web shop ships across the EU, free over {freeFrom}.</p>
+    <div class="wtb-hero__cta">
+      <a class="btn btn--lg" href="/shop/">Shop online <Icon name="arrow" size={20} class="arrow" /></a>
+      <a class="btn btn--lg btn--ghost" href="#stores">See the stores</a>
+    </div>
+  </section>
+  <div class="container">
+    <div class="frame frame--xl wtb-hero__img" data-reveal>
+      <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.half} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+    </div>
+    <div class="trust" data-reveal>
+      <div><Icon name="cart" size={22} /><div><strong>Maxima &amp; Barbora</strong><span>On shelves and delivered across Latvia</span></div></div>
+      <div><Icon name="globe" size={22} /><div><strong>{countryCount} countries</strong><span>Latvia plus {exportCount} export markets</span></div></div>
+      <div><Icon name="truck" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Otherwise €3.90 flat in the Baltics</span></div></div>
+      <div><Icon name="clock" size={22} /><div><strong>1–2 business days</strong><span>Parcels leave Riga, ship across the EU</span></div></div>
+    </div>
+  </div>
+
+  <!-- ============================== ONLINE ============================== -->
+  <section class="section container" aria-labelledby="online-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Online</p>
+        <h2 id="online-title">Two ways to order from the sofa.</h2>
+      </div>
+      <p class="muted" style="max-width:36ch">The full range lives here. In Latvia, a bar can also ride along with the weekly groceries.</p>
+    </div>
+    <div class="grid grid--2 online" data-reveal>
+      <article class="feat online__card">
+        <div class="feat__icon" style="--feat-bg:var(--mint-100);--feat-fg:var(--mint-600)"><Icon name="box" size={22} /></div>
+        <h3>The Semers web shop</h3>
+        <p>Everything we make, in one place: <a href="/shop/apple-bars/">apple bars</a>, <a href="/shop/flourless-bars/">flourless bars</a>, <a href="/shop/meringues/">meringues</a>, <a href="/shop/pastila/">pastila loaves</a>, <a href="/shop/zephyr/">zephyr</a>, the <a href="/products/apple-bar-12-pack/">12-pack</a> and <a href="/shop/gift-sets/">gift boxes</a>. Packed in Riga, shipped across the EU.</p>
+        <ul class="ticks small">
+          <li><Icon name="check" size={18} /> Free shipping over {freeFrom}; €3.90 flat below that in the Baltics</li>
+          <li><Icon name="check" size={18} /> Parcels leave within 1–2 business days</li>
+          <li><Icon name="check" size={18} /> Place an order request at checkout; we confirm by e-mail with a payment link</li>
+        </ul>
+        <a class="btn" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
+      </article>
+      <article class="feat online__card">
+        <div class="feat__icon" style="--feat-bg:var(--honey-100);--feat-fg:var(--bar-700)"><Icon name="cart" size={22} /></div>
+        <h3>Barbora</h3>
+        <p>Latvia’s grocery delivery service. Add Semers to the weekly shop and the bars arrive at the door with the milk and the bread.</p>
+        <ul class="ticks small">
+          <li><Icon name="check" size={18} /> Delivered with the rest of your groceries</li>
+          <li><Icon name="check" size={18} /> Search for “App’Lite” or “Semers” on the site</li>
+          <li><Icon name="check" size={18} /> Assortment set by Barbora and may differ from ours</li>
+        </ul>
+        <a class="btn btn--ghost" href="https://barbora.lv" rel="noopener" target="_blank">Open barbora.lv <Icon name="arrow" size={18} class="arrow" /><span class="sr-only">(opens in a new tab)</span></a>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================== IN STORES ============================== -->
+  <section class="section band" id="stores" aria-labelledby="stores-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">In stores</p>
+          <h2 id="stores-title">On shelves in {countryCount} countries.</h2>
+        </div>
+        <a class="link" href="/wholesale/">Want to stock Semers?</a>
+      </div>
+      <div class="grid grid--3" data-reveal>
+        {countries.map((c) => (
+          <article class="feat store">
+            <div class="store__head">
+              <span class="store__flag" aria-hidden="true">{c.flag}</span>
+              <div class="store__title">
+                <h3>{c.country}</h3>
+                {c.home ? <span class="chip chip--accent">Home market</span> : <span class="chip">Export</span>}
+              </div>
+            </div>
+            <ul class="store__list">
+              {c.retailers.map((r) => (
+                <li>
+                  <div class="store__name">
+                    {r.url ? <a href={r.url} rel="noopener" target="_blank">{r.name}<span class="sr-only"> (opens in a new tab)</span></a> : <strong>{r.name}</strong>}
+                    {isOnline(r) && <span class="chip chip--leaf">Online</span>}
+                  </div>
+                  <span class="small muted">{r.note}</span>
+                </li>
+              ))}
+            </ul>
+          </article>
+        ))}
+      </div>
+      <div class="notice store__note" data-reveal>
+        <Icon name="search" size={18} />
+        <p><strong>Assortment varies by store.</strong> Not every branch carries every flavour or size, and export listings change with the season. If the shelf is empty, ask the store manager: most shops can order in, and asking is what gets us on the list.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHOLESALE ============================== -->
+  <section class="section container" aria-labelledby="ws-title">
+    <div class="cta-band cta-band--img" data-reveal>
+      <div class="cta-band__copy">
+        <p class="eyebrow">Retailers &amp; distributors</p>
+        <h2 id="ws-title">Room on your shelf for a bar that is 99% apple?</h2>
+        <p>We supply supermarkets, specialty and organic stores, cafés, offices and distributors across Europe. Cases or pallets, twelve-month shelf life, no fridge needed, private label for larger volumes.</p>
+        <div class="cluster mt-2">
+          <a class="btn btn--paper" href="/wholesale/">Wholesale enquiry</a>
+          <a class="btn btn--ghost cta-band__ghost" href="/contact/">Talk to us</a>
+        </div>
+      </div>
+      <div class="frame cta-band__img">
+        <img src={im('retail-boxes').src} srcset={im('retail-boxes').srcset} sizes={im('retail-boxes').srcset && SIZES.half} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== QUESTIONS ============================== -->
+  <section class="section container section--tight" aria-labelledby="q-title">
+    <div class="wtb-faq">
+      <div>
+        <p class="eyebrow">Questions</p>
+        <h2 id="q-title">Before you head out.</h2>
+        <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+      </div>
+      <div class="acc" data-reveal>
+        {faqs.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== NOT NEAR YOU ============================== -->
+  <section class="section container" aria-labelledby="post-title">
+    <div class="split">
+      <div class="frame frame--4x5 rounded" data-reveal>
+        <img src={im('hero-bars').src} srcset={im('hero-bars').srcset} sizes={im('hero-bars').srcset && SIZES.third} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Not near you?</p>
+        <h2 id="post-title">No store nearby? Your postbox is.</h2>
+        <p class="lead">Everything on the shelf, plus a few things that are not: the <a href="/products/tasting-box/">tasting box</a>, the 12-pack, the pastila discovery set. Packed in Riga, shipped across the EU, and it keeps for months without a fridge.</p>
+        <ul class="ticks wtb-post__ticks">
+          <li><Icon name="check" /> Free shipping over {freeFrom}; €3.90 flat in the Baltics below that</li>
+          <li><Icon name="check" /> Parcels leave Riga within 1–2 business days</li>
+          <li><Icon name="check" /> You place an order request; we confirm by e-mail with a payment link</li>
+        </ul>
+        <div class="cluster">
+          <a class="btn btn--lg" href="/shop/">Shop online <Icon name="arrow" size={20} class="arrow" /></a>
+          <a class="btn btn--lg btn--ghost" href={suggestHref}><Icon name="mail" size={20} /> Suggest a store</a>
+        </div>
+        <p class="small muted mt-4">Know a shop that should carry Semers? Send us its name and town. We will do the asking.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .wtb-hero h1 { max-width: 14ch; }
+  .wtb-hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .wtb-hero__cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+  .wtb-hero__img { aspect-ratio: 3 / 2; box-shadow: var(--shadow-2); }
+  @media (min-width: 56rem) { .wtb-hero__img { aspect-ratio: 21 / 9; } }
+  .wtb-hero + .container .trust { margin-top: var(--sp-6); }
+
+  /* online cards */
+  .online__card { gap: var(--sp-4); }
+  .online__card .ticks { color: var(--fg-2); }
+  .online__card .btn { justify-self: start; margin-top: auto; }
+
+  /* country cards */
+  .store { gap: var(--sp-4); }
+  .store__head { display: flex; align-items: center; gap: var(--sp-4); }
+  .store__flag { font-size: 2.25rem; line-height: 1; flex: none; }
+  .store__title { display: grid; gap: var(--sp-2); justify-items: start; }
+  .store__list { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-3); border-top: 1px solid var(--line); padding-top: var(--sp-4); }
+  .store__list li { display: grid; gap: var(--sp-1); }
+  .store__name { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); font-weight: 600; }
+  .store__name a { text-decoration-color: var(--ink-300); }
+  .store__note { display: flex; gap: var(--sp-3); align-items: flex-start; margin-top: var(--sp-5); max-width: 66ch; }
+  .store__note :global(svg) { flex: none; margin-top: 0.2em; color: var(--bar-700); }
+
+  /* wholesale band with image */
+  .cta-band--img { gap: var(--sp-6); align-items: center; }
+  .cta-band__copy { display: grid; gap: var(--sp-4); }
+  .cta-band__img { aspect-ratio: 3 / 2; border-radius: var(--r-lg); background: var(--ink-800); }
+  @media (min-width: 56rem) {
+    .cta-band--img { grid-template-columns: 1.2fr 0.8fr; }
+    .cta-band__img { aspect-ratio: 4 / 5; max-height: 26rem; justify-self: end; width: 100%; }
+  }
+  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+
+  /* questions */
+  .wtb-faq { display: grid; gap: var(--sp-6); }
+  @media (min-width: 56rem) { .wtb-faq { grid-template-columns: 1fr 1.4fr; gap: var(--sp-8); } }
+
+  /* final cta */
+  .wtb-post__ticks { margin: var(--sp-5) 0; }
+</style>

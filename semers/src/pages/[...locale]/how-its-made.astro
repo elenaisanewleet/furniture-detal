@@ -1,0 +1,392 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { imgSrc, RENDER_BG, im, SIZES } from '~/data/images';
+import { formatThreshold } from '~/data/products';
+import { site } from '~/data/site';
+import { originOf } from '~/lib/origin';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const abs = (k: string) => {
+  const s = imgSrc(k);
+  return s.startsWith('http') ? s : new URL(s, origin).toString();
+};
+const num = (i: number) => String(i + 1).padStart(2, '0');
+
+/** The eight stages, in order. Also feeds the HowTo JSON-LD below. */
+const stages = [
+  {
+    short: 'Apples',
+    name: 'Choosing the apples',
+    text: 'Antonovka, and only Antonovka. It is a tart, aromatic northern apple with plenty of pectin and acid, which is what lets the purée set without gelatine and taste of fruit rather than sugar. Sweet dessert apples make a flat, sticky pastila; sour ones make it sing.',
+  },
+  {
+    short: 'Bake',
+    name: 'Baking the apples whole',
+    text: 'The apples go into the oven whole, skins on. Slow heat softens the flesh and caramelises the fruit’s own sugars, turning the flavour from sharp and green to warm and honeyed. Every bit of sweetness in the finished pastila is made here; there is no other source.',
+  },
+  {
+    short: 'Purée',
+    name: 'Puréeing',
+    text: 'Once baked, the apples are passed through a fine sieve. Skins, cores and pips stay behind; the smooth, fibre-rich pulp goes on. Nothing is added at this stage, and nothing is taken away except the parts you would not eat anyway.',
+  },
+  {
+    short: 'Whip',
+    name: 'Whipping with egg white',
+    text: 'The warm purée is whipped with fresh egg white until it triples in volume and holds a soft peak. This is the step that turns fruit into pastila: air, caught in a web of apple pectin and egg protein. It is also why a bar weighs so little for its size.',
+  },
+  {
+    short: 'Spread',
+    name: 'Spreading thin',
+    text: 'The foam is spread in thin, even sheets on trays. Thin matters. It lets moisture leave evenly, so each layer dries to the same texture with no wet centre and no hard crust.',
+  },
+  {
+    short: 'Dry',
+    name: 'Slow drying',
+    text: 'The sheets dry for hours at low heat — gently, never baked a second time. Water leaves; flavour stays and concentrates. The slow pace is why the finished pastila keeps for a year without a single preservative: once the water is gone, spoilage has nothing to work with.',
+  },
+  {
+    short: 'Layer',
+    name: 'Layering and pressing',
+    text: 'Dried sheets are brushed with a little of the same apple foam, stacked several high and pressed into a block. The foam glues the layers together, and the whole block goes back into the warmth to set. This layering is the Belyov signature, and the reason a cut face looks like the pages of a book.',
+  },
+  {
+    short: 'Cut & pack',
+    name: 'Resting, cutting and packing',
+    text: 'The blocks rest until the texture settles, then are cut into bars, squares and loaves and sealed the same day, each pack stamped with a batch label. Nothing is dusted, dipped or sprayed on the way. What leaves the drying room is what you open at home.',
+  },
+];
+
+const never = [
+  ['Sugar', 'baking the apple does the sweetening'],
+  ['Syrups', 'no glucose, agave, date or rice syrup'],
+  ['Sweeteners', 'no stevia, erythritol or sucralose'],
+  ['Gelatine', 'apple pectin sets the foam'],
+  ['Flour', 'air does the lifting'],
+  ['Oils or fats', 'nothing pressed, sprayed or spread on'],
+  ['Preservatives', 'slow drying does the keeping'],
+  ['Colours', 'the gold is caramelised apple'],
+  ['Flavourings', 'not even “natural flavouring”'],
+];
+
+const pageUrl = `${origin}/how-its-made/`;
+const howTo = {
+  '@type': 'HowTo',
+  '@id': `${pageUrl}#howto`,
+  name: 'How Semers apple pastila is made',
+  description:
+    'The eight-stage Belyov method behind every Semers product: Antonovka apples baked whole, puréed, whipped with egg white, spread thin, slowly dried, layered, pressed and cut. No added sugar, no flour, no preservatives.',
+  image: abs('process-oven'),
+  totalTime: 'PT12H',
+  supply: [
+    { '@type': 'HowToSupply', name: 'Antonovka apples' },
+    { '@type': 'HowToSupply', name: 'Egg white' },
+  ],
+  step: stages.map((s, i) => ({
+    '@type': 'HowToStep',
+    position: i + 1,
+    name: s.name,
+    text: s.text,
+    url: `${pageUrl}#step-${i + 1}`,
+  })),
+};
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+---
+<Base
+  title="How apple pastila is made: baked apples & egg white"
+  description="How Semers makes apple pastila in Riga: Antonovka apples baked whole, whipped with egg white, dried thin and pressed. No added sugar, no flour, no tricks."
+  canonical="/how-its-made/"
+  ogImage="process-oven"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'How it’s made', href: '/how-its-made/' }]}
+  schema={[howTo]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container hiw-hero" aria-labelledby="hero-title">
+    <p class="eyebrow">How it’s made · {site.locality}, {site.country}</p>
+    <h1 id="hero-title">Twelve hours. Four ingredients at most. <em>Nothing to hide.</em></h1>
+    <p class="lead">This is how our apple pastila is made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into loaves. The recipe was first sold commercially in Belyov in 1888. The ingredient list has not grown since.</p>
+    <ul class="cluster hiw-facts" aria-label="Key facts">
+      <li class="chip"><Icon name="apple" size={14} /> 99% baked apples</li>
+      <li class="chip"><Icon name="egg" size={14} /> 1% egg white</li>
+      <li class="chip"><Icon name="check" size={14} /> No added sugar</li>
+      <li class="chip"><Icon name="clock" size={14} /> 12 months, no fridge</li>
+    </ul>
+  </section>
+  <div class="container">
+    <div class="frame frame--xl hiw-hero__img" data-reveal>
+      <img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes={im('apples-orchard').srcset && SIZES.half} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+    </div>
+  </div>
+
+  <!-- ============================== PROCESS ============================== -->
+  <section class="section container" id="process" aria-labelledby="process-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">The process</p>
+        <h2 id="process-title">Eight stages, in order. None skipped, none hurried.</h2>
+      </div>
+      <p class="muted" style="max-width:34ch">Most of the twelve hours is waiting. The rest is baking, whipping and cutting by hand.</p>
+    </div>
+    <nav class="pills process__nav" aria-label="Jump to a stage">
+      {stages.map((s, i) => <a class="pill" href={`#step-${i + 1}`}><span class="process__n">{num(i)}</span> {s.short}</a>)}
+    </nav>
+    <div class="process">
+      <aside class="process__aside" data-reveal>
+        <div class="frame frame--4x5 rounded">
+          <img src={im('pastila-texture').src} srcset={im('pastila-texture').srcset} sizes={im('pastila-texture').srcset && SIZES.third} alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
+        </div>
+        <p class="small muted process__cap">The cut face of a loaf: thin sheets of whipped apple, dried, stacked and pressed. Every line you can see is a stage on the right.</p>
+      </aside>
+      <ol class="steps process__list" data-reveal>
+        {stages.map((s, i) => (
+          <li class="step process__step" id={`step-${i + 1}`}>
+            <h3>{s.name}</h3>
+            <p>{s.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================== THE ONE PER CENT ============================== -->
+  <section class="section band" aria-labelledby="air-title">
+    <div class="container split">
+      <div class="frame frame--1x1 rounded" data-reveal>
+        <img src={im('process-oven').src} srcset={im('process-oven').srcset} sizes={im('process-oven').srcset && SIZES.third} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">The one per cent</p>
+        <h2 id="air-title">Egg white does one job. It holds the air.</h2>
+        <p class="lead">Egg white is about one per cent of the recipe and does exactly one thing: it traps air. Whipped into warm apple purée, its proteins stretch around each bubble the way they would in a meringue. The setting, though, is done by the apple’s own pectin, so there is no sugar to add and no gelatine to hide.</p>
+        <ul class="ticks hiw-ticks">
+          <li><Icon name="check" /> <span>Sets on its own — apple pectin, not gelatine</span></li>
+          <li><Icon name="check" /> <span>Sweet on its own — baking concentrates the fruit</span></li>
+          <li><Icon name="check" /> <span>Light on its own — air does the lifting, not flour</span></li>
+        </ul>
+        <p>What comes out is springy and faintly tart, a little like sponge and a little like dried fruit. It is a texture you will not find in a bar made with flour and syrup.</p>
+        <a class="link" href="/why-pastila/">Why that matters for what you eat</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CUT ONE OPEN ============================== -->
+  <section class="open" style={`--render-bg:${RENDER_BG}`} aria-labelledby="open-title">
+    <img class="open__img" src={im('apple-render-wide').src} srcset={im('apple-render-wide').srcset} sizes={im('apple-render-wide').srcset && SIZES.half} alt={im('apple-render-wide').alt} width={im('apple-render-wide').width} height={im('apple-render-wide').height} loading="lazy" decoding="async" />
+    <div class="container open__in">
+      <div class="open__copy" data-reveal>
+        <p class="eyebrow">Transparency</p>
+        <h2 id="open-title">Cut one open. It is apple all the way through.</h2>
+        <p>No coating, no filling, no binder. The layers in a slice of pastila are the same whipped apple, dried and stacked; the gold colour is caramelised fruit, not a colouring. What is printed on the label is the whole of what is inside, and none of it needs a footnote.</p>
+        <div class="stats open__stats">
+          <div class="stat"><strong>99%</strong><span>baked Antonovka apples</span></div>
+          <div class="stat"><strong>1%</strong><span>egg white</span></div>
+          <div class="stat"><strong>0 g</strong><span>added sugar</span></div>
+          <div class="stat"><strong>~12 h</strong><span>from oven to pack</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHAT WE NEVER ADD ============================== -->
+  <section class="section container" aria-labelledby="never-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">The short list</p>
+        <h2 id="never-title">What goes in, and what we never add.</h2>
+      </div>
+      <p class="muted" style="max-width:34ch">Two columns. One of them is very short on purpose.</p>
+    </div>
+    <div class="io" data-reveal>
+      <div class="io__col io__col--in">
+        <p class="eyebrow">Goes in</p>
+        <ul class="ticks io__list">
+          <li><Icon name="check" /> <span><strong>Baked Antonovka apples</strong> <span class="muted">— 99% of every bar and loaf</span></span></li>
+          <li><Icon name="check" /> <span><strong>Egg white</strong> <span class="muted">— the other 1%</span></span></li>
+          <li><Icon name="check" /> <span><strong>Whole berries, cinnamon or pine nuts</strong> <span class="muted">— in the flavoured versions only</span></span></li>
+        </ul>
+      </div>
+      <div class="io__col io__col--out">
+        <p class="eyebrow">Never does</p>
+        <ul class="ticks ticks--no io__list">
+          {never.map(([what, why]) => (
+            <li><Icon name="close" /> <span><strong>{what}</strong> <span class="muted">— {why}</span></span></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+    <p class="tiny muted mt-4">This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.</p>
+  </section>
+
+  <!-- ============================== QUALITY & SHELF LIFE ============================== -->
+  <section class="section band" aria-labelledby="keep-title">
+    <div class="container split split--rev">
+      <div class="frame frame--1x1 rounded" data-reveal>
+        <img src={im('pastila-block').src} srcset={im('pastila-block').srcset} sizes={im('pastila-block').srcset && SIZES.third} alt={im('pastila-block').alt} width={im('pastila-block').width} height={im('pastila-block').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Quality and shelf life</p>
+        <h2 id="keep-title">Kept by drying, not by chemistry.</h2>
+        <p class="lead">Slow drying removes the water that spoilage needs. That is the whole preservation system, and it is why a pack of pastila can sit in a drawer for a year and still taste of the oven.</p>
+        <div class="specs">
+          <div class="spec">
+            <span class="feat__icon"><Icon name="shield" /></span>
+            <h3>A batch label on every pack</h3>
+            <p>Batch code and best-before date, printed at packing, so any pack can be traced back to the batch it came from.</p>
+          </div>
+          <div class="spec">
+            <span class="feat__icon"><Icon name="clock" /></span>
+            <h3>Twelve months, unopened</h3>
+            <p>For bars, dessert squares and pastila, in a cool, dry cupboard. Meringues and zephyr keep for less; the date on the pack is the one to trust.</p>
+          </div>
+          <div class="spec">
+            <span class="feat__icon"><Icon name="box" /></span>
+            <h3>No fridge, ever</h3>
+            <p>Room temperature is right. Once opened, keep it wrapped and finish it within a few days; it dries slowly rather than spoils.</p>
+          </div>
+          <div class="spec">
+            <span class="feat__icon"><Icon name="check" /></span>
+            <h3>Packed the same day</h3>
+            <p>Cut and sealed on the day it leaves the drying room. Nothing sits around waiting for a box.</p>
+          </div>
+        </div>
+        <p class="small muted specs__note">Allergens: contains egg. May contain traces of nuts, and the Pine Nut loaf contains them outright. The full allergen line is on each product page.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== KEEP READING ============================== -->
+  <section class="section section--tight container" aria-labelledby="more-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Keep reading</p>
+        <h2 id="more-title">The rest of the story.</h2>
+      </div>
+    </div>
+    <div class="grid grid--3" data-reveal>
+      <a class="card more" href="/why-pastila/">
+        <span class="eyebrow">Why pastila</span>
+        <h3>Why a baked apple beats the usual bar</h3>
+        <p>Calories, sugar and fibre, side by side with the snacks it replaces.</p>
+        <span class="more__arrow"><Icon name="arrow" size={18} class="arrow" /></span>
+      </a>
+      <a class="card more" href="/story/">
+        <span class="eyebrow">Our story</span>
+        <h3>From Belyov, 1888, to Riga</h3>
+        <p>A merchant, a sour apple and a recipe that never needed improving.</p>
+        <span class="more__arrow"><Icon name="arrow" size={18} class="arrow" /></span>
+      </a>
+      <a class="card more" href="/journal/antonovka-apples/">
+        <span class="eyebrow">Journal</span>
+        <h3>Why Antonovka apples?</h3>
+        <p>The tart green apple behind every Semers bar, and why we will not swap it.</p>
+        <span class="more__arrow"><Icon name="arrow" size={18} class="arrow" /></span>
+      </a>
+    </div>
+  </section>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Taste the twelve hours</p>
+      <h2 id="cta-title">Start with a loaf. The bars will follow.</h2>
+      <p>Belyov pastila is the recipe in its original shape: baked Antonovka apple, egg white, time. Parcels leave Riga in 1–2 business days, and orders over {freeFrom} ship free.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/shop/pastila/">Shop Belyov pastila <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost cta-band__ghost" href="/shop/">All products</a>
+        <a class="link cta-band__link" href="/why-pastila/">Why pastila?</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .hiw-hero h1 { max-width: 20ch; }
+  .hiw-hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .hiw-facts { list-style: none; margin: var(--sp-5) 0 0; padding: 0; }
+  .hiw-facts .chip :global(svg) { color: var(--leaf-500); }
+  .hiw-hero__img { aspect-ratio: 3 / 2; box-shadow: var(--shadow-2); }
+  @media (min-width: 56rem) { .hiw-hero__img { aspect-ratio: 21 / 9; } }
+
+  /* process */
+  .process__nav { margin: calc(-1 * var(--sp-4)) 0 var(--sp-6); }
+  .process__n { color: var(--accent); font-family: var(--font-display); font-weight: 600; margin-right: 0.15em; }
+  .pill.is-active .process__n, .pill:hover .process__n { color: inherit; }
+  .process { display: grid; gap: var(--sp-6); }
+  @media (min-width: 56rem) {
+    .process { grid-template-columns: 0.8fr 1.2fr; gap: clamp(2rem, 5vw, 4rem); align-items: start; }
+    .process__aside { position: sticky; top: 6rem; }
+  }
+  .process__cap { margin-top: var(--sp-3); max-width: 40ch; }
+  .process__list { list-style: none; margin: 0; padding: 0; grid-template-columns: 1fr; gap: 0; border-top: 1px solid var(--line); }
+  .process__step { grid-template-columns: 3.75rem 1fr; column-gap: var(--sp-4); row-gap: var(--sp-2); padding-block: var(--sp-5); border-bottom: 1px solid var(--line); scroll-margin-top: 6rem; }
+  .process__step::before { grid-row: 1 / span 2; font-size: var(--fs-3xl); line-height: 0.9; font-variation-settings: 'opsz' 96, 'SOFT' 50; }
+  .process__step h3 { font-size: var(--fs-xl); align-self: end; }
+  .process__step p { font-size: var(--fs-md); color: var(--ink-700); max-width: 54ch; }
+  @media (max-width: 30rem) { .process__step { grid-template-columns: 2.75rem 1fr; } .process__step::before { font-size: var(--fs-2xl); } }
+
+  /* one per cent */
+  .hiw-ticks { margin: var(--sp-5) 0; }
+
+  /* dark render band */
+  .open { position: relative; isolation: isolate; overflow: clip; background: var(--render-bg); color: var(--cream-0); }
+  .open__img { width: 100%; height: auto; display: block; }
+  .open__in { padding-block: clamp(2.5rem, 6vw, 5rem); }
+  .open .eyebrow { color: var(--honey-500); }
+  .open .eyebrow::before { background: var(--honey-500); }
+  .open h2 { color: inherit; max-width: 16ch; margin-bottom: var(--sp-4); }
+  .open__copy > p { color: rgb(250 243 228 / 0.82); max-width: 46ch; }
+  .open__stats { margin-top: var(--sp-6); grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .open .stat strong { color: var(--honey-500); }
+  .open .stat span { color: rgb(250 243 228 / 0.72); }
+  @media (min-width: 56rem) {
+    .open__img { position: absolute; inset: 0; z-index: -2; width: 100%; height: 100%; object-fit: cover; object-position: 72% 50%; }
+    .open::before { content: ''; position: absolute; inset: 0; z-index: -1; background: linear-gradient(90deg, var(--render-bg) 30%, color-mix(in srgb, var(--render-bg) 72%, transparent) 52%, transparent 78%); }
+    .open__in { min-height: clamp(30rem, 62vh, 44rem); display: grid; align-items: center; padding-block: clamp(4rem, 10vw, 8rem); }
+    .open__copy { max-width: 34rem; }
+    .open__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--sp-4); }
+  }
+
+  /* goes in / never does */
+  .io { display: grid; gap: var(--sp-4); }
+  @media (min-width: 56rem) { .io { grid-template-columns: 0.8fr 1.2fr; } }
+  .io__col { padding: var(--sp-5); border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); display: grid; gap: var(--sp-4); align-content: start; }
+  .io__col--in { outline: 2px solid var(--leaf-500); outline-offset: -2px; }
+  .io__col--out .eyebrow::before { background: var(--apple-600); }
+  .io__list strong { font-weight: 600; }
+  .ticks--no { grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--sp-3) var(--sp-5); }
+  .ticks--no :global(svg) { color: var(--apple-600); }
+
+  /* quality specs */
+  .specs { display: grid; gap: var(--sp-5) var(--sp-6); margin: var(--sp-5) 0; }
+  @media (min-width: 40rem) { .specs { grid-template-columns: 1fr 1fr; } }
+  .spec { display: grid; gap: var(--sp-2); align-content: start; }
+  .spec .feat__icon { --feat-bg: var(--honey-100); --feat-fg: var(--bar-700); width: 2.5rem; height: 2.5rem; margin-bottom: var(--sp-1); }
+  .spec h3 { font-size: var(--fs-lg); }
+  .spec p { margin: 0; font-size: var(--fs-sm); color: var(--fg-2); }
+  .specs__note { max-width: 52ch; }
+
+  /* keep reading cards */
+  .more { display: grid; gap: var(--sp-2); align-content: start; padding: var(--sp-5); text-decoration: none; color: inherit; transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
+  .more:hover, .more:focus-visible { transform: translateY(-3px); box-shadow: var(--shadow-2); }
+  .more h3 { font-size: var(--fs-xl); }
+  .more p { margin: 0; color: var(--fg-2); font-size: var(--fs-sm); }
+  .more__arrow { display: grid; place-items: center; width: 2.25rem; height: 2.25rem; margin-top: var(--sp-2); border-radius: 50%; background: var(--ink-900); color: var(--cream-0); }
+  .more:hover .arrow { transform: translateX(3px); }
+
+  /* cta */
+  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+  .cta-band__link { color: var(--cream-0); border-color: var(--honey-500); }
+</style>

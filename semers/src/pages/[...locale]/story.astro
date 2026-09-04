@@ -1,0 +1,394 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { RENDER_BG, im, SIZES } from '~/data/images';
+import { PRODUCTS, collectionByKey, formatThreshold } from '~/data/products';
+import { site } from '~/data/site';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+
+/** Countries with Semers on a shelf, derived from the retailer list (Latvia + export markets). */
+const countries = [...new Set(site.retailers.map((r) => r.country))];
+const exportCountries = countries.filter((c) => c !== site.country);
+const countryCount = countries.length;
+const exportLine = exportCountries.join(', ');
+
+/** Qualitative milestones. Only 1888 is a documented date; nothing else carries a year. */
+const milestones = [
+  {
+    key: '1888',
+    isYear: true,
+    title: 'Belyov pastila is first sold',
+    text: 'Merchant Amvrosy Prokhorov puts baked-apple pastila into commercial production in the town of Belyov. Antonovka apples, egg white, thin layers, patience.',
+  },
+  {
+    key: 'The Baltics',
+    title: 'A recipe travels north',
+    text: 'The same sour apple grows in orchards across the Baltics, and the same method follows it: a sweet that needs no sugar to make and no cold to keep.',
+  },
+  {
+    key: 'Riga',
+    title: 'Semers starts baking pastila for the modern snack shelf',
+    text: 'A bakery in Riga takes the loaf and cuts it down to a bar, bakes it into a meringue and presses it into a dessert square. The ingredient list stays two lines long.',
+  },
+  {
+    key: 'Maxima & Barbora',
+    title: 'On shelves across Latvia',
+    text: 'App’Lite bars reach supermarket shelves and the online grocery basket at home.',
+  },
+  {
+    key: 'Europe',
+    title: exportLine,
+    text: 'Cases leave Riga for specialty and online stores in five more countries.',
+  },
+  {
+    key: 'Today',
+    title: 'This shop',
+    text: 'Ordered here, packed in Riga, on its way in one to two business days. The recipe is still two ingredients long.',
+  },
+];
+
+/** The four shapes the loaf became, in the order they are told above. */
+const shapes = [
+  { slug: 'apple-bar-35g', label: 'The bar' },
+  { slug: 'apple-meringue-35g', label: 'The meringue' },
+  { slug: 'applite-baked-apple-dessert-50g', label: 'The dessert square' },
+  { slug: 'flourless-apple-bar-50g', label: 'The flourless bar' },
+].flatMap((s) => {
+  const p = PRODUCTS.find((x) => x.slug === s.slug);
+  return p ? [{ ...s, product: p }] : [];
+});
+
+/** One line per sub-brand; product names, weights and links come from the catalogue. */
+const LINE_NOTES: Record<string, string> = {
+  "App'Lite": 'The everyday line. Pastila cut to pocket size as a 35 g bar, and its thicker cut for a plate.',
+  Flourless: 'The heartier bar: 50 g of baked apple pressed with whole berries, for the days when 35 g is not enough.',
+  PastiLite: 'The same whipped apple, baked until it crackles. A meringue with no sugar to add.',
+  'Belyov Pastila': 'The original loaf, in the shape it has had since 1888. The 100 g is the one to try first; the 180 g is for the table.',
+  Belevini: 'Apple zephyr, the soft marshmallow of the east, set with agar. The one line in our range that does contain sugar, and the pack says so.',
+};
+const lines = site.brand.lines.map((brand) => {
+  const products = PRODUCTS.filter((p) => p.brand === brand && p.collection !== 'gift-sets').sort((a, b) => a.order - b.order);
+  const first = products[0];
+  const col = first ? collectionByKey(first.collection) : undefined;
+  return { brand, products, href: col ? `/shop/${col.key}/` : '/shop/', colName: col ? col.name : 'Shop', note: LINE_NOTES[brand] ?? '' };
+});
+---
+<Base
+  title="Our story: an 1888 pastila recipe, baked in Riga"
+  description="The Semers story: a Belyov apple pastila recipe first sold in 1888, the sour Antonovka apple behind it, and a Riga bakery turning the loaf into bars."
+  canonical="/story/"
+  ogImage="pastila-block"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Our story', href: '/story/' }]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container story-hero" aria-labelledby="page-title">
+    <div class="story-hero__grid">
+      <div>
+        <p class="eyebrow">Our story · {site.locality}, {site.country}</p>
+        <h1 id="page-title">A sour apple, an old recipe and a bakery in <em>Riga</em>.</h1>
+        <p class="lead">Semers makes baked-apple snacks in Riga from a Belyov pastila recipe that was first sold in 1888: Antonovka apples, egg white, and a great deal of patience. This is where the recipe came from, why we have not touched it, and how a loaf turned into a bar.</p>
+        <div class="cluster story-hero__cta">
+          <a class="btn btn--lg" href="/shop/">Shop the range <Icon name="arrow" size={20} class="arrow" /></a>
+          <a class="btn btn--lg btn--ghost" href="/how-its-made/">How it’s made</a>
+        </div>
+      </div>
+      <div class="story-hero__media" data-reveal>
+        <div class="frame frame--4x5 frame--xl">
+          <img src={im('pastila-slices').src} srcset={im('pastila-slices').srcset} sizes={im('pastila-slices').srcset && SIZES.third} alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+        </div>
+        <div class="story-hero__note"><strong>1888</strong><span>The year Belyov pastila was first sold. Two ingredients then, two ingredients now.</span></div>
+      </div>
+    </div>
+    <div class="stats story-stats" data-reveal>
+      <div class="stat"><strong>1888</strong><span>Belyov pastila first sold</span></div>
+      <div class="stat"><strong>2</strong><span>ingredients: baked apples, egg white</span></div>
+      <div class="stat"><strong>99%</strong><span>Antonovka apple in every bar</span></div>
+      <div class="stat"><strong>{countryCount}</strong><span>countries with Semers on a shelf</span></div>
+    </div>
+  </section>
+
+  <!-- ============================== THE BELYOV TRADITION ============================== -->
+  <section class="section container" aria-labelledby="belyov-title">
+    <div class="split">
+      <div class="frame frame--1x1 rounded" data-reveal>
+        <img src={im('pastila-block').src} srcset={im('pastila-block').srcset} sizes={im('pastila-block').srcset && SIZES.third} alt={im('pastila-block').alt} width={im('pastila-block').width} height={im('pastila-block').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">The Belyov tradition</p>
+        <h2 id="belyov-title">It began in a small town with more apples than it could eat.</h2>
+        <div class="prose mt-4">
+          <p>Belyov is a small town in orchard country south of Moscow. Its apples are Antonovka: sour, aromatic, and impossible to keep fresh through a winter. Baking, whipping and drying them was the local answer, and in 1888 the merchant Amvrosy Prokhorov turned that answer into a business. Belyov pastila was sold for the first time.</p>
+          <p>His method is the one we still use. Apples are baked whole until their sugars caramelise. The purée is whipped with egg white until it holds air, spread in thin sheets and dried for hours. The sheets are stacked, brushed with more of the foam, pressed and dried again. What comes out is light, layered, faintly tart, and keeps for months without a cellar.</p>
+          <p>That last part is why the recipe travelled. A sweet that needs no sugar to make and no cold to keep suits the north, and pastila became a northern-European sweet: wherever sour apples grow and winters run long, someone was drying them into loaves.</p>
+        </div>
+        <ul class="cluster recipe" aria-label="The recipe">
+          <li class="chip"><Icon name="apple" size={14} /> Baked apples</li>
+          <li class="chip"><Icon name="egg" size={14} /> Egg white</li>
+          <li class="chip"><Icon name="clock" size={14} /> Thin layers, slow drying</li>
+        </ul>
+        <div class="cluster mt-4">
+          <a class="btn btn--paper" href="/shop/pastila/">Shop Belyov pastila</a>
+          <a class="link" href="/journal/what-is-pastila/">What pastila is, in full</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHY ANTONOVKA ============================== -->
+  <section class="section band" aria-labelledby="antonovka-title">
+    <div class="container split split--rev">
+      <div class="frame frame--4x5 rounded" data-reveal>
+        <img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes={im('apples-orchard').srcset && SIZES.third} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Why Antonovka</p>
+        <h2 id="antonovka-title">One apple makes the recipe possible. We have not found a second.</h2>
+        <div class="prose mt-4">
+          <p>Antonovka is a hardy, tart, green apple from the north. It carries more pectin and more acid than a supermarket dessert apple, and that is exactly what pastila needs. The pectin sets the whipped purée without gelatine. The acid keeps the finished sweetness honest, so a bar tastes of fruit rather than of sugar. And the aroma survives twelve hours of baking and drying, which very few apples manage.</p>
+          <p>It grows well across the Baltics and the wider north, where a cold autumn sharpens it. Sweet apples make a flat, sticky pastila. Antonovka makes it sing.</p>
+        </div>
+        <ul class="ticks story-ticks">
+          <li><Icon name="check" /> <span><strong>Pectin</strong> sets the foam, so there is no gelatine</span></li>
+          <li><Icon name="check" /> <span><strong>Acid</strong> keeps the sweetness honest</span></li>
+          <li><Icon name="check" /> <span><strong>Aroma</strong> survives the oven and the drying room</span></li>
+        </ul>
+        <div class="cluster">
+          <a class="link" href="/journal/antonovka-apples/">Why Antonovka apples, in the journal</a>
+          <a class="link" href="/how-its-made/">The full process</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FROM LOAF TO BAR ============================== -->
+  <section class="section container" aria-labelledby="loaf-title">
+    <div class="loaf">
+      <div data-reveal>
+        <p class="eyebrow">From loaf to bar</p>
+        <h2 id="loaf-title">A loaf is for a table. We wanted something for a pocket.</h2>
+        <div class="prose mt-4">
+          <p>Belyov pastila is sold as a loaf. You slice it, share it and eat it with tea; it is a dessert with a ritual. In Riga we kept the loaf and asked a simpler question: what would this be if you could eat it on the way to the bus?</p>
+          <p>The answer was App’Lite: the same whipped apple, cut to 35 g and sealed so it survives a bag and a lunchbox. Then PastiLite, the same foam baked until it crackles into a meringue. Then a thicker square for a plate, and a flourless bar pressed with whole berries for a long walk. Every one of them is the 1888 recipe in a different shape. None of them needed a new ingredient to get there.</p>
+          <p>This shop came last. Until now you found us at Maxima, on Barbora and in stores across Europe; now the same cases can leave Riga for your door.</p>
+        </div>
+        <ul class="shapes" aria-label="The shapes the loaf became">
+          {shapes.map((s) => (
+            <li>
+              <a href={`/products/${s.product.slug}/`}>
+                <strong>{s.label}</strong>
+                <span>{s.product.name} · {s.product.weightGrams} g</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div class="duo" data-reveal>
+        <figure>
+          <div class="frame frame--4x5 rounded">
+            <img src={im('orchard-picking').src} srcset={im('orchard-picking').srcset} sizes={im('orchard-picking').srcset && SIZES.third} alt={im('orchard-picking').alt} width={im('orchard-picking').width} height={im('orchard-picking').height} loading="lazy" decoding="async" class="img-cover" />
+          </div>
+          <figcaption>It starts in an orchard in autumn, when the apples are at their sharpest.</figcaption>
+        </figure>
+        <figure>
+          <div class="frame frame--4x5 rounded">
+            <img src={im('retail-boxes').src} srcset={im('retail-boxes').srcset} sizes={im('retail-boxes').srcset && SIZES.third} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="lazy" decoding="async" class="img-cover" />
+          </div>
+          <figcaption>It ends as cases packed in Riga, on their way to a shop shelf or to you.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== TIMELINE ============================== -->
+  <section class="section band" aria-labelledby="journey-title">
+    <div class="container journey">
+      <div class="journey__head" data-reveal>
+        <p class="eyebrow">The journey</p>
+        <h2 id="journey-title">Six stops between Belyov and your kitchen drawer.</h2>
+        <p class="muted mt-4 journey__note">We put a year only on the stop we can document. The rest are told in the order they happened.</p>
+      </div>
+      <ol class="timeline" data-reveal>
+        {milestones.map((m) => (
+          <li>
+            {m.isYear ? <time class="tl__k" datetime={m.key}>{m.key}</time> : <span class="tl__k">{m.key}</span>}
+            <h3>{m.title}</h3>
+            <p>{m.text}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================== WHAT WE BELIEVE ============================== -->
+  <section class="section container" aria-labelledby="believe-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">What we believe</p>
+        <h2 id="believe-title">Three things we will not argue about.</h2>
+      </div>
+      <p class="muted" style="max-width:36ch">Not a mission statement. Three rules the recipe taught us, and the reasons we keep them.</p>
+    </div>
+    <div class="trio" data-reveal>
+      <article class="feat" style="--feat-bg:var(--leaf-100);--feat-fg:var(--leaf-600)">
+        <div class="feat__icon"><Icon name="leaf" size={22} /></div>
+        <h3>Two ingredients</h3>
+        <p>Baked apples and egg white. Berries, cinnamon and pine nuts may join them, because they are food. Sugar, syrups, flour, gelatine and flavourings may not, because the recipe never needed them.</p>
+      </article>
+      <article class="feat">
+        <div class="feat__icon"><Icon name="shield" size={22} /></div>
+        <h3>Honest labels</h3>
+        <p>The front of the pack says what the back of the pack says. No “natural flavouring”, no E-numbers, no claims we cannot stand behind. Where a product does contain sugar, as our Belevini zephyr does, the label says so plainly.</p>
+      </article>
+      <article class="feat" style="--feat-bg:var(--honey-100);--feat-fg:var(--bar-700)">
+        <div class="feat__icon"><Icon name="apple" size={22} /></div>
+        <h3>Apples first</h3>
+        <p>We start from whole Antonovka apples, baked whole, skins on. When the apple is right, the recipe has nothing to fix, and most of our work is keeping it that way.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================== THE SUB-BRANDS ============================== -->
+  <section class="section band" aria-labelledby="lines-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Five names on the packs</p>
+          <h2 id="lines-title">The names on our packs, explained.</h2>
+        </div>
+        <a class="link" href="/shop/">Shop all products</a>
+      </div>
+      <ul class="lines" data-reveal>
+        {lines.map((l) => (
+          <li class="line">
+            <h3>{l.brand}</h3>
+            <p>{l.note}</p>
+            <div class="line__products">
+              {l.products.map((p) => (
+                <a class="chip" href={`/products/${p.slug}/`}>{p.name} · {p.weightGrams} g</a>
+              ))}
+              <a class="chip chip--solid" href={l.href}>All {l.colName.toLowerCase()}</a>
+            </div>
+          </li>
+        ))}
+      </ul>
+      <p class="small muted mt-4">Gift sets, tasting boxes and the box of twelve live under <a href="/shop/gift-sets/">gift sets</a>. Questions about ordering are answered in the <a href="/faq/">FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+    </div>
+  </section>
+
+  <!-- ============================== PULL QUOTE ============================== -->
+  <section class="quote" style={`--quote-bg:${RENDER_BG}`} aria-labelledby="quote-title">
+    <div class="container quote__grid">
+      <div data-reveal>
+        <p class="eyebrow" id="quote-title">In one sentence</p>
+        <p class="pull">“We did not invent a recipe. We found one that needed nothing, and built a bakery around leaving it alone.”</p>
+        <p class="quote__by">The team at Semers, Riga. Semers is made by {site.brand.legalName}, {site.locality}, {site.country}.</p>
+      </div>
+      <div class="quote__media" data-reveal>
+        <img src={im('apple-render-sm').src} srcset={im('apple-render-sm').srcset} sizes={im('apple-render-sm').srcset && SIZES.half} alt={im('apple-render-sm').alt} width={im('apple-render-sm').width} height={im('apple-render-sm').height} loading="lazy" decoding="async" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Taste the story</p>
+      <h2 id="cta-title">Start with a bar. Or start with the loaf, as everyone did in 1888.</h2>
+      <p>Parcels leave Riga in 1–2 business days and ship across the EU; orders over {freeFrom} ship free. Retailer, café or office? We pack cases as happily as parcels.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost cta-band__ghost" href="/wholesale/">Wholesale &amp; B2B</a>
+        <a class="link cta-band__link" href="/where-to-buy/">Where to buy</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .story-hero { padding-bottom: clamp(2rem, 5vw, 4rem); }
+  .story-hero__grid { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: center; }
+  @media (min-width: 56rem) { .story-hero__grid { grid-template-columns: 1.1fr 0.9fr; } }
+  .story-hero h1 { max-width: 15ch; }
+  .story-hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .story-hero__cta { margin-top: var(--sp-6); }
+  .story-hero__media { position: relative; max-width: 32rem; margin-inline: auto; width: 100%; }
+  .story-hero__media .frame { box-shadow: var(--shadow-3); }
+  .story-hero__note { position: absolute; left: -1rem; bottom: 1.5rem; max-width: 15rem; display: grid; gap: 0.2rem; padding: 0.9rem 1.1rem; border-radius: var(--r-md); background: var(--bg-raised); box-shadow: var(--shadow-2); font-size: var(--fs-sm); line-height: 1.3; color: var(--fg-2); }
+  .story-hero__note strong { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.02em; line-height: 1; color: var(--fg); }
+  @media (max-width: 40rem) { .story-hero__note { left: 0.75rem; bottom: 0.75rem; } }
+  .story-stats { margin-top: clamp(2rem, 5vw, 3.5rem); padding-top: var(--sp-5); border-top: 1px solid var(--line); }
+
+  /* tradition */
+  .recipe { list-style: none; margin: var(--sp-5) 0 0; padding: 0; gap: 0.5rem; }
+  .recipe .chip :global(svg) { color: var(--leaf-500); }
+
+  /* antonovka */
+  .story-ticks { margin: var(--sp-5) 0; }
+  .story-ticks strong { font-weight: 600; }
+
+  /* loaf to bar */
+  .loaf { display: grid; gap: var(--sp-6); }
+  @media (min-width: 56rem) { .loaf { grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: center; } }
+  .shapes { list-style: none; margin: var(--sp-5) 0 0; padding: 0; display: grid; gap: 0.6rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .shapes a { display: grid; gap: 0.1rem; height: 100%; padding: 0.8rem 1rem; border-radius: var(--r-md); background: var(--bg-raised); box-shadow: var(--shadow-1); text-decoration: none; transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast); }
+  .shapes a:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); }
+  .shapes strong { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; }
+  .shapes span { font-size: var(--fs-xs); color: var(--fg-3); }
+  @media (max-width: 26rem) { .shapes { grid-template-columns: 1fr; } }
+  .duo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); align-items: end; }
+  .duo figure { margin: 0; display: grid; gap: var(--sp-3); }
+  .duo figure:first-child { padding-bottom: clamp(2rem, 6vw, 4rem); }
+  .duo figcaption { font-size: var(--fs-sm); color: var(--fg-3); max-width: 24ch; }
+
+  /* timeline */
+  .journey { display: grid; gap: var(--sp-6); }
+  @media (min-width: 56rem) {
+    .journey { grid-template-columns: 0.8fr 1.2fr; gap: clamp(2rem, 6vw, 5rem); align-items: start; }
+    .journey__head { position: sticky; top: 6rem; }
+  }
+  .journey__note { max-width: 34ch; }
+  .journey .timeline li::before { box-shadow: 0 0 0 4px var(--bg-sunken); }
+  .journey .timeline li:last-child { padding-bottom: 0; }
+  /* At 390px this lands at 20px, and 600 is not bold enough to count as large text, so it needs the readable red rather than the signal one. */
+  .tl__k { display: block; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; color: var(--accent-ink); letter-spacing: -0.01em; line-height: 1.1; }
+  .journey .timeline h3 { font-size: var(--fs-lg); margin-top: 0.3rem; }
+  .journey .timeline p { max-width: 46ch; }
+
+  /* sub-brands */
+  .lines { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .line { display: grid; gap: 0.6rem var(--sp-6); padding: var(--sp-5) 0; border-bottom: 1px solid var(--line); }
+  @media (min-width: 56rem) { .line { grid-template-columns: 12rem 1fr; align-items: start; } .line__products { grid-column: 2; } }
+  .line h3 { font-size: var(--fs-xl); }
+  .line p { margin: 0; color: var(--fg-2); max-width: 56ch; }
+  .line__products { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.2rem; }
+  .line__products .chip { text-decoration: none; transition: border-color var(--dur-fast), background var(--dur-fast); }
+  .line__products .chip:hover { border-color: var(--ink-900); }
+  .line__products .chip--solid:hover { background: var(--ink-700); }
+
+  /* pull quote on the render background */
+  .quote { background: var(--quote-bg); color: var(--cream-0); overflow: clip; }
+  .quote__grid { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: center; padding-block: clamp(3rem, 7vw, 6rem); }
+  @media (min-width: 56rem) { .quote__grid { grid-template-columns: 1.1fr 0.9fr; } }
+  .quote .eyebrow { color: var(--honey-500); }
+  .quote .eyebrow::before { background: var(--honey-500); }
+  .quote .pull { color: inherit; margin-top: var(--sp-4); }
+  .quote__by { margin-top: var(--sp-5); font-size: var(--fs-sm); color: rgb(250 243 228 / 0.72); max-width: 40ch; }
+  .quote__media img { width: 100%; height: auto; border-radius: var(--r-lg); }
+
+  /* cta */
+  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+  .cta-band__link { color: var(--cream-0); border-color: var(--honey-500); }
+</style>

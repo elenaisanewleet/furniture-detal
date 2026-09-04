@@ -1,0 +1,113 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { nav, site } from '~/data/site';
+import { formatThreshold } from '~/data/products';
+import { LOCALES, LOCALE_META, localePath, stripLocale } from '~/i18n/config';
+import { t, bold } from '~/i18n/ui';
+interface Props { transparent?: boolean }
+const { transparent = false } = Astro.props;
+/** Locale from the URL, so the header never needs it passed down. */
+const { locale, path } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const L = (href: string) => localePath(href, locale);
+/** The switcher stays on the page the visitor is reading rather than dropping them at the home page. */
+const languages = LOCALES.map((l) => ({ locale: l, href: localePath(path, l), native: LOCALE_META[l].native, current: l === locale }));
+---
+<header class={`hdr ${transparent ? 'hdr--float' : ''}`} id="hdr">
+  <div class="hdr__bar">
+    <span class="hdr__bar-text" set:html={bold(ui.headerBar(formatThreshold(site.shipping.freeFrom, locale)))} />
+  </div>
+  <div class="hdr__main container--wide">
+    <button class="hdr__burger" id="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label={ui.openMenu}>
+      <Icon name="menu" size={24} />
+    </button>
+    <a class="hdr__logo" href={L('/')} aria-label={ui.home}><Logo size={30} /></a>
+    <nav class="hdr__nav" id="nav" aria-label={ui.primaryNav}>
+      <button class="hdr__nav-close" type="button" data-nav-close aria-label={ui.closeMenu}><Icon name="close" size={24} /></button>
+      <ul>
+        {nav.map((n) => (
+          <li><a href={L(n.href)} aria-current={path.startsWith(n.href) ? 'page' : undefined}>{ui.nav[n.key]}</a></li>
+        ))}
+      </ul>
+      <div class="hdr__nav-cta">
+        <a class="btn btn--block" href={L('/shop/')}>{ui.shopAll}</a>
+        <ul class="hdr__langs" aria-label={ui.language}>
+          {languages.map((l) => (
+            <li><a href={l.href} lang={l.locale} hreflang={l.locale} aria-current={l.current ? 'true' : undefined}>{l.native}</a></li>
+          ))}
+        </ul>
+      </div>
+    </nav>
+    <div class="hdr__actions">
+      <div class="lang" aria-label={ui.language}>
+        {languages.map((l) => (
+          <a class="lang__a" href={l.href} lang={l.locale} hreflang={l.locale} aria-current={l.current ? 'true' : undefined}>{l.locale.toUpperCase()}</a>
+        ))}
+      </div>
+      <a class="hdr__shop btn btn--sm btn--ink" href={L('/shop/')}>{ui.shop}</a>
+      <button class="hdr__cart" id="cart-open" aria-label={ui.openCart} aria-haspopup="dialog">
+        <Icon name="cart" size={24} />
+        <span class="hdr__count" id="cart-count" hidden>0</span>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="hdr__scrim" id="nav-scrim" hidden></div>
+
+<style>
+  .hdr { position: sticky; top: 0; z-index: 50; background: var(--bg); border-bottom: 1px solid var(--line); transition: background var(--dur), box-shadow var(--dur); }
+  .hdr.is-stuck { box-shadow: 0 6px 24px -12px rgb(27 22 18 / 0.25); }
+  .hdr--float { background: transparent; border-bottom-color: transparent; }
+  .hdr--float.is-stuck { background: var(--bg); border-bottom-color: var(--line); }
+  .hdr__bar { background: var(--ink-900); color: var(--cream-0); font-size: var(--fs-xs); text-align: center; padding: 0.45rem var(--gutter); letter-spacing: 0.02em; }
+  /* The bar's emphasis is produced by bold() at render time, so it carries no
+     scope attribute and a plain `strong` selector would stop matching it. */
+  .hdr__bar :global(strong) { color: var(--honey-500); }
+  .hdr__main { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: var(--sp-4); min-height: 4.25rem; }
+  .hdr__logo { text-decoration: none; display: inline-flex; }
+  .hdr__nav ul { display: flex; gap: clamp(1rem, 2.4vw, 2rem); list-style: none; margin: 0; padding: 0; justify-content: center; }
+  .hdr__nav a { text-decoration: none; font-weight: 600; font-size: var(--fs-sm); padding: 0.4rem 0; position: relative; }
+  .hdr__nav a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--accent); transform: scaleX(0); transform-origin: left; transition: transform var(--dur) var(--ease-out); }
+  .hdr__nav a:hover::after, .hdr__nav a[aria-current]::after { transform: scaleX(1); }
+  .hdr__nav-cta { display: none; }
+  .hdr__nav-close { display: none; position: absolute; top: 0.75rem; right: 0.75rem; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 50%; }
+  .hdr__nav-close:hover { background: var(--bg-sunken); }
+  .hdr__actions { display: flex; align-items: center; gap: var(--sp-3); }
+  /* Language is a row of codes, not a dropdown: three options are quicker to hit than a menu. */
+  .lang { display: flex; align-items: center; gap: 0.15rem; }
+  .lang__a { text-decoration: none; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.04em; color: var(--fg-3); padding: 0.3rem 0.4rem; border-radius: var(--r-sm); }
+  .lang__a:hover { color: var(--fg); background: var(--bg-sunken); }
+  .lang__a[aria-current] { color: var(--accent-ink); background: color-mix(in oklab, var(--accent) 10%, transparent); }
+  .hdr__nav .hdr__langs { display: none; }
+  .hdr__cart { position: relative; width: 2.75rem; height: 2.75rem; display: grid; place-items: center; border-radius: 50%; transition: background var(--dur-fast); }
+  .hdr__cart:hover { background: var(--bg-sunken); }
+  .hdr__count { position: absolute; top: 0.2rem; right: 0.1rem; min-width: 1.25rem; height: 1.25rem; padding: 0 0.3rem; border-radius: var(--r-pill); background: var(--accent-fill); color: #fff; font-size: 0.7rem; font-weight: 700; display: grid; place-items: center; animation: pop var(--dur) var(--ease-spring); }
+  .hdr__count[hidden] { display: none; }
+  .hdr__burger { display: none; width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 50%; }
+  .hdr__scrim { position: fixed; inset: 0; z-index: 45; background: rgb(27 22 18 / 0.45); }
+  .hdr__scrim[hidden] { display: none; }
+  @keyframes pop { from { transform: scale(0.6); } to { transform: scale(1); } }
+
+  @media (max-width: 56rem) {
+    .hdr__main { grid-template-columns: auto 1fr auto; }
+    .hdr__burger { display: grid; }
+    .hdr__logo { justify-self: center; }
+    .hdr__shop { display: none; }
+    .hdr__nav { position: fixed; inset: 0 auto 0 0; z-index: 60; width: min(22rem, 86vw); background: var(--bg); padding: 5rem var(--gutter) 2rem; transform: translateX(-105%); visibility: hidden; transition: transform var(--dur) var(--ease-out), visibility 0s linear var(--dur); box-shadow: var(--shadow-3); overflow-y: auto; }
+    .hdr__nav.is-open { transform: none; visibility: visible; transition-delay: 0s; }
+    .hdr__nav-close { display: grid; }
+    .hdr__nav ul { flex-direction: column; gap: 0; }
+    .hdr__nav li { border-bottom: 1px solid var(--line); }
+    .hdr__nav a { display: block; padding: 1rem 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 600; }
+    .hdr__nav a::after { display: none; }
+    .hdr__nav-cta { display: block; margin-top: 1.5rem; }
+    /* On a phone the codes in the top bar are too small a target, so the drawer
+       gets the language names in full and the bar drops them. */
+    .lang { display: none; }
+    .hdr__nav .hdr__langs { display: flex; flex-direction: row; gap: 1rem; list-style: none; margin: 1.5rem 0 0; padding: 0; }
+    .hdr__nav .hdr__langs li { border-bottom: 0; }
+    .hdr__nav .hdr__langs a { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; padding: 0.35rem 0; }
+    .hdr__nav .hdr__langs a[aria-current] { color: var(--accent); }
+  }
+</style>

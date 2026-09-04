@@ -1,0 +1,388 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, FLAVORS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, formatThreshold } from '~/data/products';
+import { img, imgSrc, im, imgSmall, imgSrcset, SIZES } from '~/data/images';
+import { productSchema, faqPage } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { site } from '~/data/site';
+import { withLocales } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedProduct, localizedCollection } from '~/data/copy';
+import { t } from '~/i18n/ui';
+
+export function getStaticPaths() {
+  return withLocales(PRODUCTS.map((p) => ({ params: { slug: p.slug }, props: { product: p } })));
+}
+const { product: rawProduct, locale } = Astro.props as { product: Product; locale: Locale };
+const ui = t(locale);
+const p = localizedProduct(rawProduct, locale);
+const col = localizedCollection(collectionByKey(rawProduct.collection)!, locale);
+const origin = originOf(Astro.site);
+const gallery = p.images.map((k) => ({ key: k, ...im(k), small: imgSmall(k) }));
+const first = p.variants[0];
+const addPayload = JSON.stringify({
+  slug: p.slug,
+  name: p.title,
+  variant: first.key,
+  variantLabel: ui.flavours[first.key],
+  price: first.price ?? p.price,
+  image: gallery[0].src,
+  weight: p.weightGrams,
+  url: `/products/${p.slug}/`,
+  // Gift sets and multi-packs are already priced as a bundle; stacking the
+  // volume ladder on top of them would discount the same thing twice.
+  tier: p.collection !== 'gift-sets',
+});
+const related = [...productsInCollection(p.collection).filter((x) => x.slug !== p.slug), ...PRODUCTS.filter((x) => x.collection !== p.collection && x.bestseller)].slice(0, 3);
+const multi = p.variants.length > 1;
+/**
+ * The trust line may only quote a number for the base recipe (the first sentence of the ingredient
+ * list, brackets removed): "Baked apples, egg white" → 2. Flavour additions, mixed boxes and
+ * "see individual products" fall back to the wording that is true for every variant.
+ */
+const baseRecipe = p.ingredients.split(/[.;]/)[0].replace(/\([^)]*\)/g, '');
+const ingredientCount = /egg white/i.test(baseRecipe) ? baseRecipe.split(',').length : 0;
+const ingredientLine =
+  ingredientCount === 2 ? `2 ingredients${multi && p.variants.some((v) => v.key === 'classic') ? ' in the Classic' : ''}` : 'Short ingredient list';
+/** "Belyov Pastila · Belyov pastila" reads like a stutter when the brand is the collection. */
+const showBrand = p.brand.toLowerCase() !== col.name.toLowerCase();
+const isBundle = p.collection === 'gift-sets';
+/** Zephyr is the one product made with sugar; every claim below is switched on it. */
+const noAddedSugar = p.diet.includes('no-added-sugar');
+/** kcalPerUnit is per single piece (bar, loaf, box); multi-packs list the piece weight. A 0 means "mixed box, see each item". */
+const hasKcal = p.kcalPerUnit > 0;
+const unitGrams = p.pack > 1 ? Math.round(p.weightGrams / p.pack) : p.weightGrams;
+const kcalLine = p.pack > 1 ? `${p.kcalPerUnit} kcal per ${unitGrams} g piece` : `${p.kcalPerUnit} kcal per ${unitGrams} g`;
+
+const faqs = [
+  ...(hasKcal
+    ? [
+        p.pack > 1
+          ? { q: 'How many calories are in each piece?', a: `About ${p.kcalPerUnit} kcal per ${unitGrams} g piece, so around ${p.kcalPerUnit * p.pack} kcal in the whole pack of ${p.pack}. Per 100 g: ${p.nutrition.energyKcal} kcal.` }
+          : { q: `How many calories are in one ${p.name}?`, a: `About ${p.kcalPerUnit} kcal per ${p.weightGrams} g. Per 100 g: ${p.nutrition.energyKcal} kcal.` },
+      ]
+    : []),
+  noAddedSugar
+    ? { q: 'Does it contain added sugar?', a: 'No. The sweetness comes from the baked Antonovka apples themselves. Nothing else is added.' }
+    : { q: 'Does it contain added sugar?', a: 'Yes. Belevini zephyr is a traditional recipe made with apple purée, egg white, agar and sugar, and the pack says so. Our bars, meringues, dessert squares and Belyov pastila are the no-added-sugar range.' },
+  { q: 'How long does it keep?', a: `${p.shelfLifeMonths} months in a cool, dry place. Once opened, enjoy within a few days.` },
+  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatThreshold(site.shipping.freeFrom, locale)} ship free.` },
+];
+
+const rows: [string, string][] = [
+  ['Energy', `${p.nutrition.energyKcal} kcal`],
+  ['Fat', `${p.nutrition.fat} g`],
+  ['of which saturates', `${p.nutrition.saturates} g`],
+  ['Carbohydrate', `${p.nutrition.carbs} g`],
+  ['of which sugars', `${p.nutrition.sugars} g`],
+  ['Fibre', `${p.nutrition.fibre} g`],
+  ['Protein', `${p.nutrition.protein} g`],
+  ['Salt', `${p.nutrition.salt} g`],
+];
+---
+<Base
+  title={p.title}
+  description={p.summary}
+  canonical={`/products/${p.slug}/`}
+  ogImage={p.images[0]}
+  ogType="product"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: col.name, href: `/shop/${col.key}/` }, { name: p.name, href: `/products/${p.slug}/` }]}
+  schema={[productSchema(origin, p, ui.flavours), faqPage(faqs)]}
+  bodyClass="has-sticky-buy"
+>
+  <Fragment slot="head">
+    <meta property="product:price:amount" content={(first.price ?? p.price).toFixed(2)} />
+    <meta property="product:price:currency" content={site.currency} />
+    <meta property="product:availability" content="in stock" />
+    <meta property="product:brand" content={p.brand} />
+  </Fragment>
+  <article class="pdp container" data-pdp data-slug={p.slug}>
+    <div class="pdp__grid">
+      <div class="pdp__gallery">
+        <div class="gal" style={`--gal-accent:${p.accent}`}>
+          <div class={`gal__main ${gallery[0].fit === 'contain' ? 'is-contain' : ''}`} data-gal-wrap>
+            {p.badge || p.bestseller ? <span class="badge">{p.badge || 'Bestseller'}</span> : null}
+            <img data-gal-main src={gallery[0].src} alt={gallery[0].alt} width={gallery[0].width} height={gallery[0].height} loading="eager" fetchpriority="high" decoding="async" />
+          </div>
+          {gallery.length > 1 && (
+            <div class="gal__thumbs" role="group" aria-label={ui.productImages}>
+              {gallery.map((g, i) => (
+                <button type="button" data-gal-thumb data-src={g.src} data-alt={g.alt} data-fit={g.fit || 'cover'} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Image ${i + 1} of ${gallery.length}`}>
+                  <img src={g.small} alt="" width="72" height="72" loading="lazy" decoding="async" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div class="pdp__buy">
+        <p class="eyebrow">{showBrand && <Fragment><span translate="no">{p.brand}</span> · </Fragment>}<a href={`/shop/${col.key}/`}>{col.name}</a></p>
+        <h1 class="pdp__title">{p.name} <span class="pdp__w">{p.weightGrams} g{p.pack > 1 ? ` · ${p.pack} pcs` : ''}</span></h1>
+        <p class="pdp__hook">{p.hook}</p>
+
+        <div class="pdp__price">
+          <span class="pdp__amount num" data-price>{formatPrice(first.price ?? p.price, locale)}</span>
+          {p.compareAt && <s class="muted">{formatPrice(p.compareAt, locale)}</s>}
+          <span class="pdp__unit">{p.pack > 1 ? `${ui.perPiece(formatPrice((first.price ?? p.price) / p.pack, locale))} · ` : ''}{unitPrice(p, locale)} {ui.per100g} · {ui.inclVat}</span>
+        </div>
+
+        <ul class="pdp__facts" aria-label={ui.keyFacts}>
+          {hasKcal && <li><Icon name="apple" size={18} /> {kcalLine}</li>}
+          {p.diet.slice(0, 3).map((d) => <li><Icon name="check" size={18} /> {ui.diet[d]}</li>)}
+        </ul>
+
+        {multi && (
+          <fieldset class="pdp__vars">
+            <legend>{ui.flavour}: <strong data-variant-name>{ui.flavours[first.key]}</strong></legend>
+            <div class="vars">
+              {p.variants.map((v, i) => (
+                <label class="var">
+                  <input type="radio" name="flavour" value={v.key} data-variant data-price={v.price ?? p.price} data-label={ui.flavours[v.key]} data-gtin={v.gtin || ''} checked={i === 0} disabled={v.inStock === false} />
+                  <span><i style={`--sw:${FLAVORS[v.key].color}`}></i>{ui.flavours[v.key]}</span>
+                </label>
+              ))}
+            </div>
+            <p class="tiny muted pdp__varnote">{p.variants.map((v) => `${ui.flavours[v.key]}: ${ui.flavourNotes[v.key]}`).join(' · ')}</p>
+          </fieldset>
+        )}
+
+        {site.storefront.tiersOn && !isBundle && (
+          <div class="tiers" data-tiers role="group" aria-label={ui.quantityDiscounts}>
+            {[
+              { qty: 1, pct: 0 },
+              { qty: site.storefront.tier1Qty, pct: site.storefront.tier1Pct },
+              { qty: site.storefront.tier2Qty, pct: site.storefront.tier2Pct },
+            ].map((t, i) => (
+              <button type="button" class={`tier ${i === 0 ? 'is-on' : ''}`} data-tier data-tier-qty={t.qty} data-tier-pct={t.pct} aria-pressed={i === 0 ? 'true' : 'false'}>
+                <b>{t.qty} {t.qty === 1 ? 'pack' : 'packs'}</b>
+                <span class="tier__unit num" data-tier-unit>{formatPrice(((first.price ?? p.price) * (100 - t.pct)) / 100, locale)}</span>
+                <span class="tier__note">{t.pct ? `each · save ${t.pct}%` : 'each'}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div class="pdp__cta" data-buy-anchor>
+          <div class="qty" role="group" aria-label={ui.quantity}>
+            <button type="button" data-qty-dec aria-label={ui.decreaseShort}>−</button>
+            <input data-qty-input type="number" min="1" max="99" value="1" inputmode="numeric" aria-label="Quantity" />
+            <button type="button" data-qty-inc aria-label={ui.increaseShort}>+</button>
+          </div>
+          <button class="btn btn--lg pdp__add" type="button" data-add={addPayload}>
+            <Icon name="cart" size={20} /> Add to box
+          </button>
+        </div>
+
+        {/* Revealed by the storefront sync when an override marks this product out of stock. */}
+        <form class="restock" data-restock hidden>
+          <p class="restock__t"><strong>Out of stock right now.</strong> Leave your e-mail and we will write to you the day the next batch is ready — nothing else.</p>
+          <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
+          <div class="restock__row">
+            <label class="sr-only" for="restock-email">E-mail</label>
+            <input id="restock-email" type="email" name="email" required maxlength="160" autocomplete="email" placeholder="you@example.com" />
+            <button class="btn" type="submit">{ui.notifyMe}</button>
+          </div>
+          <p class="restock__note" data-restock-note hidden></p>
+        </form>
+
+        {site.storefront.guaranteeOn && (
+          <p class="pdp__promise" data-guarantee>
+            <Icon name="shield" size={18} /> <span data-guarantee-text>{site.storefront.guarantee}</span>
+          </p>
+        )}
+
+        <ul class="pdp__trust">
+          <li><Icon name="truck" size={18} /> Free shipping over {formatThreshold(site.shipping.freeFrom, locale)} · ships from Riga in 1–2 business days</li>
+          <li><Icon name="leaf" size={18} /> {noAddedSugar ? `${ingredientLine}, nothing artificial` : 'Made with sugar and agar, and the label says so'}</li>
+          <li><Icon name="clock" size={18} /> Keeps {p.shelfLifeMonths} months — no fridge needed</li>
+          <li data-batch hidden><Icon name="apple" size={18} /> <span data-batch-text></span></li>
+        </ul>
+
+        <div class="pdp__desc prose">
+          {p.description.map((d) => <p>{d}</p>)}
+        </div>
+
+        <div class="acc">
+          <details open>
+            <summary>{ui.ingredientsAllergens}</summary>
+            <div class="acc__body">
+              <p><strong>{ui.ingredients}</strong> {p.ingredients}</p>
+              <p><strong>{ui.allergens}</strong> {p.allergens}</p>
+              {multi && <p class="small muted">EAN for the selected flavour: <span data-gtin translate="no">{first.gtin || '—'}</span></p>}
+            </div>
+          </details>
+          <details>
+            <summary>{ui.nutritionPer100}</summary>
+            <div class="acc__body">
+              <table class="nutri">
+                <thead><tr><th>{ui.typicalValues}</th><th>{ui.per100g}</th></tr></thead>
+                <tbody>
+                  {rows.map(([k, v]) => <tr class={k.startsWith('of which') ? 'sub' : ''}><td>{k}</td><td>{v}</td></tr>)}
+                </tbody>
+              </table>
+              <p class="tiny muted">{hasKcal ? `Approximate per ${unitGrams} g: ${p.kcalPerUnit} kcal. ` : 'Typical values for the baked-apple pastila base; each product in the box carries its own nutrition label. '}Values are typical for the recipe; see the pack for the batch label.</p>
+            </div>
+          </details>
+          <details>
+            <summary>{ui.shippingReturnsTitle}</summary>
+            <div class="acc__body">
+              <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom, locale)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.slice(0, 3).join(', ')} and the rest of the EU.</p>
+              <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">{ui.fullPolicy}</a>.</p>
+            </div>
+          </details>
+          {isBundle && (
+            <details>
+              <summary>{ui.whatsInTheBox}</summary>
+              <div class="acc__body"><p>{p.summary}</p></div>
+            </details>
+          )}
+        </div>
+      </div>
+    </div>
+
+    {site.storefront.reviewsOn && (
+      <section class="pdp__reviews section--tight" data-reviews aria-labelledby="pdp-reviews-title">
+        <div class="pdp__revhead">
+          <h2 id="pdp-reviews-title">{ui.reviewsTitle}</h2>
+          <p class="pdp__revsum" data-review-summary hidden></p>
+        </div>
+        <div data-review-list></div>
+        <p class="muted" data-review-empty hidden>No reviews yet. If you have tried {p.name}, yours would be the first.</p>
+        <details class="revform">
+          <summary>{ui.writeReview}</summary>
+          <form data-review-form novalidate>
+            <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
+            <div class="revform__row">
+              <label>
+                Rating
+                <select name="rating" required>
+                  <option value="5">5 — excellent</option>
+                  <option value="4">4 — good</option>
+                  <option value="3">3 — fine</option>
+                  <option value="2">2 — poor</option>
+                  <option value="1">1 — bad</option>
+                </select>
+              </label>
+              <label>{ui.yourName}<input type="text" name="author" required maxlength="60" autocomplete="name" /></label>
+              <label>City <span class="muted">(optional)</span><input type="text" name="city" maxlength="60" /></label>
+            </div>
+            <label>Headline <span class="muted">(optional)</span><input type="text" name="title" maxlength="120" /></label>
+            <label>{ui.yourReview}<textarea name="body" required minlength="10" maxlength="2000" rows="4"></textarea></label>
+            <label>E-mail <span class="muted">(not published — only so we can reply)</span><input type="email" name="email" maxlength="160" autocomplete="email" /></label>
+            <p class="tiny muted">We read every review before it appears, so it will not show up straight away.</p>
+            <button class="btn" type="submit">Send review</button>
+            <p class="revform__note" data-review-note hidden></p>
+          </form>
+        </details>
+      </section>
+    )}
+
+    <section class="pdp__story section--tight">
+      <div class="split">
+        <div class="frame frame--4x5 rounded">
+          <img src={imgSrc('pastila-texture')} srcset={imgSrcset('pastila-texture')} sizes={imgSrcset('pastila-texture') && SIZES.half} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" />
+        </div>
+        {noAddedSugar ? (
+          <div>
+            <p class="eyebrow">Why it works</p>
+            <h2>Sweet because apples are sweet.</h2>
+            <p class="lead">We bake Antonovka apples until their sugars caramelise, whip the purée with egg white, and dry it in thin layers. That is the whole trick: concentrate the fruit, add air, add nothing else.</p>
+            <ul class="ticks">
+              <li><Icon name="check" /> No added sugar, sweeteners or syrups</li>
+              <li><Icon name="check" /> No flour, no gluten, no fat added</li>
+              <li><Icon name="check" /> Source of fibre from the whole fruit</li>
+            </ul>
+            <a class="link" href="/how-its-made/">See how it’s made</a>
+          </div>
+        ) : (
+          <div>
+            <p class="eyebrow">Good to know</p>
+            <h2>Apple first, even here.</h2>
+            <p class="lead">Zephyr is set with agar rather than gelatine and, unlike the rest of our range, it is made with sugar. We start it from the same Antonovka purée as our pastila, and the pack says exactly what is in it.</p>
+            <ul class="ticks">
+              <li><Icon name="check" /> Antonovka apple purée, egg white, agar, sugar</li>
+              <li><Icon name="check" /> Set with agar, not gelatine</li>
+              <li><Icon name="check" /> The one Semers product with sugar in it, labelled as such</li>
+            </ul>
+            <a class="link" href="/shop/apple-bars/">The no-added-sugar range</a>
+          </div>
+        )}
+      </div>
+    </section>
+
+    <section class="section--tight">
+      <div class="section-head">
+        <h2>Pairs well with</h2>
+        <a class="link" href="/shop/">All products</a>
+      </div>
+      <div class="grid grid--3 pdp__related">
+        {related.map((r) => <ProductCard product={r} compact />)}
+      </div>
+    </section>
+
+    <section class="section--tight pdp__faq" aria-labelledby="pdp-faq-title">
+      <div class="pdp__faq-grid">
+        <div>
+          <p class="eyebrow">Questions</p>
+          <h2 id="pdp-faq-title">Questions people ask about the {p.name}.</h2>
+          <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+        </div>
+        <div class="acc">
+          {faqs.map((f) => (
+            <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+          ))}
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <div class="sticky-buy" data-sticky-buy>
+    <div class="sticky-buy__in container">
+      <img class="sticky-buy__img" src={gallery[0].small} alt="" width="48" height="48" loading="lazy" />
+      <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price, locale)}</span> · <span data-variant-name>{ui.flavours[first.key]}</span></span></div>
+      <button class="btn" type="button" data-add={addPayload}>Add to box</button>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .pdp { padding-top: 1rem; }
+  .pdp__grid { display: grid; gap: clamp(1.5rem, 4vw, 4rem); padding-block: 1rem clamp(2rem, 5vw, 4rem); }
+  @media (min-width: 56rem) { .pdp__grid { grid-template-columns: 1.05fr 0.95fr; align-items: start; } .pdp__gallery { position: sticky; top: 5.5rem; } }
+  .pdp__title { font-size: var(--fs-3xl); letter-spacing: -0.02em; margin-top: 0.5rem; }
+  .pdp__w { font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-lg); color: var(--fg-3); white-space: nowrap; }
+  .pdp__hook { font-size: var(--fs-lg); color: var(--ink-700); margin: 0.6rem 0 0; }
+  .pdp__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.6rem 0.8rem; margin: 1.25rem 0; }
+  .pdp__amount { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 600; letter-spacing: -0.02em; }
+  .pdp__unit { font-size: var(--fs-sm); color: var(--fg-3); }
+  .pdp__facts { list-style: none; margin: 0 0 1.25rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; font-size: var(--fs-sm); font-weight: 600; }
+  .pdp__facts li { display: inline-flex; align-items: center; gap: 0.35em; }
+  .pdp__facts :global(svg) { color: var(--leaf-500); }
+  .pdp__vars { border: 0; padding: 0; margin: 0 0 1.25rem; }
+  .pdp__vars legend { font-size: var(--fs-sm); margin-bottom: 0.6rem; padding: 0; }
+  .pdp__varnote { margin: 0.6rem 0 0; }
+  /*
+   * A grid's `auto` track will shrink under a `1fr` neighbour whose content
+   * wants more room than the row has, and the stepper — which clips its own
+   * overflow — then had the add button drawn across its `+`. "Добавить в
+   * коробку" is long enough to do exactly that at 390px. Flex with a wrap lets
+   * the button drop to its own line instead, in whatever language runs long.
+   */
+  .pdp__cta { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: stretch; }
+  .pdp__cta .qty { flex: 0 0 auto; min-width: max-content; min-height: 3.5rem; }
+  .pdp__cta .pdp__add { flex: 1 1 11rem; }
+  .pdp__add { gap: 0.6em; }
+  .pdp__trust { list-style: none; margin: 1.25rem 0; padding: 1rem 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); display: grid; gap: 0.5rem; font-size: var(--fs-sm); color: var(--fg-2); }
+  .pdp__trust li { display: flex; gap: 0.6em; align-items: flex-start; }
+  .pdp__trust :global(svg) { flex: none; color: var(--accent); margin-top: 0.1em; }
+  .pdp__desc { margin-bottom: 1.25rem; }
+  .pdp__story { margin-top: clamp(1rem, 3vw, 2rem); }
+  .pdp__story .ticks { margin: 1.25rem 0; }
+  /* Phones: related products go two-up like the shop grid, instead of three full-width cards. */
+  @media (max-width: 40rem) { .pdp__related { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; } }
+  .pdp__faq-grid { display: grid; gap: 2rem; }
+  @media (min-width: 56rem) { .pdp__faq-grid { grid-template-columns: 1fr 1.4fr; gap: 4rem; } }
+</style>

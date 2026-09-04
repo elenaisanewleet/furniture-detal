@@ -1,0 +1,268 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { im, SIZES } from '~/data/images';
+import { site } from '~/data/site';
+import { FAQS } from '~/data/faq';
+import { formatThreshold } from '~/data/products';
+import { originOf } from '~/lib/origin';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+
+const title = 'Contact Semers in Riga: orders, wholesale, press';
+const description =
+  'Contact Semers, maker of baked-apple bars and pastila in Riga, about an order, wholesale or press. Write to us and a person replies within a business day.';
+
+/** Channels. Empty strings in site.ts mean "not rendered". */
+const hasWhatsapp = site.whatsapp.length > 0;
+const whatsappHref = hasWhatsapp ? `https://wa.me/${site.whatsapp.replace(/[^\d]/g, '')}` : '';
+const hasInstagram = site.social.instagram.length > 0;
+const mailHref = `mailto:${site.email}`;
+const wholesaleHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wholesale enquiry')}`;
+
+const TOPICS = ['Order question', 'Wholesale', 'Press & partnerships', 'Something else'];
+
+/** The questions that would otherwise land in the inbox. */
+const quick = FAQS.filter((f) => f.group === 'orders');
+
+const contactPage = {
+  '@type': 'ContactPage',
+  '@id': `${origin}/contact/#webpage`,
+  url: `${origin}/contact/`,
+  name: 'Contact Semers',
+  description,
+  inLanguage: 'en',
+  isPartOf: { '@id': `${origin}/#website` },
+  about: { '@id': `${origin}/#org` },
+  mainEntity: { '@id': `${origin}/#org` },
+};
+---
+<Base
+  title={title}
+  description={description}
+  canonical="/contact/"
+  ogImage="lifestyle-desk"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Contact', href: '/contact/' }]}
+  schema={[contactPage]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="page-hero container" aria-labelledby="page-title">
+    <p class="eyebrow">Contact · {site.locality}, {site.country}</p>
+    <h1 id="page-title" class="cx-title">Say <em>hello.</em></h1>
+    <p class="lead">Contact Semers about an order, a wholesale shelf, a press piece, or the right way to slice a loaf of pastila. A person in Riga reads every message and replies within one business day.</p>
+  </section>
+
+  <div class="container">
+    <div class="trust" data-reveal>
+      <div><Icon name="mail" size={22} /><div><strong>Reply within one business day</strong><span>From a person, not a ticket queue</span></div></div>
+      <div><Icon name="truck" size={22} /><div><strong>Parcels leave Riga in 1–2 business days</strong><span>Shipped across the EU</span></div></div>
+      <div><Icon name="box" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Otherwise a flat €3.90 in the Baltics</span></div></div>
+      <div><Icon name="globe" size={22} /><div><strong>Made in {site.locality}, {site.country}</strong><span>{site.brand.legalName}</span></div></div>
+    </div>
+  </div>
+
+  <!-- ============================== FORM + CARD ============================== -->
+  <section class="section container" id="write" aria-labelledby="write-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Write to us</p>
+        <h2 id="write-title">Tell us what’s on your mind.</h2>
+      </div>
+      <p class="muted cx-head__note">Two minutes to write. One business day to hear back. If it is about an order, the reference from your confirmation e-mail saves a round trip.</p>
+    </div>
+
+    <div class="cx-grid">
+      <div class="cx-form" data-reveal>
+        <form data-form="contact" data-success="Thanks — we reply within one business day.">
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label for="cx-name">Your name</label>
+              <input class="input" id="cx-name" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div class="field">
+              <label for="cx-email">E-mail</label>
+              <input class="input" id="cx-email" name="email" type="email" autocomplete="email" inputmode="email" required />
+            </div>
+            <div class="field span-2">
+              <label for="cx-topic">Topic</label>
+              <select class="select" id="cx-topic" name="topic" required>
+                <option value="">Choose one</option>
+                {TOPICS.map((t) => <option value={t}>{t}</option>)}
+              </select>
+              <span class="hint">Wholesale enquiries go straight to the person who handles them. Everything else lands in the same inbox.</span>
+            </div>
+            <div class="field span-2">
+              <label for="cx-message">Message</label>
+              <textarea class="textarea" id="cx-message" name="message" rows="6" required placeholder="What happened, what you would like, and anything that helps us answer in one go: an order reference, a shop name, a deadline…"></textarea>
+            </div>
+            <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
+            <label class="checkbox span-2">
+              <input type="checkbox" name="consent" value="yes" required />
+              <span>I agree that Semers stores this message in order to reply to it. Read the <a href="/legal/privacy/">privacy policy</a>.</span>
+            </label>
+            <div class="span-2 cx-submit">
+              <button class="btn btn--lg" type="submit">Send message <Icon name="arrow" size={20} class="arrow" /></button>
+              <span class="small muted">Or e-mail <a href={mailHref}>{site.email}</a> directly.</span>
+            </div>
+          </div>
+        </form>
+        <p class="small cx-note" data-form-note></p>
+      </div>
+
+      <aside class="cx-card" data-reveal aria-labelledby="ways-title">
+        <div class="frame frame--3x2">
+          <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.third} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="lazy" decoding="async" class="img-cover" />
+        </div>
+        <div class="cx-card__body">
+          <h3 id="ways-title">Other ways to reach us</h3>
+          <dl class="cx-dl">
+            <div>
+              <dt>E-mail</dt>
+              <dd><a class="cx-mail" href={mailHref}>{site.email}</a><span class="tiny muted">Orders, press and partnerships, everything else</span></dd>
+            </div>
+            <div>
+              <dt>Wholesale</dt>
+              <dd><a class="cx-mail" href={wholesaleHref}>{site.wholesaleEmail}</a><span class="tiny muted">Retailers, cafés, offices, distributors · <a href="/wholesale/">Wholesale page</a></span></dd>
+            </div>
+            {hasWhatsapp && (
+              <div>
+                <dt>WhatsApp</dt>
+                <dd><a class="cx-mail" href={whatsappHref} rel="noopener">Message us on WhatsApp</a><span class="tiny muted">Quick questions, photos of a dented parcel</span></dd>
+              </div>
+            )}
+            <div>
+              <dt>Where we are</dt>
+              <dd>{site.locality}, {site.country}<span class="tiny muted">{site.brand.legalName}. Bars and pastila are baked here and shipped from here.</span></dd>
+            </div>
+            <div>
+              <dt>Reply time</dt>
+              <dd>Within one business day<span class="tiny muted">Wholesale replies come with the line sheet and prices.</span></dd>
+            </div>
+          </dl>
+          <div class="cx-links">
+            <a class="link" href="/faq/">Read the FAQ</a>
+            <a class="link" href="/legal/shipping-returns/">Shipping &amp; returns</a>
+            <a class="link" href="/where-to-buy/">Where to buy</a>
+          </div>
+          {hasInstagram && (
+            <a class="cx-ig" href={site.social.instagram} rel="noopener"><Icon name="instagram" size={20} /> Follow Semers on Instagram</a>
+          )}
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================== QUICK ANSWERS ============================== -->
+  <section class="section band" aria-labelledby="quick-title">
+    <div class="container cx-faq">
+      <div data-reveal>
+        <p class="eyebrow">Before you write</p>
+        <h2 id="quick-title">The questions we answer most.</h2>
+        <p class="muted mt-2">If yours is here, you have your answer already. If not, the <a href="#write">form</a> is one scroll up, and the <a href="/faq/">full FAQ</a> covers the rest, from egg white to shelf life.</p>
+        <div class="cx-faq__links">
+          <a class="link" href="/shop/">Shop all products</a>
+          <a class="link" href="/shop/apple-bars/">Apple bars</a>
+          <a class="link" href="/shop/pastila/">Belyov pastila</a>
+          <a class="link" href="/how-its-made/">How it’s made</a>
+        </div>
+      </div>
+      <div class="acc" data-reveal>
+        {quick.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== PRESS & PARTNERS ============================== -->
+  <section class="section container section--tight" aria-labelledby="press-title">
+    <div class="split">
+      <div class="frame frame--4x5 rounded cx-press__img" data-reveal>
+        <img src={im('gift-box').src} srcset={im('gift-box').srcset} sizes={im('gift-box').srcset && SIZES.third} alt={im('gift-box').alt} width={im('gift-box').width} height={im('gift-box').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Press &amp; partnerships</p>
+        <h2 id="press-title">Writing about apples? We can help.</h2>
+        <p class="lead">Journalists, food writers, gift-guide editors and brands with a good idea: pick “Press &amp; partnerships” in the form or write to <a href={mailHref}>{site.email}</a>. We send product photos, the facts behind the recipe and, if you ask nicely, a box to taste.</p>
+        <ul class="ticks">
+          <li><Icon name="check" size={18} /> 99% baked Antonovka apples and egg white, no added sugar, no flour, no gluten</li>
+          <li><Icon name="check" size={18} /> A recipe with a date on it: Belyov pastila, made commercially since 1888</li>
+          <li><Icon name="check" size={18} /> Baked in Riga, sold at Maxima and on Barbora, exported across the EU</li>
+        </ul>
+        <div class="cluster mt-4">
+          <a class="btn btn--ghost" href="/story/">Read our story</a>
+          <a class="link" href="/journal/">The journal</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container section--tight" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Or skip the e-mail</p>
+      <h2 id="cta-title">The fastest answer to “what does it taste like?”</h2>
+      <p>A Tasting Box holds four Apple Bars, two Flourless Bars, two bags of apple meringues and a 100 g loaf of Belyov pastila. It ships free from Riga in 1–2 business days.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/shop/">Shop all products</a>
+        <a class="btn btn--ghost cx-cta__ghost" href="/products/tasting-box/">Order a Tasting Box</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* hero */
+  .cx-title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .cx-head__note { max-width: 40ch; margin: 0; }
+
+  /* form + card */
+  .cx-grid { display: grid; gap: var(--sp-6); align-items: start; }
+  @media (min-width: 60rem) { .cx-grid { grid-template-columns: 1.15fr 0.85fr; gap: var(--sp-7); } }
+  .cx-form { padding: clamp(1.25rem, 3vw, 2.25rem); border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .cx-form .field .hint { line-height: 1.4; }
+  .cx-submit { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3) var(--sp-5); }
+  .cx-note { margin-top: var(--sp-4); }
+  .cx-note:empty { display: none; }
+
+  .cx-card { border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); overflow: clip; }
+  .cx-card .frame { border-radius: 0; }
+  .cx-card__body { padding: clamp(1.25rem, 3vw, 1.75rem); display: grid; gap: var(--sp-5); }
+  .cx-card__body h3 { font-size: var(--fs-xl); }
+  .cx-dl { margin: 0; display: grid; }
+  .cx-dl > div { display: grid; gap: 0.2rem; padding-block: var(--sp-3); border-top: 1px solid var(--line); }
+  .cx-dl > div:first-child { border-top: 0; padding-top: 0; }
+  .cx-dl dt { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-3); }
+  .cx-dl dd { margin: 0; display: grid; gap: 0.15rem; font-weight: 600; }
+  .cx-dl dd .tiny { font-weight: 400; }
+  .cx-mail { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 600; letter-spacing: -0.01em; text-decoration: none; border-bottom: 2px solid var(--accent); padding-bottom: 1px; width: fit-content; overflow-wrap: anywhere; }
+  .cx-mail:hover { border-color: var(--fg); }
+  .cx-links { display: flex; flex-wrap: wrap; gap: var(--sp-3) var(--sp-5); }
+  .cx-ig { display: inline-flex; align-items: center; gap: 0.5em; width: fit-content; font-size: var(--fs-sm); font-weight: 600; text-decoration: none; }
+  .cx-ig:hover { color: var(--accent-fill); }
+
+  /* quick answers */
+  .cx-faq { display: grid; gap: var(--sp-6); }
+  @media (min-width: 56rem) { .cx-faq { grid-template-columns: 1fr 1.4fr; gap: var(--sp-8); align-items: start; } }
+  .cx-faq__links { display: grid; gap: var(--sp-3); justify-items: start; margin-top: var(--sp-5); }
+
+  /* press */
+  .cx-press__img { max-width: 30rem; margin-inline: auto; box-shadow: var(--shadow-2); }
+  @media (min-width: 56rem) { .cx-press__img { max-width: none; } }
+  .split .ticks { margin: var(--sp-5) 0; }
+
+  /* cta */
+  .cx-cta__ghost { --btn-fg: var(--cream-0); border-color: color-mix(in srgb, var(--cream-0) 40%, transparent); }
+  .cx-cta__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+</style>

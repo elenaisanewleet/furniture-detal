@@ -1,0 +1,294 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { ARTICLES, ARTICLES_SORTED, type Article } from '~/data/journal';
+import { im, SIZES } from '~/data/images';
+import { site } from '~/data/site';
+import { formatThreshold } from '~/data/products';
+import { article as articleSchema } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { withLocales } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+export function getStaticPaths() {
+  return withLocales(ARTICLES.map((a) => ({ params: { slug: a.slug }, props: { article: a } })));
+}
+
+const { locale } = Astro.props as { locale: Locale };
+const { article: a } = Astro.props as { article: Article };
+const origin = originOf(Astro.site);
+const href = `/journal/${a.slug}/`;
+const canonicalUrl = `${origin}${href}`;
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+const hero = im(a.image);
+
+/* ---- Body: written separately into src/data/articles/<slug>.ts. Never crash if it is not there yet. ---- */
+const bodies = import.meta.glob('../../data/articles/*.ts', { eager: true, import: 'default' }) as Record<string, unknown>;
+const bodyKey = Object.keys(bodies).find((k) => k.endsWith(`/${a.slug}.ts`));
+const loaded = bodyKey ? bodies[bodyKey] : undefined;
+const rawBody = typeof loaded === 'string' && loaded.trim() ? loaded : a.body || '';
+const hasBody = rawBody.trim().length > 0;
+
+/* ---- Table of contents: give every <h2> in the body an id and collect the labels. ---- */
+const slugify = (s: string) =>
+  s
+    .toLowerCase()
+    .replace(/&[a-z#0-9]+;/g, ' ')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+const toc: { id: string; label: string }[] = [];
+const seen = new Set<string>();
+const body = hasBody
+  ? rawBody.replace(/<h2(\s[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m: string, attrs: string | undefined, inner: string) => {
+      const at = attrs || '';
+      const label = inner.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+      const existing = at.match(/\sid=["']([^"']+)["']/);
+      let id = existing ? existing[1] : slugify(label) || 'section';
+      const base = id;
+      let n = 2;
+      while (seen.has(id)) id = `${base}-${n++}`;
+      seen.add(id);
+      toc.push({ id, label });
+      return existing ? `<h2${at}>${inner}</h2>` : `<h2${at} id="${id}">${inner}</h2>`;
+    })
+  : '';
+const showToc = toc.length >= 2;
+
+/* ---- Meta ---- */
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+const fmtDate = (iso: string) => {
+  const [y, m, d] = iso.split('-').map(Number);
+  return `${d} ${MONTHS[(m || 1) - 1]} ${y}`;
+};
+const dateLabel = fmtDate(a.date);
+const readLabel = `${a.readMinutes} min read`;
+const tagLine = a.tags.join(' · ');
+
+/** <title> must stay within 60 characters including the " — Semers" suffix (51 for the page part); article headlines are longer than that on purpose. */
+const SEO_TITLES: Record<string, string> = {
+  'what-is-pastila': 'What is pastila? A two-ingredient baked-apple sweet',
+  'healthy-snacks-no-added-sugar': 'Healthy snacks with no added sugar: read the label',
+  'antonovka-apples': 'Why Antonovka apples? The sour apple in every bar',
+};
+const shortTitle = (t: string) => {
+  if (t.length <= 51) return t;
+  const clause = t.match(/^(.{12,50}?[?:.])\s/);
+  if (clause) return clause[1];
+  return `${t.slice(0, 49).replace(/\s+\S*$/, '')}…`;
+};
+const pageTitle = SEO_TITLES[a.slug] ?? shortTitle(a.title);
+
+/** Meta descriptions 120–155 chars; the card description is allowed to run longer. */
+const SEO_DESC: Record<string, string> = {
+  'what-is-pastila': 'Pastila is a baked-apple sweet from Belyov: apple purée whipped with egg white, dried in thin layers. Where it comes from and why it needs no added sugar.',
+  'healthy-snacks-no-added-sugar': 'Most “sugar-free” snack bars hide syrups, sweeteners or fruit concentrates. How to read an ingredient list properly, and a short list of snacks that pass.',
+  'antonovka-apples': 'Antonovka is a hardy, tart, aromatic apple from the north. Its pectin and acidity are exactly what pastila needs. Why we will not bake with anything else.',
+};
+const trimDesc = (d: string) => {
+  if (d.length <= 155) return d;
+  const head = d.slice(0, 155);
+  const stop = Math.max(head.lastIndexOf('. '), head.lastIndexOf('.'));
+  if (stop >= 119) return head.slice(0, stop + 1);
+  return `${d.slice(0, 152).replace(/\s+\S*$/, '')}…`;
+};
+const pageDesc = SEO_DESC[a.slug] ?? trimDesc(a.description);
+
+/* ---- Related ---- */
+const others = ARTICLES_SORTED.filter((x) => x.slug !== a.slug).slice(0, 3);
+const hasOthers = others.length > 0;
+
+/** The product most of the journal is about; used in the sidebar. */
+const shopcard = im('packshot-classic');
+const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no flour, no gluten', 'About 97 kcal per 35 g bar', 'Keeps 12 months without a fridge'];
+---
+<Base
+  title={pageTitle}
+  description={pageDesc}
+  canonical={href}
+  ogImage={a.image}
+  ogType="article"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Journal', href: '/journal/' }, { name: a.title, href }]}
+  schema={[articleSchema(origin, { title: a.title, description: a.description, href, date: a.date, image: a.image })]}
+>
+  <Fragment slot="head">
+    <meta property="article:published_time" content={a.date} />
+    <meta property="article:modified_time" content={a.date} />
+    {a.tags.map((t) => <meta property="article:tag" content={t} />)}
+  </Fragment>
+  <article class="art">
+    <!-- ============================== HEADER ============================== -->
+    <header class="page-hero container art__head">
+      <p class="eyebrow">{tagLine}</p>
+      <h1 id="page-title">{a.title}</h1>
+      <p class="art__meta">
+        <time datetime={a.date}>{dateLabel}</time>
+        <span class="art__dot" aria-hidden="true">·</span>
+        <span><Icon name="clock" size={16} /> {readLabel}</span>
+        <span class="art__dot" aria-hidden="true">·</span>
+        <span>{site.brand.name}, {site.locality}</span>
+      </p>
+    </header>
+
+    <!-- ============================== HERO IMAGE ============================== -->
+    <div class="container">
+      <div class="frame frame--16x9 art__hero" data-reveal>
+        <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.half} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+      </div>
+    </div>
+
+    <!-- ============================== BODY ============================== -->
+    <div class="container art__grid section--tight">
+      <div class="art__body">
+        {hasBody ? (
+          <div class="prose art__prose" set:html={body} />
+        ) : (
+          <div class="prose art__prose">
+            <p class="lead">{a.description}</p>
+            <p class="muted">Full article coming shortly.</p>
+          </div>
+        )}
+
+        <footer class="art__foot">
+          <ul class="cluster art__tags" aria-label="Topics">
+            {a.tags.map((t) => <li class="chip">{t}</li>)}
+          </ul>
+          <div class="cluster">
+            <button class="btn btn--ghost btn--sm" type="button" data-copy={canonicalUrl}>Copy link</button>
+            <a class="link small" href="/journal/">All articles</a>
+          </div>
+        </footer>
+      </div>
+
+      <div class="art__aside">
+        {showToc && (
+          <nav class="toc" aria-labelledby="toc-title">
+            <p class="eyebrow" id="toc-title">In this article</p>
+            <ol>
+              {toc.map((t) => (
+                <li><a href={`#${t.id}`} set:html={t.label} /></li>
+              ))}
+            </ol>
+          </nav>
+        )}
+        <aside class="art__shop" aria-labelledby="shop-title">
+          <div class="frame frame--1x1 art__shop-img"><img src={shopcard.src} srcset={shopcard.srcset} sizes={shopcard.srcset && SIZES.third} alt="" width={shopcard.width} height={shopcard.height} loading="lazy" decoding="async" /></div>
+          <p class="eyebrow">From the bakery</p>
+          <h2 id="shop-title" class="art__shop-title">The bar these notes are about.</h2>
+          <ul class="ticks small">
+            {facts.map((f) => <li><Icon name="check" size={16} /> {f}</li>)}
+          </ul>
+          <a class="btn btn--block" href="/shop/apple-bars/">Shop apple bars</a>
+          <a class="link small art__shop-more" href="/shop/">See everything in the shop</a>
+        </aside>
+      </div>
+    </div>
+
+    <!-- ============================== ALSO READ ============================== -->
+    {hasOthers && (
+      <section class="section band" aria-labelledby="also-title">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Also read</p>
+              <h2 id="also-title">Keep <em>reading.</em></h2>
+            </div>
+            <a class="link" href="/journal/">Back to the journal</a>
+          </div>
+          <div class="grid grid--3" data-reveal>
+            {others.map((o) => (
+              <a class="jc" href={`/journal/${o.slug}/`}>
+                <div class="frame frame--3x2"><img src={im(o.image).src} srcset={im(o.image).srcset} sizes={im(o.image).srcset && SIZES.third} alt="" width={im(o.image).width} height={im(o.image).height} loading="lazy" decoding="async" /></div>
+                <div class="jc__meta"><time datetime={o.date}>{fmtDate(o.date)}</time> · {o.readMinutes} min read</div>
+                <h3>{o.title}</h3>
+                <p>{o.description}</p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )}
+
+    <!-- ============================== CTA ============================== -->
+    <section class="section container" aria-labelledby="cta-title">
+      <div class="cta-band" data-reveal>
+        <p class="eyebrow">Taste the subject</p>
+        <h2 id="cta-title">Reading about apples is the slow way to find out.</h2>
+        <p>Apple bars, meringues and Belyov pastila, baked in {site.locality} from two ingredients. Parcels leave in 1–2 business days and ship across the EU; orders over {freeFrom} ship free.</p>
+        <div class="cluster mt-2">
+          <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
+          <a class="btn btn--ghost cta-band__ghost" href="/why-pastila/">Why pastila</a>
+          <a class="link cta-band__link" href="/how-its-made/">How it’s made</a>
+        </div>
+      </div>
+    </section>
+  </article>
+</Base>
+
+<style>
+  /* header */
+  .art__head { max-width: 50rem; padding-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+  .art__head h1 { font-size: var(--fs-3xl); max-width: 22ch; margin-top: 0.75rem; }
+  .art__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.6rem; margin: 1.1rem 0 0; font-size: var(--fs-sm); color: var(--fg-3); }
+  .art__meta span { display: inline-flex; align-items: center; gap: 0.35em; }
+  .art__meta time { color: var(--fg-2); font-weight: 600; }
+  .art__dot { opacity: 0.6; }
+
+  /* hero image */
+  .art__hero { border-radius: var(--r-xl); box-shadow: var(--shadow-2); }
+
+  /* body grid. DOM: prose, then aside (TOC + shop card). Small screens show the TOC first, the shop card last. */
+  .art__grid { display: grid; gap: clamp(1.5rem, 4vw, 2.5rem); }
+  .art__aside { display: contents; }
+  .toc { order: 1; }
+  .art__body { order: 2; min-width: 0; }
+  .art__shop { order: 3; }
+  @media (min-width: 60rem) {
+    .art__grid { grid-template-columns: minmax(0, 1fr) 19rem; gap: clamp(2.5rem, 6vw, 5rem); align-items: start; }
+    .art__body { order: 0; }
+    .art__aside { display: grid; gap: 1.5rem; position: sticky; top: 5.5rem; order: 1; }
+  }
+
+  /* table of contents */
+  .toc { padding: 1.1rem 1.25rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .toc ol { margin: 0.75rem 0 0; padding: 0; list-style: none; counter-reset: toc; display: grid; gap: 0.4rem; }
+  .toc li { counter-increment: toc; display: flex; gap: 0.6rem; align-items: baseline; font-size: var(--fs-sm); }
+  .toc li::before { content: counter(toc, decimal-leading-zero); font-family: var(--font-display); font-weight: 600; color: var(--accent); font-size: var(--fs-xs); letter-spacing: 0.04em; }
+  .toc a { text-decoration: none; color: var(--fg-2); }
+  .toc a:hover { color: var(--fg); text-decoration: underline; text-decoration-color: var(--accent); }
+
+  /* prose */
+  .art__prose { font-size: var(--fs-lg); color: var(--ink-800); }
+  .art__prose > p:first-child::first-letter { float: left; font-family: var(--font-display); font-weight: 600; font-size: 3.6em; line-height: 0.8; padding: 0.08em 0.12em 0 0; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 50; }
+  .art__prose h2 { font-size: var(--fs-2xl); scroll-margin-top: 6rem; }
+  .art__prose h3 { scroll-margin-top: 6rem; }
+  .art__prose a { text-decoration-color: var(--accent); }
+  .art__prose img { border-radius: var(--r-lg); margin: 1.5em 0; }
+  .art__prose table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin: 1.5em 0; }
+  .art__prose th, .art__prose td { padding: 0.6em 0.4em; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .art__prose th { font-weight: 600; color: var(--fg-2); }
+  .art__prose blockquote p { margin: 0; }
+  .art__prose hr { margin: 2.5em 0; }
+
+  /* footer of the article */
+  .art__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-top: clamp(2rem, 5vw, 3.5rem); padding-top: 1.25rem; border-top: 1px solid var(--line); }
+  .art__tags { list-style: none; margin: 0; padding: 0; }
+  .art__tags .chip { text-transform: capitalize; }
+
+  /* sidebar shop card */
+  .art__shop { display: grid; gap: 0.75rem; padding: 1.25rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .art__shop-img { background: var(--mint-100); border-radius: var(--r-md); }
+  .art__shop-img img { object-fit: contain; padding: 8%; }
+  .art__shop-title { font-size: var(--fs-xl); }
+  .art__shop .ticks { gap: 0.4rem; }
+  .art__shop .ticks :global(svg) { margin-top: 0.2em; }
+  .art__shop .btn { margin-top: 0.25rem; }
+  .art__shop-more { justify-self: start; }
+
+  /* also read */
+  .band h2 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 96, 'SOFT' 100, 'WONK' 1; }
+
+  /* cta */
+  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
+  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+  .cta-band__link { color: var(--cream-0); border-color: var(--honey-500); }
+</style>
