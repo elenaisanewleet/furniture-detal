@@ -21,7 +21,8 @@
     "check:html": "node scripts/check-html.mjs",
     "check:a11y": "node scripts/check-a11y.mjs",
     "check:flow": "node scripts/check-flow.mjs",
-    "verify": "npm test && npm run build && npm run check:html && npm run check:seo && npm run check:i18n",
+    "check:schema": "node scripts/check-schema.mjs",
+    "verify": "npm test && npm run build && npm run check:html && npm run check:seo && npm run check:schema && npm run check:i18n",
     "test": "node scripts/test.mjs",
     "check:i18n": "node scripts/check-i18n.mjs"
   },

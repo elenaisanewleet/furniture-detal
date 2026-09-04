@@ -119,7 +119,12 @@ export function productSchema(origin: string, p: Product, flavourLabels?: Record
       shippingDestination: ['LV', 'LT', 'EE'].map((c) => ({ '@type': 'DefinedRegion', addressCountry: c })),
       deliveryTime: {
         '@type': 'ShippingDeliveryTime',
+        // Both halves, because Google adds them to show one delivery estimate and
+        // shows none at all with only the first. The figures are the ones on
+        // /legal/shipping-returns/: dispatched in 1–2 business days, 1–3 in transit
+        // to the Baltic destinations named above.
         handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
+        transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
       },
     },
     // Mirrors /legal/shipping-returns/: 14 days, sealed goods only, customer pays return postage, full refund.
@@ -154,6 +159,11 @@ export function productSchema(origin: string, p: Product, flavourLabels?: Record
     ...base,
     productGroupID: p.slug,
     // schema.org has no "flavor" term, so the varying attribute is carried on each variant as a PropertyValue.
+    // variesBy names that PropertyValue, which is how a reader knows the variants
+    // are one product in three flavours rather than three products. It stays in
+    // English on every locale: the value beside it is translated, but the name is
+    // the key the two sides are matched on.
+    variesBy: 'Flavour',
     hasVariant: p.variants.map((v) => ({
       '@type': 'Product',
       name: `${p.title} — ${flavour(v.key)}`,

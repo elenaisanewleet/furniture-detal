@@ -84,6 +84,20 @@ Vercel project → Settings → Domains → add `semers.org` and `www.semers.org
 - [ ] `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` set on the hosting project (see above). Until `ADMIN_PASSWORD` exists, `/admin/` cannot be logged into at all.
 - [x] Order receipts and the newsletter welcome go out in the language the customer was reading, with the money formatted the way that language writes it and every link pointing into that language. The shop's own notification stays English on purpose — one person reads them all — and carries a `Language:` line saying which language to reply in. `MAIL` in `worker/server.js` holds the wording; a key a language has not translated falls back to English rather than sending a blank.
 
+## Structured-data check
+
+`npm run check:schema` (part of `npm run verify`) reads the JSON-LD out of the
+built pages and asserts what Google actually reads: the required properties per
+type, the shape of the values — a price as a bare number, an availability and a
+return category from the vocabulary rather than spelled from memory, dates in
+ISO form, a GTIN whose check digit adds up — that on-site URLs point at pages
+the build produced, and that `@id` references resolve inside their own graph. A
+rich result is withheld silently for any of these; the block stays valid JSON
+and the page renders either way.
+
+Recommendations are reported apart from errors and do not fail the run, because
+a warning is a decision and an error is a bug.
+
 ## Accessibility check
 
 `npm run check:a11y` runs axe over a real render of every template, in all three
