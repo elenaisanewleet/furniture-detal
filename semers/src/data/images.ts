@@ -27,6 +27,12 @@ const UPLOADS = 'https://d2ol7oe51mr4n9.cloudfront.net/user_32PUi7N1yLbRwJAjaFXF
 export const RENDER_BG = '#3a322e';
 
 export const IMAGES: Record<string, SiteImage> = {
+  'family-kitchen': {
+    remote: CDN + 'hf_20260904_161845_c3e0e41e-6233-43ef-b9e2-9e29f3790c01.png',
+    alt: 'A mother and her two children laughing on a sunlit kitchen floor, sharing apple bars from a kraft box',
+    width: 1376,
+    height: 768,
+  },
   'hero-bars': {
     // WebP (≤2000 px) re-encoded from the original hf_20260901_225023_a4fea9d4-74e6-4d8a-8d6a-b3b1a99ef2c3.png
     remote: UPLOADS + 'af7ae71b-f935-4779-b81a-139f401ba900.webp',

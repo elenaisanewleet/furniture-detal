@@ -556,7 +556,8 @@ onScroll();
 window.addEventListener('scroll', onScroll, { passive: true });
 
 /* ------------------------------------------------------------------ reveal */
-const revealEls = $$('[data-reveal]');
+// Both shapes of the same idea: a block that fades in, and a grid whose children fade in one after another.
+const revealEls = $$('[data-reveal], [data-stagger]');
 if ('IntersectionObserver' in window && revealEls.length) {
   const io = new IntersectionObserver(
     (entries) => {

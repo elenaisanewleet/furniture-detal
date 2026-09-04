@@ -22,6 +22,7 @@
     "check:a11y": "node scripts/check-a11y.mjs",
     "check:flow": "node scripts/check-flow.mjs",
     "check:admin": "node scripts/check-admin.mjs",
+    "check:motion": "node scripts/check-motion.mjs",
     "check:schema": "node scripts/check-schema.mjs",
     "check:security": "node scripts/check-security.mjs",
     "verify": "npm test && npm run build && npm run check:html && npm run check:seo && npm run check:schema && npm run check:security && npm run check:i18n",

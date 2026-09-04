@@ -174,6 +174,33 @@ the function still sends the shop's own English notification as the customer's
 receipt, where the Worker sends a receipt written in the customer's language.
 Fix that before pointing semers.org at Vercel.
 
+## Motion check
+
+`npm run check:motion` drives the apple-to-bar sequence on the home page — the
+one thing on the site that only exists once JavaScript has run and only means
+anything if the reader scrolls. It scrolls through the section in all three
+languages at a desktop and a phone width and asserts that the silhouette
+actually changes (five distinct shapes, five distinct colours), that the five
+steps keep pace with it, that the last frame is a bar rather than whatever it
+was halfway through, and that the page never scrolls sideways inside it. Then
+it loads the page twice more — once with `prefers-reduced-motion: reduce`, once
+with JavaScript switched off — and asserts that nothing is pinned, all five
+steps are readable as a plain list, and the drawing is resting on the bar.
+
+Needs a browser, so it is not part of `npm run verify`.
+
+**The flat version is the default and the pinned one is opted into.** `.forge`
+is an ordinary section; the script adds `.forge--live` and only then does it
+become 320 vh of sticky stage. Written the other way round, a reader with no
+JavaScript would get three screens of scroll holding one frozen apple and four
+paragraphs at opacity zero. The markup also ships the *last* silhouette as its
+static `d`, which is why the no-script page shows a bar.
+
+The five silhouettes live in `src/data/forge.ts` as ordinary SVG outlines — each
+starting at top-centre and running clockwise, which is the only thing the morph
+needs of them. They are resampled to a shared point count at load, so any of
+them can be redrawn in an editor without touching the code.
+
 ## Structured-data check
 
 `npm run check:schema` (part of `npm run verify`) reads the JSON-LD out of the

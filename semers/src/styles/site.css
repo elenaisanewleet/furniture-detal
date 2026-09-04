@@ -37,9 +37,25 @@
 
 /* ---------- Product card ---------- */
 .pc { --pc-accent: var(--bg-sunken); position: relative; display: grid; grid-template-rows: auto 1fr; border-radius: var(--r-lg); background: var(--bg-raised); overflow: clip; box-shadow: var(--shadow-1); transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
-.pc:hover, .pc:focus-within { transform: translateY(-4px); box-shadow: var(--shadow-3); }
+/*
+ * The lift picks up the product's own colour. Every card already carries its
+ * flavour as --pc-accent for the image bed, so the halo costs nothing to know
+ * and a row of cards glows in six different colours instead of one grey.
+ */
+.pc:hover, .pc:focus-within { transform: translateY(-6px); box-shadow: var(--shadow-3), 0 22px 46px -18px var(--pc-accent); }
+.pc::after { content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 1.5px var(--pc-accent); opacity: 0; transition: opacity var(--dur) var(--ease-out); }
+.pc:hover::after, .pc:focus-within::after { opacity: 0.55; }
+@media (prefers-reduced-motion: reduce) { .pc { transition: box-shadow var(--dur) var(--ease-out); } .pc:hover, .pc:focus-within { transform: none; } }
 .pc[hidden] { display: none; }
 .pc__media { position: relative; aspect-ratio: 4 / 5; background: var(--pc-accent); overflow: clip; }
+/*
+ * A shelf light passing over the pack. It is the cheapest thing on the page
+ * that makes a flat photograph read as an object someone could pick up, and it
+ * only ever runs while a reader is actually pointing at the card.
+ */
+.pc__media::after { content: ''; position: absolute; inset: -10% -40%; pointer-events: none; transform: translateX(-100%); transition: transform 0.9s var(--ease-out); background: linear-gradient(105deg, transparent 42%, rgb(255 255 255 / 0.5) 50%, transparent 58%); }
+.pc:hover .pc__media::after, .pc:focus-within .pc__media::after { transform: translateX(100%); }
+@media (prefers-reduced-motion: reduce) { .pc__media::after { display: none; } }
 .pc__media img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.8s var(--ease-out); }
 .pc:hover .pc__media img { transform: scale(1.04); }
 .pc__media .badge { top: 0.75rem; left: 0.75rem; }
