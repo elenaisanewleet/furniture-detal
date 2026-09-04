@@ -253,6 +253,13 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
       }
       #adm .adm-row > .adm-shrink {
         flex: 0 0 auto;
+        /*
+         * flex: 0 0 auto sizes to the content and refuses to shrink, so a group
+         * of buttons wider than a phone pushed the row past the viewport
+         * instead of wrapping onto the next line. Capping it at the row width
+         * makes it wrap; its own flex-wrap then stacks the buttons inside.
+         */
+        max-width: 100%;
       }
       #adm .adm-scroll {
         overflow-x: auto;
@@ -446,7 +453,9 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
         if (res.status === 401) {
           state.authed = false;
           render();
-          throw new Error('auth');
+          // The body travels with it: a caller that wants to say *why* the door
+          // did not open needs the reason, and 401 is the one it needs most.
+          throw Object.assign(new Error('auth'), { data });
         }
         if (!res.ok) throw Object.assign(new Error(data?.reason || `HTTP ${res.status}`), { data });
         return data;
@@ -752,8 +761,21 @@ const catalog = PRODUCTS.map((p) => ({ slug: p.slug, name: p.title, price: p.pri
             state.authed = true;
             await loadTab();
           } catch (err) {
+            /*
+             * Only a 401 means the password was wrong. A 503 means nobody set
+             * ADMIN_PASSWORD or the database is gone, and telling the owner
+             * their password is wrong sends them to type it again — eight more
+             * times, until the rate limit locks them out of a door that was
+             * never locked.
+             */
             const reason = (err as any)?.data?.reason;
-            root.innerHTML = loginView(reason === 'too-many-attempts' ? 'Слишком много попыток. Подождите 15 минут.' : 'Неверный пароль.');
+            const said: Record<string, string> = {
+              password: 'Неверный пароль.',
+              'too-many-attempts': 'Слишком много попыток. Подождите 15 минут.',
+              'admin-not-configured': 'Пароль администратора не задан на хостинге (ADMIN_PASSWORD). Пароль здесь не поможет.',
+              'no-database': 'База данных недоступна. Это не пароль — попробуйте позже.',
+            };
+            root.innerHTML = loginView(said[reason] || `Войти не удалось (${reason || 'ошибка сети'}). Это не пароль — попробуйте ещё раз.`);
           }
           return;
         }

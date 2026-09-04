@@ -84,6 +84,19 @@ Vercel project → Settings → Domains → add `semers.org` and `www.semers.org
 - [ ] `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` set on the hosting project (see above). Until `ADMIN_PASSWORD` exists, `/admin/` cannot be logged into at all.
 - [x] Order receipts and the newsletter welcome go out in the language the customer was reading, with the money formatted the way that language writes it and every link pointing into that language. The shop's own notification stays English on purpose — one person reads them all — and carries a `Language:` line saying which language to reply in. `MAIL` in `worker/server.js` holds the wording; a key a language has not translated falls back to English rather than sending a blank.
 
+## Back-office check
+
+`npm run check:admin` drives `/admin/` against a stubbed API: the login screen,
+each of the four tabs at a desktop and a phone width, approving a review, saving
+a price override, and the five different reasons a login can fail. Same
+requirements as the checks below — a browser, and not part of `npm run verify`.
+
+The failure messages are the point. Only a 401 means the password was wrong.
+`ADMIN_PASSWORD` missing on the host, a database that is gone, or a 500 all used
+to be reported as a wrong password, which sends the owner to type it again —
+eight more times, until the login limiter locks them out of a door that was
+never locked.
+
 ## Structured-data check
 
 `npm run check:schema` (part of `npm run verify`) reads the JSON-LD out of the
