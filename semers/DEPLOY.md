@@ -57,8 +57,34 @@ until the next deploy:
 | `RESEND_API_KEY`, `ORDER_TO_EMAIL`, `ORDER_FROM_EMAIL` | orders by e-mail, and the customer's receipt |
 
 **To ship a change:** build and verify here (`npm run verify`), copy `src/`, `public/`,
-`worker/`, `astro.config.mjs` and `scripts/` across to the website project, push, and
-deploy. The Worker and the pages deploy together, so a change to either is one deploy.
+`worker/`, `migrations/`, `astro.config.mjs` and `scripts/` across to the website project,
+push, and deploy. The Worker and the pages deploy together, so a change to either is
+one deploy.
+
+Three files belong to the website project and must survive the copy — overwriting
+any of them breaks the deploy rather than the page:
+
+| File | Why |
+| --- | --- |
+| `app/scripts/pack.mjs` | rearranges the Astro output into `dist/client` + `dist/server/server.js`; it exists only there |
+| `app/src/app-meta.json` | the Open Graph and marketplace card for the hosting platform |
+| `app/app.manifest.json` | declares `"db": true`, which is what binds the D1 database |
+
+`app/package.json` also stays as it is: it builds with `bun --bun astro build && bun
+scripts/pack.mjs`, and this repository's build script is a different one.
+
+The old flat `src/pages/*.astro` must be **deleted**, not merged: the localised tree
+routes through `src/pages/[...locale]/`, and leaving both in place collides on every
+route.
+
+**When the network blocks the clone.** `apps-repos.higgs.ai` is not always reachable
+from wherever this repository is being worked on. The hosting platform's own cloud
+sandbox is inside that network and has `git`, `curl` and `bun`, so the sync can be
+done from there instead: clone this repository from GitHub and the website repository
+side by side, copy across, build with `bun --bun astro build && bun scripts/pack.mjs`
+exactly as CI does, run the checks over `dist/client`, then push and deploy. Building
+before pushing is the point — the deploy ships whatever is on `main`, and there is no
+preview stage to catch a broken build.
 
 ## 2. Domain
 
