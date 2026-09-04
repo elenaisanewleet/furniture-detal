@@ -13,6 +13,7 @@ import { site } from '~/data/site';
 import { organization, webSite, breadcrumbs, graph } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { img, imgSrc } from '~/data/images';
+import { FONT_PRELOAD } from '~/data/fonts';
 import { LOCALES, LOCALE_META, DEFAULT_LOCALE, localePath, stripLocale } from '~/i18n/config';
 import { t, crumbName } from '~/i18n/ui';
 
@@ -133,8 +134,8 @@ const nodes = [
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="sitemap" href="/sitemap-index.xml" />
 
-    <link rel="preload" href="/fonts/fraunces-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/fonts/instrument-sans-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+    {/* A Russian page never reads a byte of the Latin subsets, and an English one never reads the Cyrillic. */}
+    {FONT_PRELOAD[locale].map((href) => <link rel="preload" href={href} as="font" type="font/woff2" crossorigin />)}
     <!-- Images are fetched without CORS, so the warm connection must be non-crossorigin to be reused. -->
     <link rel="preconnect" href="https://d2ol7oe51mr4n9.cloudfront.net" />
 

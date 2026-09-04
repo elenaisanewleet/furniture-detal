@@ -9,7 +9,7 @@
  *
  * Usage: node scripts/test.mjs
  */
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import { localizeHtml, isExempt } from './localize-links.mjs';
 import { scanProse, applyProse, isProse } from './prose-scan.mjs';
 
@@ -554,6 +554,65 @@ group('customer e-mail');
   is('every pick is linked', [...(await welcome('ru')).text.matchAll(/https:\/\/semers\.org\/ru\/products\//g)].length, 3);
 
   globalThis.fetch = realFetch;
+}
+
+/* ------------------------------------------------------------------ fonts */
+group('font coverage');
+/*
+ * A unicode-range that does not cover the script fails silently: the glyph
+ * still draws, in whatever the browser reaches for next, and the page looks
+ * finished. That is how the whole Russian site came to be set in Georgia and
+ * Arial. So the ranges are asserted here against the alphabets they have to
+ * carry, and every file a face points at has to exist.
+ */
+{
+  const css = await readFile(new URL('../src/styles/fonts.css', import.meta.url), 'utf-8');
+  const faces = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => {
+    const f = (k) => (new RegExp(`${k}:\\s*([^;]+);`).exec(m[1]) || [])[1]?.trim();
+    return { family: f('font-family')?.replace(/'/g, ''), style: f('font-style'), range: f('unicode-range'), src: f('src') };
+  });
+  is('the stylesheet declares faces', faces.length > 8, true);
+
+  /** Every code point a unicode-range covers, as a lookup. */
+  const covers = (range, cp) =>
+    range.split(',').some((part) => {
+      const [a, b] = part.trim().replace(/^U\+/i, '').split('-');
+      const lo = parseInt(a.replace(/\?/g, '0'), 16);
+      const hi = parseInt((b ?? a).replace(/\?/g, 'F'), 16);
+      return cp >= lo && cp <= hi;
+    });
+  const set = (text, style) => {
+    const cps = [...text].map((c) => c.codePointAt(0));
+    return cps.every((cp) => faces.some((f) => f.style === style && f.range && covers(f.range, cp)));
+  };
+
+  // One letter per alphabet that the site actually has to print.
+  is('english is covered', set('The quick brown fox — €1.45', 'normal'), true);
+  is('latvian diacritics are covered', set('Ābolu batoniņi bez miltiem, žāvēti', 'normal'), true);
+  is('russian is covered', set('Батончик, в котором 99% яблока', 'normal'), true);
+  is('the russian ё is covered', set('печёное', 'normal'), true);
+  is('and in italic too', set('Батончик Ābolu The', 'italic'), true);
+
+  const files = new Set(await readdir(new URL('../public/fonts', import.meta.url)));
+  const missing = faces
+    .map((f) => /url\('\/fonts\/([^']+)'\)/.exec(f.src || '')?.[1])
+    .filter((n) => n && !files.has(n));
+  is('every declared file is on disk', missing, []);
+
+  // The Cyrillic faces must sit ahead of the metric fallbacks, which are
+  // Georgia and Arial and would otherwise take the Cyrillic themselves.
+  const tokens = await readFile(new URL('../src/styles/tokens.css', import.meta.url), 'utf-8');
+  const stack = (name) => new RegExp(`--font-${name}:([^;]+);`).exec(tokens)[1].split(',').map((s) => s.trim().replace(/'/g, ''));
+  const before = (list, a, b) => list.indexOf(a) !== -1 && list.indexOf(a) < list.indexOf(b);
+  is('literata outranks the serif fallback', before(stack('display'), 'Literata', 'Fraunces Fallback'), true);
+  is('inter outranks the sans fallback', before(stack('sans'), 'Inter', 'Instrument Sans Fallback'), true);
+
+  // The preload list has to name files that exist, or it is a wasted request
+  // and a missed one.
+  const preload = await readFile(new URL('../src/data/fonts.ts', import.meta.url), 'utf-8');
+  const named = [...preload.matchAll(/'\/fonts\/([^']+)'/g)].map((m) => m[1]);
+  is('the preloads name real files', named.filter((n) => !files.has(n)), []);
+  is('russian preloads its own subsets', named.filter((n) => n.includes('cyrillic')).length, 3);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

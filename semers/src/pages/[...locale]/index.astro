@@ -11,6 +11,7 @@ import { itemList, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { localeParams, type Locale } from '~/i18n/config';
 import { localizedCollections, localizedFaqs } from '~/data/copy';
+import { FONT_PRELOAD_ITALIC } from '~/data/fonts';
 
 export function getStaticPaths() {
   return localeParams();
@@ -32,8 +33,8 @@ const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a 
   bodyClass="home"
 >
   <Fragment slot="head">
-    <!-- The hero headline sets "99% apple." in Fraunces italic; without a preload the file is only discovered after the CSS parses. -->
-    <link rel="preload" href="/fonts/fraunces-italic-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- The hero headline sets "99% apple." in the display italic; without a preload the file is only discovered after the CSS parses. Which file that is depends on the script the headline is written in. -->
+    <link rel="preload" href={FONT_PRELOAD_ITALIC[locale]} as="font" type="font/woff2" crossorigin />
   </Fragment>
   <!-- ============================== HERO ============================== -->
   <section class="hero hero--home bg-grain" aria-labelledby="hero-title">

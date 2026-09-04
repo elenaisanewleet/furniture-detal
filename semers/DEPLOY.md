@@ -84,6 +84,24 @@ Vercel project → Settings → Domains → add `semers.org` and `www.semers.org
 - [ ] `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` set on the hosting project (see above). Until `ADMIN_PASSWORD` exists, `/admin/` cannot be logged into at all.
 - [x] Order receipts and the newsletter welcome go out in the language the customer was reading, with the money formatted the way that language writes it and every link pointing into that language. The shop's own notification stays English on purpose — one person reads them all — and carries a `Language:` line saying which language to reply in. `MAIL` in `worker/server.js` holds the wording; a key a language has not translated falls back to English rather than sending a blank.
 
+## Fonts
+
+Four families, self-hosted, no request to Google at runtime. `npm run fonts`
+re-fetches the subsets and rewrites the `@font-face` block in
+`src/styles/fonts.css`; `npm run fonts:check` reports what would change without
+downloading anything.
+
+Fraunces and Instrument Sans carry the Latin, and neither ships a single
+Cyrillic glyph — which is why Literata and Inter are there, declared over the
+Cyrillic ranges only. Nothing switches them per page: a `@font-face` applies
+strictly inside its `unicode-range`, so a Russian sentence with a Latin brand
+name in it sets "Semers" in Fraunces and the Russian words in Literata by
+itself. Adding a language means adding its subsets to `FAMILIES` in
+`scripts/fetch-fonts.mjs`, the new family to the two stacks in
+`src/styles/tokens.css` — **before** the metric-matched fallbacks, which are
+Georgia and Arial and will otherwise take the glyphs themselves — and its
+preload pair to `src/data/fonts.ts`.
+
 ## Local development
 
 ```bash
