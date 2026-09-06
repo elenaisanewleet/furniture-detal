@@ -34,12 +34,13 @@ const hasRest = rest.length > 0;
 const count = ARTICLES_SORTED.length;
 const countLine = count === 1 ? '1 article' : `${count} articles`;
 const readLine = featured ? `${featured.readMinutes} min read` : '';
+const featImg = featured ? im(featured.image) : null;
 
 /** Evergreen pages the journal keeps pointing back to. */
 const startHere = [
-  { href: '/why-pastila/', icon: 'apple', title: 'Why pastila', text: 'Two ingredients, no added sugar, about 97 kcal a bar. The case for a snack first sold in 1888, with the numbers.' },
-  { href: '/how-its-made/', icon: 'clock', title: 'How it’s made', text: 'Twelve hours from whole Antonovka apples to a sealed pack: bake, whip, dry, press, cut.' },
-  { href: '/story/', icon: 'globe', title: 'Our story', text: 'A Belyov recipe first sold in 1888, a sour northern apple, and a bakery in Riga that has left the recipe alone.' },
+  { href: '/why-pastila/', title: 'Why pastila', text: 'Two ingredients, no added sugar, about 97 kcal a bar. The case for a snack first sold in 1888, with the numbers.' },
+  { href: '/how-its-made/', title: 'How it’s made', text: 'Twelve hours from whole Antonovka apples to a sealed pack: bake, whip, dry, press, cut.' },
+  { href: '/story/', title: 'Our story', text: 'A Belyov recipe first sold in 1888, a sour northern apple, and a bakery in Riga that has left the recipe alone.' },
 ] as const;
 
 const schema = [
@@ -63,48 +64,60 @@ const schema = [
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Journal', href: '/journal/' }]}
   schema={schema}
 >
-  <!-- ============================== HERO ============================== -->
+  <!-- ============================== MASTHEAD ============================== -->
+  <!-- A front page: one enormous line, the lead, and the count set as a display numeral on the far side. -->
   <section class="page-hero container jr-hero" aria-labelledby="page-title">
     <p class="eyebrow">Journal · From the bakery in {site.locality}</p>
-    <h1 id="page-title">Notes from the <em>bakery.</em></h1>
-    <p class="lead">Longer reads on pastila, Antonovka apples and snacks with no added sugar, written by the people who bake the bars. The kettle takes four minutes. Most of these take six.</p>
+    <h1 id="page-title" class="jr-hero__title" data-words>Notes from the <em>bakery.</em></h1>
+    <div class="jr-hero__row">
+      <p class="lead">Longer reads on pastila, Antonovka apples and snacks with no added sugar, written by the people who bake the bars. The kettle takes four minutes. Most of these take six.</p>
+      <p class="jr-hero__count" data-reveal><span class="jr-hero__big" aria-hidden="true" translate="no">{String(count).padStart(2, '0')}</span><span class="jr-hero__count-t">{countLine} so far. New ones appear as they are written.</span></p>
+    </div>
   </section>
 
   <!-- ============================== FEATURED ============================== -->
-  {hasFeatured && (
-    <section class="section--tight container" aria-labelledby="featured-title">
-      <article class="feature" data-reveal>
-        <a class="feature__media frame frame--3x2 rounded" href={`/journal/${featured.slug}/`} tabindex="-1" aria-hidden="true">
-          <img src={im(featured.image).src} srcset={im(featured.image).srcset} sizes={im(featured.image).srcset && SIZES.third} alt="" width={im(featured.image).width} height={im(featured.image).height} loading="eager" fetchpriority="high" decoding="async" class="img-cover zoom" />
+  <!--
+    The set piece: the newest article as one full-width lit window. The
+    photograph drifts behind a dark scrim and the headline stands in front of
+    it at display size, the way a front page carries its lead story.
+  -->
+  {hasFeatured && featImg && (
+    <section class="container jr-feat" aria-labelledby="featured-title">
+      <article class="jf" data-reveal>
+        <a class="jf__media" href={`/journal/${featured.slug}/`} tabindex="-1" aria-hidden="true" data-cursor="Read">
+          <img src={featImg.src} srcset={featImg.srcset} sizes={featImg.srcset && SIZES.full} alt="" width={featImg.width} height={featImg.height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.2" />
         </a>
-        <div class="feature__body">
-          <p class="eyebrow">Latest</p>
-          <h2 id="featured-title" class="feature__title"><a href={`/journal/${featured.slug}/`}>{featured.title}</a></h2>
-          <p class="jc__meta feature__meta"><time datetime={featured.date}>{fmtDate(featured.date)}</time> · {readLine}</p>
-          <p class="feature__desc">{featured.description}</p>
-          <a class="btn btn--ghost" href={`/journal/${featured.slug}/`}>Read the article <Icon name="arrow" size={18} class="arrow" /></a>
+        <div class="jf__body">
+          <p class="eyebrow jf__eyebrow"><span>Latest</span><span class="jf__sep" aria-hidden="true">·</span><span>{readLine}</span></p>
+          <h2 id="featured-title" class="jf__title"><a href={`/journal/${featured.slug}/`}>{featured.title}</a></h2>
+          <p class="jf__desc">{featured.description}</p>
+          <div class="jf__foot">
+            <a class="btn" href={`/journal/${featured.slug}/`}>Read the article <Icon name="arrow" size={18} class="arrow" /></a>
+            <time class="jf__date" datetime={featured.date}>{fmtDate(featured.date)}</time>
+          </div>
         </div>
       </article>
     </section>
   )}
 
   <!-- ============================== ALL ARTICLES ============================== -->
+  <!-- The rest of the front page: an offset grid, wide then narrow, each card wearing its reading time as an eyebrow. -->
   {hasRest && (
     <section class="section container" aria-labelledby="all-title">
       <div class="section-head">
         <div>
           <p class="eyebrow">More from the journal</p>
-          <h2 id="all-title">Slow reads for a two-ingredient snack.</h2>
+          <h2 id="all-title" data-words>Slow reads for a two-ingredient snack.</h2>
         </div>
-        <p class="muted small">{countLine} so far. New ones appear as they are written.</p>
       </div>
-      <div class="grid grid--3 jr-grid" data-reveal>
-        {rest.map((a) => (
-          <a class="jc" href={`/journal/${a.slug}/`}>
-            <div class="frame frame--3x2"><img src={im(a.image).src} srcset={im(a.image).srcset} sizes={im(a.image).srcset && SIZES.third} alt="" width={im(a.image).width} height={im(a.image).height} loading="lazy" decoding="async" /></div>
-            <div class="jc__meta"><time datetime={a.date}>{fmtDate(a.date)}</time> · {a.readMinutes} min read</div>
+      <div class="jr-grid" data-stagger>
+        {rest.map((a, i) => (
+          <a class={`jc jr-card ${i % 2 === 0 ? 'jr-card--wide' : 'jr-card--tall'}`} href={`/journal/${a.slug}/`} data-cursor="Read">
+            <div class={`frame ${i % 2 === 0 ? 'frame--3x2' : 'frame--4x5'}`}><img src={im(a.image).src} srcset={im(a.image).srcset} sizes={im(a.image).srcset && SIZES.half} alt="" width={im(a.image).width} height={im(a.image).height} loading="lazy" decoding="async" /></div>
+            <p class="eyebrow jr-card__eyebrow">{a.readMinutes} min read</p>
             <h3>{a.title}</h3>
             <p>{a.description}</p>
+            <time class="jc__meta" datetime={a.date}>{fmtDate(a.date)}</time>
           </a>
         ))}
       </div>
@@ -112,6 +125,7 @@ const schema = [
   )}
 
   <!-- ============================== START HERE ============================== -->
+  <!-- Three evergreen pages as a numbered index, not a card grid. -->
   <section class="section band" aria-labelledby="start-title">
     <div class="container">
       <div class="section-head">
@@ -121,26 +135,28 @@ const schema = [
         </div>
         <a class="link" href="/faq/">Or skip to the FAQ</a>
       </div>
-      <div class="trio" data-reveal>
-        {startHere.map((s) => (
-          <a class="feat feat--link" href={s.href}>
-            <div class="feat__icon"><Icon name={s.icon} size={22} /></div>
-            <h3>{s.title}</h3>
-            <p>{s.text}</p>
-            <span class="link feat__more">Read <span class="sr-only">{s.title}</span></span>
-          </a>
+      <ol class="jr-start" data-stagger>
+        {startHere.map((s, i) => (
+          <li>
+            <a class="jr-start__row" href={s.href}>
+              <span class="jr-start__n" aria-hidden="true" translate="no">{String(i + 1).padStart(2, '0')}</span>
+              <span class="jr-start__t">{s.title}</span>
+              <span class="jr-start__d">{s.text}</span>
+              <Icon name="arrow" size={22} class="jr-start__arrow" />
+            </a>
+          </li>
         ))}
-      </div>
+      </ol>
     </div>
   </section>
 
   <!-- ============================== NEWSLETTER ============================== -->
   <section class="section container" aria-labelledby="nl-title">
-    <div class="nl band--honey" data-reveal>
-      <div class="split nl__grid">
+    <div class="nl" data-reveal>
+      <div class="nl__grid">
         <div>
           <p class="eyebrow">By e-mail</p>
-          <h2 id="nl-title">The next note, when it is written.</h2>
+          <h2 id="nl-title" class="nl__title">The next note, when it is written.</h2>
           <p class="muted mt-2">No countdown timers, no daily deals. An e-mail when there is a new article, and a line when a new flavour leaves the oven. Unsubscribe whenever you like.</p>
         </div>
         <div>
@@ -172,7 +188,7 @@ const schema = [
       <p>Apple bars, flourless bars, apple meringues and Belyov pastila, baked in {site.locality}. Parcels leave in 1–2 business days and ship across the EU; orders over {freeFrom} ship free.</p>
       <div class="cluster mt-2">
         <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
-        <a class="btn btn--ghost cta-band__ghost" href="/shop/apple-bars/">Apple bars</a>
+        <a class="btn btn--ghost" href="/shop/apple-bars/">Apple bars</a>
         <a class="link cta-band__link" href="/shop/pastila/">Belyov pastila</a>
       </div>
     </div>
@@ -180,43 +196,78 @@ const schema = [
 </Base>
 
 <style>
-  /* hero */
-  .jr-hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  /* ------------------------------------------------------------ masthead */
+  .jr-hero { padding-bottom: clamp(2rem, 4vw, 3rem); }
+  .jr-hero__title { font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.045em; max-width: 10ch; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .jr-hero__title em { display: block; font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .jr-hero__row { display: grid; gap: 1.5rem; align-items: end; margin-top: clamp(1.5rem, 4vw, 3rem); }
+  @media (min-width: 56rem) { .jr-hero__row { grid-template-columns: minmax(0, 1fr) auto; gap: 4rem; } }
+  .jr-hero__row .lead { margin: 0; max-width: 50ch; }
+  .jr-hero__count { display: flex; gap: 0.9rem; align-items: baseline; margin: 0; color: var(--fg-2); font-size: var(--fs-sm); max-width: 24ch; }
+  .jr-hero__big { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-3xl); line-height: 0.85; letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; flex: none; }
 
-  /* featured article */
-  .feature { display: grid; gap: clamp(1.25rem, 3vw, 2.5rem); align-items: center; padding: clamp(1rem, 2vw, 1.5rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-1); }
-  @media (min-width: 56rem) { .feature { grid-template-columns: 1.15fr 0.85fr; } }
-  .feature__media { display: block; }
-  .feature__body { display: grid; gap: 0.75rem; align-content: center; justify-items: start; padding: clamp(0.25rem, 2vw, 1.5rem); }
-  .feature__title { font-size: var(--fs-2xl); max-width: 22ch; }
-  .feature__title a { text-decoration: none; }
-  .feature__title a:hover { text-decoration: underline; text-decoration-color: var(--accent); }
-  .feature__meta { margin: 0; }
-  .feature__desc { color: var(--ink-700); max-width: 52ch; margin: 0 0 0.25rem; }
+  /* ------------------------------------------------------------ the lead story */
+  .jr-feat { padding-top: 0.5rem; }
+  .jf { position: relative; isolation: isolate; overflow: clip; display: grid; align-items: end; border-radius: var(--r-xl); background: var(--night-800); box-shadow: var(--shadow-3), var(--glow-honey); aspect-ratio: 4 / 5; }
+  @media (min-width: 48rem) { .jf { aspect-ratio: 16 / 9; } }
+  @media (min-width: 72rem) { .jf { aspect-ratio: 21 / 10; } }
+  .jf__media { position: absolute; inset: -12% 0; z-index: 0; display: block; }
+  .jf__media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+  .jf::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, rgb(6 10 8 / 0.96) 0%, rgb(6 10 8 / 0.7) 32%, rgb(6 10 8 / 0.15) 65%, rgb(6 10 8 / 0.25) 100%); pointer-events: none; }
+  .jf__body { position: relative; z-index: 2; display: grid; gap: clamp(0.75rem, 1.5vw, 1.25rem); justify-items: start; padding: clamp(1.5rem, 4vw, 3.5rem); max-width: 62rem; pointer-events: none; }
+  .jf__body a, .jf__body .btn { pointer-events: auto; }
+  .jf__eyebrow { color: var(--cream-2); gap: 0.8em; }
+  .jf__sep { color: var(--accent); }
+  .jf__title { font-size: var(--fs-3xl); line-height: 0.98; letter-spacing: -0.03em; max-width: 18ch; text-wrap: balance; color: var(--cream-0); }
+  .jf__title a { text-decoration: none; color: inherit; transition: color var(--dur-fast); }
+  .jf__title a:hover { color: var(--accent-ink); }
+  .jf__desc { margin: 0; max-width: 52ch; color: var(--cream-2); font-size: var(--fs-md); }
+  .jf__foot { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; margin-top: 0.25rem; }
+  .jf__date { font-size: var(--fs-xs); letter-spacing: 0.1em; text-transform: uppercase; color: var(--cream-2); }
+  @media (max-width: 40rem) { .jf__desc { display: none; } .jf__title { font-size: var(--fs-2xl); } }
 
-  /* card grid */
-  .jr-grid .jc h3 { max-width: 26ch; }
+  /* ------------------------------------------------------------ the rest of the front page */
+  .jr-grid { display: grid; gap: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 4rem); }
+  @media (min-width: 56rem) {
+    .jr-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; }
+    .jr-card--wide { grid-column: span 7; }
+    .jr-card--tall { grid-column: span 5; margin-top: clamp(3rem, 8vw, 7rem); }
+    .jr-card--wide:nth-child(4n + 3) { grid-column: 2 / span 6; }
+  }
+  .jr-card { gap: 0.75rem; }
+  .jr-card .frame { margin-bottom: 0.5rem; box-shadow: var(--shadow-2); }
+  .jr-card__eyebrow { margin: 0; }
+  .jr-card h3 { font-size: var(--fs-2xl); line-height: 1.02; letter-spacing: -0.025em; max-width: 20ch; text-wrap: balance; }
+  .jr-card p { font-size: var(--fs-md); max-width: 46ch; }
+  .jr-card time { margin-top: 0.25rem; }
 
-  /* start-here cards as links */
-  .feat--link { color: inherit; text-decoration: none; transition: transform var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out); }
-  .feat--link:hover { transform: translateY(-3px); box-shadow: var(--shadow-2); }
-  .feat__more { justify-self: start; margin-top: 0.25rem; font-size: var(--fs-sm); }
+  /* ------------------------------------------------------------ start here, as an index */
+  .jr-start { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .jr-start li { border-bottom: 1px solid var(--line); }
+  .jr-start__row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-template-areas: 'n t a' 'n d a'; column-gap: clamp(1rem, 3vw, 2.5rem); row-gap: 0.4rem; align-items: center; padding: clamp(1.25rem, 3vw, 2rem) 0; text-decoration: none; color: inherit; }
+  @media (min-width: 56rem) { .jr-start__row { grid-template-columns: 8rem minmax(0, 18rem) minmax(0, 1fr) auto; grid-template-areas: 'n t d a'; } }
+  .jr-start__n { grid-area: n; font-family: var(--font-display); font-weight: 400; font-size: clamp(3rem, 6vw, 5.5rem); line-height: 0.8; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; transition: -webkit-text-stroke-color var(--dur), text-shadow var(--dur); }
+  .jr-start__t { grid-area: t; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-2xl); line-height: 1; letter-spacing: -0.02em; color: var(--cream-0); transition: color var(--dur-fast); }
+  .jr-start__d { grid-area: d; color: var(--fg-2); max-width: 44ch; font-size: var(--fs-md); }
+  .jr-start__arrow { grid-area: a; color: var(--accent); transition: transform var(--dur-fast) var(--ease-out); }
+  .jr-start__row:hover .jr-start__arrow { transform: translateX(6px); }
+  .jr-start__row:hover .jr-start__t { color: var(--accent-ink); }
+  .jr-start__row:hover .jr-start__n { -webkit-text-stroke-color: var(--accent); text-shadow: 0 0 24px rgb(255 90 60 / 0.35); }
+  @media (prefers-reduced-motion: reduce) { .jr-start__n, .jr-start__arrow { transition: none; } }
 
-  /* newsletter */
-  .nl { border-radius: var(--r-xl); padding: clamp(1.5rem, 5vw, 3.5rem); }
-  .nl__grid { align-items: center; }
-  .nl h2 { font-size: var(--fs-2xl); max-width: 18ch; }
+  /* ------------------------------------------------------------ newsletter: a panel lit from the honey side */
+  .nl { position: relative; isolation: isolate; overflow: clip; border-radius: var(--r-xl); padding: clamp(1.5rem, 5vw, 3.5rem); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-honey); }
+  .nl::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(55% 60% at 100% 0%, rgb(240 176 74 / 0.18), transparent 70%); pointer-events: none; }
+  .nl__grid { display: grid; gap: clamp(1.5rem, 4vw, 3rem); align-items: center; }
+  @media (min-width: 56rem) { .nl__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 6vw, 6rem); } }
+  .nl__title { font-size: var(--fs-2xl); max-width: 16ch; }
   .nl__form { display: grid; gap: 1rem; }
   .nl__row { display: grid; gap: 0.6rem; }
-  @media (min-width: 40rem) { .nl__row { grid-template-columns: 1fr auto; } }
-  .nl .input { border-color: transparent; box-shadow: var(--shadow-1); }
-  .nl .input:focus { border-color: var(--ink-900); }
+  @media (min-width: 40rem) { .nl__row { grid-template-columns: minmax(0, 1fr) auto; } }
   .nl [data-form-note] { margin-top: 0.75rem; }
   .nl [data-form-note]:empty { display: none; }
 
-  /* cta */
+  /* ------------------------------------------------------------ the one cream room */
   .jr-cta { padding-bottom: clamp(3rem, 8vw, 7rem); }
-  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
-  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
-  .cta-band__link { color: var(--cream-0); border-color: var(--honey-500); }
+  .cta-band__link { color: var(--night-900); border-color: var(--apple-600); }
 </style>

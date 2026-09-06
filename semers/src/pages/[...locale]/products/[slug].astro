@@ -431,17 +431,17 @@ const rows: [string, string][] = [
 
 <style>
   /* ------------------------------------------------------------- stage */
-  .stage { display: grid; gap: clamp(1.5rem, 4vw, 4.5rem); padding-block: clamp(0.5rem, 2vw, 1.5rem) clamp(3rem, 6vw, 5rem); }
+  .stage { display: grid; gap: clamp(1.5rem, 4vw, 4.5rem); padding-block: 0.5rem clamp(3rem, 6vw, 5rem); }
   @media (min-width: 56rem) {
     .stage { grid-template-columns: 1.05fr 0.95fr; align-items: start; }
-    .stage__gal { position: sticky; top: 5.5rem; }
+    .stage__gal { position: sticky; top: 7rem; }
   }
   .stage__buy { min-width: 0; }
 
   /* The frame: a lit window with the flavour's own light behind it. */
   .gal { position: relative; }
   .gal::before { content: ''; position: absolute; inset: 8% 4% -4%; z-index: 0; border-radius: 50%; background: var(--fl); opacity: 0.16; filter: blur(70px); pointer-events: none; transition: background var(--dur-slow) var(--ease-out); }
-  .gal__main { position: relative; z-index: 1; max-height: calc(100svh - 9rem); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
+  .gal__main { position: relative; z-index: 1; max-height: calc(100svh - 8.5rem); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
   .gal__main img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .gal__thumbs { position: relative; z-index: 1; padding: 0.15rem; }
   .gal__thumbs button { background: var(--gal-accent, var(--bg-sunken)); }
@@ -454,36 +454,36 @@ const rows: [string, string][] = [
 
   /* ------------------------------------------------------------- buy panel */
   .buy { display: grid; gap: 0; }
-  .buy .eyebrow { margin-bottom: 1rem; }
+  .buy .eyebrow { margin-bottom: 0.75rem; }
   .buy .eyebrow a { text-decoration: none; color: var(--cream-2); }
   .buy .eyebrow a:hover { color: var(--cream-0); }
   .pdp__title { font-size: var(--fs-4xl); letter-spacing: -0.04em; line-height: var(--lh-tight); max-width: 12ch; }
   .pdp__title--long { font-size: var(--fs-3xl); max-width: 16ch; }
   .pdp__w { display: inline-block; font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-md); letter-spacing: 0.02em; color: var(--fg-3); white-space: nowrap; vertical-align: 0.35em; margin-left: 0.15em; }
-  .pdp__hook { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: var(--fs-xl); line-height: 1.2; color: var(--cream-2); margin: 1.1rem 0 0; max-width: 28ch; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .pdp__hook { font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: var(--fs-xl); line-height: 1.2; color: var(--cream-2); margin: 0.85rem 0 0; max-width: 28ch; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
 
-  .pdp__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.9rem; margin: 1.75rem 0 1.25rem; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+  .pdp__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.9rem; margin: 1.35rem 0 1.1rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
   .pdp__amount { font-family: var(--font-display); font-size: var(--fs-3xl); font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 50; }
   .pdp__was { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 400; color: var(--fg-3); text-decoration-color: var(--accent); }
   .pdp__unit { flex-basis: 100%; font-size: var(--fs-sm); color: var(--fg-3); }
 
-  .pdp__facts { list-style: none; margin: 0 0 1.5rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; font-size: var(--fs-sm); font-weight: 600; color: var(--fg-2); }
+  .pdp__facts { list-style: none; margin: 0 0 1.2rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; font-size: var(--fs-sm); font-weight: 600; color: var(--fg-2); }
   .pdp__facts li { display: inline-flex; align-items: center; gap: 0.35em; }
   .pdp__facts :global(svg) { color: var(--leaf-500); }
 
   /* Chips glow in their own flavour when chosen. */
-  .pdp__vars { border: 0; padding: 0; margin: 0 0 1.5rem; }
+  .pdp__vars { border: 0; padding: 0; margin: 0 0 1.2rem; }
   .pdp__vars legend { font-size: var(--fs-sm); color: var(--fg-2); margin-bottom: 0.7rem; padding: 0; }
   .pdp__vars legend strong { color: var(--cream-0); }
   .var span { min-height: 2.75rem; padding: 0.55em 1.05em 0.55em 0.85em; background: rgb(255 252 245 / 0.03); transition: border-color var(--dur), background var(--dur), color var(--dur), box-shadow var(--dur-slow) var(--ease-out); }
   .var i { flex: none; width: 0.7em; height: 0.7em; }
   .var input:checked + span { border-color: var(--sg); background: color-mix(in srgb, var(--sg) 16%, transparent); color: var(--cream-0); box-shadow: 0 0 0 1px var(--sg), 0 0 28px -6px var(--sg); }
   .var input:checked + span i { box-shadow: 0 0 12px var(--sg); }
-  .pdp__varnote { margin: 0.75rem 0 0; color: var(--fg-3); }
+  .pdp__varnote { margin: 0.6rem 0 0; color: var(--fg-3); }
 
   /* The ladder: three steps, the current one lit in cream so the button stays the only red thing. */
-  .tiers { margin: 0 0 1.25rem; gap: 0.4rem; }
-  .tier { background: rgb(255 252 245 / 0.03); border-color: rgb(243 233 214 / 0.14); border-radius: var(--r-md); }
+  .tiers { margin: 0 0 1rem; gap: 0.4rem; }
+  .tier { padding: 0.6rem 0.5rem; background: rgb(255 252 245 / 0.03); border-color: rgb(243 233 214 / 0.14); border-radius: var(--r-md); }
   .tier:nth-child(2) { border-top-width: 2px; }
   .tier:nth-child(3) { border-top-width: 3px; }
   .tier.is-on { border-color: var(--cream-1); background: rgb(243 233 214 / 0.08); box-shadow: 0 0 0 1px var(--cream-1), 0 0 30px -10px rgb(243 233 214 / 0.5); }
@@ -541,7 +541,7 @@ const rows: [string, string][] = [
 
   /* ------------------------------------------------------------- what's inside */
   .pdp-inside__grid { display: grid; gap: clamp(2rem, 5vw, 5rem); align-items: start; }
-  @media (min-width: 56rem) { .pdp-inside__grid { grid-template-columns: 1.1fr 0.9fr; } }
+  @media (min-width: 56rem) { .pdp-inside__grid { grid-template-columns: 1.1fr 0.9fr; } .pdp-inside__text { position: sticky; top: 7rem; } }
   .pdp-inside__text h2 { max-width: 14ch; margin-top: 0.8rem; }
   .pdp-inside__text h2 em { font-style: italic; font-weight: 400; color: var(--honey-500); }
   .pdp-inside__ing { margin: clamp(1.5rem, 3vw, 2.25rem) 0 0; font-family: var(--font-display); font-weight: 400; font-size: var(--fs-xl); line-height: 1.3; letter-spacing: -0.01em; color: var(--cream-1); max-width: 30ch; text-wrap: pretty; font-variation-settings: 'opsz' 48, 'SOFT' 60; }
@@ -565,8 +565,8 @@ const rows: [string, string][] = [
   .lit__note { margin-top: 1.1rem; }
 
   /* ------------------------------------------------------------- reviews */
-  .pdp__reviews { gap: clamp(1.5rem, 3vw, 2.5rem); border-top: 1px solid var(--line); }
-  .pdp__revhead { align-items: end; }
+  .pdp__reviews { border-top: 1px solid var(--line); }
+  .pdp__revhead { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.5rem 2rem; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
   .pdp__revsum { font-size: var(--fs-md); }
   .pdp__revbody { display: grid; gap: 2rem; align-items: start; }
   @media (min-width: 56rem) { .pdp__revbody { grid-template-columns: 1.1fr 0.9fr; gap: 4rem; } }
@@ -588,6 +588,13 @@ const rows: [string, string][] = [
   /* ------------------------------------------------------------- sticky bar */
   .sticky-buy__t strong { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-md); }
   .sticky-buy .btn { min-height: 2.9rem; padding-inline: 1.3em; }
+  /* A long localised button ("Добавить в коробку") must not crush the title to one syllable. */
+  @media (max-width: 30rem) {
+    .sticky-buy__in { gap: 0.75rem; }
+    .sticky-buy__t strong { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--fs-sm); line-height: 1.2; }
+    .sticky-buy__t span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sticky-buy .btn { padding-inline: 1em; font-size: var(--fs-sm); }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .gal::before, .gal__main, .var span { transition: none; }

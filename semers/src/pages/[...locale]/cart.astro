@@ -16,7 +16,8 @@ export function getStaticPaths() {
 
 const { locale } = Astro.props as { locale: Locale };
 const ui = t(locale);
-const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 3);
+/* A strip, not a grid: the script hides anything already in the box, so it starts with more than three. */
+const suggestions = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 5);
 const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 ---
 <Base title="Your box" description="Review the apple snacks in your box before checkout." canonical="/cart/" noindex>
@@ -25,10 +26,10 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     pieces in the box is set as one enormous outlined numeral that the script
     keeps current, so the box reads at a glance from across the room.
   -->
-  <section class="container cart-hero" aria-labelledby="cart-title">
+  <section class="container cart-hero" aria-labelledby="box-title">
     <div>
       <p class="eyebrow">Cart</p>
-      <h1 id="cart-title" class="cart-hero__title" data-words>Your box<em>.</em></h1>
+      <h1 id="box-title" class="cart-hero__title" data-words>Your box<em>.</em></h1>
     </div>
     <p class="cart-hero__count" aria-hidden="true">
       <span class="cart-hero__n num" data-cart-big>00</span>
@@ -79,7 +80,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
       </div>
       <a class="link" href="/shop/">Shop all products</a>
     </div>
-    <div class="grid grid--3 cart-more__grid" data-cart-suggest data-stagger>{suggestions.map((p) => <ProductCard product={p} compact />)}</div>
+    <div class="cart-more__strip" data-cart-suggest data-stagger>{suggestions.map((p) => <ProductCard product={p} compact />)}</div>
   </section>
 </Base>
 
@@ -192,13 +193,16 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .cart__total > span:last-child { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-2xl); letter-spacing: -0.03em; line-height: 1; }
   @media (prefers-reduced-motion: reduce) { .cart__bar span { transition: none; } .cart__items :global(.ci__img) { transition: none; } }
 
-  /* ------------------------------------------------------------ cross-sell */
+  /* ------------------------------------------------------------ cross-sell strip */
+  /* Runs edge to edge and scrolls sideways inside itself; the cut-off last card is the hint. */
   .cart-more { padding-top: clamp(3rem, 7vw, 6rem); }
+  .cart-more__strip { display: flex; gap: var(--sp-5); overflow-x: auto; scroll-snap-type: x proximity; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); padding-bottom: 0.75rem; scrollbar-width: none; }
+  .cart-more__strip::-webkit-scrollbar { display: none; }
+  .cart-more__strip > :global(*) { flex: 0 0 clamp(17rem, 22vw, 20rem); min-width: 0; scroll-snap-align: start; }
+  .cart-more__strip > :global([hidden]) { display: none; }
   @media (max-width: 40rem) {
-    .cart-more__grid { display: flex; gap: 0.75rem; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); padding-bottom: 0.5rem; scrollbar-width: none; }
-    .cart-more__grid::-webkit-scrollbar { display: none; }
-    .cart-more__grid > :global(*) { flex: 0 0 74%; scroll-snap-align: start; }
-    .cart-more__grid > :global([hidden]) { display: none; }
+    .cart-more__strip { gap: 0.75rem; }
+    .cart-more__strip > :global(*) { flex-basis: 74%; }
   }
   @media (max-width: 36rem) {
     .cart-hero { padding-top: 3.5rem; }
