@@ -362,10 +362,9 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   .art__prose :global(tr:last-child td) { border-bottom: 0; }
   .art__prose :global(th) { font-weight: 600; color: var(--cream-0); background: rgb(243 233 214 / 0.04); }
   .art__prose :global(blockquote) { position: relative; margin: 2.2em 0; padding: 0.4em 0 0 0; border: 0; font-family: var(--font-display); font-weight: 400; font-style: italic; font-size: var(--fs-2xl); line-height: 1.12; letter-spacing: -0.02em; color: var(--cream-0); text-wrap: balance; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
-  .art__prose :global(blockquote)::before { content: '“'; position: absolute; left: -0.06em; top: -0.42em; font-size: 2.6em; line-height: 1; font-style: normal; color: transparent; -webkit-text-stroke: 1px var(--accent); opacity: 0.9; pointer-events: none; }
+  .art__prose :global(blockquote)::before { content: '“'; position: absolute; left: -0.04em; top: -0.5em; font-size: 2.6em; line-height: 1; font-style: normal; color: transparent; -webkit-text-stroke: 1px var(--accent); opacity: 0.9; pointer-events: none; }
   .art__prose :global(blockquote)::after { content: ''; display: block; width: 3rem; height: 1px; margin-top: 0.7em; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
   .art__prose :global(blockquote p) { margin: 0; color: inherit; }
-  @media (min-width: 72rem) { .art__prose :global(blockquote) { margin-left: -4rem; padding-left: 4rem; } .art__prose :global(blockquote)::before { left: 0; } }
 
   /* footer of the article */
   .art__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; max-width: 65ch; margin-top: clamp(2rem, 5vw, 3.5rem); padding-top: 1.25rem; border-top: 1px solid var(--line); }
