@@ -245,6 +245,62 @@ and holds it, and Escape closes it and gives focus back to the button that
 opened it. Same requirements as the audit above — a browser, and not part of
 `npm run verify`.
 
+## Design system and the motion layer
+
+The site is one direction, "the orchard at night": a deep green-black ground,
+cream type set very large, and the fruit's own colours — apple red, baked honey,
+App'Lite mint — used as light sources rather than fills. Everything visual hangs
+off three files, and the names in them are the contract every page is written to:
+
+| File | What it decides |
+| --- | --- |
+| `src/styles/tokens.css` | the palette (`--night-*`, `--cream-*`, `--apple-500`, `--honey-500`, `--mint-500`…), the **roles** (`--bg`, `--fg`, `--accent`, `--line`…), the type scale up to `--fs-hero`, radii, glows, motion curves. A page never names a hex; it names a role, which is why the whole site changed ground from this one file. |
+| `src/styles/base.css` | primitives: type, `.container`/`.section`, buttons (`.btn` cream pill, `.btn--accent`, `.btn--ghost`), forms, the outlined `.marquee`, the reveal hooks, the cursor and grain, the page-enter animation. |
+| `src/styles/site.css` | shared components used by more than one page: product card (`.pc`), tiles, steps, comparison (`.vs`), cart drawer, sticky buy bar, journal card, timeline, `.cta-band` (the one cream room on a page), gallery, variant chips, builder. Page-specific styles live in each page's own `<style>`. |
+
+Type is the light: Fraunces (Literata over the Cyrillic ranges) at `--fs-hero`
+for the one line a page opens with, an italic `<em>` in the accent for the one
+word that matters, and outlined numerals (`-webkit-text-stroke`) for anything
+decorative. Photographs are lit windows — rounded frames with a hairline, on the
+ground, never on white. Depth is glow and hairline, not shadow.
+
+**Motion** is one script, `src/scripts/motion.ts`, loaded by the layout on every
+page. It is an enhancement throughout: with `prefers-reduced-motion: reduce`, on
+a coarse pointer, or without JavaScript, the page is simply there. What it provides:
+
+| Hook | Effect |
+| --- | --- |
+| Lenis + GSAP ScrollTrigger | smooth scrolling synced to the scroll-driven set pieces. `window.semersMotion.stop()` turns the smoothing off, which the check scripts do before they measure scroll positions. |
+| `data-words` on a heading | the words rise one after another; the split happens in the browser so the sentence stays one string for the translator. |
+| `data-reveal`, `data-stagger` | fade-and-rise on entry, staggered across children. |
+| `data-parallax="0.2"` on an image in a clipped wrapper | drifts a fraction as fast as the page. |
+| `data-tilt` on a card | 3-D tilt with the pointer. |
+| `data-cursor="View"` on anything | the drawn cursor grows and prints the word. |
+| `data-count="97"` | the number counts up when it scrolls into view. |
+
+**The hero** (`src/scripts/hero.ts`, home page only) is a three.js point cloud:
+each of ~26 000 points carries a position on the skin of an apple and one on the
+skin of a bar, and how far the reader has scrolled through the pinned hero blends
+between them, with a swarm and a honey glow half way — the baking. It writes
+`--hp` (0–1) on the section so the headline crossfades in CSS from "One apple."
+to "One bar. Nothing else." Without WebGL, with reduced motion, or on a device
+that reports few cores, the poster photograph behind the canvas is the hero and
+the copy still swaps with scroll. On a portrait phone the body is scaled down
+rather than pushed away, so the points do not shrink to dust.
+
+**Adding a page.** Write it against the roles and the shared classes, open with
+one enormous line and air, give it one set piece of its own and keep the rest
+quiet, and add the hooks above rather than page-level animation code. Media boxes
+must hold their shape without the image — `aspect-ratio` on the wrapper and the
+`<img>` positioned `absolute; inset: 0` — because a plain `width: 100%` image can
+push a grid item past its frame. Nothing may scroll sideways at 390 px.
+
+**Dependencies.** `three`, `gsap` and `lenis` are runtime dependencies (and
+`@types/three` a dev one). The Higgsfield project's `app/package.json` and
+`app/bun.lock` do not pick these up from a file copy: add them there with
+`bun add` in the same sync that carries the scripts, or the deploy fails at
+import time.
+
 ## Fonts
 
 Four families, self-hosted, no request to Google at runtime. `npm run fonts`

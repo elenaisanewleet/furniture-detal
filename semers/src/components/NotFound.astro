@@ -6,30 +6,64 @@
  * exact filename `404.html` for a page file literally named `404.astro`, and
  * the Worker serves that file by name. So there is one file per language and
  * one copy of the markup.
+ *
+ * The page is one enormous outlined numeral, the line about the tree, and one
+ * cream button back to the shop. An apple of light falls once and comes to
+ * rest on the baseline — the page that fell off the tree.
  */
-import { im as image, SIZES } from '~/data/images';
 import { stripLocale } from '~/i18n/config';
 import { t } from '~/i18n/ui';
 
-const im = image('apple-render-sm');
 const { locale } = stripLocale(Astro.url.pathname);
 const ui = t(locale);
 ---
-<section class="container nf">
-  <div class="nf__img" style={`background:${im.bg}`}><img src={im.src} srcset={im.srcset} sizes={im.srcset && SIZES.half} alt={im.alt} width={im.width} height={im.height} loading="eager" decoding="async" /></div>
-  <div>
-    <p class="eyebrow">404</p>
-    <h1>{ui.notFoundHead}</h1>
-    <p class="lead">{ui.notFoundLead}</p>
-    <div class="cluster mt-4">
-      <a class="btn" href="/shop/">{ui.notFoundShop}</a>
-      <a class="btn btn--ghost" href="/">{ui.notFoundHome}</a>
+<section class="nf" aria-labelledby="nf-title">
+  <div class="nf__glow" aria-hidden="true"></div>
+  <div class="container nf__grid">
+    <p class="nf__num" aria-hidden="true">
+      404
+      <span class="nf__apple"></span>
+    </p>
+    <div class="nf__copy">
+      <p class="eyebrow">{ui.notFoundTitle}</p>
+      <h1 id="nf-title" data-words>{ui.notFoundHead}</h1>
+      <p class="lead">{ui.notFoundLead}</p>
+      <div class="cluster nf__cta">
+        <a class="btn btn--lg" href="/shop/">{ui.notFoundShop}</a>
+        <a class="link" href="/">{ui.notFoundHome}</a>
+      </div>
     </div>
   </div>
 </section>
+
 <style>
-  .nf { display: grid; gap: 2rem; align-items: center; padding-block: clamp(2rem, 6vw, 5rem); }
-  @media (min-width: 48rem) { .nf { grid-template-columns: 1fr 1fr; } }
-  .nf__img { border-radius: var(--r-xl); overflow: clip; }
-  .nf__img img { width: 100%; height: auto; display: block; }
+  .nf { position: relative; isolation: isolate; overflow: clip; min-height: calc(100svh - 6.5rem); display: grid; align-content: center; padding-block: clamp(2rem, 6vw, 5rem) clamp(3rem, 8vw, 7rem); }
+  .nf__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background:
+      radial-gradient(45% 40% at 50% 62%, rgb(255 90 60 / 0.16), transparent 70%),
+      radial-gradient(70% 50% at 50% 100%, var(--night-950), transparent 70%); }
+  .nf__grid { display: grid; gap: clamp(1rem, 3vw, 2.5rem); }
+
+  /* The numeral: outlined, as wide as the room, with the apple resting on its baseline. */
+  .nf__num { position: relative; margin: 0; font-family: var(--font-display); font-weight: 400; font-size: clamp(9rem, 36vw, 36rem); line-height: 0.78; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; user-select: none; white-space: nowrap; width: max-content; max-width: 100%; }
+  .nf__apple { position: absolute; left: 66%; bottom: 0.02em; width: 0.09em; height: 0.09em; min-width: 1rem; min-height: 1rem; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff9a80, var(--apple-500) 55%, var(--apple-700)); box-shadow: 0 0 24px 4px rgb(255 90 60 / 0.55), 0 0 90px 20px rgb(255 90 60 / 0.25); animation: nf-fall 1.6s var(--ease-out) 0.3s both; }
+  .nf__apple::after { content: ''; position: absolute; left: 50%; top: -18%; width: 8%; height: 26%; min-width: 2px; min-height: 5px; border-radius: 2px; background: var(--leaf-600); transform: translateX(-50%) rotate(-12deg); }
+  @keyframes nf-fall {
+    0% { transform: translateY(-70vh) scale(0.9); opacity: 0; }
+    12% { opacity: 1; }
+    70% { transform: translateY(0) scale(1); }
+    80% { transform: translateY(-0.55em) scale(1); }
+    90% { transform: translateY(0) scaleY(0.9) scaleX(1.06); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) { .nf__apple { animation: none; } }
+
+  .nf__copy { max-width: 40rem; }
+  .nf__copy h1 { font-size: var(--fs-3xl); max-width: 14ch; }
+  .nf__copy .lead { margin-top: 1rem; }
+  .nf__cta { margin-top: 2rem; gap: 1.25rem; }
+
+  @media (min-width: 60rem) {
+    .nf__grid { grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); align-items: end; }
+    .nf__copy { padding-bottom: 0.5rem; }
+  }
 </style>

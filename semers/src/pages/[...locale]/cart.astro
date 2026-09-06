@@ -4,6 +4,7 @@ import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
 import { formatPrice, PRODUCTS, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
+import { t, bold } from '~/i18n/ui';
 
 import { localeParams } from '~/i18n/config';
 import type { Locale } from '~/i18n/config';
@@ -14,33 +15,54 @@ export function getStaticPaths() {
 }
 
 const { locale } = Astro.props as { locale: Locale };
+const ui = t(locale);
 const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 3);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 ---
 <Base title="Your box" description="Review the apple snacks in your box before checkout." canonical="/cart/" noindex>
-  <section class="container page-hero">
-    <p class="eyebrow">Cart</p>
-    <h1>Your box</h1>
-  </section>
-  <section class="container co" data-cart-summary data-shipping="3.9">
+  <!--
+    The page opens on two things: the words, and the number. The count of
+    pieces in the box is set as one enormous outlined numeral that the script
+    keeps current, so the box reads at a glance from across the room.
+  -->
+  <section class="container cart-hero" aria-labelledby="cart-title">
     <div>
-      <div data-summary-empty class="co__empty">
-        <Icon name="box" size={48} />
-        <p><strong>Your box is empty.</strong><br />Let’s fix that.</p>
-        <a class="btn" href="/shop/">Shop bestsellers</a>
+      <p class="eyebrow">Cart</p>
+      <h1 id="cart-title" class="cart-hero__title" data-words>Your box<em>.</em></h1>
+    </div>
+    <p class="cart-hero__count" aria-hidden="true">
+      <span class="cart-hero__n num" data-cart-big>00</span>
+      <span class="cart-hero__lbl">in the box</span>
+    </p>
+  </section>
+
+  <section class="container cart" data-cart-summary data-shipping="3.9" aria-label="Cart">
+    <div class="cart__main">
+      <div data-summary-empty class="cart__empty">
+        <span class="cart__empty-icon"><Icon name="box" size={40} /></span>
+        <p class="cart__empty-text"><strong>Your box is empty.</strong><br />Let’s fix that.</p>
+        <a class="btn" href="/shop/">Shop bestsellers <Icon name="arrow" size={18} class="arrow" /></a>
       </div>
       <div data-summary-full>
-        <ul class="drawer__items co__items" data-summary-rows></ul>
-        <p class="small muted mt-2"><a href="/shop/">← Keep shopping</a></p>
+        <ul class="drawer__items cart__items" data-summary-rows></ul>
+        <p class="cart__back"><a href="/shop/">← Keep shopping</a></p>
       </div>
     </div>
-    <aside class="co__aside">
-      <div class="co__box">
-        <h2>Summary</h2>
-        <div class="co__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>{formatPrice(0, locale)}</strong></div>
-        <div class="co__row"><span>Shipping</span><span class="num" data-summary-shipping>—</span></div>
-        <div class="co__row co__total"><span>Total</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
-        <p class="tiny muted">Free shipping over {formatThreshold(site.shipping.freeFrom, locale)}; otherwise €3.90 in the Baltics, EU courier rates confirmed by e-mail. Prices include VAT.</p>
-        <a class="btn btn--lg btn--block" href="/checkout/" data-summary-checkout>Checkout <Icon name="arrow" size={18} class="arrow" /></a>
+
+    <aside class="cart__aside">
+      <div class="cart__panel">
+        <h2 class="cart__panel-title">Summary</h2>
+        <div class="cart__ship">
+          <div class="cart__bar" aria-hidden="true"><span data-ship-fill></span></div>
+          <p class="cart__ship-text" data-ship-text set:html={bold(ui.freeShippingOver(freeFrom))} />
+        </div>
+        <div class="cart__rows">
+          <div class="cart__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>{formatPrice(0, locale)}</strong></div>
+          <div class="cart__row"><span>Shipping</span><span class="num" data-summary-shipping>—</span></div>
+          <div class="cart__row cart__total"><span>Total</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
+        </div>
+        <p class="tiny muted">Free shipping over {freeFrom}; otherwise €3.90 in the Baltics, EU courier rates confirmed by e-mail. Prices include VAT.</p>
+        <a class="btn btn--lg btn--block btn--accent" href="/checkout/" data-summary-checkout>Checkout <Icon name="arrow" size={18} class="arrow" /></a>
         <ul class="ticks small">
           <li><Icon name="truck" size={16} /> Ships from Riga in 1–2 business days</li>
           <li><Icon name="shield" size={16} /> Damaged in transit? We replace it.</li>
@@ -48,14 +70,143 @@ const suggestions = PRODUCTS.filter((p) => p.bestseller).slice(0, 3);
       </div>
     </aside>
   </section>
-  <section class="section container">
-    <div class="section-head"><h2>People also add</h2></div>
-    <div class="grid grid--3" data-cart-suggest>{suggestions.map((p) => <ProductCard product={p} compact />)}</div>
+
+  <section class="section container cart-more" aria-labelledby="more-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Before you go</p>
+        <h2 id="more-title" data-words>People also add</h2>
+      </div>
+      <a class="link" href="/shop/">Shop all products</a>
+    </div>
+    <div class="grid grid--3 cart-more__grid" data-cart-suggest data-stagger>{suggestions.map((p) => <ProductCard product={p} compact />)}</div>
   </section>
 </Base>
+
+<script>
+  /*
+   * The free-shipping meter and the big numeral. The cart itself lives in
+   * site.ts; this only reads it — through window.semersCart once that has
+   * loaded, straight from storage before it has — and listens for changes.
+   */
+  type Line = { slug: string; price: number; qty: number };
+  type Cfg = { freeFrom?: number; intl?: string; currency?: string; strings?: Record<string, string> };
+  const w = window as unknown as { SEMERS?: Cfg; semersCart?: { items: Line[]; subtotal(): number } };
+  const cfg: Cfg = w.SEMERS || {};
+  const S = (k: string, fb: string) => (cfg.strings && cfg.strings[k]) || fb;
+  const fill = document.querySelector<HTMLElement>('[data-ship-fill]');
+  const text = document.querySelector<HTMLElement>('[data-ship-text]');
+  const big = document.querySelector<HTMLElement>('[data-cart-big]');
+  const money = (n: number, whole = false) =>
+    new Intl.NumberFormat(cfg.intl || 'en-IE', { style: 'currency', currency: cfg.currency || 'EUR', ...(whole && Number.isInteger(n) ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}) }).format(n);
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  const rich = (tpl: string, vars: Record<string, string>) => esc(tpl.replace(/\{(\w+)\}/g, (_m, k) => vars[k] ?? '')).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  const fromStorage = (): Line[] => {
+    try {
+      const raw = localStorage.getItem('semers.cart.v1');
+      const list = raw ? (JSON.parse(raw) as Line[]) : [];
+      return Array.isArray(list) ? list.filter((i) => i && Number(i.qty) > 0) : [];
+    } catch {
+      return [];
+    }
+  };
+  const render = () => {
+    const cart = w.semersCart;
+    const items = cart ? cart.items : fromStorage();
+    const count = items.reduce((n, i) => n + Number(i.qty), 0);
+    const total = cart ? cart.subtotal() : items.reduce((n, i) => n + Number(i.price) * Number(i.qty), 0);
+    const freeFrom = Number(cfg.freeFrom) || 25;
+    const free = count > 0 && (total >= freeFrom || items.some((i) => i.slug === 'tasting-box'));
+    if (big) big.textContent = String(Math.min(99, count)).padStart(2, '0');
+    if (fill) {
+      fill.style.width = free ? '100%' : `${Math.min(100, (total / freeFrom) * 100)}%`;
+      fill.classList.toggle('is-free', free);
+    }
+    if (text) {
+      const left = Math.max(0, freeFrom - total);
+      text.innerHTML =
+        count === 0
+          ? rich(S('freeShippingOver', 'Free shipping on orders over **{from}**.'), { from: money(freeFrom, true) })
+          : free
+            ? rich(S('unlockedFreeShipping', 'You’ve unlocked **free shipping**.'), {})
+            : rich(S('addMoreForFree', 'Add **{amount}** more for free shipping.'), { amount: money(left) });
+    }
+  };
+  render();
+  window.setTimeout(render, 0);
+  document.addEventListener('cart:change', render);
+  window.addEventListener('storage', render);
+  window.addEventListener('pageshow', render);
+</script>
+
 <style>
-  .co__empty { padding: 3rem 1rem; text-align: center; display: grid; gap: 0.75rem; justify-items: center; border: 1px dashed var(--line-strong); border-radius: var(--r-lg); }
-  .co__empty[hidden] { display: none; }
-  [data-summary-full][hidden] { display: none; }
-  .co__items { padding: 0; }
+  /* ------------------------------------------------------------ the opening */
+  .cart-hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.5rem 3rem; padding-block: clamp(4rem, 9vw, 8rem) clamp(2rem, 5vw, 3.5rem); }
+  .cart-hero .eyebrow { margin-bottom: 1.25rem; }
+  .cart-hero__title { font-size: var(--fs-hero); letter-spacing: -0.045em; line-height: 0.9; }
+  .cart-hero__title em { font-style: normal; color: var(--accent); text-shadow: 0 0 40px rgb(255 90 60 / 0.55); }
+  .cart-hero__count { display: grid; justify-items: end; gap: 0.35rem; margin: 0; text-align: right; }
+  .cart-hero__n { font-family: var(--font-display); font-weight: 400; font-size: clamp(5rem, 12vw, 11rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 20; }
+  .cart-hero__lbl { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); }
+
+  /* ------------------------------------------------------------ the stage */
+  .cart { display: grid; gap: var(--sp-6); align-items: start; padding-bottom: clamp(1rem, 3vw, 2rem); }
+  @media (min-width: 60rem) { .cart { grid-template-columns: minmax(0, 1.25fr) minmax(20rem, 0.75fr); gap: clamp(2rem, 5vw, 5rem); } .cart__aside { position: sticky; top: 6rem; } }
+  .cart__main { min-width: 0; }
+
+  /* Rows come from the script with the drawer's markup; on this page they get room to breathe and lit thumbnails. */
+  .cart__items { padding: 0; overflow: visible; border-top: 1px solid var(--line); }
+  .cart__items :global(.ci) { grid-template-columns: 5.5rem minmax(0, 1fr) auto; gap: 1.25rem; padding: 1.35rem 0; align-items: center; }
+  .cart__items :global(.ci__img) { width: 5.5rem; border-radius: var(--r-md); background: var(--night-600); box-shadow: var(--shadow-1); transition: box-shadow var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+  .cart__items :global(.ci__img:hover) { box-shadow: var(--shadow-1), var(--glow-honey); transform: translateY(-2px); }
+  .cart__items :global(.ci__name) { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xl); letter-spacing: -0.02em; line-height: 1.05; color: var(--cream-0); }
+  .cart__items :global(.ci__var) { font-size: var(--fs-sm); margin-top: 0.3rem; }
+  .cart__items :global(.ci__ctl) { margin-top: 0.75rem; gap: 0.9rem; }
+  .cart__items :global(.ci__ctl .qty) { grid-template-columns: 2.4rem 2.4rem 2.4rem; height: 2.75rem; }
+  .cart__items :global(.ci__rm) { min-height: 2.75rem; padding: 0 0.35rem; font-size: var(--fs-sm); }
+  .cart__items :global(.ci__price) { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xl); letter-spacing: -0.02em; text-align: right; }
+  .cart__items :global(.ci__save) { font-family: var(--font-sans); }
+  .cart__back { margin-top: 1.5rem; font-size: var(--fs-sm); }
+  .cart__back a { color: var(--fg-2); text-decoration: none; border-bottom: 1px solid var(--line); padding-bottom: 2px; transition: color var(--dur-fast), border-color var(--dur-fast); }
+  .cart__back a:hover { color: var(--cream-0); border-color: var(--cream-0); }
+
+  .cart__empty { display: grid; justify-items: start; gap: 1.25rem; padding: clamp(2rem, 5vw, 3.5rem) 0; border-block: 1px solid var(--line); }
+  .cart__empty-icon { display: grid; place-items: center; width: 4.5rem; height: 4.5rem; border-radius: 50%; color: var(--honey-500); background: var(--honey-100); box-shadow: var(--glow-honey); }
+  .cart__empty-text { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 500; letter-spacing: -0.03em; line-height: var(--lh-snug); color: var(--fg-2); }
+  .cart__empty-text strong { font-weight: 500; color: var(--cream-0); }
+
+  /* ------------------------------------------------------------ the lit panel */
+  .cart__panel { display: grid; gap: 1.25rem; padding: clamp(1.5rem, 3vw, 2rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-mint); }
+  .cart__panel-title { font-size: var(--fs-xl); }
+  .cart__ship { display: grid; gap: 0.75rem; }
+  .cart__bar { height: 0.4rem; border-radius: var(--r-pill); background: rgb(243 233 214 / 0.1); overflow: hidden; }
+  .cart__bar span { display: block; width: 0; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--leaf-500), var(--mint-500)); box-shadow: 0 0 18px var(--mint-500); transition: width var(--dur-slow) var(--ease-expo); }
+  .cart__bar span.is-free { box-shadow: 0 0 22px var(--mint-500), 0 0 6px var(--mint-500); }
+  .cart__ship-text { margin: 0; font-size: var(--fs-sm); color: var(--fg-2); }
+  .cart__ship-text :global(strong) { color: var(--mint-500); }
+  .cart__rows { display: grid; gap: 0.6rem; }
+  .cart__row { display: flex; justify-content: space-between; gap: 1rem; color: var(--fg-2); }
+  .cart__row strong { font-weight: 600; color: var(--cream-0); }
+  .cart__total { padding-top: 0.9rem; border-top: 1px solid var(--line); align-items: baseline; color: var(--cream-0); }
+  .cart__total > span:first-child { font-size: var(--fs-sm); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-3); }
+  .cart__total > span:last-child { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-2xl); letter-spacing: -0.03em; line-height: 1; }
+  @media (prefers-reduced-motion: reduce) { .cart__bar span { transition: none; } .cart__items :global(.ci__img) { transition: none; } }
+
+  /* ------------------------------------------------------------ cross-sell */
+  .cart-more { padding-top: clamp(3rem, 7vw, 6rem); }
+  @media (max-width: 40rem) {
+    .cart-more__grid { display: flex; gap: 0.75rem; overflow-x: auto; scroll-snap-type: x mandatory; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); padding-bottom: 0.5rem; scrollbar-width: none; }
+    .cart-more__grid::-webkit-scrollbar { display: none; }
+    .cart-more__grid > :global(*) { flex: 0 0 74%; scroll-snap-align: start; }
+    .cart-more__grid > :global([hidden]) { display: none; }
+  }
+  @media (max-width: 36rem) {
+    .cart-hero { padding-top: 3.5rem; }
+    .cart-hero__count { justify-items: start; text-align: left; }
+    .cart__items :global(.ci) { grid-template-columns: 4.25rem minmax(0, 1fr); grid-template-rows: auto auto; gap: 0.6rem 1rem; padding: 1.1rem 0; align-items: start; }
+    .cart__items :global(.ci__img) { width: 4.25rem; grid-row: 1 / 3; }
+    .cart__items :global(.ci__name) { font-size: var(--fs-lg); }
+    .cart__items :global(.ci__price) { grid-column: 2; grid-row: 2; text-align: left; font-size: var(--fs-lg); }
+    .cart__items :global(.ci__ctl) { flex-wrap: wrap; }
+  }
 </style>
