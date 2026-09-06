@@ -2,6 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import GoverningLanguage from '~/components/GoverningLanguage.astro';
 import Icon from '~/components/Icon.astro';
+import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
 import { originOf } from '~/lib/origin';
 
@@ -21,6 +22,8 @@ const description =
 
 /** Booleans are computed here so the template stays free of comparisons. */
 const analyticsOn = site.analytics.plausibleDomain.length > 0;
+
+const band = im('apple-split');
 
 const legalNav = [
   { href: '/legal/privacy/', label: 'Privacy policy' },
@@ -224,17 +227,29 @@ const webPage = {
       <!-- TODO Semers: repeat the registration number and street address here as visible text. -->
       <p>Prefer a form? Use the <a href="/contact/">contact page</a>. Curious about our shipping? See <a href="/legal/shipping-returns/">shipping &amp; returns</a> and the <a href="/legal/terms/">terms of sale</a>.</p>
     </div>
+
+    <!-- Marginalia: the numbers that matter on this page, set as outlined type in the otherwise empty right third. -->
+    <ul class="legal__facts">
+      <li><strong>0</strong><span>tracking cookies, so no cookie banner</span></li>
+      <li><strong>4</strong><span>situations in which we collect data at all</span></li>
+      <li><strong>1</strong><span>e-mail to see, correct or delete your data</span></li>
+    </ul>
   </div>
 
   <!-- ============================== CTA ============================== -->
   <section class="section container section--tight" aria-labelledby="cta-title">
-    <div class="cta-band" data-reveal>
-      <p class="eyebrow">That is all of it</p>
-      <h2 id="cta-title">Two ingredients in the bar. Not much more in the data.</h2>
-      <p>Apple bars, meringues and Belyov pastila, shipped from Riga across the EU. Free shipping over €25.</p>
-      <div class="cluster mt-2">
-        <a class="btn btn--paper" href="/shop/">Shop the range <Icon name="arrow" size={18} class="arrow" /></a>
-        <a class="btn btn--ghost legal__ghost" href="/contact/">Ask a question</a>
+    <div class="cta-band legal__band" data-reveal>
+      <div class="legal__band-copy">
+        <p class="eyebrow">That is all of it</p>
+        <h2 id="cta-title">Two ingredients in the bar. Not much more in the data.</h2>
+        <p>Apple bars, meringues and Belyov pastila, shipped from Riga across the EU. Free shipping over €25.</p>
+        <div class="cluster mt-2">
+          <a class="btn btn--paper" href="/shop/">Shop the range <Icon name="arrow" size={18} class="arrow" /></a>
+          <a class="btn btn--ghost legal__ghost" href="/contact/">Ask a question</a>
+        </div>
+      </div>
+      <div class="legal__band-media">
+        <img src={band.src} srcset={band.srcset} sizes={band.srcset && SIZES.third} alt={band.alt} width={band.width} height={band.height} loading="lazy" decoding="async" data-parallax="0.1" />
       </div>
     </div>
   </section>
@@ -309,8 +324,9 @@ const webPage = {
   .legal { display: grid; gap: var(--sp-6); align-items: start; padding-block: var(--sp-5) clamp(2rem, 5vw, 4rem); }
   @media (min-width: 60rem) {
     .legal { grid-template-columns: 16rem minmax(0, 1fr); gap: var(--sp-8); }
-    .legal__aside { position: sticky; top: 7rem; max-height: calc(100vh - 7.5rem); overflow-y: auto; scrollbar-width: none; }
-    .legal__aside::-webkit-scrollbar { display: none; }
+    /* The rail stays put and only the table of contents scrolls inside it, so the help box is never cut off. */
+    .legal__aside { position: sticky; top: 7rem; max-height: calc(100vh - 7.5rem); grid-template-rows: auto minmax(0, 1fr) auto; }
+    .legal__toc { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 1.25rem; scrollbar-width: thin; scrollbar-color: rgb(243 233 214 / 0.18) transparent; mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent); -webkit-mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent); }
     .legal__pills { flex-direction: column; align-items: stretch; }
     .legal__pills .pill { text-align: left; }
   }
@@ -370,4 +386,24 @@ const webPage = {
   .legal__ghost:hover { background: var(--night-900); color: var(--cream-0); border-color: var(--night-900); }
 
   .legal__body .table td:first-child { width: 40%; }
+
+  /* ------------------------------------------------------------- marginalia: the page's key numbers in the empty right third */
+  .legal__facts { display: none; }
+  @media (min-width: 72rem) {
+    .legal { grid-template-columns: 16rem minmax(0, 44rem) minmax(0, 1fr); }
+    .legal__facts { display: grid; gap: 1.5rem; align-content: start; position: sticky; top: 7.5rem; justify-self: end; width: min(100%, 15rem); margin: 0; padding: 0; list-style: none; }
+    .legal__facts li { display: grid; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+    .legal__facts strong { font-family: var(--font-display); font-weight: 400; font-size: clamp(3rem, 4.6vw, 4.75rem); line-height: 0.85; letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); white-space: nowrap; font-variant-numeric: tabular-nums; font-variation-settings: 'opsz' 144, 'SOFT' 60; }
+    .legal__facts span { font-size: var(--fs-sm); line-height: 1.4; color: var(--fg-2); max-width: 22ch; }
+  }
+
+  /* The cream room: copy on the left, a lit picture on the right wall from 64rem up. */
+  .legal__band { align-items: center; }
+  .legal__band-copy { display: grid; gap: 1rem; }
+  .legal__band-media { display: none; }
+  @media (min-width: 64rem) {
+    .legal__band { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); column-gap: clamp(2rem, 5vw, 4rem); }
+    .legal__band-media { position: relative; display: block; overflow: clip; aspect-ratio: 1 / 1; width: min(100%, 26rem); justify-self: end; border-radius: var(--r-lg); background: var(--cream-2); box-shadow: 0 0 0 1px rgb(27 22 18 / 0.08), 0 30px 70px -30px rgb(27 22 18 / 0.6); }
+    .legal__band-media img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; }
+  }
 </style>

@@ -132,7 +132,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <div class="ladder__head">
         <p class="eyebrow">Any volume</p>
         <h2 id="ladder-title" data-words>Any volume, from one case to a pallet a week.</h2>
-        <p class="muted ladder__note">A rough guess is fine. It helps us send the right price list.</p>
       </div>
       <ol class="ladder__list">
         {rungs.map((r, i) => (
@@ -485,7 +484,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .ladder { overflow: clip; }
   .ladder__head { display: grid; gap: var(--sp-4); max-width: 60rem; margin-bottom: clamp(1rem, 3vw, 2rem); }
   .ladder__head h2 { max-width: 16ch; }
-  .ladder__note { max-width: 44ch; }
   .ladder__list { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
   .rung { --size: clamp(4rem, 12vw + var(--i) * 2vw, calc(5.5rem + var(--i) * 2rem)); display: grid; gap: var(--sp-3) var(--sp-6); padding-block: clamp(1.5rem, 4vw, 3rem); border-top: 1px solid var(--line); align-items: end; }
   .rung__n { display: block; font-family: var(--font-display); font-size: var(--size); font-weight: 400; line-height: 0.85; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 30; transition: -webkit-text-stroke-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out), filter var(--dur-slow) var(--ease-out); }

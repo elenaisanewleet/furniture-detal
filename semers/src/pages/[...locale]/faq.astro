@@ -236,7 +236,14 @@ const topics = groups.length;
   const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-rail-link]'));
   const targets = Array.from(document.querySelectorAll<HTMLElement>('[data-rail-target]'));
   if (links.length && targets.length && 'IntersectionObserver' in window) {
-    const set = (id: string) => links.forEach((l) => (l.dataset.railLink === id ? l.setAttribute('aria-current', 'true') : l.removeAttribute('aria-current')));
+    const glass = document.querySelector<HTMLElement>('.fq-rail__glass');
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const set = (id: string) => {
+      links.forEach((l) => (l.dataset.railLink === id ? l.setAttribute('aria-current', 'true') : l.removeAttribute('aria-current')));
+      /* On a phone the topics are a strip that scrolls sideways; keep the lit chip in view. */
+      const on = links.find((l) => l.dataset.railLink === id);
+      if (on && glass && glass.scrollWidth > glass.clientWidth) glass.scrollTo({ left: on.offsetLeft - glass.clientWidth / 2 + on.offsetWidth / 2, behavior: reduced ? 'auto' : 'smooth' });
+    };
     const io = new IntersectionObserver(
       (entries) => {
         const hit = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
@@ -266,14 +273,18 @@ const topics = groups.length;
   /* ------------------------------------------------------------ rail + main */
   .fq { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; align-items: start; }
   .fq-rail, .fq-main { min-width: 0; }
-  @media (min-width: 60rem) { .fq { grid-template-columns: 15rem minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 6rem); } }
+  @media (min-width: 60rem) { .fq { grid-template-columns: 16.5rem minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 6rem); } }
 
   .fq-rail { position: sticky; z-index: 5; }
-  .fq-rail__glass { background: rgb(11 18 14 / 0.62); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid var(--line); border-radius: var(--r-lg); }
+  .fq-rail__glass { position: relative; background: rgb(14 28 15 / 0.92); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid var(--line); border-radius: var(--r-lg); }
   .fq-rail__label { margin: 0; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); }
   .fq-rail__list { list-style: none; margin: 0; padding: 0; display: grid; }
-  .fq-rail__list a, .fq-rail__ask { display: flex; align-items: center; gap: 0.7rem; min-height: 2.75rem; text-decoration: none; color: var(--fg-2); transition: color var(--dur-fast); }
-  .fq-rail__t { font-variant-caps: all-small-caps; letter-spacing: 0.14em; font-weight: 600; font-size: var(--fs-md); line-height: 1; }
+  .fq-rail__list a, .fq-rail__ask { display: flex; align-items: center; gap: 0.7rem; min-height: 2.75rem; min-width: 0; text-decoration: none; color: var(--fg-2); transition: color var(--dur-fast); }
+  .fq-rail__ask { white-space: nowrap; }
+  .fq-rail__ask :global(svg) { flex: none; }
+  .fq-rail__t { font-variant-caps: all-small-caps; letter-spacing: 0.14em; font-weight: 600; font-size: var(--fs-md); line-height: 1; white-space: nowrap; }
+  /* Cyrillic and Latvian topic names run long; tighter tracking keeps each on one line with its count. */
+  .fq-rail__t:lang(ru), .fq-rail__t:lang(lv) { letter-spacing: 0.03em; font-size: 0.95rem; }
   .fq-rail__n { font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: 0.06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-fast); }
   .fq-rail__c { margin-left: auto; font-size: var(--fs-xs); color: var(--fg-3); font-variant-numeric: tabular-nums; }
   .fq-rail__list a:hover, .fq-rail__ask:hover { color: var(--cream-0); }
@@ -295,7 +306,8 @@ const topics = groups.length;
   }
   /* Narrow: a strip of pills under the header that bleeds to the screen edges and scrolls sideways inside itself. */
   @media (max-width: 59.99rem) {
-    .fq-rail { top: 6.3rem; margin-inline: calc(-1 * var(--gutter)); }
+    .fq-rail { top: 6.3rem; margin-inline: calc(-1 * var(--gutter)); background: var(--bg); }
+    .fq-rail::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 14px; background: linear-gradient(var(--bg), transparent); pointer-events: none; }
     .fq-rail__glass { display: flex; align-items: center; gap: 0.5rem; border-radius: 0; border-inline: 0; padding: 0.6rem var(--gutter); overflow-x: auto; scrollbar-width: none; scroll-padding-inline: var(--gutter); }
     .fq-rail__glass::-webkit-scrollbar { display: none; }
     .fq-rail__label { display: none; }
@@ -350,7 +362,7 @@ const topics = groups.length;
   /* ------------------------------------------------------------ the end: one lit room, then the longer answers */
   .fq-end { display: grid; gap: clamp(2rem, 5vw, 4rem); scroll-margin-top: 6rem; }
   .fq-cta { isolation: isolate; }
-  .fq-cta > * { position: relative; z-index: 1; }
+  .fq-cta > :not(.fq-cta__mark) { position: relative; z-index: 1; }
   .fq-cta__mark { position: absolute; z-index: 0; right: -0.06em; bottom: -0.28em; font-family: var(--font-display); font-weight: 400; font-size: clamp(14rem, 30vw, 26rem); line-height: 1; color: transparent; -webkit-text-stroke: 1px rgb(27 22 18 / 0.16); pointer-events: none; user-select: none; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .fq-cta .btn--ghost { --btn-fg: var(--night-900); border-color: rgb(27 22 18 / 0.35); }
   .fq-cta .btn--ghost:hover { background: var(--night-900); color: var(--cream-0); }

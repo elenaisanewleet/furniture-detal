@@ -60,10 +60,12 @@ const languages = LOCALES.map((l) => ({ locale: l, href: localePath(path, l), na
 
 <style>
   .hdr { position: sticky; top: 0; z-index: 50; background: transparent; transition: background var(--dur), box-shadow var(--dur), backdrop-filter var(--dur); }
-  .hdr.is-stuck { background: rgb(11 18 14 / 0.72); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); box-shadow: 0 1px 0 var(--line); }
+  .hdr.is-stuck { background: rgb(14 28 15 / 0.92); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); box-shadow: 0 1px 0 var(--line); }
   .hdr--float { position: fixed; left: 0; right: 0; }
   .hdr__bar { text-align: center; font-size: var(--fs-xs); letter-spacing: 0.04em; padding: 0.45rem 1rem; color: var(--night-900); background: var(--cream-1); }
   .hdr__bar :global(strong) { font-weight: 700; }
+  /* On a phone the bar is one line cut with an ellipsis, so it never pushes the header down. */
+  @media (max-width: 40rem) { .hdr__bar { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-inline: 0.75rem; } }
   .hdr__main { display: flex; align-items: center; gap: 1rem; height: 4.6rem; }
   .hdr__logo { display: inline-flex; align-items: center; padding: 0.3rem 0.7rem; border-radius: var(--r-pill); background: var(--cream-0); color: var(--night-900); text-decoration: none; margin-right: auto; transition: transform var(--dur) var(--ease-spring); }
   .hdr__logo:hover { transform: scale(1.04); }

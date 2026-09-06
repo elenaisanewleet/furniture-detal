@@ -41,6 +41,7 @@ const [mailUser, mailHost] = site.email.split('@');
 const [salesUser, salesHost] = site.wholesaleEmail.split('@');
 
 const press = im('gift-box');
+const taste = im('tasting-box');
 
 const contactPage = {
   '@type': 'ContactPage',
@@ -240,13 +241,18 @@ const contactPage = {
 
   <!-- ============================== CTA ============================== -->
   <section class="section container section--tight cx-end" aria-labelledby="cta-title">
-    <div class="cta-band" data-reveal>
-      <p class="eyebrow">Or skip the e-mail</p>
-      <h2 id="cta-title">The fastest answer to “what does it taste like?”</h2>
-      <p>A Tasting Box holds four Apple Bars, two Flourless Bars, two bags of apple meringues and a 100 g loaf of Belyov pastila. It ships free from Riga in 1–2 business days.</p>
-      <div class="cluster mt-2">
-        <a class="btn btn--paper" href="/shop/">Shop all products</a>
-        <a class="btn btn--ghost" href="/products/tasting-box/">Order a Tasting Box</a>
+    <div class="cta-band cx-band" data-reveal>
+      <div class="cx-band__copy">
+        <p class="eyebrow">Or skip the e-mail</p>
+        <h2 id="cta-title">The fastest answer to “what does it taste like?”</h2>
+        <p>A Tasting Box holds four Apple Bars, two Flourless Bars, two bags of apple meringues and a 100 g loaf of Belyov pastila. It ships free from Riga in 1–2 business days.</p>
+        <div class="cluster mt-2">
+          <a class="btn btn--paper" href="/shop/">Shop all products</a>
+          <a class="btn btn--ghost" href="/products/tasting-box/">Order a Tasting Box</a>
+        </div>
+      </div>
+      <div class="cx-band__media">
+        <img src={taste.src} srcset={taste.srcset} sizes={taste.srcset && SIZES.third} alt={taste.alt} width={taste.width} height={taste.height} loading="lazy" decoding="async" data-parallax="0.1" />
       </div>
     </div>
   </section>
@@ -294,8 +300,9 @@ const contactPage = {
   .cx-big { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.6rem, 1.1rem + 1.9vw, 2.75rem); line-height: 1.02; letter-spacing: -0.03em; color: var(--cream-0); text-decoration: none; overflow-wrap: anywhere; font-variation-settings: 'opsz' 96, 'SOFT' 40; }
   a.cx-big { background-image: linear-gradient(var(--accent), var(--accent)); background-repeat: no-repeat; background-size: 100% 1px; background-position: 0 100%; padding-bottom: 0.08em; transition: color var(--dur-fast), background-size var(--dur) var(--ease-out); }
   a.cx-big:hover { color: var(--accent-ink); background-size: 100% 2px; }
-  .cx-big--time { display: flex; align-items: center; gap: 0.35em; }
-  .cx-one { font-weight: 400; font-size: 2.1em; line-height: 0.75; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--accent); text-shadow: 0 0 26px rgb(255 90 60 / 0.35); font-variation-settings: 'opsz' 144, 'SOFT' 60; margin-top: -0.05em; }
+  /* The outlined 1 sits in its own column with a real gap, so the glyph and the first word never touch. */
+  .cx-big--time { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.6em; align-items: center; }
+  .cx-one { font-weight: 400; font-size: 2.1em; line-height: 0.75; letter-spacing: 0; padding-right: 0.06em; color: transparent; -webkit-text-stroke: 1px var(--accent); text-shadow: 0 0 26px rgb(255 90 60 / 0.35); font-variation-settings: 'opsz' 144, 'SOFT' 60; margin-top: -0.05em; }
   .cx-dl__sub { font-size: var(--fs-sm); color: var(--fg-2); max-width: 44ch; line-height: 1.45; }
   .cx-dl__sub a { color: var(--cream-1); }
   .cx-links { display: flex; flex-wrap: wrap; gap: var(--sp-3) var(--sp-5); align-items: center; font-size: var(--fs-sm); }
@@ -334,4 +341,13 @@ const contactPage = {
 
   /* ------------------------------------------------------------ the one cream room */
   .cx-end { padding-bottom: clamp(3rem, 8vw, 7rem); }
+  /* The band is a room with a lit picture on the right wall; below 64rem the picture is left out and the copy has the room. */
+  .cx-band { align-items: center; }
+  .cx-band__copy { display: grid; gap: 1rem; }
+  .cx-band__media { display: none; }
+  @media (min-width: 64rem) {
+    .cx-band { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); column-gap: clamp(2rem, 5vw, 4rem); }
+    .cx-band__media { position: relative; display: block; overflow: clip; aspect-ratio: 1 / 1; width: min(100%, 26rem); justify-self: end; border-radius: var(--r-lg); background: var(--cream-2); box-shadow: 0 0 0 1px rgb(27 22 18 / 0.08), 0 30px 70px -30px rgb(27 22 18 / 0.6); }
+    .cx-band__media img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; }
+  }
 </style>

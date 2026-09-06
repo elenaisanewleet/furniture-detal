@@ -350,3 +350,6 @@
 .restock__row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
 .restock__row input { flex: 1 1 12rem; min-width: 0; }
 .restock__note { margin: 0; font-size: var(--fs-sm); }
+
+/* On a phone the announcement is one line, cut with an ellipsis, so it never pushes the header down. */
+@media (max-width: 40rem) { .announce .container { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .announce .container * { display: inline; white-space: inherit; } }

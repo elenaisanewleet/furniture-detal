@@ -593,7 +593,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .hiw-facts { list-style: none; margin: 2rem 0 0; padding: 0; }
   .hiw-facts .chip :global(svg) { color: var(--leaf-500); }
   /* The twelve hours as one outlined numeral, lit from behind in honey. */
-  .hiw-hero__fig { position: relative; display: grid; gap: 0.5rem; margin: 0; justify-items: start; }
+  .hiw-hero__fig { position: relative; display: grid; gap: 0.5rem; margin: 0; justify-items: start; width: max-content; max-width: 100%; }
   .hiw-hero__fig::before { content: ''; position: absolute; left: -10%; top: -10%; width: 120%; height: 110%; z-index: -1; background: radial-gradient(closest-side, rgb(253 185 19 / 0.26), transparent 72%); pointer-events: none; }
   .hiw-hero__num { display: block; font-family: var(--font-display); font-weight: 400; font-size: clamp(8rem, 26vw, 22rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; filter: drop-shadow(0 0 28px rgb(253 185 19 / 0.25)); }
   .hiw-hero__cap { font-size: var(--fs-md); color: var(--fg-2); max-width: 20ch; }
