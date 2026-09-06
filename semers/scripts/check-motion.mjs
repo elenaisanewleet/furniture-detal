@@ -17,6 +17,8 @@
  *   npm i -D playwright && npx playwright install chromium
  * so it is deliberately not part of `npm run verify`.
  *
+ * Visits /how-its-made/ in every language, where the sequence now lives.
+ *
  * Usage: node scripts/check-motion.mjs [origin]
  * Exits non-zero when something is wrong.
  */
@@ -75,7 +77,7 @@ for (const [loc, name] of LOCALES) {
     page.on('console', (m) => m.type() === 'error' && !/Failed to load resource/.test(m.text()) && errors.push(m.text().slice(0, 110)));
     const tag = `${name} ${size}`;
 
-    await page.goto(`${BASE}${loc}/`, { waitUntil: 'domcontentloaded' });
+    await page.goto(`${BASE}${loc}/how-its-made/`, { waitUntil: 'domcontentloaded' });
     // A jump this long animates if the page asked it to, and the shot would
     // land mid-flight.
     await page.addStyleTag({ content: 'html,*{scroll-behavior:auto !important}' });
@@ -123,7 +125,7 @@ for (const [what, opts] of [
 ]) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, ...opts });
   const page = await ctx.newPage();
-  await page.goto(`${BASE}/`, { waitUntil: 'domcontentloaded' });
+  await page.goto(`${BASE}/how-its-made/`, { waitUntil: 'domcontentloaded' });
   await page.waitForTimeout(400);
   const s = await page.evaluate(state);
   if (s.sticky === 'sticky') note(`${what}: the stage still pins the reader`);

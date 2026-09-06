@@ -2,7 +2,8 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
-import { PRODUCTS, COLLECTIONS } from '~/data/products';
+import { PRODUCTS, COLLECTIONS, type CollectionKey } from '~/data/products';
+import { img, imgSrc, imgSrcset, SIZES } from '~/data/images';
 import { itemList } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 
@@ -21,6 +22,20 @@ const ui = t(locale);
 const origin = originOf(Astro.site);
 const products = [...PRODUCTS].sort((a, b) => Number(b.bestseller || 0) - Number(a.bestseller || 0) || a.order - b.order);
 const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as const;
+const collections = localizedCollections(COLLECTIONS, locale);
+const countIn = (key: CollectionKey) => PRODUCTS.filter((p) => p.collection === key).length;
+/** The word after the number ("products", "товаров"…) so the giant numeral and its label can be set separately. */
+const countWord = ui.productCount(products.length).replace(/^[\d\s ]+/, '');
+/** The light each window throws on the shelf: the collection's own colour, never a fill. */
+const glow: Record<CollectionKey, string> = {
+  'apple-bars': 'rgb(62 207 168 / 0.55)',
+  'flourless-bars': 'rgb(240 176 74 / 0.55)',
+  meringues: 'rgb(255 122 136 / 0.5)',
+  applite: 'rgb(227 213 187 / 0.45)',
+  pastila: 'rgb(208 138 69 / 0.55)',
+  zephyr: 'rgb(255 122 136 / 0.5)',
+  'gift-sets': 'rgb(240 176 74 / 0.5)',
+};
 ---
 <Base
   title="Shop apple bars, meringues & pastila"
@@ -29,81 +44,274 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }]}
   schema={[itemList(origin, products)]}
 >
-  <section class="container page-hero">
-    <p class="eyebrow">Shop</p>
-    <h1>Everything we bake.</h1>
-    <p class="lead">Bars for bags, meringues for tea, loaves for sharing. 99% apple and no added sugar across the range — plus the one traditional zephyr we make with sugar and agar, clearly labelled.</p>
-  </section>
-
-  <section class="container" data-shop data-collection="all">
-    <div class="shop__bar">
-      <div class="pills" role="group" aria-label="Collection">
-        <button class="pill" type="button" data-filter-collection="all" aria-pressed="true">All</button>
-        {localizedCollections(COLLECTIONS, locale).map((c) => <button class="pill" type="button" data-filter-collection={c.key} aria-pressed="false">{c.name}</button>)}
+  <!-- ============================== ONE LINE, ONE NUMBER ============================== -->
+  <!-- The page opens on a single sentence and the size of the range, set as outlined light. -->
+  <section class="shop-hero" aria-labelledby="shop-title">
+    <div class="shop-hero__glow" aria-hidden="true"></div>
+    <div class="container shop-hero__in">
+      <p class="eyebrow shop-hero__eyebrow">Shop</p>
+      <h1 class="shop-hero__title" id="shop-title" data-words>Everything we bake.</h1>
+      <p class="lead shop-hero__lead" data-reveal>Bars for bags, meringues for tea, loaves for sharing. 99% apple and no added sugar across the range — plus the one traditional zephyr we make with sugar and agar, clearly labelled.</p>
+      <div class="shop-hero__count" aria-hidden="true">
+        <b data-count={products.length}>{products.length}</b>
+        <span>{countWord}</span>
       </div>
-      <div class="shop__tools">
-        <form class="shop__search" role="search" action="/shop/" method="get">
-          <Icon name="search" size={18} />
-          <label class="sr-only" for="shop-q">Search products</label>
-          <input class="input" id="shop-q" type="search" name="q" placeholder="Search…" data-search autocomplete="off" />
-        </form>
-        <label class="shop__sort">
-          <span class="sr-only">Sort by</span>
-          <select class="select" data-sort>
-            <option value="featured">Featured</option>
-            <option value="price-asc">Price: low to high</option>
-            <option value="price-desc">Price: high to low</option>
-            <option value="kcal">Lowest calories</option>
-            <option value="name">Name A–Z</option>
-          </select>
-        </label>
-      </div>
-    </div>
-    <div class="shop__bar shop__bar--sub">
-      <div class="pills" role="group" aria-label="Dietary filters">
-        {dietKeys.map((k) => <button class="pill pill--sm" type="button" data-filter-diet={k} aria-pressed="false">{ui.diet[k]}</button>)}
-      </div>
-      <p class="small muted" data-shop-count aria-live="polite">{products.length} products</p>
-    </div>
-
-    <h2 class="sr-only">All products</h2>
-    <div class="grid grid--4 shop__grid" data-shop-grid>
-      {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
-    </div>
-    <div class="shop__empty" data-shop-empty hidden>
-      <p><strong>Nothing matches those filters.</strong></p>
-      <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
-    </div>
-
-    <div class="trust mt-6">
-      <div><Icon name="truck" /><div><strong>Free shipping over €25</strong><span>Leaves Riga in 1–2 business days</span></div></div>
-      <div><Icon name="leaf" /><div><strong>Two ingredients</strong><span>Apples and egg white</span></div></div>
-      <div><Icon name="clock" /><div><strong>Up to 12 months shelf life</strong><span>No fridge needed</span></div></div>
-      <div><Icon name="shield" /><div><strong>Damaged? Replaced.</strong><span>Photo within 48 h</span></div></div>
     </div>
   </section>
 
-  <section class="section container">
-    <div class="cta-band">
+  <!-- ============================== THE SHELF ============================== -->
+  <!-- Seven lit windows on one shelf. The strip scrolls sideways (snap on touch, drag with a mouse); each window pools its own light on the ledge. -->
+  <section class="shelf" aria-labelledby="shelf-title">
+    <div class="container section-head shelf__head">
+      <div>
+        <p class="eyebrow">Shop by shape</p>
+        <h2 id="shelf-title" data-words>One apple, seven shapes.</h2>
+      </div>
+      <a class="link" href="#products">See everything</a>
+    </div>
+    <div class="shelf__viewport">
+      <div class="shelf__scroll" data-shelf data-stagger>
+        {collections.map((c) => (
+          <div class="shelf__slot" style={`--win-glow:${glow[c.key]}`}>
+            <a class="ct shelf__win" href={`/shop/${c.key}/`} style={`--ct-accent:${c.accent}`} data-cursor={c.name}>
+              <img src={imgSrc(c.image)} srcset={imgSrcset(c.image)} sizes={imgSrcset(c.image) && SIZES.tile} alt="" width={img(c.image).width} height={img(c.image).height} loading="lazy" decoding="async" />
+              <div class="ct__body">
+                <span class="shelf__n">{ui.productCount(countIn(c.key))}</span>
+                <h3>{c.name}</h3>
+                <p>{c.description.split('.')[0]}.</p>
+              </div>
+            </a>
+          </div>
+        ))}
+      </div>
+      <button class="shelf__arrow shelf__arrow--prev" type="button" data-shelf-prev aria-hidden="true" tabindex="-1"><Icon name="chevron" size={22} /></button>
+      <button class="shelf__arrow shelf__arrow--next" type="button" data-shelf-next aria-hidden="true" tabindex="-1"><Icon name="chevron" size={22} /></button>
+    </div>
+    <div class="shelf__ledge" aria-hidden="true"></div>
+  </section>
+
+  <!-- ============================== THE GRID ============================== -->
+  <!-- A bar of glass stays under the header while the grid scrolls beneath it. -->
+  <section class="shop" id="products" data-shop data-collection="all" aria-labelledby="products-title">
+    <div class="gbar__sentinel" data-gbar-sentinel aria-hidden="true"></div>
+    <div class="gbar" data-gbar>
+      <div class="container gbar__in">
+        <div class="gbar__filters">
+          <div class="pills gbar__cols" role="group" aria-label="Collection">
+            <button class="pill" type="button" data-filter-collection="all" aria-pressed="true">All</button>
+            {collections.map((c) => <button class="pill" type="button" data-filter-collection={c.key} aria-pressed="false">{c.name}</button>)}
+          </div>
+          <div class="pills gbar__diet" role="group" aria-label="Dietary filters">
+            {dietKeys.map((k) => <button class="pill pill--diet" type="button" data-filter-diet={k} aria-pressed="false">{ui.diet[k]}</button>)}
+          </div>
+        </div>
+        <div class="gbar__tools">
+          <form class="gbar__search" role="search" action="/shop/" method="get">
+            <Icon name="search" size={18} />
+            <label class="sr-only" for="shop-q">Search products</label>
+            <input class="input" id="shop-q" type="search" name="q" placeholder="Search…" data-search autocomplete="off" />
+          </form>
+          <label class="gbar__sort">
+            <span class="sr-only">Sort by</span>
+            <select class="select" data-sort>
+              <option value="featured">Featured</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="kcal">Lowest calories</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </label>
+        </div>
+        <p class="gbar__count" data-shop-count aria-live="polite">{products.length} products</p>
+      </div>
+    </div>
+
+    <div class="container shop__body">
+      <h2 class="sr-only" id="products-title">All products</h2>
+      <div class="grid grid--4 shop__grid" data-shop-grid data-stagger>
+        {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+      </div>
+      <div class="shop__empty" data-shop-empty hidden>
+        <p><strong>Nothing matches those filters.</strong></p>
+        <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
+      </div>
+
+      <div class="trust shop__trust">
+        <div><Icon name="truck" /><div><strong>Free shipping over €25</strong><span>Leaves Riga in 1–2 business days</span></div></div>
+        <div><Icon name="leaf" /><div><strong>Two ingredients</strong><span>Apples and egg white</span></div></div>
+        <div><Icon name="clock" /><div><strong>Up to 12 months shelf life</strong><span>No fridge needed</span></div></div>
+        <div><Icon name="shield" /><div><strong>Damaged? Replaced.</strong><span>Photo within 48 h</span></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== THE ONE LIT ROOM ============================== -->
+  <section class="section container section--tight" aria-labelledby="box-title">
+    <div class="cta-band shop-cta" data-reveal>
       <p class="eyebrow">Build your box</p>
-      <h2>Pick six bars, save 10%.</h2>
+      <h2 id="box-title">Pick six bars, save 10%.</h2>
       <p>Mix Apple Bars, Flourless Bars and bags of apple meringues any way you like. We pack them in one box.</p>
       <div><a class="btn btn--paper" href="/shop/build-your-box/">Start building</a></div>
+      <span class="shop-cta__six" aria-hidden="true">6</span>
     </div>
   </section>
 </Base>
 
+<script>
+  /*
+   * Three small things the shop needs beyond the shared motion:
+   * the glass bar sticks exactly under the header (whose height depends on the
+   * announcement line and the viewport), it takes a shadow once it is actually
+   * stuck, and the shelf can be dragged sideways with a mouse.
+   */
+  const hdr = document.getElementById('hdr');
+  const setH = () => document.documentElement.style.setProperty('--hdr-h', `${hdr?.offsetHeight ?? 0}px`);
+  setH();
+  if (hdr && 'ResizeObserver' in window) new ResizeObserver(setH).observe(hdr);
+  addEventListener('resize', setH);
+
+  const bar = document.querySelector<HTMLElement>('[data-gbar]');
+  const sentinel = document.querySelector<HTMLElement>('[data-gbar-sentinel]');
+  if (bar && sentinel && 'IntersectionObserver' in window) {
+    const watch = () => {
+      const io = new IntersectionObserver(([e]) => bar.classList.toggle('is-stuck', !e.isIntersecting && e.boundingClientRect.top < 0), { rootMargin: `-${(hdr?.offsetHeight ?? 0) + 1}px 0px 0px 0px` });
+      io.observe(sentinel);
+      return io;
+    };
+    let io = watch();
+    addEventListener('resize', () => { io.disconnect(); io = watch(); });
+  }
+
+  for (const strip of Array.from(document.querySelectorAll<HTMLElement>('[data-shelf]'))) {
+    const wrap = strip.parentElement!;
+    const prev = wrap.querySelector<HTMLButtonElement>('[data-shelf-prev]');
+    const next = wrap.querySelector<HTMLButtonElement>('[data-shelf-next]');
+    const step = () => (strip.querySelector<HTMLElement>('.shelf__slot')?.offsetWidth ?? 300) + 16;
+    const sync = () => {
+      const max = strip.scrollWidth - strip.clientWidth;
+      wrap.classList.toggle('at-start', strip.scrollLeft <= 2);
+      wrap.classList.toggle('at-end', strip.scrollLeft >= max - 2);
+      wrap.classList.toggle('no-overflow', max <= 2);
+    };
+    prev?.addEventListener('click', () => strip.scrollBy({ left: -step() * 2, behavior: 'smooth' }));
+    next?.addEventListener('click', () => strip.scrollBy({ left: step() * 2, behavior: 'smooth' }));
+    strip.addEventListener('scroll', sync, { passive: true });
+    addEventListener('resize', sync);
+    sync();
+
+    // Drag with a mouse; a real click on a window still opens it.
+    let x0 = 0, s0 = 0, dragged = false, down = false;
+    strip.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      down = true; dragged = false; x0 = e.clientX; s0 = strip.scrollLeft;
+      strip.classList.add('is-drag');
+    });
+    strip.addEventListener('pointermove', (e) => {
+      if (!down) return;
+      const dx = e.clientX - x0;
+      if (Math.abs(dx) > 6) dragged = true;
+      if (dragged) strip.scrollLeft = s0 - dx;
+    });
+    const up = () => { down = false; strip.classList.remove('is-drag'); };
+    strip.addEventListener('pointerup', up);
+    strip.addEventListener('pointercancel', up);
+    strip.addEventListener('pointerleave', up);
+    strip.addEventListener('click', (e) => { if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; } }, true);
+    strip.addEventListener('dragstart', (e) => e.preventDefault());
+  }
+</script>
+
 <style>
-  .shop__bar { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; justify-content: space-between; padding-block: 0.5rem; }
-  .shop__bar--sub { border-bottom: 1px solid var(--line); margin-bottom: 1.5rem; padding-bottom: 1rem; }
-  .shop__tools { display: flex; gap: 0.6rem; align-items: center; }
-  .shop__search { position: relative; }
-  .shop__search :global(svg) { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
-  .shop__search .input { padding-left: 2.4rem; min-width: 12rem; min-height: 2.6rem; }
-  .shop__sort .select { min-height: 2.6rem; }
-  .pill--sm { padding: 0.35em 0.8em; font-size: var(--fs-xs); }
-  .shop__grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
+  /* ------------------------------------------------------------- hero */
+  .shop-hero { position: relative; isolation: isolate; overflow: clip; padding-block: clamp(3rem, 8vw, 7rem) clamp(2rem, 5vw, 4rem); }
+  .shop-hero__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background:
+      radial-gradient(45% 60% at 88% 70%, rgb(240 176 74 / 0.14), transparent 70%),
+      radial-gradient(40% 50% at 10% 20%, rgb(255 90 60 / 0.07), transparent 70%); }
+  .shop-hero__in { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'eyebrow count' 'title count' 'lead count'; column-gap: clamp(1.5rem, 4vw, 4rem); align-items: end; }
+  .shop-hero__eyebrow { grid-area: eyebrow; margin-bottom: 1.25rem; align-self: start; }
+  .shop-hero__title { grid-area: title; font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.045em; color: var(--cream-0); max-width: 9ch; text-wrap: balance; font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .shop-hero__lead { grid-area: lead; margin-top: 1.75rem; max-width: 52ch; }
+  .shop-hero__count { grid-area: count; display: grid; justify-items: end; text-align: right; align-self: end; padding-bottom: 0.15em; }
+  .shop-hero__count b { font-family: var(--font-display); font-weight: 400; font-size: clamp(7rem, 22vw, 21rem); line-height: 0.78; letter-spacing: -0.07em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 0; }
+  .shop-hero__count span { margin-top: 1rem; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); }
+  @media (max-width: 56rem) {
+    .shop-hero__in { grid-template-columns: 1fr; grid-template-areas: 'eyebrow' 'title' 'lead' 'count'; }
+    .shop-hero__title { max-width: none; }
+    .shop-hero__count { margin-top: 1.5rem; justify-items: end; }
+    .shop-hero__count b { font-size: clamp(6rem, 30vw, 9rem); }
+  }
+
+  /* ------------------------------------------------------------- shelf */
+  .shelf { --edge: max(var(--gutter), calc((100% - var(--container)) / 2)); position: relative; padding-top: clamp(1rem, 3vw, 2rem); }
+  .shelf__head { margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+  .shelf__viewport { position: relative; }
+  .shelf__scroll { display: flex; gap: clamp(0.75rem, 1.6vw, 1.5rem); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding-inline: var(--edge); scroll-padding-inline: var(--edge); padding-block: 0.5rem 3.25rem; scrollbar-width: none; cursor: grab; -webkit-overflow-scrolling: touch; }
+  .shelf__scroll::-webkit-scrollbar { display: none; }
+  .shelf__scroll.is-drag { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+  .shelf__scroll::after { content: ''; flex: 0 0 calc(var(--edge) - clamp(0.75rem, 1.6vw, 1.5rem)); }
+  .shelf__slot { position: relative; flex: 0 0 auto; width: clamp(15rem, 23vw, 22rem); scroll-snap-align: start; }
+  /* The light each window drops on the ledge. */
+  .shelf__slot::after { content: ''; position: absolute; left: 6%; right: 6%; bottom: -1.9rem; height: 2.6rem; border-radius: 50%; background: radial-gradient(50% 60% at 50% 45%, var(--win-glow), transparent 72%); filter: blur(8px); pointer-events: none; }
+  .shelf__win { box-shadow: var(--shadow-1), 0 40px 90px -40px var(--win-glow); }
+  .shelf__win:hover { box-shadow: var(--shadow-2), 0 40px 90px -30px var(--win-glow); }
+  .shelf__win .ct__body { padding: 1.4rem; padding-top: 5rem; }
+  .shelf__win .ct__body h3 { font-size: var(--fs-2xl); letter-spacing: -0.02em; line-height: 1.02; }
+  .shelf__win .ct__body p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .shelf__n { display: block; margin-bottom: 0.6rem; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream-2); }
+  .shelf__ledge { height: 1px; margin-top: -2.1rem; background: linear-gradient(90deg, transparent, rgb(243 233 214 / 0.32) 12%, rgb(243 233 214 / 0.32) 88%, transparent); }
+  .shelf__arrow { position: absolute; top: calc(50% - 2rem); z-index: 2; width: 3rem; height: 3rem; border-radius: 50%; display: none; place-items: center; background: rgb(11 18 14 / 0.75); color: var(--cream-1); border: 1px solid rgb(243 233 214 / 0.3); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity var(--dur), transform var(--dur-fast) var(--ease-spring), background var(--dur-fast); }
+  .shelf__arrow:hover { background: var(--cream-1); color: var(--night-900); transform: scale(1.08); }
+  .shelf__arrow--prev { left: calc(var(--edge) - 1.5rem); }
+  .shelf__arrow--prev :global(svg) { transform: rotate(180deg); }
+  .shelf__arrow--next { right: calc(var(--edge) - 1.5rem); }
+  @media (pointer: fine) { .shelf__arrow { display: grid; } }
+  .shelf__viewport.at-start .shelf__arrow--prev, .shelf__viewport.at-end .shelf__arrow--next, .shelf__viewport.no-overflow .shelf__arrow { opacity: 0; pointer-events: none; }
+  @media (max-width: 56rem) {
+    .shelf__slot { width: min(76vw, 20rem); }
+    .shelf__win .ct__body { padding: 1.1rem; padding-top: 4rem; }
+  }
+
+  /* ------------------------------------------------------------- glass bar */
+  .shop { position: relative; }
+  .gbar__sentinel { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
+  .gbar { position: sticky; top: var(--hdr-h, 6.6rem); z-index: 30; background: rgb(11 18 14 / 0.74); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border-block: 1px solid var(--line); transition: box-shadow var(--dur), background var(--dur); }
+  .gbar.is-stuck { background: rgb(11 18 14 / 0.82); box-shadow: 0 24px 40px -32px rgb(0 0 0 / 0.9); }
+  .gbar__in { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'cols tools' 'diet count'; gap: 0.6rem 1.5rem; align-items: center; padding-block: 0.8rem; }
+  .gbar__filters { display: contents; }
+  .gbar__cols { grid-area: cols; }
+  .gbar__diet { grid-area: diet; }
+  .gbar__tools { grid-area: tools; display: flex; gap: 0.5rem; align-items: center; justify-self: end; }
+  .gbar__count { grid-area: count; justify-self: end; margin: 0; font-size: var(--fs-sm); color: var(--fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .gbar .pill { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.75rem; padding-block: 0.4em; white-space: nowrap; }
+  .pill--diet { font-weight: 500; color: var(--fg-2); }
+  .pill--diet::before { content: ''; width: 0.45em; height: 0.45em; border-radius: 50%; background: var(--leaf-500); box-shadow: 0 0 8px var(--leaf-500); flex: none; }
+  .pill--diet[aria-pressed="true"]::before { background: var(--night-900); box-shadow: none; }
+  .gbar__search { position: relative; }
+  .gbar__search :global(svg) { position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
+  .gbar__search .input { min-height: 2.75rem; padding: 0.5em 1em 0.5em 2.6rem; width: 14rem; border-radius: var(--r-pill); font-size: var(--fs-sm); }
+  .gbar__sort .select { min-height: 2.75rem; width: auto; padding: 0.5em 2.4rem 0.5em 1.1rem; border-radius: var(--r-pill); font-size: var(--fs-sm); font-weight: 600; }
+  .shop__body { padding-top: clamp(1.5rem, 4vw, 3rem); }
   .shop__grid > :global([hidden]) { display: none; }
-  .shop__empty { padding: 3rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
+  .shop__empty { padding: 4rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
   .shop__empty[hidden] { display: none; }
+  .shop__trust { margin-top: clamp(2.5rem, 6vw, 4rem); border-bottom: 0; }
+  @media (max-width: 56rem) {
+    .gbar { top: var(--hdr-h, 6.1rem); }
+    .gbar__in { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'tools tools' 'filters count'; gap: 0.5rem 0.75rem; padding-block: 0.6rem; }
+    .gbar__filters { display: flex; grid-area: filters; flex-wrap: nowrap; gap: 0.5rem; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-left: calc(-1 * var(--gutter)); padding-left: var(--gutter); scroll-padding-left: var(--gutter); -webkit-overflow-scrolling: touch; }
+    .gbar__filters::-webkit-scrollbar { display: none; }
+    .gbar__cols, .gbar__diet { flex: none; flex-wrap: nowrap; }
+    .gbar__diet { border-left: 1px solid var(--line); padding-left: 0.5rem; }
+    .gbar__tools { justify-self: stretch; }
+    .gbar__search { flex: 1 1 auto; min-width: 0; }
+    .gbar__search .input { width: 100%; }
+    .gbar__sort { flex: 0 0 auto; }
+    .gbar__sort .select { max-width: 42vw; }
+    .gbar__count { font-size: var(--fs-xs); }
+  }
+
+  /* ------------------------------------------------------------- the lit room */
+  .shop-cta { isolation: isolate; }
+  .shop-cta__six { position: absolute; right: clamp(1rem, 4vw, 3rem); bottom: -0.16em; z-index: -1; font-family: var(--font-display); font-weight: 400; font-size: clamp(10rem, 28vw, 24rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(27 22 18 / 0.22); pointer-events: none; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  @media (max-width: 56rem) { .shop-cta__six { font-size: 9rem; right: 0.5rem; bottom: -0.1em; } }
 </style>
