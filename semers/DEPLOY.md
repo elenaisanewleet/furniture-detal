@@ -176,7 +176,7 @@ Fix that before pointing semers.org at Vercel.
 
 ## Motion check
 
-`npm run check:motion` drives the apple-to-bar sequence on the home page — the
+`npm run check:motion` drives the apple-to-bar sequence on the how-it's-made page — the
 one thing on the site that only exists once JavaScript has run and only means
 anything if the reader scrolls. It scrolls through the section in all three
 languages at a desktop and a phone width and asserts that the silhouette
@@ -188,6 +188,11 @@ with JavaScript switched off — and asserts that nothing is pinned, all five
 steps are readable as a plain list, and the drawing is resting on the bar.
 
 Needs a browser, so it is not part of `npm run verify`.
+
+The sequence opened the home page until the rebuild; the home page now opens
+with the WebGL particle hero (see *Design system and the motion layer*), and
+the drawn sequence is the first thing on `/how-its-made/`, where the process
+is the subject.
 
 **The flat version is the default and the pinned one is opted into.** `.forge`
 is an ordinary section; the script adds `.forge--live` and only then does it
