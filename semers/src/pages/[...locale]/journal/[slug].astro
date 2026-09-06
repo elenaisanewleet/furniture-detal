@@ -23,7 +23,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 const hero = im(a.image);
 
 /* ---- Body: written separately into src/data/articles/<slug>.ts. Never crash if it is not there yet. ---- */
-const bodies = import.meta.glob('../../data/articles/*.ts', { eager: true, import: 'default' }) as Record<string, unknown>;
+const bodies = import.meta.glob('../../../data/articles/*.ts', { eager: true, import: 'default' }) as Record<string, unknown>;
 const bodyKey = Object.keys(bodies).find((k) => k.endsWith(`/${a.slug}.ts`));
 const loaded = bodyKey ? bodies[bodyKey] : undefined;
 const rawBody = typeof loaded === 'string' && loaded.trim() ? loaded : a.body || '';
@@ -165,10 +165,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
           <ul class="cluster art__tags" aria-label="Topics">
             {a.tags.map((t) => <li class="chip">{t}</li>)}
           </ul>
-          <div class="cluster">
-            <button class="btn btn--ghost btn--sm" type="button" data-copy={canonicalUrl}>Copy link</button>
-            <a class="link small" href="/journal/">All articles</a>
-          </div>
+          <a class="link small" href="/journal/">All articles</a>
         </footer>
       </div>
 
@@ -186,7 +183,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
         <div class="art__share">
           <p class="eyebrow">Share</p>
           <div class="art__share-row">
-            <button class="art__share-btn" type="button" data-copy={canonicalUrl}><Icon name="check" size={16} /> Copy link</button>
+            <button class="art__share-btn" type="button" data-copy={canonicalUrl}>Copy link</button>
             <a class="art__share-btn" href={mailShare}><Icon name="mail" size={16} /> E-mail</a>
             <a class="art__share-btn" href={waShare} rel="noopener">WhatsApp</a>
           </div>

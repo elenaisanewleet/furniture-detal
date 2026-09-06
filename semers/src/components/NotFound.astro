@@ -57,7 +57,7 @@ const doors = [
   .nf__room { position: relative; display: grid; gap: clamp(2.5rem, 6vw, 5rem); }
 
   /* The numeral: a wall of outlined type behind the line, the apple resting on its baseline. */
-  .nf__num { position: absolute; right: -0.04em; top: 0; z-index: -1; margin: 0; transform: translateY(-62%); font-family: var(--font-display); font-weight: 400; font-size: clamp(11rem, 34vw, 34rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(200 182 151 / 0.55); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; user-select: none; white-space: nowrap; pointer-events: none; }
+  .nf__num { position: absolute; right: -0.04em; top: 0; z-index: -1; margin: 0; transform: translateY(-45%); font-family: var(--font-display); font-weight: 400; font-size: clamp(11rem, 28vw, 30rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(200 182 151 / 0.55); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; user-select: none; white-space: nowrap; pointer-events: none; }
   .nf__apple { position: absolute; left: 63%; bottom: 0.03em; width: 0.085em; height: 0.085em; min-width: 1rem; min-height: 1rem; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff9a80, var(--apple-500) 55%, var(--apple-700)); box-shadow: 0 0 24px 4px rgb(255 90 60 / 0.55), 0 0 90px 20px rgb(255 90 60 / 0.25); animation: nf-fall 1.6s var(--ease-out) 0.3s both; }
   .nf__apple::after { content: ''; position: absolute; left: 50%; top: -18%; width: 8%; height: 26%; min-width: 2px; min-height: 5px; border-radius: 2px; background: var(--leaf-600); transform: translateX(-50%) rotate(-12deg); }
   @keyframes nf-fall {
@@ -87,8 +87,11 @@ const doors = [
   .nf__door:hover .arrow { transform: translateX(4px); color: var(--accent); }
 
   @media (max-width: 48rem) {
-    .nf { min-height: 0; padding-top: clamp(7rem, 30vw, 9rem); }
-    .nf__num { right: -0.06em; transform: translateY(-78%); font-size: clamp(11rem, 44vw, 16rem); }
+    .nf { min-height: 0; padding-top: 2rem; }
+    /* In flow on a phone: the numeral sits above the line, right-aligned, and the apple lands just over the eyebrow. */
+    .nf__num { position: relative; right: auto; top: auto; z-index: 0; transform: none; margin: 0 -0.05em -0.5rem 0; text-align: right; font-size: clamp(11rem, 44vw, 16rem); }
+    .nf__room { gap: 1.5rem; }
+    .nf__doors { gap: 0.6rem; }
     .nf__title { max-width: 10ch; }
   }
 </style>

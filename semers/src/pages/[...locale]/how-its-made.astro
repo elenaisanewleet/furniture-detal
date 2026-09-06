@@ -225,10 +225,13 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
   <!-- ============================== THE EIGHT STAGES ============================== -->
   <!--
-    Eight photographs, each one holding still while its caption scrolls past,
-    then giving way to the next. The hold is CSS: every stage is a row whose
-    photograph is sticky inside it, so the sequence needs no script and, on a
-    phone, simply stacks. The ids feed the HowTo JSON-LD and the jump links.
+    One photograph that stays put while eight captions scroll past it. The
+    pictures sit stacked in a single sticky frame and the script lights the one
+    whose caption is in the middle of the screen; the numeral on the caption
+    and the counter on the frame turn over with it. With no script the frame
+    is a plain column of eight photographs beside eight captions. On a phone
+    the frame sits above the captions and holds at the top of the screen.
+    The ids feed the HowTo JSON-LD and the jump links.
   -->
   <section class="section stages-sec" id="process" aria-labelledby="process-title">
     <div class="container">
@@ -244,24 +247,30 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
           {stages.map((s, i) => <a class="pill" href={`#step-${i + 1}`}><span class="process__n">{num(i)}</span> {s.short}</a>)}
         </div>
       </nav>
-      <ol class="stages">
-        {stages.map((s, i) => (
-          <li class="stage" id={`step-${i + 1}`}>
-            <div class="stage__pic">
-              <div class="frame frame--4x5 stage__frame">
-                <img src={im(s.image).src} srcset={im(s.image).srcset} sizes={im(s.image).srcset && SIZES.half} alt={im(s.image).alt} width={im(s.image).width} height={im(s.image).height} loading={i === 0 ? 'eager' : 'lazy'} decoding="async" class="img-cover" />
+      <div class="stages" data-stages>
+        <div class="stages__pic">
+          <div class="stages__stack">
+            {stages.map((s, i) => (
+              <div class={`stages__ph ${i === 0 ? 'is-on' : ''}`} data-stage-photo>
+                <div class="frame stages__frame">
+                  <img src={im(s.image).src} srcset={im(s.image).srcset} sizes={im(s.image).srcset && SIZES.half} alt={im(s.image).alt} width={im(s.image).width} height={im(s.image).height} loading={i === 0 ? 'eager' : 'lazy'} decoding="async" class="img-cover" />
+                </div>
               </div>
-              <span class="stage__badge" aria-hidden="true">{num(i)} / {num(stages.length - 1)}</span>
-            </div>
-            <div class="stage__say" data-reveal>
+            ))}
+          </div>
+          <span class="stages__badge" aria-hidden="true"><b data-stage-badge>{num(0)}</b> / {num(stages.length - 1)}</span>
+        </div>
+        <ol class="stages__list">
+          {stages.map((s, i) => (
+            <li class={`stage ${i === 0 ? 'is-on' : ''}`} id={`step-${i + 1}`} data-stage>
               <span class="stage__n" aria-hidden="true">{num(i)}</span>
               <p class="eyebrow stage__short">{s.short}</p>
               <h3>{s.name}</h3>
               <p>{s.text}</p>
-            </div>
-          </li>
-        ))}
-      </ol>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   </section>
 
@@ -560,6 +569,34 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     addEventListener('resize', schedule, { passive: true });
     draw();
   }
+  /*
+   * The stages: whichever caption sits in the middle band of the screen is the
+   * one whose photograph shows. One observer, a band rather than a threshold,
+   * so a long caption and a short one are treated alike.
+   */
+  const stagesEl = document.querySelector<HTMLElement>('[data-stages]');
+  if (stagesEl && 'IntersectionObserver' in window) {
+    const captions = [...stagesEl.querySelectorAll<HTMLElement>('[data-stage]')];
+    const photos = [...stagesEl.querySelectorAll<HTMLElement>('[data-stage-photo]')];
+    const badge = stagesEl.querySelector<HTMLElement>('[data-stage-badge]');
+    let current = 0;
+    const show = (i: number) => {
+      if (i === current) return;
+      current = i;
+      captions.forEach((el, k) => el.classList.toggle('is-on', k === i));
+      photos.forEach((el, k) => el.classList.toggle('is-on', k === i));
+      if (badge) badge.textContent = String(i + 1).padStart(2, '0');
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) show(captions.indexOf(entry.target as HTMLElement));
+        }
+      },
+      { rootMargin: '-38% 0px -42% 0px', threshold: 0 },
+    );
+    captions.forEach((el) => io.observe(el));
+  }
 </script>
 
 <style>
@@ -614,7 +651,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .forge--live { height: 320vh; padding-block: 0; }
   .forge--live .forge__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; align-items: center; overflow: clip; }
   .forge--live .forge__steps { position: relative; display: block; min-height: 13.5rem; }
-  .forge--live .forge__step { position: absolute; inset: 0; opacity: 0; transform: translateY(12px); transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out); }
+  .forge--live .forge__step { position: absolute; inset: 0; opacity: 0; transform: translateY(12px); transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out); }
   .forge--live .forge__step.is-on { opacity: 1; transform: none; }
   .forge--live .forge__rail { display: flex; gap: 0.35rem; margin-top: 0.4rem; }
   .forge__tick { flex: 1; height: 3px; border-radius: 2px; background: rgb(243 233 214 / 0.12); overflow: hidden; }
@@ -642,26 +679,45 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .process__n { color: var(--accent-ink); font-family: var(--font-display); font-weight: 500; margin-right: 0.15em; }
   .pill:hover .process__n { color: inherit; }
 
-  .stages { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(3rem, 8vw, 6rem); }
-  .stage { display: grid; gap: 1.5rem; scroll-margin-top: 5rem; }
-  .stage__pic { position: relative; }
-  .stage__frame { border-radius: var(--r-xl); box-shadow: var(--shadow-2); aspect-ratio: 4 / 3; }
-  .stage__badge { position: absolute; left: 1rem; top: 1rem; z-index: 2; padding: 0.4em 0.8em; border-radius: var(--r-pill); background: rgb(11 18 14 / 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); font-family: var(--font-display); font-size: var(--fs-sm); color: var(--cream-1); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
-  .stage__say { position: relative; }
-  .stage__n { display: block; font-family: var(--font-display); font-size: clamp(4.5rem, 12vw, 11rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.35); margin-bottom: -0.1em; }
+  /* The header is sticky and about 7rem tall with its announcement; the frame parks just under it. */
+  .stages { --park: 7.5rem; display: grid; gap: 2rem; align-items: start; }
+  .stages__pic { position: sticky; top: var(--park); z-index: 2; }
+  .stages__stack { display: grid; }
+  .stages__ph { grid-area: 1 / 1; opacity: 0; transition: opacity 0.7s var(--ease-out); }
+  .stages__ph.is-on { opacity: 1; }
+  .stages__frame { border-radius: var(--r-xl); box-shadow: var(--shadow-2); aspect-ratio: 16 / 10; }
+  .stages__badge { position: absolute; left: 1rem; top: 1rem; z-index: 3; padding: 0.4em 0.8em; border-radius: var(--r-pill); background: rgb(11 18 14 / 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); font-family: var(--font-display); font-size: var(--fs-sm); color: var(--cream-1); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+  .stages__badge b { font-weight: 500; color: var(--cream-0); }
+  .stages__list { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(3rem, 8vw, 5rem); }
+  .stage { position: relative; scroll-margin-top: calc(var(--park) + 1rem); }
+  .stage__n { display: block; font-family: var(--font-display); font-size: clamp(4.5rem, 12vw, 11rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.35); margin-bottom: -0.1em; transition: color var(--dur-slow) var(--ease-out), -webkit-text-stroke-color var(--dur-slow) var(--ease-out); }
+  .stage.is-on .stage__n { color: var(--accent); -webkit-text-stroke-color: var(--accent); }
   .stage__short { margin-top: 1.25rem; }
-  .stage__say h3 { font-size: var(--fs-2xl); letter-spacing: -0.02em; margin-top: 0.75rem; max-width: 16ch; }
-  .stage__say p:not(.eyebrow) { margin: 1rem 0 0; color: var(--fg-2); font-size: var(--fs-lg); max-width: 46ch; }
-  @media (min-width: 56rem) {
-    .stages { gap: 0; }
-    .stage { grid-template-columns: 0.85fr 1.15fr; gap: clamp(2rem, 6vw, 6rem); align-items: start; }
-    .stage__pic { position: sticky; top: 5.5rem; }
-    .stage__frame { aspect-ratio: 4 / 5; }
-    /* Each caption is a screen's worth of scroll, so the photograph beside it gets time to be looked at. */
-    .stage__say { min-height: 80svh; display: grid; align-content: center; padding-block: 3rem; }
-    .stage:last-child .stage__say { min-height: 0; padding-block: 3rem 0; }
-    .stage:first-child .stage__say { padding-top: 0; }
+  .stage h3 { font-size: var(--fs-2xl); letter-spacing: -0.02em; margin-top: 0.75rem; max-width: 16ch; }
+  .stage p:not(.eyebrow) { margin: 1rem 0 0; color: var(--fg-2); font-size: var(--fs-lg); max-width: 46ch; }
+  /* Phone: the frame is a short window that holds at the top while the captions pass under it. */
+  @media (max-width: 55.99rem) {
+    .stages__pic { top: var(--park); padding-top: 0.5rem; background: var(--bg); }
+    .stages__pic::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 2.5rem; background: linear-gradient(to bottom, var(--bg), transparent); pointer-events: none; }
+    .stages__badge { top: 1.5rem; }
+    .stages__list { padding-top: 1rem; }
+    .stage { scroll-margin-top: calc(var(--park) + 0.5rem + 62.5vw + 2.5rem); }
   }
+  @media (min-width: 56rem) {
+    .stages { grid-template-columns: 0.8fr 1.2fr; gap: clamp(2rem, 6vw, 6rem); }
+    .stages__frame { aspect-ratio: 4 / 5; }
+    .stages__list { gap: 0; }
+    /* Each caption is most of a screen, so the photograph beside it gets time to be looked at. */
+    .stage { min-height: 82svh; display: grid; align-content: center; padding-block: 2rem; }
+    .stage:first-child { padding-top: 0; }
+    .stage:last-child { min-height: 0; padding-bottom: 0; }
+  }
+  /* With no script the frame is a plain column of eight photographs; nothing pins. */
+  html:not(.js) .stages__pic { position: static; }
+  html:not(.js) .stages__stack { gap: 1rem; }
+  html:not(.js) .stages__ph { grid-area: auto; opacity: 1; }
+  html:not(.js) .stages__badge { display: none; }
+  @media (prefers-reduced-motion: reduce) { .stages__ph, .stage__n { transition: none; } }
 
   /* ------------------------------------------------------------- one per cent */
   .pct-sec { background: radial-gradient(45% 50% at 20% 50%, rgb(240 176 74 / 0.1), transparent 65%), var(--bg-sunken); overflow: clip; }
@@ -670,6 +726,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .pct__big { position: relative; z-index: 1; font-family: var(--font-display); font-size: clamp(9rem, 26vw, 22rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.06em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 50; text-shadow: 0 0 60px rgb(240 176 74 / 0.45); }
   .pct__big small { font-size: 0.42em; font-style: italic; color: var(--honey-500); margin-left: 0.05em; }
   .pct__ghost { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-display); font-size: clamp(14rem, 40vw, 34rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.08em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.14); pointer-events: none; }
+  .split .lead { margin-top: 1.25rem; }
   .hiw-ticks { margin: 1.5rem 0; }
   .hiw-ticks li { font-size: var(--fs-md); }
 

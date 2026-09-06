@@ -111,7 +111,7 @@ const glow: Record<CollectionKey, string> = {
 
     <div class="container shop__body">
       <h2 class="sr-only" id="products-title">Products</h2>
-      <div class="grid grid--4 col-grid" data-shop-grid data-stagger>
+      <div class={`grid grid--4 col-grid ${products.length === 1 ? 'col-grid--one' : ''}`} data-shop-grid data-stagger>
         {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
       </div>
       {products.length === 0 && <p class="muted">Nothing here yet — <a href="/shop/">see all products</a>.</p>}
@@ -261,7 +261,7 @@ const glow: Record<CollectionKey, string> = {
   .gbar__sentinel { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
   .gbar { position: sticky; top: var(--hdr-h, 6.6rem); z-index: 30; background: rgb(11 18 14 / 0.74); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border-block: 1px solid var(--line); transition: box-shadow var(--dur), background var(--dur); }
   .gbar.is-stuck { background: rgb(11 18 14 / 0.82); box-shadow: 0 24px 40px -32px rgb(0 0 0 / 0.9); }
-  .gbar__in { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'cols tools' 'diet count'; gap: 0.6rem 1.5rem; align-items: center; padding-block: 0.8rem; }
+  .gbar__in { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'cols cols cols' 'diet count tools'; gap: 0.6rem 1.25rem; align-items: center; padding-block: 0.8rem; }
   .gbar__filters { display: contents; }
   .gbar__cols { grid-area: cols; }
   .gbar__diet { grid-area: diet; }
@@ -279,12 +279,14 @@ const glow: Record<CollectionKey, string> = {
   /* Most collections hold 1-3 products: cap at three columns so a lone product reads as a feature, not a stamp. */
   .col-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, max(18rem, calc((100% - 2 * var(--sp-5)) / 3))), 1fr)); }
   .col-grid > :global([hidden]) { display: none; }
+  /* A collection with a single product shows it full width on a phone rather than as one small stamp in an empty pair. */
+  @media (max-width: 40rem) { .grid.grid--4.col-grid--one { grid-template-columns: 1fr; } .col-grid--one :global(.pc__media) { aspect-ratio: 1; } }
   .shop__empty { padding: 4rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
   .shop__empty[hidden] { display: none; }
   @media (max-width: 56rem) {
     .gbar { top: var(--hdr-h, 6.1rem); }
     .gbar__in { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'tools tools' 'filters count'; gap: 0.5rem 0.75rem; padding-block: 0.6rem; }
-    .gbar__filters { display: flex; grid-area: filters; flex-wrap: nowrap; gap: 0.5rem; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-left: calc(-1 * var(--gutter)); padding-left: var(--gutter); scroll-padding-left: var(--gutter); -webkit-overflow-scrolling: touch; }
+    .gbar__filters { display: flex; grid-area: filters; flex-wrap: nowrap; gap: 0.5rem; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-left: calc(-1 * var(--gutter)); padding-left: var(--gutter); scroll-padding-left: var(--gutter); -webkit-overflow-scrolling: touch; mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent); }
     .gbar__filters::-webkit-scrollbar { display: none; }
     .gbar__cols, .gbar__diet { flex: none; flex-wrap: nowrap; }
     .gbar__diet { border-left: 1px solid var(--line); padding-left: 0.5rem; }
@@ -318,13 +320,13 @@ const glow: Record<CollectionKey, string> = {
   .shelf__win .ct__body h3 { font-size: var(--fs-2xl); letter-spacing: -0.02em; line-height: 1.02; }
   .shelf__win .ct__body p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .shelf__n { display: block; margin-bottom: 0.6rem; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream-2); }
-  .shelf__ledge { height: 1px; margin-top: -2.1rem; background: linear-gradient(90deg, transparent, rgb(243 233 214 / 0.32) 12%, rgb(243 233 214 / 0.32) 88%, transparent); }
+  .shelf__ledge { height: 1px; margin-top: -2.1rem; background: linear-gradient(90deg, transparent, rgb(243 233 214 / 0.4) 12%, rgb(243 233 214 / 0.4) 88%, transparent); }
   .shelf__foot { height: clamp(3rem, 8vw, 6rem); }
   .shelf__arrow { position: absolute; top: calc(50% - 2rem); z-index: 2; width: 3rem; height: 3rem; border-radius: 50%; display: none; place-items: center; background: rgb(11 18 14 / 0.75); color: var(--cream-1); border: 1px solid rgb(243 233 214 / 0.3); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity var(--dur), transform var(--dur-fast) var(--ease-spring), background var(--dur-fast); }
   .shelf__arrow:hover { background: var(--cream-1); color: var(--night-900); transform: scale(1.08); }
-  .shelf__arrow--prev { left: calc(var(--edge) - 1.5rem); }
+  .shelf__arrow--prev { left: max(0.5rem, calc(var(--edge) - 1.5rem)); }
   .shelf__arrow--prev :global(svg) { transform: rotate(180deg); }
-  .shelf__arrow--next { right: calc(var(--edge) - 1.5rem); }
+  .shelf__arrow--next { right: max(0.5rem, calc(var(--edge) - 1.5rem)); }
   @media (pointer: fine) { .shelf__arrow { display: grid; } }
   .shelf__viewport.at-start .shelf__arrow--prev, .shelf__viewport.at-end .shelf__arrow--next, .shelf__viewport.no-overflow .shelf__arrow { opacity: 0; pointer-events: none; }
   @media (max-width: 56rem) {

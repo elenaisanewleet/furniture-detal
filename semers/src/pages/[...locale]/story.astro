@@ -417,6 +417,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .wall__stop { --year: clamp(4.5rem, 17vw, 15rem); position: relative; display: grid; gap: var(--sp-5); padding-block: clamp(2.5rem, 6vw, 5rem); border-top: 1px solid var(--line); }
   .wall__year { display: block; margin: 0; font-family: var(--font-display); font-size: var(--year); font-weight: 400; line-height: 0.85; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); overflow-wrap: break-word; font-variation-settings: 'opsz' 144, 'SOFT' 30; transition: -webkit-text-stroke-color var(--dur-slow) var(--ease-out), filter var(--dur-slow) var(--ease-out); }
   .wall__year--long { --year: clamp(3rem, 10.5vw, 9.5rem); }
+  .wall__stop:first-child { --year: clamp(5rem, 21vw, 19rem); }
   .wall__stop.is-lit .wall__year { -webkit-text-stroke-color: var(--accent); filter: drop-shadow(0 0 22px rgb(255 90 60 / 0.35)); }
   .wall__media { position: relative; z-index: 1; margin-top: calc(var(--year) * -0.28); }
   .wall__frame { position: relative; aspect-ratio: 4 / 3; overflow: clip; border-radius: var(--r-xl); background: var(--bg-sunken); box-shadow: var(--shadow-3); }

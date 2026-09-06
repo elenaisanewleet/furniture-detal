@@ -264,7 +264,8 @@ const topics = groups.length;
   .fq-hero__ticks { font-size: var(--fs-sm); gap: 0.5rem; }
 
   /* ------------------------------------------------------------ rail + main */
-  .fq { display: grid; gap: 2rem; align-items: start; }
+  .fq { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; align-items: start; }
+  .fq-rail, .fq-main { min-width: 0; }
   @media (min-width: 60rem) { .fq { grid-template-columns: 15rem minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 6rem); } }
 
   .fq-rail { position: sticky; z-index: 5; }

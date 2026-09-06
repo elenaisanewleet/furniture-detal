@@ -260,12 +260,13 @@ const webPage = {
   .legal { display: grid; gap: var(--sp-6); align-items: start; padding-block: var(--sp-5) clamp(2rem, 5vw, 4rem); }
   @media (min-width: 60rem) {
     .legal { grid-template-columns: 16rem minmax(0, 1fr); gap: var(--sp-8); }
-    .legal__aside { position: sticky; top: 5.5rem; max-height: calc(100vh - 6rem); overflow-y: auto; scrollbar-width: none; }
+    .legal__aside { position: sticky; top: 7rem; max-height: calc(100vh - 7.5rem); overflow-y: auto; scrollbar-width: none; }
     .legal__aside::-webkit-scrollbar { display: none; }
     .legal__pills { flex-direction: column; align-items: stretch; }
     .legal__pills .pill { text-align: left; }
   }
-  .legal__aside { display: grid; gap: var(--sp-5); min-width: 0; }
+  .legal__aside { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); min-width: 0; }
+  .legal__nav, .legal__toc { min-width: 0; }
   .legal__aside .eyebrow { margin-bottom: 0.75rem; }
 
   /* The rail: every section as a small outlined numeral; the one in view lights, and a honey line grows with the reading. */
@@ -295,7 +296,7 @@ const webPage = {
   .legal__body p, .legal__body li { color: var(--fg-2); }
   .legal__body p strong, .legal__body li strong { color: var(--cream-0); }
   .legal__body a { color: var(--cream-0); }
-  .legal__body h2 { position: relative; counter-increment: sec; scroll-margin-top: 6rem; margin: 3.4rem 0 0.9rem; padding-top: 1.4rem; border-top: 1px solid var(--line); font-size: var(--fs-2xl); letter-spacing: -0.03em; line-height: 1.05; }
+  .legal__body h2 { position: relative; counter-increment: sec; scroll-margin-top: 7.5rem; margin: 3.4rem 0 0.9rem; padding-top: 1.4rem; border-top: 1px solid var(--line); font-size: var(--fs-2xl); letter-spacing: -0.03em; line-height: 1.05; }
   .legal__body h2::before { content: counter(sec, decimal-leading-zero); display: block; margin-bottom: 0.6rem; font-size: 1.1rem; font-weight: 400; letter-spacing: 0.02em; line-height: 1; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 48, 'SOFT' 0; }
   .legal__body h3 { margin-top: 2.2rem; font-size: var(--fs-xl); }
   @media (min-width: 60rem) {
