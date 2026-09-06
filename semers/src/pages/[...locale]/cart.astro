@@ -142,9 +142,10 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
 <style>
   /* ------------------------------------------------------------ the opening */
-  .cart-hero { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.5rem 3rem; padding-block: clamp(4rem, 9vw, 8rem) clamp(2rem, 5vw, 3.5rem); }
+  /* Two columns at every width: the words may wrap (Cyrillic runs long), the count stays locked bottom-right. */
+  .cart-hero { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 1rem clamp(1.5rem, 4vw, 3rem); padding-block: clamp(4rem, 9vw, 8rem) clamp(2rem, 5vw, 3.5rem); }
   .cart-hero .eyebrow { margin-bottom: 1.25rem; }
-  .cart-hero__title { font-size: var(--fs-hero); letter-spacing: -0.045em; line-height: 0.9; }
+  .cart-hero__title { font-size: var(--fs-hero); letter-spacing: -0.045em; line-height: 0.9; text-wrap: balance; }
   .cart-hero__title em { font-style: normal; color: var(--accent); text-shadow: 0 0 40px rgb(255 90 60 / 0.55); }
   .cart-hero__count { display: grid; justify-items: end; gap: 0.35rem; margin: 0; text-align: right; }
   .cart-hero__n { font-family: var(--font-display); font-weight: 400; font-size: clamp(5rem, 12vw, 11rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 20; }
@@ -206,7 +207,8 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   }
   @media (max-width: 36rem) {
     .cart-hero { padding-top: 3.5rem; }
-    .cart-hero__count { justify-items: start; text-align: left; }
+    .cart-hero__title { font-size: clamp(3.25rem, 14vw, 4.5rem); }
+    .cart-hero__n { font-size: 4.5rem; }
     .cart__items :global(.ci) { grid-template-columns: 4.25rem minmax(0, 1fr); grid-template-rows: auto auto; gap: 0.6rem 1rem; padding: 1.1rem 0; align-items: start; }
     .cart__items :global(.ci__img) { width: 4.25rem; grid-row: 1 / 3; }
     .cart__items :global(.ci__name) { font-size: var(--fs-lg); }

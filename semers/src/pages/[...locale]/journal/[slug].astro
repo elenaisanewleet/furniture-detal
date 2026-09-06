@@ -38,7 +38,7 @@ const slugify = (s: string) =>
     .replace(/^-+|-+$/g, '');
 const toc: { id: string; label: string }[] = [];
 const seen = new Set<string>();
-const body = hasBody
+const withIds = hasBody
   ? rawBody.replace(/<h2(\s[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m: string, attrs: string | undefined, inner: string) => {
       const at = attrs || '';
       const label = inner.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
@@ -52,6 +52,8 @@ const body = hasBody
       return existing ? `<h2${at}>${inner}</h2>` : `<h2${at} id="${id}">${inner}</h2>`;
     })
   : '';
+/* A wide table scrolls inside its own box on a phone instead of pushing the page sideways. Content untouched. */
+const body = withIds.replace(/<table(\s[^>]*)?>/gi, '<div class="art__table"><table$1>').replace(/<\/table>/gi, '</table></div>');
 const showToc = toc.length >= 2;
 
 /* ---- Meta ---- */
@@ -93,11 +95,15 @@ const trimDesc = (d: string) => {
 };
 const pageDesc = SEO_DESC[a.slug] ?? trimDesc(a.description);
 
+/* ---- Share ---- */
+const mailShare = `mailto:?subject=${encodeURIComponent(a.title)}&body=${encodeURIComponent(canonicalUrl)}`;
+const waShare = `https://wa.me/?text=${encodeURIComponent(`${a.title} ${canonicalUrl}`)}`;
+
 /* ---- Related ---- */
 const others = ARTICLES_SORTED.filter((x) => x.slug !== a.slug).slice(0, 3);
 const hasOthers = others.length > 0;
 
-/** The product most of the journal is about; used in the sidebar. */
+/** The product most of the journal is about; used in the panel after the body. */
 const shopcard = im('packshot-classic');
 const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no flour, no gluten', 'About 97 kcal per 35 g bar', 'Keeps 12 months without a fridge'];
 ---
@@ -115,29 +121,36 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
     <meta property="article:modified_time" content={a.date} />
     {a.tags.map((t) => <meta property="article:tag" content={t} />)}
   </Fragment>
+  <!-- A hairline of light along the top edge that fills as the reader gets through the piece. -->
+  <div class="art__progress" aria-hidden="true" data-progress><i></i></div>
+
   <article class="art">
     <!-- ============================== HEADER ============================== -->
+    <!-- Big title, dek, meta. The photograph follows full-bleed, so the header is the only thing on the first screen. -->
     <header class="page-hero container art__head">
       <p class="eyebrow">{tagLine}</p>
-      <h1 id="page-title">{a.title}</h1>
-      <p class="art__meta">
-        <time datetime={a.date}>{dateLabel}</time>
-        <span class="art__dot" aria-hidden="true">·</span>
-        <span><Icon name="clock" size={16} /> {readLabel}</span>
-        <span class="art__dot" aria-hidden="true">·</span>
-        <span>{site.brand.name}, {site.locality}</span>
-      </p>
+      <h1 id="page-title" class="art__title" data-words>{a.title}</h1>
+      <div class="art__headrow">
+        <p class="art__dek">{a.description}</p>
+        <p class="art__meta">
+          <time datetime={a.date}>{dateLabel}</time>
+          <span class="art__dot" aria-hidden="true">·</span>
+          <span><Icon name="clock" size={16} /> {readLabel}</span>
+          <span class="art__dot" aria-hidden="true">·</span>
+          <span>{site.brand.name}, {site.locality}</span>
+        </p>
+      </div>
     </header>
 
     <!-- ============================== HERO IMAGE ============================== -->
-    <div class="container">
-      <div class="frame frame--16x9 art__hero" data-reveal>
-        <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.half} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" />
+    <div class="art__hero" data-reveal>
+      <div class="art__hero-media">
+        <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.full} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.2" />
       </div>
     </div>
 
-    <!-- ============================== BODY ============================== -->
-    <div class="container art__grid section--tight">
+    <!-- ============================== BODY + RAIL ============================== -->
+    <div class="container art__grid">
       <div class="art__body">
         {hasBody ? (
           <div class="prose art__prose" set:html={body} />
@@ -159,33 +172,50 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
         </footer>
       </div>
 
-      <div class="art__aside">
+      <aside class="art__rail">
         {showToc && (
           <nav class="toc" aria-labelledby="toc-title">
             <p class="eyebrow" id="toc-title">In this article</p>
             <ol>
               {toc.map((t) => (
-                <li><a href={`#${t.id}`} set:html={t.label} /></li>
+                <li><a href={`#${t.id}`} data-toc-link={t.id} set:html={t.label} /></li>
               ))}
             </ol>
           </nav>
         )}
-        <aside class="art__shop" aria-labelledby="shop-title">
-          <div class="frame frame--1x1 art__shop-img"><img src={shopcard.src} srcset={shopcard.srcset} sizes={shopcard.srcset && SIZES.third} alt="" width={shopcard.width} height={shopcard.height} loading="lazy" decoding="async" /></div>
+        <div class="art__share">
+          <p class="eyebrow">Share</p>
+          <div class="art__share-row">
+            <button class="art__share-btn" type="button" data-copy={canonicalUrl}><Icon name="check" size={16} /> Copy link</button>
+            <a class="art__share-btn" href={mailShare}><Icon name="mail" size={16} /> E-mail</a>
+            <a class="art__share-btn" href={waShare} rel="noopener">WhatsApp</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- ============================== THE PRODUCT ============================== -->
+    <!-- The bar the journal keeps talking about, as one lit panel: the packshot on a mint field, the facts, one button. -->
+    <section class="container art__shopwrap" aria-labelledby="shop-title">
+      <div class="art__shop" data-reveal>
+        <div class="art__shop-img"><img src={shopcard.src} srcset={shopcard.srcset} sizes={shopcard.srcset && SIZES.third} alt="" width={shopcard.width} height={shopcard.height} loading="lazy" decoding="async" /></div>
+        <div class="art__shop-body">
           <p class="eyebrow">From the bakery</p>
           <h2 id="shop-title" class="art__shop-title">The bar these notes are about.</h2>
-          <ul class="ticks small">
+          <ul class="ticks art__shop-ticks">
             {facts.map((f) => <li><Icon name="check" size={16} /> {f}</li>)}
           </ul>
-          <a class="btn btn--block" href="/shop/apple-bars/">Shop apple bars</a>
-          <a class="link small art__shop-more" href="/shop/">See everything in the shop</a>
-        </aside>
+          <div class="cluster art__shop-cta">
+            <a class="btn btn--accent" href="/shop/apple-bars/">Shop apple bars <Icon name="arrow" size={18} class="arrow" /></a>
+            <a class="link small" href="/shop/">See everything in the shop</a>
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
 
     <!-- ============================== ALSO READ ============================== -->
     {hasOthers && (
-      <section class="section band" aria-labelledby="also-title">
+      <section class="section band art__also" aria-labelledby="also-title">
         <div class="container">
           <div class="section-head">
             <div>
@@ -194,29 +224,30 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
             </div>
             <a class="link" href="/journal/">Back to the journal</a>
           </div>
-          <div class="grid grid--3" data-reveal>
-            {others.map((o) => (
-              <a class="jc" href={`/journal/${o.slug}/`}>
-                <div class="frame frame--3x2"><img src={im(o.image).src} srcset={im(o.image).srcset} sizes={im(o.image).srcset && SIZES.third} alt="" width={im(o.image).width} height={im(o.image).height} loading="lazy" decoding="async" /></div>
-                <div class="jc__meta"><time datetime={o.date}>{fmtDate(o.date)}</time> · {o.readMinutes} min read</div>
-                <h3>{o.title}</h3>
-                <p>{o.description}</p>
-              </a>
-            ))}
-          </div>
+        </div>
+        <div class="art__rel" data-stagger>
+          {others.map((o) => (
+            <a class="jc art__rel-card" href={`/journal/${o.slug}/`} data-cursor="Read">
+              <div class="frame frame--3x2"><img src={im(o.image).src} srcset={im(o.image).srcset} sizes={im(o.image).srcset && SIZES.third} alt="" width={im(o.image).width} height={im(o.image).height} loading="lazy" decoding="async" /></div>
+              <p class="eyebrow art__rel-eyebrow">{o.readMinutes} min read</p>
+              <h3>{o.title}</h3>
+              <p>{o.description}</p>
+              <time class="jc__meta" datetime={o.date}>{fmtDate(o.date)}</time>
+            </a>
+          ))}
         </div>
       </section>
     )}
 
     <!-- ============================== CTA ============================== -->
-    <section class="section container" aria-labelledby="cta-title">
+    <section class="section container art__end" aria-labelledby="cta-title">
       <div class="cta-band" data-reveal>
         <p class="eyebrow">Taste the subject</p>
         <h2 id="cta-title">Reading about apples is the slow way to find out.</h2>
         <p>Apple bars, meringues and Belyov pastila, baked in {site.locality} from two ingredients. Parcels leave in 1–2 business days and ship across the EU; orders over {freeFrom} ship free.</p>
         <div class="cluster mt-2">
           <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
-          <a class="btn btn--ghost cta-band__ghost" href="/why-pastila/">Why pastila</a>
+          <a class="btn btn--ghost" href="/why-pastila/">Why pastila</a>
           <a class="link cta-band__link" href="/how-its-made/">How it’s made</a>
         </div>
       </div>
@@ -224,71 +255,152 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   </article>
 </Base>
 
-<style>
-  /* header */
-  .art__head { max-width: 50rem; padding-bottom: clamp(1.5rem, 3vw, 2.5rem); }
-  .art__head h1 { font-size: var(--fs-3xl); max-width: 22ch; margin-top: 0.75rem; }
-  .art__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.6rem; margin: 1.1rem 0 0; font-size: var(--fs-sm); color: var(--fg-3); }
-  .art__meta span { display: inline-flex; align-items: center; gap: 0.35em; }
-  .art__meta time { color: var(--fg-2); font-weight: 600; }
-  .art__dot { opacity: 0.6; }
-
-  /* hero image */
-  .art__hero { border-radius: var(--r-xl); box-shadow: var(--shadow-2); }
-
-  /* body grid. DOM: prose, then aside (TOC + shop card). Small screens show the TOC first, the shop card last. */
-  .art__grid { display: grid; gap: clamp(1.5rem, 4vw, 2.5rem); }
-  .art__aside { display: contents; }
-  .toc { order: 1; }
-  .art__body { order: 2; min-width: 0; }
-  .art__shop { order: 3; }
-  @media (min-width: 60rem) {
-    .art__grid { grid-template-columns: minmax(0, 1fr) 19rem; gap: clamp(2.5rem, 6vw, 5rem); align-items: start; }
-    .art__body { order: 0; }
-    .art__aside { display: grid; gap: 1.5rem; position: sticky; top: 5.5rem; order: 1; }
+<script>
+  /* Reading progress along the top edge, and the rail lighting the section under the reader. Both cosmetic; the page reads without them. */
+  const bar = document.querySelector<HTMLElement>('[data-progress]');
+  const prose = document.querySelector<HTMLElement>('.art__prose');
+  if (bar && prose) {
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const r = prose.getBoundingClientRect();
+      const span = r.height - innerHeight * 0.5;
+      const p = span > 0 ? Math.min(1, Math.max(0, -r.top / span)) : 1;
+      bar.style.setProperty('--p', String(p));
+      bar.classList.toggle('is-on', r.top < innerHeight * 0.9 && p < 1);
+    };
+    addEventListener('scroll', () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } }, { passive: true });
+    addEventListener('resize', update);
+    update();
   }
 
-  /* table of contents */
-  .toc { padding: 1.1rem 1.25rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
-  .toc ol { margin: 0.75rem 0 0; padding: 0; list-style: none; counter-reset: toc; display: grid; gap: 0.4rem; }
-  .toc li { counter-increment: toc; display: flex; gap: 0.6rem; align-items: baseline; font-size: var(--fs-sm); }
-  .toc li::before { content: counter(toc, decimal-leading-zero); font-family: var(--font-display); font-weight: 600; color: var(--accent); font-size: var(--fs-xs); letter-spacing: 0.04em; }
-  .toc a { text-decoration: none; color: var(--fg-2); }
-  .toc a:hover { color: var(--fg); text-decoration: underline; text-decoration-color: var(--accent); }
+  const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]'));
+  const heads = links.map((l) => document.getElementById(l.dataset.tocLink || '')).filter((h): h is HTMLElement => Boolean(h));
+  if (links.length && heads.length && 'IntersectionObserver' in window) {
+    const set = (id: string) => links.forEach((l) => (l.dataset.tocLink === id ? l.setAttribute('aria-current', 'true') : l.removeAttribute('aria-current')));
+    let current = '';
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) current = (e.target as HTMLElement).id;
+        if (current) set(current);
+      },
+      { rootMargin: '-20% 0px -70% 0px', threshold: 0 },
+    );
+    heads.forEach((h) => io.observe(h));
+  }
+</script>
 
-  /* prose */
-  .art__prose { font-size: var(--fs-lg); color: var(--ink-800); }
-  .art__prose > p:first-child::first-letter { float: left; font-family: var(--font-display); font-weight: 600; font-size: 3.6em; line-height: 0.8; padding: 0.08em 0.12em 0 0; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 50; }
-  .art__prose h2 { font-size: var(--fs-2xl); scroll-margin-top: 6rem; }
-  .art__prose h3 { scroll-margin-top: 6rem; }
-  .art__prose a { text-decoration-color: var(--accent); }
-  .art__prose img { border-radius: var(--r-lg); margin: 1.5em 0; }
-  .art__prose table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin: 1.5em 0; }
-  .art__prose th, .art__prose td { padding: 0.6em 0.4em; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
-  .art__prose th { font-weight: 600; color: var(--fg-2); }
-  .art__prose blockquote p { margin: 0; }
-  .art__prose hr { margin: 2.5em 0; }
+<style>
+  /* ------------------------------------------------------------ progress */
+  .art__progress { position: fixed; left: 0; right: 0; top: 0; z-index: 60; height: 2px; pointer-events: none; opacity: 0; transition: opacity var(--dur); }
+  .art__progress.is-on { opacity: 1; }
+  .art__progress i { display: block; height: 100%; width: 100%; background: var(--accent); box-shadow: 0 0 12px var(--accent); transform: scaleX(var(--p, 0)); transform-origin: left; }
+
+  /* ------------------------------------------------------------ header */
+  .art__head { padding-bottom: clamp(2rem, 4vw, 3.5rem); }
+  .art__title { font-size: var(--fs-3xl); line-height: 0.98; letter-spacing: -0.035em; max-width: 20ch; margin-top: 0.75rem; color: var(--cream-0); text-wrap: balance; font-variation-settings: 'opsz' 144, 'SOFT' 50, 'WONK' 1; }
+  @media (min-width: 72rem) { .art__title { font-size: clamp(3.5rem, 2rem + 4.2vw, 6rem); } }
+  .art__headrow { display: grid; gap: 1.5rem; align-items: end; margin-top: clamp(1.5rem, 3vw, 2.5rem); }
+  @media (min-width: 56rem) { .art__headrow { grid-template-columns: minmax(0, 1fr) auto; gap: 4rem; } }
+  .art__dek { margin: 0; max-width: 56ch; font-family: var(--font-display); font-weight: 400; font-size: var(--fs-xl); line-height: 1.3; letter-spacing: -0.01em; color: var(--cream-2); font-variation-settings: 'opsz' 48, 'SOFT' 50; }
+  .art__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.6rem; margin: 0; font-size: var(--fs-sm); color: var(--fg-3); }
+  .art__meta span { display: inline-flex; align-items: center; gap: 0.35em; }
+  .art__meta time { color: var(--cream-1); font-weight: 600; }
+  .art__dot { opacity: 0.6; }
+
+  /* ------------------------------------------------------------ hero: a lit window as wide as the page */
+  .art__hero { position: relative; isolation: isolate; overflow: clip; height: min(72svh, 46rem); min-height: 22rem; background: var(--night-800); }
+  .art__hero-media { position: absolute; inset: -12% 0; z-index: 0; }
+  .art__hero-media img { width: 100%; height: 100%; object-fit: cover; }
+  .art__hero::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to bottom, var(--night-900) 0%, transparent 18%, transparent 70%, var(--night-900) 100%); pointer-events: none; }
+  @media (max-width: 48rem) { .art__hero { height: auto; aspect-ratio: 4 / 5; min-height: 0; } }
+
+  /* ------------------------------------------------------------ body grid. DOM: prose, then the rail (TOC + share). Narrow screens read TOC, prose, share. */
+  .art__grid { display: grid; gap: clamp(2rem, 4vw, 3rem); padding-block: clamp(2.5rem, 6vw, 5rem); }
+  .art__rail { display: contents; }
+  .toc { order: 1; }
+  .art__body { order: 2; min-width: 0; }
+  .art__share { order: 3; }
+  @media (min-width: 64rem) {
+    .art__grid { grid-template-columns: minmax(0, 1fr) 17rem; gap: clamp(3rem, 7vw, 8rem); align-items: start; }
+    .art__body { order: 0; }
+    .art__rail { display: grid; gap: 2rem; position: sticky; top: 6rem; order: 1; }
+  }
+
+  /* the rail */
+  .toc { padding: 1.1rem 1.25rem 1rem; border-radius: var(--r-lg); background: rgb(11 18 14 / 0.62); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid var(--line); }
+  .toc ol { margin: 0.9rem 0 0; padding: 0; list-style: none; counter-reset: toc; display: grid; }
+  .toc li { counter-increment: toc; }
+  .toc a { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); align-items: baseline; gap: 0.5rem; min-height: 2.6rem; padding: 0.55rem 0; border-top: 1px solid var(--line); font-size: var(--fs-sm); line-height: 1.3; text-decoration: none; color: var(--fg-2); transition: color var(--dur-fast); }
+  .toc li:first-child a { border-top: 0; }
+  .toc a::before { content: counter(toc, decimal-leading-zero); font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: 0.06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-fast); }
+  .toc a:hover { color: var(--cream-0); }
+  .toc a[aria-current="true"] { color: var(--cream-0); }
+  .toc a[aria-current="true"]::before { color: var(--accent); text-shadow: 0 0 12px var(--accent); }
+  .art__share { display: grid; gap: 0.75rem; }
+  .art__share-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .art__share-btn { display: inline-flex; align-items: center; gap: 0.45em; min-height: 2.75rem; padding: 0.5rem 1rem; border-radius: var(--r-pill); border: 1px solid rgb(243 233 214 / 0.25); background: transparent; color: var(--cream-1); font: inherit; font-size: var(--fs-sm); font-weight: 600; text-decoration: none; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
+  .art__share-btn:hover { background: var(--cream-1); color: var(--night-900); border-color: var(--cream-1); }
+  .art__share-btn :global(svg) { color: var(--accent); transition: color var(--dur-fast); }
+  .art__share-btn:hover :global(svg) { color: var(--night-900); }
+
+  /* ------------------------------------------------------------ prose: a 65ch measure, generous leading, a drop cap, numbered chapters, pull quotes at display size */
+  .art__prose { max-width: 65ch; font-size: var(--fs-lg); line-height: 1.7; color: var(--fg-2); counter-reset: chapter; }
+  .art__prose :global(p) { margin-bottom: 1.25em; }
+  .art__prose > :global(p:first-of-type)::first-letter { float: left; font-family: var(--font-display); font-weight: 500; font-size: 4.4em; line-height: 0.78; padding: 0.06em 0.12em 0 0; margin-bottom: -0.1em; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .art__prose :global(h2) { counter-increment: chapter; margin-top: 2.4em; margin-bottom: 0.6em; font-size: var(--fs-2xl); line-height: 1.02; letter-spacing: -0.025em; color: var(--cream-0); scroll-margin-top: 6rem; text-wrap: balance; }
+  .art__prose :global(h2)::before { content: counter(chapter, decimal-leading-zero); display: block; margin-bottom: 0.7rem; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
+  .art__prose :global(h3) { margin-top: 1.8em; margin-bottom: 0.5em; font-size: var(--fs-xl); color: var(--cream-0); scroll-margin-top: 6rem; }
+  .art__prose :global(a) { color: var(--cream-1); text-decoration-color: var(--accent); text-underline-offset: 0.16em; }
+  .art__prose :global(a:hover) { color: var(--accent-ink); }
+  .art__prose :global(strong) { color: var(--cream-0); }
+  .art__prose :global(ul), .art__prose :global(ol) { padding-left: 1.2em; margin: 0 0 1.25em; }
+  .art__prose :global(li) { margin-bottom: 0.5em; padding-left: 0.2em; }
+  .art__prose :global(li)::marker { color: var(--accent); }
+  .art__prose :global(img) { border-radius: var(--r-lg); margin: 1.5em 0; }
+  .art__prose :global(hr) { margin: 2.5em 0; border: 0; border-top: 1px solid var(--line); }
+  .art__prose :global(.art__table) { overflow-x: auto; margin: 1.75em 0; border-radius: var(--r-md); border: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
+  .art__prose :global(table) { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: var(--fs-sm); line-height: 1.45; }
+  .art__prose :global(th), .art__prose :global(td) { padding: 0.75em 0.9em; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+  .art__prose :global(tr:last-child td) { border-bottom: 0; }
+  .art__prose :global(th) { font-weight: 600; color: var(--cream-0); background: rgb(243 233 214 / 0.04); }
+  .art__prose :global(blockquote) { position: relative; margin: 2.2em 0; padding: 0.4em 0 0 0; border: 0; font-family: var(--font-display); font-weight: 400; font-style: italic; font-size: var(--fs-2xl); line-height: 1.12; letter-spacing: -0.02em; color: var(--cream-0); text-wrap: balance; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .art__prose :global(blockquote)::before { content: '“'; position: absolute; left: -0.06em; top: -0.42em; font-size: 2.6em; line-height: 1; font-style: normal; color: transparent; -webkit-text-stroke: 1px var(--accent); opacity: 0.9; pointer-events: none; }
+  .art__prose :global(blockquote)::after { content: ''; display: block; width: 3rem; height: 1px; margin-top: 0.7em; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .art__prose :global(blockquote p) { margin: 0; color: inherit; }
+  @media (min-width: 72rem) { .art__prose :global(blockquote) { margin-left: -4rem; padding-left: 4rem; } .art__prose :global(blockquote)::before { left: 0; } }
 
   /* footer of the article */
-  .art__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; margin-top: clamp(2rem, 5vw, 3.5rem); padding-top: 1.25rem; border-top: 1px solid var(--line); }
+  .art__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; max-width: 65ch; margin-top: clamp(2rem, 5vw, 3.5rem); padding-top: 1.25rem; border-top: 1px solid var(--line); }
   .art__tags { list-style: none; margin: 0; padding: 0; }
   .art__tags .chip { text-transform: capitalize; }
 
-  /* sidebar shop card */
-  .art__shop { display: grid; gap: 0.75rem; padding: 1.25rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
-  .art__shop-img { background: var(--mint-100); border-radius: var(--r-md); }
-  .art__shop-img img { object-fit: contain; padding: 8%; }
-  .art__shop-title { font-size: var(--fs-xl); }
-  .art__shop .ticks { gap: 0.4rem; }
-  .art__shop .ticks :global(svg) { margin-top: 0.2em; }
-  .art__shop .btn { margin-top: 0.25rem; }
-  .art__shop-more { justify-self: start; }
+  /* ------------------------------------------------------------ the product panel */
+  .art__shopwrap { padding-bottom: clamp(3rem, 7vw, 6rem); }
+  .art__shop { position: relative; isolation: isolate; overflow: clip; display: grid; gap: 0; border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-mint); }
+  .art__shop::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(50% 70% at 0% 50%, rgb(62 207 168 / 0.12), transparent 70%); pointer-events: none; }
+  @media (min-width: 56rem) { .art__shop { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); align-items: center; } }
+  .art__shop-img { position: relative; aspect-ratio: 4 / 3; background: var(--mint-100); }
+  @media (min-width: 56rem) { .art__shop-img { aspect-ratio: auto; align-self: stretch; min-height: 22rem; } }
+  .art__shop-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; padding: 10%; }
+  .art__shop-body { display: grid; gap: 1rem; justify-items: start; padding: clamp(1.5rem, 4vw, 3.5rem); }
+  .art__shop-title { font-size: var(--fs-2xl); max-width: 14ch; line-height: 1; }
+  .art__shop-ticks { gap: 0.4rem; font-size: var(--fs-sm); }
+  .art__shop-ticks :global(svg) { margin-top: 0.2em; }
+  .art__shop-cta { gap: 0.75rem 1.5rem; margin-top: 0.5rem; }
 
-  /* also read */
-  .band h2 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 96, 'SOFT' 100, 'WONK' 1; }
+  /* ------------------------------------------------------------ also read: a strip on a phone, three across on a desk */
+  .art__also h2 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 96, 'SOFT' 100, 'WONK' 1; }
+  .art__rel { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 22rem); gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-inline: var(--gutter); padding-bottom: 0.5rem; }
+  .art__rel::-webkit-scrollbar { display: none; }
+  .art__rel-card { scroll-snap-align: start; }
+  .art__rel-eyebrow { margin: 0; }
+  .art__rel-card h3 { max-width: 20ch; text-wrap: balance; }
+  @media (min-width: 56rem) {
+    .art__rel { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-columns: auto; gap: clamp(1.5rem, 3vw, 2.5rem); overflow: visible; width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; padding: 0; }
+  }
 
-  /* cta */
-  .cta-band__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
-  .cta-band__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
-  .cta-band__link { color: var(--cream-0); border-color: var(--honey-500); }
+  /* ------------------------------------------------------------ the one cream room */
+  .art__end { padding-top: 0; }
+  .cta-band__link { color: var(--night-900); border-color: var(--apple-600); }
 </style>
