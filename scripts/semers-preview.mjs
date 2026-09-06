@@ -28,7 +28,19 @@ const run = (cmd, cwd) => {
   execSync(cmd, { cwd, stdio: 'inherit', env: { ...process.env, SITE_URL: process.env.SEMERS_SITE_URL || 'https://semers.org' } });
 };
 
-if (!existsSync(join(semers, 'node_modules', 'astro'))) run('npm ci --no-audit --no-fund', semers);
+/*
+ * A restored build cache brings back last time's semers/node_modules, so "is
+ * astro installed" is the wrong question: a dependency added since then is
+ * missing while astro is present, and the build fails at the first import of
+ * it. Install whenever any package the manifest names is absent.
+ */
+const manifest = JSON.parse(readFileSync(join(semers, 'package.json'), 'utf8'));
+const wanted = Object.keys({ ...manifest.dependencies, ...manifest.devDependencies });
+const missing = wanted.filter((name) => !existsSync(join(semers, 'node_modules', name, 'package.json')));
+if (missing.length) {
+  console.log(`[semers-preview] installing (missing: ${missing.join(', ')})`);
+  run('npm ci --no-audit --no-fund', semers);
+}
 run('npx astro build', semers);
 
 // Mount under /semers/: every root-relative URL the site emits gets the prefix.
