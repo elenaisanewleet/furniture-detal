@@ -10,6 +10,8 @@
 [hidden] { display: none !important; }
 
 html {
+  /* The brand faces have no italic: a word marked <em> stays upright in its accent colour rather than being sheared. */
+  font-synthesis: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
   /* Scrolling is smoothed by the script (Lenis); the browser's own smoothing would fight it. */
@@ -134,7 +136,7 @@ p:last-child { margin-bottom: 0; }
 /* ---- Chips & badges --------------------------------------------------- */
 .chip { display: inline-flex; align-items: center; gap: 0.4em; padding: 0.4em 0.85em; border-radius: var(--r-pill); background: rgb(243 233 214 / 0.06); border: 1px solid var(--line); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.04em; white-space: nowrap; }
 .chip--solid { background: var(--cream-1); color: var(--night-900); border-color: transparent; }
-.chip--accent { background: var(--apple-100); color: var(--accent-ink); border-color: rgb(255 90 60 / 0.3); }
+.chip--accent { background: var(--apple-100); color: var(--accent-ink); border-color: rgb(241 90 34 / 0.35); }
 .chip--mint { background: var(--mint-100); color: var(--mint-500); border-color: rgb(62 207 168 / 0.3); }
 .chip--leaf { background: var(--leaf-100); color: var(--leaf-500); border-color: rgb(111 194 122 / 0.3); }
 .chip .dot { width: 0.6em; height: 0.6em; border-radius: 50%; background: var(--chip-color, var(--accent)); }

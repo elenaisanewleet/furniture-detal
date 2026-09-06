@@ -613,7 +613,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
    * zero — the section is only worth its height once something is driving it,
    * so `forge--live` is added by the script and by nothing else.
    */
-  .forge { position: relative; isolation: isolate; background: var(--night-950); border-block: 1px solid var(--line); padding-block: clamp(3rem, 7vw, 6rem); --halo: 208 138 69; }
+  .forge { position: relative; isolation: isolate; background: var(--night-950); border-block: 1px solid var(--line); padding-block: clamp(2.5rem, 5vw, 4.5rem); --halo: 208 138 69; }
   .forge__inner { display: grid; gap: clamp(1.4rem, 3vw, 2.5rem); align-items: center; }
   .forge__art { position: relative; justify-self: center; width: min(34rem, 46vw); }
   /* The drawing is the light on this screen: a soft halo in the colour of the stage it is in. */
@@ -634,10 +634,10 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .forge__title { font-size: var(--fs-3xl); line-height: var(--lh-tight); letter-spacing: -0.03em; max-width: 15ch; margin-top: 0.75rem; }
   .forge__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
 
-  .forge__steps { list-style: none; margin: clamp(1.4rem, 3.5vw, 2.2rem) 0 0; padding: 0; display: grid; gap: 1.5rem; }
+  .forge__steps { list-style: none; margin: clamp(1.2rem, 3vw, 1.8rem) 0 0; padding: 0; display: grid; gap: 1.1rem; }
   .forge__n { display: block; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.16em; color: var(--accent-ink); }
-  .forge__step h3 { font-size: var(--fs-2xl); margin: 0.3rem 0 0.55rem; letter-spacing: -0.02em; line-height: var(--lh-snug); color: var(--cream-0); }
-  .forge__step p { color: var(--cream-2); max-width: 40ch; margin: 0; font-size: var(--fs-lg); }
+  .forge__step h3 { font-size: var(--fs-xl); margin: 0.25rem 0 0.4rem; letter-spacing: -0.01em; line-height: var(--lh-snug); color: var(--cream-0); }
+  .forge__step p { color: var(--cream-2); max-width: 44ch; margin: 0; font-size: var(--fs-md); }
   .forge__rail { display: none; }
   .forge__cta { margin-top: clamp(1.2rem, 3vw, 1.8rem); }
 

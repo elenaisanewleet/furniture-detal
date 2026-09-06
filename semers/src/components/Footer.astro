@@ -36,7 +36,7 @@ const columns = [
   </div>
   <div class="ftr__main container">
     <div class="ftr__brand">
-      <a class="ftr__logo" href={L('/')} aria-label={ui.home}><Logo size={30} /></a>
+      <a class="ftr__logo" href={L('/')} aria-label={ui.home}><Logo size={40} /></a>
       <p class="ftr__tag">{ui.footerTagline}</p>
       <div class="ftr__social">
         {site.social.instagram && <a href={site.social.instagram} rel="noopener" target="_blank" aria-label={ui.instagramAria}><Icon name="instagram" /></a>}
@@ -65,8 +65,8 @@ const columns = [
   @media (max-width: 30rem) { .ftr__form { grid-template-columns: 1fr; } }
   .ftr__main { display: grid; gap: 2.5rem; padding-block: 3.5rem; border-top: 1px solid var(--line); }
   @media (min-width: 48rem) { .ftr__main { grid-template-columns: 1.6fr 1fr 1fr 1fr; } }
-  .ftr__logo { display: inline-flex; align-items: center; padding: 0.5rem 0.95rem 0.5rem 0.7rem; border-radius: var(--r-pill); background: var(--cream-0); color: var(--night-900); text-decoration: none; }
-  .ftr__logo :global(img) { height: 30px; width: auto; display: block; }
+  .ftr__logo { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: var(--r-pill); background: var(--cream-0); color: var(--night-900); text-decoration: none; }
+  .ftr__logo :global(img) { height: 64px; width: auto; display: block; }
   .ftr__tag { margin: 1.25rem 0; max-width: 28ch; color: var(--fg-2); }
   .ftr__social { display: flex; gap: 0.5rem; }
   .ftr__social a { display: grid; place-items: center; width: 2.6rem; height: 2.6rem; border-radius: 50%; border: 1px solid var(--line); color: var(--cream-2); transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }

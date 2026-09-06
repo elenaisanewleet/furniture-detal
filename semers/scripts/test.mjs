@@ -617,20 +617,20 @@ group('font coverage');
     .filter((n) => n && !files.has(n));
   is('every declared file is on disk', missing, []);
 
-  // The Cyrillic faces must sit ahead of the metric fallbacks, which are
-  // Georgia and Arial and would otherwise take the Cyrillic themselves.
+  // The brand faces must sit ahead of the metric fallbacks, which are Arial
+  // and would otherwise take the text themselves.
   const tokens = await readFile(new URL('../src/styles/tokens.css', import.meta.url), 'utf-8');
   const stack = (name) => new RegExp(`--font-${name}:([^;]+);`).exec(tokens)[1].split(',').map((s) => s.trim().replace(/'/g, ''));
   const before = (list, a, b) => list.indexOf(a) !== -1 && list.indexOf(a) < list.indexOf(b);
-  is('literata outranks the serif fallback', before(stack('display'), 'Literata', 'Fraunces Fallback'), true);
-  is('inter outranks the sans fallback', before(stack('sans'), 'Inter', 'Instrument Sans Fallback'), true);
+  is('the display face outranks its fallback', before(stack('display'), 'Lifehack Sans', 'Lifehack Sans Fallback'), true);
+  is('the text face outranks its fallback', before(stack('sans'), 'PT Sans', 'PT Sans Fallback'), true);
 
   // The preload list has to name files that exist, or it is a wasted request
   // and a missed one.
   const preload = await readFile(new URL('../src/data/fonts.ts', import.meta.url), 'utf-8');
   const named = [...preload.matchAll(/'\/fonts\/([^']+)'/g)].map((m) => m[1]);
   is('the preloads name real files', named.filter((n) => !files.has(n)), []);
-  is('russian preloads its own subsets', named.filter((n) => n.includes('cyrillic')).length, 3);
+  is('russian preloads its own subsets', named.filter((n) => n.includes('cyrillic')).length, 2);
 }
 
 console.log(`\n${passed} passed, ${failed} failed`);

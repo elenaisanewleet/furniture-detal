@@ -306,23 +306,26 @@ push a grid item past its frame. Nothing may scroll sideways at 390 px.
 `bun add` in the same sync that carries the scripts, or the deploy fails at
 import time.
 
-## Fonts
+## Brand and fonts
 
-Four families, self-hosted, no request to Google at runtime. `npm run fonts`
-re-fetches the subsets and rewrites the `@font-face` block in
-`src/styles/fonts.css`; `npm run fonts:check` reports what would change without
-downloading anything.
+The identity is the owner's existing one, published at semers.org: the
+apple-and-wordmark logo in navy (`public/logo-semers.svg`), the deep-green /
+orange-red / amber palette, and the faces **Lifehack Sans Medium** (display) and
+**PT Sans** (text). `src/styles/tokens.css` carries the palette as roles; the
+night ground is the brand's deep green taken down, the accent is the brand
+orange with dark type on it, as on the packs.
 
-Fraunces and Instrument Sans carry the Latin, and neither ships a single
-Cyrillic glyph — which is why Literata and Inter are there, declared over the
-Cyrillic ranges only. Nothing switches them per page: a `@font-face` applies
-strictly inside its `unicode-range`, so a Russian sentence with a Latin brand
-name in it sets "Semers" in Fraunces and the Russian words in Literata by
-itself. Adding a language means adding its subsets to `FAMILIES` in
-`scripts/fetch-fonts.mjs`, the new family to the two stacks in
-`src/styles/tokens.css` — **before** the metric-matched fallbacks, which are
-Georgia and Arial and will otherwise take the glyphs themselves — and its
-preload pair to `src/data/fonts.ts`.
+PT Sans is self-hosted from Google Fonts: `npm run fonts` re-fetches its
+subsets (latin, latin-ext, cyrillic, cyrillic-ext, in 400 and 700, upright and
+italic) and rewrites the generated `@font-face` block in `src/styles/fonts.css`;
+`npm run fonts:check` reports what would change without downloading anything.
+Lifehack Sans is not on Google Fonts. Its two subsets — Latin with the Latvian
+diacritics, and Cyrillic — were cut from the woff2 semers.org serves and live in
+`public/fonts/lifehack-sans-*.woff2`; they are declared by hand *below* the
+generated block, in the part the script leaves alone, together with the
+metric-matched fallbacks. Neither face has an italic, and `html { font-synthesis:
+none }` keeps the browser from shearing one: a word marked `<em>` stands upright
+in its accent colour.
 
 ## Local development
 

@@ -36,36 +36,12 @@ const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Geck
 /** `slug` names the files on disk; `subsets` are the ones this site can use. */
 const FAMILIES = [
   {
-    family: 'Fraunces',
-    slug: 'fraunces',
-    query: 'Fraunces:ital,opsz,SOFT,WONK,wght@0,9..144,0..100,0..1,300..900;1,9..144,0..100,0..1,300..900',
-    subsets: ['latin', 'latin-ext'],
-    weight: '300 900',
-    note: 'display serif — optical size, softness and the wonk axis',
-  },
-  {
-    family: 'Instrument Sans',
-    slug: 'instrument-sans',
-    query: 'Instrument+Sans:ital,wdth,wght@0,75..100,400..700;1,75..100,400..700',
-    subsets: ['latin', 'latin-ext'],
-    weight: '400 700',
-    note: 'grotesk for UI and body text',
-  },
-  {
-    family: 'Literata',
-    slug: 'literata',
-    query: 'Literata:ital,opsz,wght@0,7..72,200..900;1,7..72,200..900',
-    subsets: ['cyrillic', 'cyrillic-ext'],
-    weight: '200 900',
-    note: 'the display serif for Cyrillic, beside Fraunces',
-  },
-  {
-    family: 'Inter',
-    slug: 'inter',
-    query: 'Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900',
-    subsets: ['cyrillic', 'cyrillic-ext'],
-    weight: '100 900',
-    note: 'the grotesk for Cyrillic, beside Instrument Sans',
+    family: 'PT Sans',
+    slug: 'pt-sans',
+    query: 'PT+Sans:ital,wght@0,400;0,700;1,400;1,700',
+    subsets: ['latin', 'latin-ext', 'cyrillic', 'cyrillic-ext'],
+    weights: ['400', '700'],
+    note: 'the brand text face — Latin, Latvian and Cyrillic in one family',
   },
 ];
 
@@ -79,7 +55,7 @@ function parseFaces(css) {
     const field = (name) => (new RegExp(`${name}:\\s*([^;]+);`).exec(body) || [])[1]?.trim();
     const url = /src:\s*url\(([^)]+)\)/.exec(body)?.[1];
     if (!url) continue;
-    faces.push({ subset: m[1], style: field('font-style') || 'normal', range: field('unicode-range'), url });
+    faces.push({ subset: m[1], style: field('font-style') || 'normal', weight: field('font-weight') || '400', range: field('unicode-range'), url });
   }
   return faces;
 }
@@ -93,30 +69,30 @@ for (const f of FAMILIES) {
   if (!res.ok) throw new Error(`${f.family}: the font service answered ${res.status}`);
   const faces = parseFaces(await res.text()).filter((x) => f.subsets.includes(x.subset));
 
-  for (const subset of f.subsets) {
-    for (const style of ['normal', 'italic']) {
-      const face = faces.find((x) => x.subset === subset && x.style === style);
-      if (!face) {
-        // Not every family draws a true italic; say so rather than leaving a gap.
-        console.log(`  ${f.slug} ${subset} ${style}: not served, skipped`);
-        continue;
-      }
-      const name = `${f.slug}-${style}-${subset}.woff2`;
-      const path = `${OUT_DIR}/${name}`;
-      if (!existsSync(path)) {
-        changes.push(name);
-        if (!check) {
-          const bin = await fetch(face.url, { headers: { 'User-Agent': UA } });
-          if (!bin.ok) throw new Error(`${name}: ${bin.status}`);
-          const bytes = Buffer.from(await bin.arrayBuffer());
-          await mkdir(OUT_DIR, { recursive: true });
-          await writeFile(path, bytes);
-          console.log(`  ${name}  ${(bytes.length / 1024).toFixed(1)} kB`);
+  for (const weight of f.weights) {
+    for (const subset of f.subsets) {
+      for (const style of ['normal', 'italic']) {
+        const face = faces.find((x) => x.subset === subset && x.style === style && x.weight === weight);
+        if (!face) {
+          // Not every family draws a true italic; say so rather than leaving a gap.
+          console.log(`  ${f.slug} ${weight} ${subset} ${style}: not served, skipped`);
+          continue;
         }
+        const name = `${f.slug}-${weight}-${style}-${subset}.woff2`;
+        const path = `${OUT_DIR}/${name}`;
+        if (!existsSync(path)) {
+          changes.push(name);
+          if (!check) {
+            const bin = await fetch(face.url, { headers: { 'User-Agent': UA } });
+            if (!bin.ok) throw new Error(`${name}: ${bin.status}`);
+            await writeFile(path, Buffer.from(await bin.arrayBuffer()));
+            console.log(`  fetched ${name}`);
+          }
+        }
+        blocks.push(
+          `@font-face {\n  font-family: '${f.family}';\n  font-style: ${style};\n  font-weight: ${weight};\n  font-display: swap;\n  src: url('/fonts/${name}') format('woff2');\n  unicode-range: ${face.range};\n}`,
+        );
       }
-      blocks.push(
-        `@font-face {\n  font-family: '${f.family}';\n  font-style: ${style};\n  font-weight: ${f.weight};\n  font-display: swap;\n  src: url('/fonts/${name}') format('woff2');\n  unicode-range: ${face.range};\n}`,
-      );
     }
   }
 }
@@ -139,7 +115,8 @@ const header = [
   ' *',
   ...FAMILIES.map((f) => ` *   ${f.family.padEnd(16)}${f.subsets.join(', ').padEnd(24)}${f.note}`),
   ' *',
-  ' * All four are OFL licensed.',
+  ' * PT Sans is OFL licensed. Lifehack Sans, the brand display face from semers.org,',
+  ' * is not served by Google and is declared by hand below the generated block.',
   ' */',
 ].join('\n');
 

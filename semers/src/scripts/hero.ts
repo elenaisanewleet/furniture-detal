@@ -95,11 +95,11 @@ if (section && canvas && !reduced && webgl()) {
     uP: { value: 0 },
     uTime: { value: 0 },
     uSize: { value: mobile ? 13 : 11 },
-    cA: { value: col('#ff5a3c') },
-    cA2: { value: col('#c8321f') },
-    cB: { value: col('#d99a52') },
-    cB2: { value: col('#f1cf98') },
-    cM: { value: col('#f0b04a') },
+    cA: { value: col('#f15a22') },
+    cA2: { value: col('#b8401a') },
+    cB: { value: col('#d88351') },
+    cB2: { value: col('#ffd98a') },
+    cM: { value: col('#fdb913') },
   };
   const mat = new THREE.ShaderMaterial({
     uniforms,

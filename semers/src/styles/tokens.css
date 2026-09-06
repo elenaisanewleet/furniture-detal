@@ -12,13 +12,14 @@
   color-scheme: dark;
 
   /* ---- Night (the ground) --------------------------------------------- */
-  --night-950: #060a08;
-  --night-900: #0b120e;
-  --night-800: #101913;
-  --night-700: #172219;
-  --night-600: #202d24;
-  --night-500: #2c3b31;
-  --night-400: #4b5c51;
+  /* The brand's own deep green (#245b08 / #293d17 on semers.org), taken down to night. */
+  --night-950: #08120a;
+  --night-900: #0e1c0f;
+  --night-800: #142615;
+  --night-700: #1b301c;
+  --night-600: #233d24;
+  --night-500: #2f4f2f;
+  --night-400: #4f7450;
 
   /* ---- Cream (the light) ---------------------------------------------- */
   --cream-0: #fffcf5;
@@ -35,14 +36,14 @@
   --ink-100: #d8cfc2;
 
   /* ---- Brand / product colours, tuned to glow on the night ground ------- */
-  --apple-500: #ff5a3c; /* the signal — a red that reads as light, not paint */
-  --apple-600: #e2452f;
-  --apple-700: #b8301c;
-  --apple-100: #3a1a14; /* a "soft" red is now a red-lit shadow */
+  --apple-500: #f15a22; /* the brand orange-red from semers.org — the signal, read as light */
+  --apple-600: #d94d18;
+  --apple-700: #b33d10;
+  --apple-100: #3a1d0f; /* a "soft" orange is now an orange-lit shadow */
 
-  --leaf-500: #6fc27a;
-  --leaf-600: #4fa35b;
-  --leaf-100: #16261b;
+  --leaf-500: #9fca77; /* the brand light green */
+  --leaf-600: #6aa14b;
+  --leaf-100: #17301a;
 
   --mint-500: #3ecfa8; /* App'Lite Classic wrapper */
   --mint-600: #2bb597;
@@ -52,8 +53,8 @@
   --coral-600: #f26b7a;
   --coral-100: #3a1a20;
 
-  --honey-500: #f0b04a; /* baked apple amber */
-  --honey-100: #33260f;
+  --honey-500: #fdb913; /* the brand amber */
+  --honey-100: #33270a;
 
   --bar-700: #a8602a; /* pastila crumb */
   --bar-500: #d08a45;
@@ -82,31 +83,31 @@
 
   --fg: var(--cream-1);
   --fg-2: #bdb09a;
-  --fg-3: #958b78; /* 5.4:1 on night-900, 4.7:1 on night-700 */
+  --fg-3: #a39a86; /* 6.2:1 on night-900, 5.1:1 on night-700 */
   --fg-invert: var(--night-900);
 
   --line: rgb(243 233 214 / 0.12);
   --line-strong: var(--cream-1);
 
   --accent: var(--apple-500);
-  /* The accent as *text*: lifted a step so 12 px of it still clears 4.5:1 on the ground. */
-  --accent-ink: #ff8266;
-  /* Cream on the fill must clear 4.5:1; apple-600 sits at 4.0, so the fill is a step deeper (4.6) and brightens on hover. */
-  --accent-fill: #d63a24;
-  --accent-fill-hover: var(--apple-600);
-  --accent-on: #fffcf5;
+  /* The accent as *text*: lifted a step so 12 px of it still clears 4.5:1 on the ground (6.8:1). */
+  --accent-ink: #ff7a45;
+  /* The brand orange carries dark type, as it does on the packs: night on orange is 5.6:1, on amber 11:1. */
+  --accent-fill: var(--apple-500);
+  --accent-fill-hover: var(--honey-500);
+  --accent-on: var(--night-950);
   --accent-soft: var(--apple-100);
 
-  --focus: #7cc0ff;
+  --focus: #8ec7ff;
 
   /* ---- Type ----------------------------------------------------------- */
   /*
-   * Two families per role, not one. Fraunces and Instrument Sans have no
-   * Cyrillic; Literata and Inter are declared over the Cyrillic ranges only and
-   * pick up exactly the glyphs the first pair cannot draw.
+   * The brand faces from semers.org: Lifehack Sans Medium for everything set
+   * large and PT Sans for text. Both carry Cyrillic and the Latvian diacritics
+   * themselves, so no companion face is needed.
    */
-  --font-display: 'Fraunces', 'Literata', 'Fraunces Fallback', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
-  --font-sans: 'Instrument Sans', 'Inter', 'Instrument Sans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Lifehack Sans', 'Lifehack Sans Fallback', 'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif;
+  --font-sans: 'PT Sans', 'PT Sans Fallback', 'Trebuchet MS', Arial, sans-serif;
 
   /* Bigger at every step: on a dark ground, type is the light. */
   --fs-xs: 0.75rem;
@@ -117,9 +118,9 @@
   --fs-2xl: clamp(1.875rem, 1.4rem + 1.9vw, 3rem);
   --fs-3xl: clamp(2.5rem, 1.7rem + 3.2vw, 4.75rem);
   --fs-4xl: clamp(3.25rem, 1.9rem + 5.6vw, 7.25rem);
-  --fs-hero: clamp(3.75rem, 1.5rem + 10.5vw, 13rem);
+  --fs-hero: clamp(3.75rem, 1.5rem + 11vw, 14rem);
 
-  --lh-tight: 0.92;
+  --lh-tight: 0.94;
   --lh-snug: 1.1;
   --lh-body: 1.55;
 
@@ -144,8 +145,8 @@
   --shadow-1: 0 0 0 1px rgb(243 233 214 / 0.08);
   --shadow-2: 0 0 0 1px rgb(243 233 214 / 0.1), 0 24px 60px -30px rgb(0 0 0 / 0.8);
   --shadow-3: 0 0 0 1px rgb(243 233 214 / 0.12), 0 40px 90px -30px rgb(0 0 0 / 0.9);
-  --glow-accent: 0 0 80px -20px rgb(255 90 60 / 0.55);
-  --glow-honey: 0 0 80px -20px rgb(240 176 74 / 0.5);
+  --glow-accent: 0 0 80px -20px rgb(241 90 34 / 0.6);
+  --glow-honey: 0 0 80px -20px rgb(253 185 19 / 0.5);
   --glow-mint: 0 0 80px -20px rgb(62 207 168 / 0.5);
 
   --container: 84rem;

@@ -288,7 +288,7 @@
 /* ---------- Misc ---------- */
 .notice { padding: 0.95rem 1.15rem; border-radius: var(--r-md); background: var(--honey-100); color: var(--honey-500); font-size: var(--fs-sm); border: 1px solid rgb(240 176 74 / 0.3); }
 .notice--ok { background: var(--leaf-100); color: var(--leaf-500); border-color: rgb(111 194 122 / 0.3); }
-.notice--err { background: var(--apple-100); color: var(--accent-ink); border-color: rgb(255 90 60 / 0.3); }
+.notice--err { background: var(--apple-100); color: var(--accent-ink); border-color: rgb(241 90 34 / 0.35); }
 .two-tone { background: linear-gradient(to bottom, var(--bg) 0 55%, var(--bg-sunken) 55% 100%); }
 .img-cover { width: 100%; height: 100%; object-fit: cover; display: block; }
 .rounded { border-radius: var(--r-lg); overflow: clip; }

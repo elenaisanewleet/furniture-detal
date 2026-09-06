@@ -11,7 +11,6 @@ import { itemList, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { localeParams, type Locale } from '~/i18n/config';
 import { localizedCollections, localizedFaqs } from '~/data/copy';
-import { FONT_PRELOAD_ITALIC } from '~/data/fonts';
 
 export function getStaticPaths() {
   return localeParams();
@@ -35,7 +34,6 @@ const poster = im('hero-bars');
   heroHeader
 >
   <Fragment slot="head">
-    <link rel="preload" href={FONT_PRELOAD_ITALIC[locale]} as="font" type="font/woff2" crossorigin />
   </Fragment>
 
   <!-- ============================== THE SKY ============================== -->
@@ -344,8 +342,8 @@ const poster = im('hero-bars');
   .sky { position: relative; height: 230vh; height: 230svh; background: var(--night-950); }
   .sky__pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: clip; display: grid; align-items: end; isolation: isolate; }
   .sky__glow { position: absolute; inset: 0; z-index: 0; background:
-      radial-gradient(60% 50% at 62% 42%, rgb(255 90 60 / calc(0.32 - var(--hp, 0) * 0.14)), transparent 70%),
-      radial-gradient(50% 40% at 40% 60%, rgb(240 176 74 / calc(0.06 + var(--hp, 0) * 0.16)), transparent 70%),
+      radial-gradient(60% 50% at 62% 42%, rgb(241 90 34 / calc(0.3 - var(--hp, 0) * 0.13)), transparent 70%),
+      radial-gradient(50% 40% at 40% 60%, rgb(253 185 19 / calc(0.06 + var(--hp, 0) * 0.15)), transparent 70%),
       radial-gradient(120% 100% at 50% 100%, var(--night-900), transparent 60%); }
   .sky__poster { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; opacity: 0.22; filter: saturate(0.6) contrast(1.1); transform: scale(calc(1.06 + var(--hp, 0) * 0.06)); mask-image: radial-gradient(80% 70% at 62% 45%, #000 30%, transparent 75%); }
   .sky__gl { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; transition: opacity 1.4s var(--ease-out); }
@@ -355,7 +353,7 @@ const poster = im('hero-bars');
   .sky__copy a, .sky__copy .btn { pointer-events: auto; }
   .sky__eyebrow { color: var(--cream-2); margin-bottom: 1.2rem; }
   /* The two headlines share one grid cell, so the block is as tall as the taller of them in any language and neither is ever clipped. */
-  .sky__title { position: relative; display: grid; font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.045em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .sky__title { position: relative; display: grid; font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.03em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
   .sky__line { grid-area: 1 / 1; display: block; text-wrap: balance; will-change: opacity, transform; }
   .sky__line--a { opacity: clamp(0, calc((0.55 - var(--hp, 0)) * 5), 1); transform: translateY(calc(var(--hp, 0) * -0.35em)); }
   .sky__line--b { opacity: clamp(0, calc((var(--hp, 0) - 0.45) * 5), 1); transform: translateY(calc((1 - var(--hp, 0)) * 0.35em)); }
