@@ -91,8 +91,9 @@
   --accent: var(--apple-500);
   /* The accent as *text*: lifted a step so 12 px of it still clears 4.5:1 on the ground. */
   --accent-ink: #ff8266;
-  --accent-fill: var(--apple-600);
-  --accent-fill-hover: var(--apple-500);
+  /* Cream on the fill must clear 4.5:1; apple-600 sits at 4.0, so the fill is a step deeper (4.6) and brightens on hover. */
+  --accent-fill: #d63a24;
+  --accent-fill-hover: var(--apple-600);
   --accent-on: #fffcf5;
   --accent-soft: var(--apple-100);
 
