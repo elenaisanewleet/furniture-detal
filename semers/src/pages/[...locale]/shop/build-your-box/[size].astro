@@ -33,15 +33,34 @@ const bigger = BOX_SIZES.filter((b) => b.size > box.size).sort((a, b) => a.size 
     { name: `${box.size} pieces`, href: boxHref(box.size) },
   ]}
 >
-  <section class="container page-hero">
-    <p class="eyebrow">Build your box</p>
-    <h1>{box.size} bars. Your rules. {pct}% off.</h1>
-    <p class="lead">
-      Tap to add any bar or meringue pack to a slot. Fill all {box.size} and the box goes to your cart as one item — from {formatPrice(total, locale)},
-      about {formatPrice(total / box.size, locale)} a piece.
-      {bigger && <Fragment> The {bigger.size}-piece box takes {Math.round(bigger.discount * 100)}% off instead.</Fragment>}
-    </p>
+  <!-- One enormous numeral, the size of the box, and the line beside it. -->
+  <section class="container bb-hero" aria-labelledby="page-title">
+    <div class="bb-hero__copy">
+      <p class="eyebrow">Build your box</p>
+      <h1 id="page-title" class="bb-hero__title" data-words>{box.size} bars. Your rules. {pct}% off.</h1>
+      <p class="lead bb-hero__lead">
+        Tap to add any bar or meringue pack to a slot. Fill all {box.size} and the box goes to your cart as one item — from {formatPrice(total, locale)},
+        about {formatPrice(total / box.size, locale)} a piece.
+        {bigger && <Fragment> The {bigger.size}-piece box takes {Math.round(bigger.discount * 100)}% off instead.</Fragment>}
+      </p>
+    </div>
+    <p class="bb-hero__n" aria-hidden="true">{box.size}</p>
   </section>
 
   <BoxBuilder size={box.size} discount={box.discount} siblings={siblings} />
 </Base>
+
+<style>
+  .bb-hero { position: relative; display: grid; gap: 1.5rem; align-items: end; padding-block: clamp(3.5rem, 8vw, 7rem) clamp(2rem, 5vw, 3.5rem); overflow: visible; }
+  .bb-hero .eyebrow { margin-bottom: 1.25rem; }
+  .bb-hero__title { font-size: var(--fs-4xl); max-width: 12ch; }
+  .bb-hero__lead { margin-top: 1.5rem; max-width: 52ch; }
+  .bb-hero__n { position: relative; margin: 0; justify-self: end; font-family: var(--font-display); font-weight: 400; font-size: clamp(9rem, 26vw, 24rem); line-height: 0.78; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; user-select: none; pointer-events: none; }
+  .bb-hero__n::after { content: ''; position: absolute; left: 50%; top: 50%; z-index: -1; width: 60%; height: 60%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgb(240 176 74 / 0.28), transparent 70%); filter: blur(30px); }
+  @media (min-width: 56rem) {
+    .bb-hero { grid-template-columns: minmax(0, 1fr) auto; gap: 3rem; }
+  }
+  @media (max-width: 55.99rem) {
+    .bb-hero__n { position: absolute; right: -0.05em; top: 0.9rem; z-index: -1; font-size: clamp(9rem, 40vw, 14rem); -webkit-text-stroke-color: rgb(200 182 151 / 0.5); }
+  }
+</style>

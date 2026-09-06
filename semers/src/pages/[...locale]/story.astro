@@ -371,7 +371,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
   /* ---------------------------------------------------------- hero */
   .story-hero { padding-bottom: clamp(2rem, 5vw, 4rem); }
-  .story-hero__title { font-size: clamp(3rem, 2rem + 6.5vw, 8.5rem); line-height: 0.92; letter-spacing: -0.04em; max-width: 16ch; }
+  .story-hero .story-hero__title { font-size: clamp(3rem, 2rem + 6.5vw, 8.5rem); line-height: 0.92; letter-spacing: -0.04em; max-width: 16ch; }
   .story-hero__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .story-hero__row { display: grid; gap: clamp(2rem, 5vw, 4rem); margin-top: clamp(2rem, 5vw, 3.5rem); align-items: end; }
   @media (min-width: 56rem) { .story-hero__row { grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); } }

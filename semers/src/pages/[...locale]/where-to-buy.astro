@@ -106,7 +106,7 @@ const faqs = pick.flatMap((q) => {
         {rows.map((r) => (
           <li class="shelf__row">
             {r.url ? (
-              <a class="shelf__in" href={r.url} rel="noopener" target="_blank" data-cursor="Visit">
+              <a class="shelf__in" href={r.url} rel="noopener" target="_blank">
                 <span class="shelf__n" aria-hidden="true">{r.n}</span>
                 <span class="shelf__meta">
                   <span class="eyebrow">{r.eyebrow}</span>
@@ -244,7 +244,7 @@ const faqs = pick.flatMap((q) => {
 
   /* ---------------------------------------------------------- hero */
   .wtb-hero { padding-bottom: clamp(2rem, 5vw, 3.5rem); }
-  .wtb-hero__title { font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.045em; max-width: 9ch; }
+  .wtb-hero .wtb-hero__title { font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.045em; max-width: 9ch; }
   .wtb-hero__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .wtb-hero__row { display: grid; gap: var(--sp-5) var(--sp-8); margin-top: clamp(2rem, 4vw, 3rem); align-items: end; }
   @media (min-width: 56rem) { .wtb-hero__row { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); } .wtb-hero__cta { justify-content: end; } }
