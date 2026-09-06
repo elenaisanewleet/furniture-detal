@@ -1,0 +1,448 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, COLLECTIONS, formatThreshold } from '~/data/products';
+import { img, imgSrc, im, imgSrcset, SIZES } from '~/data/images';
+import { ARTICLES_SORTED } from '~/data/journal';
+import { FAQS } from '~/data/faq';
+import { site } from '~/data/site';
+import { itemList, faqPage } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { localeParams, type Locale } from '~/i18n/config';
+import { localizedCollections, localizedFaqs } from '~/data/copy';
+
+export function getStaticPaths() {
+  return localeParams();
+}
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const best = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 4);
+const homeFaqs = localizedFaqs(FAQS.filter((f) => ['product', 'nutrition', 'orders'].includes(f.group)).slice(0, 5), locale);
+const tiles = localizedCollections(COLLECTIONS.filter((c) => c.key !== 'applite'), locale);
+const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a bar', 'Made in Riga', 'Recipe from 1888', 'Ships across the EU', 'Egg white, nothing else'];
+const poster = im('hero-bars');
+---
+<Base
+  title="Semers — Apple bars & pastila. 99% apples, no added sugar"
+  description="Baked apple snacks from Riga: Apple Bars, Flourless Bars, meringues and Belyov pastila. 99% apples, egg white, no added sugar, about 97 kcal a bar."
+  canonical="/"
+  ogImage="hero-bars"
+  schema={[itemList(origin, best), faqPage(homeFaqs)]}
+  bodyClass="home"
+  heroHeader
+>
+  <Fragment slot="head">
+  </Fragment>
+
+  <!-- ============================== THE SKY ============================== -->
+  <!--
+    An apple made of light that becomes a bar as the reader scrolls. The
+    section is tall and its one screen is pinned; --hp (0 to 1) is written by
+    the script and everything here — the two headlines, the hint, the canvas —
+    reads it. With no WebGL the poster photograph is the hero and the headline
+    still turns over.
+  -->
+  <section class="sky" data-hero aria-labelledby="hero-title">
+    <div class="sky__pin">
+      <div class="sky__glow" aria-hidden="true"></div>
+      <img class="sky__poster" src={poster.src} srcset={poster.srcset} sizes="100vw" alt="" width={poster.width} height={poster.height} loading="eager" fetchpriority="high" decoding="async" />
+      <canvas class="sky__gl" data-hero-canvas aria-hidden="true"></canvas>
+      <div class="container sky__copy">
+        <p class="eyebrow sky__eyebrow">Baked apple snacks · Riga, Latvia</p>
+        <h1 class="sky__title" id="hero-title">
+          <span class="sky__line sky__line--a">One apple.</span>
+          <span class="sky__line sky__line--b">One bar. <em>Nothing else.</em></span>
+        </h1>
+        <p class="sky__lead">Antonovka apples baked, whipped with egg white and slowly dried the Belyov way. No added sugar, no flour, no nonsense. About 97 kcal a bar.</p>
+        <div class="hero__cta">
+          <a class="btn btn--lg btn--accent" href="/shop/">Shop the bars <Icon name="arrow" size={20} class="arrow" /></a>
+          <a class="btn btn--lg btn--ghost" href="/why-pastila/">Why pastila?</a>
+        </div>
+        <div class="hero__proof">
+          <span><Icon name="check" size={16} /> No added sugar</span>
+          <span><Icon name="check" size={16} /> Gluten free</span>
+          <span><Icon name="check" size={16} /> Free EU shipping over {formatThreshold(site.shipping.freeFrom, locale)}</span>
+        </div>
+      </div>
+      <div class="sky__hint" aria-hidden="true"><span>Scroll</span><i></i></div>
+    </div>
+  </section>
+
+  <div class="marquee tape" aria-hidden="true">
+    <div class="marquee__track">
+      {[...tape, ...tape].map((t) => <span class="marquee__item">{t}</span>)}
+    </div>
+  </div>
+
+  <!-- ============================== BESTSELLERS ============================== -->
+  <section class="section container" aria-labelledby="best-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Bestsellers</p>
+        <h2 id="best-title" data-words>Start with the ones everyone starts with.</h2>
+      </div>
+      <a class="link" href="/shop/">Shop all products</a>
+    </div>
+    <div class="grid grid--4" data-stagger>
+      {best.map((p, i) => <ProductCard product={p} loading={i < 2 ? 'eager' : 'lazy'} />)}
+    </div>
+  </section>
+
+  <!-- ============================== INSIDE ============================== -->
+  <!-- The shop's own sentence, over the one photograph that proves it. -->
+  <section class="inside" aria-labelledby="render-title">
+    <div class="inside__media">
+      <img src={im('apple-split').src} srcset={im('apple-split').srcset} sizes="100vw" alt={im('apple-split').alt} width={im('apple-split').width} height={im('apple-split').height} loading="lazy" decoding="async" data-parallax="0.25" />
+    </div>
+    <div class="container inside__copy">
+      <p class="eyebrow">What pastila is</p>
+      <h2 id="render-title" class="inside__title" data-words>It’s an apple. <em>Inside, it’s pastila.</em></h2>
+      <div class="inside__text" data-reveal>
+        <p>Take a sour northern apple, bake it until the sugars caramelise, whip the purée with egg white until it holds air, then spread it thin and dry it for hours. What you get is a soft, fibrous loaf that tastes like the concentrated heart of an apple — and nothing else was added to make it so.</p>
+        <p>We cut that loaf into bars, bake it into meringues and press it into desserts. Same two ingredients every time.</p>
+        <div class="cluster mt-4">
+          <a class="btn" href="/how-its-made/">How it’s made</a>
+          <a class="link" href="/shop/pastila/">Shop pastila</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== HOW IT'S MADE (sideways) ============================== -->
+  <!--
+    Four steps read as four rooms the page walks through sideways. On a phone,
+    or with reduced motion, the rooms stack and the walk is a scroll.
+  -->
+  <section class="walk" aria-labelledby="how-title" data-hscroll>
+    <div class="walk__pin">
+      <div class="walk__track" data-hscroll-track>
+        <div class="walk__panel walk__panel--intro">
+          <p class="eyebrow">How it’s made</p>
+          <h2 id="how-title" class="walk__title">Twelve hours, four steps, zero shortcuts.</h2>
+          <a class="btn btn--ghost mt-4" href="/how-its-made/">The full process</a>
+        </div>
+        <div class="walk__panel">
+          <span class="walk__n" aria-hidden="true">01</span>
+          <div class="walk__img"><img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes="(min-width: 56rem) 40vw, 100vw" alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" /></div>
+          <h3>Bake</h3>
+          <p>Whole Antonovka apples go into the oven until soft and caramel-edged.</p>
+        </div>
+        <div class="walk__panel">
+          <span class="walk__n" aria-hidden="true">02</span>
+          <div class="walk__img"><img src={im('process-oven').src} srcset={im('process-oven').srcset} sizes="(min-width: 56rem) 40vw, 100vw" alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" /></div>
+          <h3>Whip</h3>
+          <p>The purée is beaten with egg white until it triples in volume.</p>
+        </div>
+        <div class="walk__panel">
+          <span class="walk__n" aria-hidden="true">03</span>
+          <div class="walk__img"><img src={im('pastila-texture').src} srcset={im('pastila-texture').srcset} sizes="(min-width: 56rem) 40vw, 100vw" alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" /></div>
+          <h3>Layer &amp; dry</h3>
+          <p>Thin sheets dry slowly at low heat, then are stacked and pressed.</p>
+        </div>
+        <div class="walk__panel">
+          <span class="walk__n" aria-hidden="true">04</span>
+          <div class="walk__img"><img src={im('pastila-slices').src} srcset={im('pastila-slices').srcset} sizes="(min-width: 56rem) 40vw, 100vw" alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="lazy" decoding="async" /></div>
+          <h3>Cut &amp; pack</h3>
+          <p>Bars, squares and loaves are cut by hand and sealed the same day.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== INGREDIENTS ============================== -->
+  <section class="section container" aria-labelledby="ing-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">The whole ingredient list</p>
+        <h2 id="ing-title" data-words>Apples. Egg white. Sometimes berries.</h2>
+      </div>
+      <p class="muted" style="max-width:36ch">If it isn’t grown in an orchard or laid by a hen, it isn’t in the pack.</p>
+    </div>
+    <div class="trio" data-stagger>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes={im('apples-orchard').srcset && SIZES.third} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" /></div>
+        <h3>Antonovka apples <span class="muted">99%</span></h3>
+        <p>A tart, aromatic northern apple with lots of pectin. That is what lets the purée set without gelatine and taste like fruit rather than sugar.</p>
+      </article>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('process-oven').src} srcset={im('process-oven').srcset} sizes={im('process-oven').srcset && SIZES.third} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" /></div>
+        <h3>Egg white <span class="muted">1%</span></h3>
+        <p>Whipped into the purée to trap air. It is why pastila is light and springy instead of a dense fruit leather.</p>
+      </article>
+      <article class="feat feat--img">
+        <div class="frame frame--3x2"><img src={im('flourless-bar').src} srcset={im('flourless-bar').srcset} sizes={im('flourless-bar').srcset && SIZES.third} alt={im('flourless-bar').alt} width={im('flourless-bar').width} height={im('flourless-bar').height} loading="lazy" decoding="async" /></div>
+        <h3>Berries &amp; spice <span class="muted">optional</span></h3>
+        <p>Blueberry, cranberry, cherry, lingonberry, black currant, cinnamon, pine nuts. Whole fruit, not “natural flavouring”.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================== COMPARISON ============================== -->
+  <section class="section maths" aria-labelledby="vs-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Honest maths</p>
+          <h2 id="vs-title" data-words>Same craving. Less than half the calories.</h2>
+        </div>
+      </div>
+      <div class="vs" data-reveal>
+        <div class="vs__col vs__col--win">
+          <p class="eyebrow">App’Lite Apple Bar · 35 g</p>
+          <div class="vs__kcal"><b data-count="97">97</b> <span class="muted small">kcal</span></div>
+          <div class="vs__meter" aria-hidden="true"><i style="--w:0.404"></i></div>
+          <ul class="vs__list">
+            <li class="yes"><Icon name="check" size={18} /> 0 g added sugar — sweetness from the apple</li>
+            <li class="yes"><Icon name="check" size={18} /> 2 ingredients</li>
+            <li class="yes"><Icon name="check" size={18} /> 0 g fat, no flour, no gluten</li>
+            <li class="yes"><Icon name="check" size={18} /> Source of fibre</li>
+          </ul>
+        </div>
+        <div class="vs__vs">vs</div>
+        <div class="vs__col">
+          <p class="eyebrow">Typical milk chocolate bar · 45 g</p>
+          <div class="vs__kcal"><b data-count="240" data-count-prefix="~">~240</b> <span class="muted small">kcal</span></div>
+          <div class="vs__meter vs__meter--rival" aria-hidden="true"><i style="--w:1"></i></div>
+          <ul class="vs__list">
+            <li class="no"><Icon name="close" size={18} /> ~24 g sugar, mostly added</li>
+            <li class="no"><Icon name="close" size={18} /> 8–12 ingredients incl. emulsifiers</li>
+            <li class="no"><Icon name="close" size={18} /> ~13 g fat</li>
+            <li class="no"><Icon name="close" size={18} /> No meaningful fibre</li>
+          </ul>
+        </div>
+      </div>
+      <p class="tiny muted mt-4">Chocolate figures are typical values for a mainstream 45 g milk chocolate bar; Apple Bar values are per pack. Full nutrition on every product page.</p>
+    </div>
+  </section>
+
+  <!-- ============================== WHO IT'S FOR ============================== -->
+  <section class="famband" aria-labelledby="famband-title">
+    <div class="famband__media">
+      <img src={im('family-kitchen').src} srcset={im('family-kitchen').srcset} sizes="100vw" alt={im('family-kitchen').alt} width="1376" height="768" loading="lazy" decoding="async" data-parallax="0.2" />
+    </div>
+    <div class="container famband__say" data-reveal>
+      <h2 class="famband__title" id="famband-title">Two ingredients, and a snack you can hand a child without reading the label twice.</h2>
+      <p class="famband__lead">Baked apples and egg white. Nothing added, nothing to explain.</p>
+    </div>
+  </section>
+
+  <!-- ============================== COLLECTIONS ============================== -->
+  <section class="section container" aria-labelledby="col-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Shop by shape</p>
+        <h2 id="col-title" data-words>One apple, six ways to eat it.</h2>
+      </div>
+      <a class="link" href="/shop/">See everything</a>
+    </div>
+    <div class="grid grid--3 tiles" data-stagger>
+      {tiles.map((c) => (
+        <a class="ct" href={`/shop/${c.key}/`} style={`--ct-accent:${c.accent}`} data-cursor={c.name}>
+          <img src={imgSrc(c.image)} srcset={imgSrcset(c.image)} sizes={imgSrcset(c.image) && SIZES.tile} alt="" width={img(c.image).width} height={img(c.image).height} loading="lazy" decoding="async" />
+          <div class="ct__body"><h3>{c.name}</h3><p>{c.description.split('.')[0]}.</p></div>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================== WHERE TO BUY / B2B ============================== -->
+  <section class="section container" aria-labelledby="buy-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Also on shelves</p>
+      <h2 id="buy-title">Find Semers at Maxima, on Barbora and in stores across Europe.</h2>
+      <p>Retailer, café, office or distributor? We ship pallets as happily as parcels, and we do private label.</p>
+      <div class="cluster mt-2">
+        <a class="btn" href="/where-to-buy/">Where to buy</a>
+        <a class="btn btn--ghost" href="/wholesale/">Wholesale &amp; B2B</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== JOURNAL ============================== -->
+  <section class="section container section--tight" aria-labelledby="jr-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Journal</p>
+        <h2 id="jr-title" data-words>Reading for the kettle to boil.</h2>
+      </div>
+      <a class="link" href="/journal/">All articles</a>
+    </div>
+    <div class="grid grid--3" data-stagger>
+      {ARTICLES_SORTED.slice(0, 3).map((a) => (
+        <a class="jc" href={`/journal/${a.slug}/`}>
+          <div class="frame frame--3x2"><img src={imgSrc(a.image)} srcset={imgSrcset(a.image)} sizes={imgSrcset(a.image) && SIZES.third} alt="" width={img(a.image).width} height={img(a.image).height} loading="lazy" decoding="async" /></div>
+          <div class="jc__meta">{a.readMinutes} min read</div>
+          <h3>{a.title}</h3>
+          <p>{a.description}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================== FAQ ============================== -->
+  <section class="section container" aria-labelledby="faq-title">
+    <div class="faq-grid">
+      <div>
+        <p class="eyebrow">Questions</p>
+        <h2 id="faq-title">Things people ask before their first box.</h2>
+        <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+      </div>
+      <div class="acc" data-reveal>
+        {homeFaqs.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import '~/scripts/hero';
+  import { gsap, ScrollTrigger, reduced } from '~/scripts/motion';
+
+  /*
+   * The walk: four panels move sideways under a pinned viewport. Only where
+   * there is room for it — on a phone the panels stack, which is what the CSS
+   * does when nothing here runs.
+   */
+  const walk = document.querySelector<HTMLElement>('[data-hscroll]');
+  const track = walk?.querySelector<HTMLElement>('[data-hscroll-track]');
+  if (walk && track && !reduced) {
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 56rem)', () => {
+      walk.classList.add('walk--live');
+      const distance = () => track.scrollWidth - walk.clientWidth;
+      const tween = gsap.to(track, {
+        x: () => -distance(),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: walk,
+          pin: true,
+          scrub: 0.8,
+          start: 'top top',
+          end: () => `+=${distance()}`,
+          invalidateOnRefresh: true,
+          anticipatePin: 1,
+        },
+      });
+      return () => {
+        tween.scrollTrigger?.kill();
+        tween.kill();
+        walk.classList.remove('walk--live');
+      };
+    });
+    ScrollTrigger.refresh();
+  }
+</script>
+
+<style>
+  /* ------------------------------------------------------------- the sky */
+  .sky { position: relative; height: 230vh; height: 230svh; background: var(--night-950); }
+  .sky__pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: clip; display: grid; align-items: end; isolation: isolate; }
+  .sky__glow { position: absolute; inset: 0; z-index: 0; background:
+      radial-gradient(60% 50% at 62% 42%, rgb(241 90 34 / calc(0.3 - var(--hp, 0) * 0.13)), transparent 70%),
+      radial-gradient(50% 40% at 40% 60%, rgb(253 185 19 / calc(0.06 + var(--hp, 0) * 0.15)), transparent 70%),
+      radial-gradient(120% 100% at 50% 100%, var(--night-900), transparent 60%); }
+  .sky__poster { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; opacity: 0.22; filter: saturate(0.6) contrast(1.1); transform: scale(calc(1.06 + var(--hp, 0) * 0.06)); mask-image: radial-gradient(80% 70% at 62% 45%, #000 30%, transparent 75%); }
+  .sky__gl { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; transition: opacity 1.4s var(--ease-out); }
+  .sky__gl.is-ready { opacity: 1; }
+  .sky__gl.is-ready ~ .sky__poster { opacity: 0.1; }
+  .sky__copy { position: relative; z-index: 2; padding-bottom: clamp(3.5rem, 9vh, 7rem); padding-top: 8rem; pointer-events: none; }
+  .sky__copy a, .sky__copy .btn { pointer-events: auto; }
+  .sky__eyebrow { color: var(--cream-2); margin-bottom: 1.2rem; }
+  /* The two headlines share one grid cell, so the block is as tall as the taller of them in any language and neither is ever clipped. */
+  .sky__title { position: relative; display: grid; font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.03em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .sky__line { grid-area: 1 / 1; display: block; text-wrap: balance; will-change: opacity, transform; }
+  .sky__line--a { opacity: clamp(0, calc((0.55 - var(--hp, 0)) * 5), 1); transform: translateY(calc(var(--hp, 0) * -0.35em)); }
+  .sky__line--b { opacity: clamp(0, calc((var(--hp, 0) - 0.45) * 5), 1); transform: translateY(calc((1 - var(--hp, 0)) * 0.35em)); }
+  .sky__line em { display: block; font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .sky__lead { font-size: var(--fs-lg); max-width: 44ch; margin-top: 1.5rem; color: var(--cream-2); }
+  .sky__hint { position: absolute; right: var(--gutter); bottom: clamp(1.5rem, 5vh, 3rem); z-index: 2; display: flex; align-items: center; gap: 0.7rem; font-size: var(--fs-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg-3); opacity: clamp(0, calc(1 - var(--hp, 0) * 4), 1); }
+  .sky__hint i { width: 1px; height: 3rem; background: linear-gradient(to bottom, var(--cream-1), transparent); animation: hint 2.2s var(--ease-in-out) infinite; transform-origin: top; }
+  @keyframes hint { 0% { transform: scaleY(0); opacity: 0; } 30% { opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) {
+    .sky { height: auto; }
+    .sky__pin { position: relative; height: auto; min-height: 80svh; }
+    .sky__poster { opacity: 0.35; transform: none; }
+    .sky__line { position: static; opacity: 1 !important; transform: none !important; }
+    .sky__hint { display: none; }
+  }
+  @media (max-width: 48rem) {
+    .sky { height: 200svh; }
+    .sky__copy { padding-top: 6rem; }
+    .sky__title { font-size: clamp(3.25rem, 14.5vw, 4.5rem); }
+    .sky__poster { object-position: 60% 40%; }
+    .sky__hint { display: none; }
+  }
+
+  .tape { padding-block: clamp(1rem, 3vw, 2rem); border-block: 1px solid var(--line); background: var(--night-950); }
+
+  /* ------------------------------------------------------------- inside */
+  .inside { position: relative; isolation: isolate; overflow: clip; min-height: min(100svh, 60rem); display: grid; align-items: end; }
+  .inside__media { position: absolute; inset: -12% 0; z-index: 0; }
+  .inside__media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.55; }
+  .inside::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, var(--night-900) 8%, rgb(11 18 14 / 0.6) 45%, rgb(11 18 14 / 0.15) 75%, var(--night-900) 100%); }
+  .inside__copy { position: relative; z-index: 2; padding-block: clamp(4rem, 12vw, 9rem) clamp(3rem, 8vw, 6rem); }
+  .inside__title { font-size: var(--fs-4xl); max-width: 12ch; letter-spacing: -0.04em; line-height: 0.95; }
+  .inside__title em { display: block; font-style: italic; font-weight: 400; color: var(--honey-500); }
+  .inside__text { max-width: 54ch; margin-top: 2rem; color: var(--cream-2); font-size: var(--fs-lg); }
+  .inside__text p { color: inherit; }
+
+  /* ------------------------------------------------------------- the walk */
+  .walk { position: relative; background: var(--night-950); border-block: 1px solid var(--line); }
+  .walk__pin { overflow: clip; }
+  .walk__track { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); padding: clamp(3rem, 8vw, 6rem) var(--gutter); }
+  .walk__panel { position: relative; display: grid; gap: 0.75rem; align-content: end; min-width: 0; }
+  .walk__panel--intro { align-content: center; }
+  .walk__title { font-size: var(--fs-3xl); max-width: 12ch; }
+  .walk__n { font-family: var(--font-display); font-size: clamp(5rem, 14vw, 12rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.35); font-weight: 400; margin-bottom: -0.18em; position: relative; z-index: 1; }
+  .walk__img { position: relative; border-radius: var(--r-lg); overflow: clip; aspect-ratio: 4 / 3; box-shadow: var(--shadow-1); }
+  .walk__img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .walk__panel h3 { font-size: var(--fs-2xl); margin-top: 0.5rem; }
+  .walk__panel p { margin: 0; color: var(--fg-2); max-width: 36ch; }
+  /* Pinned: the panels stand side by side and the track slides. */
+  .walk--live .walk__pin { height: 100vh; height: 100svh; display: grid; align-items: center; }
+  .walk--live .walk__track { display: flex; gap: clamp(2rem, 5vw, 5rem); width: max-content; padding-block: 0; will-change: transform; }
+  .walk--live .walk__panel { width: min(32rem, 44vw); flex: none; }
+  .walk--live .walk__panel--intro { width: min(36rem, 46vw); padding-right: clamp(2rem, 5vw, 5rem); }
+  .walk--live .walk__panel:last-child { margin-right: var(--gutter); }
+
+  /* ------------------------------------------------------------- maths */
+  .maths { background: radial-gradient(60% 60% at 20% 30%, rgb(111 194 122 / 0.08), transparent 60%), var(--bg); }
+  .vs__meter { height: 6px; border-radius: 3px; background: rgb(243 233 214 / 0.1); overflow: hidden; margin-top: -0.35rem; }
+  .vs__meter i { display: block; height: 100%; border-radius: inherit; background: var(--leaf-500); box-shadow: 0 0 16px var(--leaf-500); transform: scaleX(0); transform-origin: left; transition: transform 1.3s var(--ease-expo) 0.15s; }
+  .vs__meter--rival i { background: var(--fg-3); box-shadow: none; }
+  [data-reveal].is-in .vs__meter i { transform: scaleX(var(--w, 1)); }
+  .vs__kcal b { font-weight: inherit; font-variant-numeric: tabular-nums; }
+  .vs__kcal span { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); margin-left: 0.2em; }
+  @media (prefers-reduced-motion: reduce) { .vs__meter i { transition: none; transform: scaleX(var(--w, 1)); } }
+
+  /* ------------------------------------------------------------- family */
+  .famband { position: relative; isolation: isolate; overflow: clip; min-height: min(90svh, 52rem); display: grid; align-items: center; }
+  .famband__media { position: absolute; inset: -10% 0; z-index: 0; }
+  .famband__media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.7; }
+  .famband::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to right, rgb(6 10 8 / 0.9), rgb(6 10 8 / 0.55) 50%, rgb(6 10 8 / 0.2)), linear-gradient(to bottom, var(--night-900), transparent 25%, transparent 75%, var(--night-900)); }
+  .famband__say { position: relative; z-index: 2; padding-block: clamp(4rem, 10vw, 8rem); max-width: 40rem; }
+  .famband__title { font-size: var(--fs-3xl); text-wrap: balance; letter-spacing: -0.03em; }
+  .famband__lead { margin-top: 1rem; font-size: var(--fs-lg); color: var(--cream-2); }
+
+  /* ingredient trio with images */
+  .feat--img { padding: 0; overflow: clip; }
+  .feat--img .frame { border-radius: 0; box-shadow: none; }
+  .feat--img h3, .feat--img p { padding-inline: 1.5rem; }
+  .feat--img h3 { padding-top: 1.4rem; }
+  .feat--img p { padding-bottom: 1.6rem; }
+  .feat--img h3 .muted { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; margin-left: 0.3em; }
+
+  @media (max-width: 40rem) {
+    .tiles { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .tiles .ct__body { padding: 0.8rem; padding-top: 2.5rem; }
+    .tiles .ct__body h3 { font-size: var(--fs-lg); }
+    .tiles .ct__body p { display: none; }
+  }
+
+  .faq-grid { display: grid; gap: 2rem; }
+  @media (min-width: 56rem) { .faq-grid { grid-template-columns: 1fr 1.4fr; gap: 4rem; } }
+</style>

@@ -1,0 +1,317 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { im, SIZES } from '~/data/images';
+import { site } from '~/data/site';
+import { formatThreshold } from '~/data/products';
+import { FAQS } from '~/data/faq';
+import { faqPage } from '~/lib/schema';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+const suggestHref = `mailto:${site.email}?subject=${encodeURIComponent('Store suggestion for Semers')}`;
+
+/** Retailers from site.ts, in the order they are listed there. */
+interface Retailer { name: string; country: string; note: string; url?: string }
+const RETAILERS: readonly Retailer[] = site.retailers;
+const countries = [...new Set(RETAILERS.map((r) => r.country))];
+const countryCount = countries.length;
+const exportNames = countries.filter((c) => c !== site.country);
+const exportCount = exportNames.length;
+const exportList = exportNames.length > 1 ? `${exportNames.slice(0, -1).join(', ')} and ${exportNames[exportNames.length - 1]}` : exportNames.join('');
+const isOnline = (r: Retailer) => /online/i.test(r.note);
+
+/**
+ * The wall: one row per retailer. A retailer with a name is set as the big
+ * word and its country is the eyebrow; where the list only says "selected
+ * retailers", the country becomes the word and the retailer the eyebrow, so
+ * the wall reads Maxima, Barbora, Germany, Poland… rather than the same two
+ * words five times over.
+ */
+const UNNAMED = 'Selected retailers';
+const rows = RETAILERS.map((r, i) => ({
+  n: String(i + 1).padStart(2, '0'),
+  word: r.name === UNNAMED ? r.country : r.name,
+  eyebrow: r.name === UNNAMED ? r.name : r.country,
+  note: r.note,
+  url: r.url,
+  home: r.country === site.country,
+  online: isOnline(r),
+}));
+
+/** Questions that matter before a shop trip, from the shared FAQ. */
+const pick = ['Where can I buy in a shop?', 'Where do you ship?', 'How do I pay?'];
+const faqs = pick.flatMap((q) => {
+  const f = FAQS.find((x) => x.q === q);
+  return f ? [f] : [];
+});
+---
+<Base
+  title="Where to buy Semers apple bars & pastila"
+  description="Where to buy Semers: apple bars and Belyov pastila at Maxima and on Barbora in Latvia, in selected stores across Europe, or online with EU-wide shipping."
+  canonical="/where-to-buy/"
+  ogImage="hero-bars"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Where to buy', href: '/where-to-buy/' }]}
+  schema={[faqPage(faqs)]}
+>
+  <!-- ============================== HERO: one enormous line, then air ============================== -->
+  <section class="page-hero container wtb-hero" aria-labelledby="page-title">
+    <p class="eyebrow">Where to buy · {site.locality} and across Europe</p>
+    <h1 id="page-title" class="wtb-hero__title" data-words>Find Semers <em>near you.</em></h1>
+    <div class="wtb-hero__row">
+      <p class="lead" data-reveal>Here is where to buy Semers apple bars, meringues and Belyov pastila: on the shelves at Maxima across Latvia, in your Barbora basket, and with selected retailers in {exportList}. Not near any of them? Our web shop ships across the EU, free over {freeFrom}.</p>
+      <div class="wtb-hero__cta" data-reveal>
+        <a class="btn btn--lg" href="/shop/">Shop online <Icon name="arrow" size={20} class="arrow" /></a>
+        <a class="btn btn--lg btn--ghost" href="#stores">See the stores</a>
+      </div>
+    </div>
+  </section>
+  <div class="container">
+    <div class="pf wtb-hero__img" data-reveal>
+      <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.full} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.15" />
+    </div>
+    <div class="trust wtb-trust" data-stagger>
+      <div><Icon name="cart" size={22} /><div><strong>Maxima &amp; Barbora</strong><span>On shelves and delivered across Latvia</span></div></div>
+      <div><Icon name="globe" size={22} /><div><strong>{countryCount} countries</strong><span>Latvia plus {exportCount} export markets</span></div></div>
+      <div><Icon name="truck" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Otherwise €3.90 flat in the Baltics</span></div></div>
+      <div><Icon name="clock" size={22} /><div><strong>1–2 business days</strong><span>Parcels leave Riga, ship across the EU</span></div></div>
+    </div>
+  </div>
+
+  <!-- ============================== THE WALL: every shelf as one big word ============================== -->
+  <!--
+    The set piece. Each retailer is a row of display type with its country as
+    an eyebrow and its note on the right; a hairline between rows, and the row
+    the pointer is over lights up from the left.
+  -->
+  <section class="section shelf" id="stores" aria-labelledby="stores-title">
+    <div class="container">
+      <div class="shelf__head">
+        <div>
+          <p class="eyebrow">In stores</p>
+          <h2 id="stores-title" data-words>On shelves in {countryCount} countries.</h2>
+        </div>
+        <a class="link" href="/wholesale/">Want to stock Semers?</a>
+      </div>
+      <ol class="shelf__list" data-stagger>
+        {rows.map((r) => (
+          <li class="shelf__row">
+            {r.url ? (
+              <a class="shelf__in" href={r.url} rel="noopener" target="_blank">
+                <span class="shelf__n" aria-hidden="true">{r.n}</span>
+                <span class="shelf__meta">
+                  <span class="eyebrow">{r.eyebrow}</span>
+                  {r.home && <span class="chip chip--accent">Home market</span>}
+                  {r.online && <span class="chip chip--leaf">Online</span>}
+                </span>
+                <strong class="shelf__word">{r.word}<span class="sr-only"> (opens in a new tab)</span></strong>
+                <span class="shelf__note">{r.note} <Icon name="arrow" size={20} class="arrow" /></span>
+              </a>
+            ) : (
+              <div class="shelf__in">
+                <span class="shelf__n" aria-hidden="true">{r.n}</span>
+                <span class="shelf__meta">
+                  <span class="eyebrow">{r.eyebrow}</span>
+                  {r.home && <span class="chip chip--accent">Home market</span>}
+                  {r.online && <span class="chip chip--leaf">Online</span>}
+                </span>
+                <strong class="shelf__word">{r.word}</strong>
+                <span class="shelf__note">{r.note}</span>
+              </div>
+            )}
+          </li>
+        ))}
+      </ol>
+      <div class="notice shelf__notice" data-reveal>
+        <Icon name="search" size={18} />
+        <p><strong>Assortment varies by store.</strong> Not every branch carries every flavour or size, and export listings change with the season. If the shelf is empty, ask the store manager: most shops can order in, and asking is what gets us on the list.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ONLINE: two lit cards ============================== -->
+  <section class="section container" aria-labelledby="online-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Online</p>
+        <h2 id="online-title" data-words>Two ways to order from the sofa.</h2>
+      </div>
+      <p class="muted" style="max-width:36ch">The full range lives here. In Latvia, a bar can also ride along with the weekly groceries.</p>
+    </div>
+    <div class="lit-row" data-stagger>
+      <article class="lit lit--mint" data-tilt>
+        <span class="lit__n" aria-hidden="true">01</span>
+        <h3>The Semers web shop</h3>
+        <p>Everything we make, in one place: <a href="/shop/apple-bars/">apple bars</a>, <a href="/shop/flourless-bars/">flourless bars</a>, <a href="/shop/meringues/">meringues</a>, <a href="/shop/pastila/">pastila loaves</a>, <a href="/shop/zephyr/">zephyr</a>, the <a href="/products/apple-bar-12-pack/">12-pack</a> and <a href="/shop/gift-sets/">gift boxes</a>. Packed in Riga, shipped across the EU.</p>
+        <ul class="ticks small">
+          <li><Icon name="check" size={18} /> Free shipping over {freeFrom}; €3.90 flat below that in the Baltics</li>
+          <li><Icon name="check" size={18} /> Parcels leave within 1–2 business days</li>
+          <li><Icon name="check" size={18} /> Place an order request at checkout; we confirm by e-mail with a payment link</li>
+        </ul>
+        <a class="btn" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
+      </article>
+      <article class="lit" data-tilt>
+        <span class="lit__n" aria-hidden="true">02</span>
+        <h3>Barbora</h3>
+        <p>Latvia’s grocery delivery service. Add Semers to the weekly shop and the bars arrive at the door with the milk and the bread.</p>
+        <ul class="ticks small">
+          <li><Icon name="check" size={18} /> Delivered with the rest of your groceries</li>
+          <li><Icon name="check" size={18} /> Search for “App’Lite” or “Semers” on the site</li>
+          <li><Icon name="check" size={18} /> Assortment set by Barbora and may differ from ours</li>
+        </ul>
+        <a class="btn btn--ghost" href="https://barbora.lv" rel="noopener" target="_blank">Open barbora.lv <Icon name="arrow" size={18} class="arrow" /><span class="sr-only">(opens in a new tab)</span></a>
+      </article>
+    </div>
+  </section>
+
+  <!-- ============================== THE SHOP'S OWN CTA: the one cream room ============================== -->
+  <section class="section container" aria-labelledby="post-title">
+    <div class="cta-band postbox" data-reveal>
+      <div class="postbox__copy">
+        <p class="eyebrow">Not near you?</p>
+        <h2 id="post-title">No store nearby? Your postbox is.</h2>
+        <p class="postbox__lead">Everything on the shelf, plus a few things that are not: the <a href="/products/tasting-box/">tasting box</a>, the 12-pack, the pastila discovery set. Packed in Riga, shipped across the EU, and it keeps for months without a fridge.</p>
+        <ul class="ticks postbox__ticks">
+          <li><Icon name="check" /> Free shipping over {freeFrom}; €3.90 flat in the Baltics below that</li>
+          <li><Icon name="check" /> Parcels leave Riga within 1–2 business days</li>
+          <li><Icon name="check" /> You place an order request; we confirm by e-mail with a payment link</li>
+        </ul>
+        <div class="cluster">
+          <a class="btn btn--lg" href="/shop/">Shop online <Icon name="arrow" size={20} class="arrow" /></a>
+          <a class="btn btn--lg btn--ghost" href={suggestHref}><Icon name="mail" size={20} /> Suggest a store</a>
+        </div>
+        <p class="small postbox__note">Know a shop that should carry Semers? Send us its name and town. We will do the asking.</p>
+      </div>
+      <div class="postbox__media">
+        <div class="pf postbox__frame">
+          <img src={im('hero-bars').src} srcset={im('hero-bars').srcset} sizes={im('hero-bars').srcset && SIZES.third} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="lazy" decoding="async" data-parallax="0.12" />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHOLESALE, quietly ============================== -->
+  <section class="section band" aria-labelledby="ws-title">
+    <div class="container split">
+      <div class="pf pf--4x5 pf--honey" data-reveal>
+        <img src={im('retail-boxes').src} srcset={im('retail-boxes').srcset} sizes={im('retail-boxes').srcset && SIZES.third} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="lazy" decoding="async" data-parallax="0.15" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Retailers &amp; distributors</p>
+        <h2 id="ws-title" data-words>Room on your shelf for a bar that is 99% apple?</h2>
+        <p class="lead mt-4">We supply supermarkets, specialty and organic stores, cafés, offices and distributors across Europe. Cases or pallets, twelve-month shelf life, no fridge needed, private label for larger volumes.</p>
+        <div class="cluster mt-4">
+          <a class="btn" href="/wholesale/">Wholesale enquiry <Icon name="arrow" size={18} class="arrow" /></a>
+          <a class="btn btn--ghost" href="/contact/">Talk to us</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== QUESTIONS ============================== -->
+  <section class="section container section--tight" aria-labelledby="q-title">
+    <div class="wtb-faq">
+      <div>
+        <p class="eyebrow">Questions</p>
+        <h2 id="q-title">Before you head out.</h2>
+        <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+      </div>
+      <div class="acc" data-reveal>
+        {faqs.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ---------------------------------------------------------- parallax frames */
+  /* A photograph that drifts is taller than its window, or the drift would show the ground behind it. */
+  .pf { position: relative; overflow: clip; border-radius: var(--r-xl); background: var(--bg-sunken); box-shadow: var(--shadow-2); }
+  .pf img { position: absolute; left: 0; right: 0; top: -12%; width: 100%; height: 124%; object-fit: cover; }
+  .pf--4x5 { aspect-ratio: 4 / 5; }
+  .pf--honey { box-shadow: var(--shadow-2), var(--glow-honey); }
+
+  /* ---------------------------------------------------------- hero */
+  .wtb-hero { padding-bottom: clamp(2rem, 5vw, 3.5rem); }
+  .wtb-hero .wtb-hero__title { font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.045em; max-width: 9ch; }
+  .wtb-hero__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .wtb-hero__row { display: grid; gap: var(--sp-5) var(--sp-8); margin-top: clamp(2rem, 4vw, 3rem); align-items: end; }
+  @media (min-width: 56rem) { .wtb-hero__row { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); } .wtb-hero__cta { justify-content: end; } }
+  .wtb-hero__row .lead { margin: 0; }
+  .wtb-hero__cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); }
+  .wtb-hero__img { aspect-ratio: 3 / 2; box-shadow: var(--shadow-3); }
+  @media (min-width: 56rem) { .wtb-hero__img { aspect-ratio: 21 / 9; } }
+  .wtb-trust { margin-top: var(--sp-6); }
+
+  /* ---------------------------------------------------------- the wall */
+  .shelf { padding-top: clamp(3rem, 8vw, 7rem); }
+  .shelf__head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: var(--sp-4) var(--sp-6); margin-bottom: clamp(1.5rem, 4vw, 3rem); }
+  .shelf__head h2 { max-width: 14ch; font-size: var(--fs-3xl); }
+  .shelf__list { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+  .shelf__row { position: relative; border-top: 1px solid var(--line); }
+  .shelf__row::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background: radial-gradient(70% 140% at 0% 50%, rgb(255 90 60 / 0.16), transparent 70%); transition: opacity var(--dur-slow) var(--ease-out); }
+  .shelf__row:hover::before, .shelf__row:focus-within::before { opacity: 1; }
+  .shelf__in { position: relative; z-index: 1; display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); column-gap: var(--sp-4); row-gap: 0.5rem; padding-block: clamp(1.25rem, 3vw, 2.25rem); text-decoration: none; color: inherit; }
+  a.shelf__in:focus-visible { outline-offset: -4px; }
+  .shelf__n { grid-column: 1; grid-row: 1; font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 400; line-height: 1; color: transparent; -webkit-text-stroke: 1px var(--cream-3); letter-spacing: -0.04em; padding-top: 0.15rem; font-variant-numeric: tabular-nums; }
+  .shelf__meta { grid-column: 2; grid-row: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; }
+  .shelf__meta .eyebrow { color: var(--fg-3); }
+  .shelf__word { grid-column: 1 / -1; grid-row: 2; display: block; font-family: var(--font-display); font-size: var(--fs-4xl); font-weight: 500; line-height: 0.95; letter-spacing: -0.04em; color: var(--cream-1); font-variation-settings: 'opsz' 144, 'SOFT' 50, 'WONK' 1; text-wrap: balance; overflow-wrap: anywhere; transition: color var(--dur) var(--ease-out), transform var(--dur-slow) var(--ease-expo), text-shadow var(--dur-slow) var(--ease-out); }
+  .shelf__note { grid-column: 1 / -1; grid-row: 3; display: inline-flex; align-items: center; gap: 0.5rem; color: var(--fg-2); font-size: var(--fs-md); }
+  .shelf__note .arrow { color: var(--accent); transition: transform var(--dur) var(--ease-out); }
+  .shelf__row:hover .shelf__word, .shelf__row:focus-within .shelf__word { color: var(--cream-0); text-shadow: 0 0 48px rgb(255 252 245 / 0.35); transform: translateX(0.06em); }
+  .shelf__row:hover .shelf__note .arrow, .shelf__row:focus-within .shelf__note .arrow { transform: translate(6px, -6px) rotate(-45deg); }
+  .shelf__row:hover .shelf__n, .shelf__row:focus-within .shelf__n { -webkit-text-stroke-color: var(--accent); }
+  @media (min-width: 56rem) {
+    .shelf__in { grid-template-columns: 4.5rem minmax(0, 1fr) minmax(14rem, 0.5fr); column-gap: var(--sp-6); align-items: end; }
+    .shelf__n { grid-row: 1 / span 2; align-self: start; font-size: var(--fs-2xl); padding-top: 0.35rem; }
+    .shelf__word { grid-column: 2; grid-row: 2; }
+    .shelf__note { grid-column: 3; grid-row: 2; justify-content: end; text-align: right; padding-bottom: 0.35em; }
+  }
+  .shelf__notice { display: flex; gap: var(--sp-3); align-items: flex-start; margin-top: var(--sp-6); max-width: 66ch; }
+  .shelf__notice p { margin: 0; }
+  .shelf__notice :global(svg) { flex: none; margin-top: 0.2em; }
+  @media (prefers-reduced-motion: reduce) { .shelf__word, .shelf__note .arrow, .shelf__row::before { transition: none; } }
+
+  /* ---------------------------------------------------------- lit cards */
+  .lit-row { display: grid; gap: var(--sp-5); }
+  @media (min-width: 56rem) { .lit-row { grid-template-columns: 1fr 1fr; } }
+  .lit { --lit: rgb(243 233 214 / 0.14); position: relative; isolation: isolate; overflow: clip; display: grid; gap: var(--sp-4); align-content: start; padding: clamp(1.5rem, 3.5vw, 2.75rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
+  .lit::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 55% at 100% 0%, var(--lit), transparent 70%); }
+  .lit--mint { --lit: rgb(62 207 168 / 0.22); }
+  .lit--mint:hover { box-shadow: var(--shadow-2), var(--glow-mint); }
+  .lit:not(.lit--mint):hover { box-shadow: var(--shadow-3); }
+  .lit__n { font-family: var(--font-display); font-size: var(--fs-3xl); font-weight: 400; line-height: 1; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); }
+  .lit h3 { font-size: var(--fs-2xl); letter-spacing: -0.025em; }
+  .lit > p { margin: 0; color: var(--fg-2); max-width: 52ch; }
+  .lit .ticks { color: var(--fg-2); }
+  .lit .btn { justify-self: start; margin-top: auto; }
+
+  /* ---------------------------------------------------------- the cream room */
+  .postbox { gap: var(--sp-6); align-items: center; }
+  @media (min-width: 56rem) { .postbox { grid-template-columns: 1.15fr 0.85fr; gap: clamp(2rem, 5vw, 4rem); } }
+  .postbox__copy { display: grid; gap: var(--sp-4); }
+  .postbox__lead { font-size: var(--fs-lg); max-width: 48ch; }
+  .postbox__lead a { color: var(--night-900); text-decoration-color: var(--apple-600); }
+  .postbox__ticks { margin: var(--sp-2) 0; }
+  .postbox__ticks li { color: var(--ink-700); }
+  .postbox__ticks :global(svg) { color: var(--leaf-600); }
+  .postbox__note { color: var(--ink-500); }
+  .postbox__media { min-width: 0; }
+  .postbox__frame { aspect-ratio: 4 / 5; border-radius: var(--r-lg); box-shadow: 0 0 0 1px rgb(27 22 18 / 0.08), 0 30px 70px -30px rgb(27 22 18 / 0.6); background: var(--cream-2); }
+
+  /* ---------------------------------------------------------- questions */
+  .wtb-faq { display: grid; gap: var(--sp-6); }
+  @media (min-width: 56rem) { .wtb-faq { grid-template-columns: 1fr 1.4fr; gap: var(--sp-8); } }
+</style>

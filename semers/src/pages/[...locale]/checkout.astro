@@ -1,0 +1,179 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { formatPrice, formatThreshold } from '~/data/products';
+import { site } from '~/data/site';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Poland', 'Austria', 'Netherlands', 'Belgium', 'France', 'Italy', 'Spain', 'Sweden', 'Denmark', 'Czechia', 'Bulgaria', 'Other EU'];
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+---
+<Base title="Checkout" description="Place your Semers order." canonical="/checkout/" noindex>
+  <section class="container page-hero co-hero">
+    <p class="eyebrow">Checkout</p>
+    <h1 data-words>Almost there.</h1>
+    <p class="lead">Tell us where to send the box. We confirm by e-mail with a secure payment link within one business day; online card payment is being connected.</p>
+  </section>
+
+  <!--
+    Two columns: the form walks down the left in three numbered steps, the box
+    keeps pace on the right. The numerals are the only decoration; the one
+    accent on the page is the button that places the order.
+  -->
+  <section class="container co-stage" aria-label="Checkout">
+    <form class="co-form" data-checkout data-shipping="3.9">
+      <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
+
+      <fieldset class="co-step">
+        <legend class="sr-only">Contact</legend>
+        <span class="co-step__n" aria-hidden="true">01</span>
+        <div class="co-step__body">
+          <h2 class="co-step__title">Contact</h2>
+          <div class="form-grid form-grid--2">
+            <div class="field"><label for="co-name">Full name</label><input class="input" id="co-name" name="name" required autocomplete="name" /></div>
+            <div class="field"><label for="co-email">E-mail</label><input class="input" id="co-email" name="email" type="email" required autocomplete="email" /></div>
+            <div class="field span-2"><label for="co-phone">Phone <span class="muted">(for the courier)</span></label><input class="input" id="co-phone" name="phone" type="tel" autocomplete="tel" /></div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="co-step">
+        <legend class="sr-only">Delivery</legend>
+        <span class="co-step__n" aria-hidden="true">02</span>
+        <div class="co-step__body">
+          <h2 class="co-step__title">Delivery</h2>
+          <div class="co-methods">
+            <label class="method"><input type="radio" name="delivery" value="Parcel locker (Omniva / DPD)" checked /><span><strong>Parcel locker</strong><em>Omniva or DPD · 1–3 days in the Baltics</em></span></label>
+            <label class="method"><input type="radio" name="delivery" value="Courier to door" /><span><strong>Courier to door</strong><em>DPD / DHL · 2–5 days across the EU</em></span></label>
+            <label class="method"><input type="radio" name="delivery" value="Pickup in Riga" /><span><strong>Pick up in Riga</strong><em>Free · we send the address with your confirmation</em></span></label>
+          </div>
+          <div class="form-grid form-grid--2 co-address" data-address-fields>
+            <div class="field span-2"><label for="co-address">Street address or parcel locker</label><input class="input" id="co-address" name="address" required autocomplete="street-address" placeholder="Street, house, flat — or the locker name" /></div>
+            <div class="field"><label for="co-city">City</label><input class="input" id="co-city" name="city" required autocomplete="address-level2" /></div>
+            <div class="field"><label for="co-post">Postcode</label><input class="input" id="co-post" name="postcode" required autocomplete="postal-code" /></div>
+            <div class="field span-2"><label for="co-country">Country</label>
+              <select class="select" id="co-country" name="country" required autocomplete="country-name">{countries.map((c) => <option value={c}>{c}</option>)}</select>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+
+      <fieldset class="co-step">
+        <legend class="sr-only">Extras</legend>
+        <span class="co-step__n" aria-hidden="true">03</span>
+        <div class="co-step__body">
+          <h2 class="co-step__title">Extras</h2>
+          <div class="form-grid">
+            <div class="field"><label for="co-gift">Gift message <span class="muted">(optional, we print it on a card)</span></label><input class="input" id="co-gift" name="gift" maxlength="200" /></div>
+            <div class="field"><label for="co-note">Note for us <span class="muted">(optional)</span></label><textarea class="textarea" id="co-note" name="note" maxlength="1000"></textarea></div>
+            <label class="checkbox"><input type="checkbox" name="terms" value="yes" required /> <span>I agree to the <a href="/legal/terms/">terms</a> and <a href="/legal/privacy/">privacy policy</a>.</span></label>
+            <label class="checkbox"><input type="checkbox" name="newsletter" value="yes" /> <span>Send me new flavours and restock alerts (rarely, no spam).</span></label>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="co-submit">
+        <p class="notice" data-checkout-note hidden></p>
+        <button class="btn btn--lg btn--block btn--accent" type="submit">Place order <Icon name="arrow" size={18} class="arrow" /></button>
+        <p class="tiny muted center co-submit__note">No payment is taken now. You will receive an e-mail with the total, delivery estimate and a payment link.</p>
+      </div>
+    </form>
+
+    <aside class="co-aside" data-cart-summary data-shipping="3.9">
+      <div class="co-sum">
+        <h2 class="co-sum__title">Your box</h2>
+        <div data-summary-empty class="co-sum__empty"><p class="muted">Your box is empty. <a href="/shop/">Add something first.</a></p></div>
+        <div data-summary-full>
+          <ul class="drawer__items co-sum__items" data-summary-rows></ul>
+        </div>
+        <div class="co-sum__rows">
+          <div class="co-sum__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>{formatPrice(0, locale)}</strong></div>
+          <div class="co-sum__row"><span>Shipping</span><span class="num" data-summary-shipping>—</span></div>
+          <div class="co-sum__row co-sum__total"><span>Total</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
+        </div>
+        <p class="tiny muted">Free shipping over {freeFrom}; otherwise €3.90 (Baltics) — EU courier rates confirmed by e-mail. Prices include VAT.</p>
+        <ul class="ticks small co-sum__ticks">
+          <li><Icon name="truck" size={16} /> {site.shipping.note}</li>
+          <li><Icon name="shield" size={16} /> Damaged in transit? We replace it.</li>
+          <li><Icon name="mail" size={16} /> Questions? <a href={`mailto:${site.email}`}>{site.email}</a></li>
+        </ul>
+      </div>
+    </aside>
+  </section>
+</Base>
+
+<style>
+  .co-hero { padding-bottom: clamp(1.5rem, 4vw, 3rem); }
+  .co-hero h1 { font-size: var(--fs-hero); letter-spacing: -0.045em; line-height: 0.9; max-width: 10ch; }
+
+  /* ------------------------------------------------------------ the stage */
+  .co-stage { display: grid; gap: var(--sp-6); align-items: start; padding-bottom: clamp(2rem, 4vw, 3rem); }
+  /* The footer's own margin would leave a room-sized void under the form; the newsletter band follows at the home page's rhythm instead. */
+  :global(.ftr) { margin-top: clamp(2.5rem, 5vw, 4rem); }
+  @media (min-width: 60rem) { .co-stage { grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr); gap: clamp(2rem, 5vw, 5rem); } .co-aside { position: sticky; top: 6rem; } }
+  .co-form { position: relative; display: grid; gap: 0; min-width: 0; }
+
+  /* Steps: an outlined numeral in the margin, a hairline above, the fields to the right. */
+  .co-step { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 0.5rem 1.5rem; margin: 0; padding: clamp(1.75rem, 4vw, 2.75rem) 0; border: 0; border-top: 1px solid var(--line); min-width: 0; }
+  .co-step:first-of-type { border-top: 0; padding-top: 0.5rem; }
+  .co-step__n { font-family: var(--font-display); font-weight: 400; font-size: clamp(3.25rem, 6vw, 5rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 20; margin-top: -0.02em; }
+  .co-step__body { display: grid; gap: 1.25rem; min-width: 0; }
+  .co-step__title { font-size: var(--fs-2xl); letter-spacing: -0.03em; }
+
+  .co-methods { display: grid; gap: 0.6rem; }
+  .method { display: flex; gap: 0.9rem; align-items: flex-start; padding: 1rem 1.1rem; min-height: 3.5rem; border: 1px solid rgb(243 233 214 / 0.2); border-radius: var(--r-md); background: rgb(255 252 245 / 0.02); cursor: pointer; transition: border-color var(--dur-fast), background var(--dur-fast), box-shadow var(--dur-fast); }
+  .method:hover { border-color: rgb(243 233 214 / 0.45); }
+  .method:has(input:checked) { border-color: var(--cream-1); background: rgb(255 252 245 / 0.06); box-shadow: 0 0 0 1px var(--cream-1); }
+  .method:has(input:focus-visible) { outline: 2px solid var(--focus); outline-offset: 3px; }
+  .method.is-disabled { opacity: 0.45; cursor: not-allowed; }
+  .method input { appearance: none; flex: none; width: 1.15rem; height: 1.15rem; margin: 0.2rem 0 0; border-radius: 50%; border: 1px solid var(--cream-3); background: transparent; transition: border var(--dur-fast); }
+  .method input:checked { border: 0.36rem solid var(--cream-1); box-shadow: 0 0 12px rgb(243 233 214 / 0.35); }
+  .method input:focus-visible { outline: none; }
+  .method span { display: grid; gap: 0.15rem; min-width: 0; }
+  .method strong { font-weight: 600; color: var(--cream-0); }
+  .method em { font-style: normal; font-size: var(--fs-sm); color: var(--fg-3); }
+  .co-address { margin-top: 0.75rem; }
+
+  .co-submit { display: grid; gap: 1rem; padding-top: clamp(1.75rem, 4vw, 2.75rem); border-top: 1px solid var(--line); }
+  .co-submit__note { max-width: 40ch; }
+  @media (min-width: 40rem) { .co-submit { grid-column: 1 / -1; padding-left: 7.5rem; } }
+  .co-submit .btn--accent { box-shadow: var(--glow-accent); }
+
+  /* ------------------------------------------------------------ the box beside it */
+  .co-sum { display: grid; gap: 1.25rem; padding: clamp(1.5rem, 3vw, 2rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2); }
+  .co-sum__title { font-size: var(--fs-xl); }
+  .co-sum__empty p { margin: 0; }
+  .co-sum__items { padding: 0; overflow: visible; }
+  .co-sum__items :global(.ci) { grid-template-columns: 3.75rem minmax(0, 1fr) auto; gap: 0.9rem; padding: 0.9rem 0; }
+  .co-sum__items :global(.ci:first-child) { padding-top: 0; }
+  .co-sum__items :global(.ci__img) { width: 3.75rem; box-shadow: var(--shadow-1); }
+  .co-sum__items :global(.ci__name) { font-size: var(--fs-sm); }
+  .co-sum__items :global(.ci__price) { font-size: var(--fs-sm); }
+  .co-sum__items :global(.ci__ctl) { margin-top: 0.4rem; gap: 0.5rem; flex-wrap: wrap; }
+  .co-sum__items :global(.ci__ctl .qty) { grid-template-columns: 2.2rem 2rem 2.2rem; height: 2.2rem; }
+  .co-sum__rows { display: grid; gap: 0.6rem; }
+  .co-sum__row { display: flex; justify-content: space-between; gap: 1rem; color: var(--fg-2); }
+  .co-sum__row strong { font-weight: 600; color: var(--cream-0); }
+  .co-sum__total { padding-top: 0.9rem; border-top: 1px solid var(--line); align-items: baseline; color: var(--cream-0); }
+  .co-sum__total > span:first-child { font-size: var(--fs-sm); font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--fg-3); }
+  .co-sum__total > span:last-child { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-2xl); letter-spacing: -0.03em; line-height: 1; text-align: right; }
+  .co-sum__ticks { padding-top: 1rem; border-top: 1px solid var(--line); }
+  .co-sum__ticks a { color: var(--cream-0); }
+
+  [data-summary-full][hidden], [data-summary-empty][hidden], [data-checkout-note][hidden], [data-address-fields][hidden] { display: none; }
+
+  /* Phones: the numeral sits above its step, and the box comes first so the reader sees what the form is for. */
+  @media (max-width: 40rem) {
+    .co-step { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+    .co-step__n { font-size: 3rem; }
+    .co-aside { order: -1; }
+  }
+</style>

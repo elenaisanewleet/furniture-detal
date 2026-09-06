@@ -1,0 +1,97 @@
+---
+/**
+ * The body of the 404 page, shared by all three language copies.
+ *
+ * It lives in a component rather than a route because Astro only emits the
+ * exact filename `404.html` for a page file literally named `404.astro`, and
+ * the Worker serves that file by name. So there is one file per language and
+ * one copy of the markup.
+ *
+ * The page is one enormous line, an outlined "404" the width of the room
+ * behind it, a cream button back to the shop and three lit doors out. An
+ * apple of light falls once and comes to rest on the numeral's baseline —
+ * the page that fell off the tree.
+ */
+import Icon from './Icon.astro';
+import { stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const doors = [
+  { href: '/shop/', label: ui.nav.shop },
+  { href: '/journal/', label: ui.nav.journal },
+  { href: '/contact/', label: ui.footerLinks.contact },
+];
+---
+<section class="nf" aria-labelledby="nf-title">
+  <div class="nf__glow" aria-hidden="true"></div>
+  <div class="container nf__room">
+    <p class="nf__num" aria-hidden="true">404<span class="nf__apple"></span></p>
+    <div class="nf__copy">
+      <p class="eyebrow">{ui.notFoundTitle}</p>
+      <h1 id="nf-title" class="nf__title" data-words>{ui.notFoundHead}</h1>
+      <p class="lead nf__lead">{ui.notFoundLead}</p>
+      <div class="cluster nf__cta">
+        <a class="btn btn--lg" href="/shop/">{ui.notFoundShop}</a>
+        <a class="link" href="/">{ui.notFoundHome}</a>
+      </div>
+    </div>
+    <div class="nf__doors" data-stagger>
+      {doors.map((d, i) => (
+        <a class="nf__door" href={d.href}>
+          <span class="nf__door-n" aria-hidden="true">0{i + 1}</span>
+          <span class="nf__door-t">{d.label}</span>
+          <Icon name="arrow" size={20} class="arrow" />
+        </a>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  .nf { position: relative; isolation: isolate; overflow: clip; min-height: calc(100svh - 6.5rem); display: grid; align-content: end; padding-block: clamp(6rem, 14vw, 10rem) clamp(2.5rem, 6vw, 5rem); }
+  .nf__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background:
+      radial-gradient(40% 35% at 78% 28%, rgb(255 90 60 / 0.16), transparent 70%),
+      radial-gradient(70% 50% at 50% 100%, var(--night-950), transparent 70%); }
+  .nf__room { position: relative; display: grid; gap: clamp(2.5rem, 6vw, 5rem); }
+
+  /* The numeral: a wall of outlined type behind the line, the apple resting on its baseline. */
+  .nf__num { position: absolute; right: -0.04em; top: 0; z-index: -1; margin: 0; transform: translateY(-45%); font-family: var(--font-display); font-weight: 400; font-size: clamp(11rem, 28vw, 30rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(200 182 151 / 0.55); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; user-select: none; white-space: nowrap; pointer-events: none; }
+  .nf__apple { position: absolute; left: 63%; bottom: 0.03em; width: 0.085em; height: 0.085em; min-width: 1rem; min-height: 1rem; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #ff9a80, var(--apple-500) 55%, var(--apple-700)); box-shadow: 0 0 24px 4px rgb(255 90 60 / 0.55), 0 0 90px 20px rgb(255 90 60 / 0.25); animation: nf-fall 1.6s var(--ease-out) 0.3s both; }
+  .nf__apple::after { content: ''; position: absolute; left: 50%; top: -18%; width: 8%; height: 26%; min-width: 2px; min-height: 5px; border-radius: 2px; background: var(--leaf-600); transform: translateX(-50%) rotate(-12deg); }
+  @keyframes nf-fall {
+    0% { transform: translateY(-70vh) scale(0.9); opacity: 0; }
+    12% { opacity: 1; }
+    70% { transform: translateY(0) scale(1); }
+    80% { transform: translateY(-0.55em) scale(1); }
+    90% { transform: translateY(0) scaleY(0.9) scaleX(1.06); }
+    100% { transform: translateY(0) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) { .nf__apple { animation: none; } }
+
+  .nf__copy { position: relative; max-width: 60rem; }
+  .nf__title { font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.045em; max-width: 9ch; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .nf__lead { margin-top: 1.5rem; max-width: 44ch; }
+  .nf__cta { margin-top: 2.25rem; gap: 1.5rem; }
+
+  /* Three lit doors out. */
+  .nf__doors { display: grid; gap: 0.75rem; padding-top: clamp(1.5rem, 4vw, 2.5rem); border-top: 1px solid var(--line); }
+  @media (min-width: 40rem) { .nf__doors { grid-template-columns: repeat(3, 1fr); } }
+  .nf__door { position: relative; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 1rem; min-height: 4.5rem; padding: 1.1rem 1.4rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); color: var(--cream-1); text-decoration: none; transition: transform var(--dur) var(--ease-out), box-shadow var(--dur), color var(--dur-fast); }
+  .nf__door:hover { transform: translateY(-3px); box-shadow: var(--shadow-1), var(--glow-accent); color: var(--cream-0); }
+  .nf__door-n { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 400; line-height: 1; letter-spacing: 0.02em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 48, 'SOFT' 0; transition: color var(--dur-fast); }
+  .nf__door:hover .nf__door-n { color: var(--accent); -webkit-text-stroke: 0; }
+  .nf__door-t { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 500; letter-spacing: -0.02em; line-height: 1.1; }
+  .nf__door .arrow { color: var(--fg-3); transition: transform var(--dur-fast) var(--ease-out), color var(--dur-fast); }
+  .nf__door:hover .arrow { transform: translateX(4px); color: var(--accent); }
+
+  @media (max-width: 48rem) {
+    .nf { min-height: 0; padding-top: 2rem; }
+    /* In flow on a phone: the numeral sits above the line, right-aligned, and the apple lands just over the eyebrow. */
+    .nf__num { position: relative; right: auto; top: auto; z-index: 0; transform: none; margin: 0 -0.05em -0.5rem 0; text-align: right; font-size: clamp(11rem, 44vw, 16rem); }
+    .nf__room { gap: 1.5rem; }
+    .nf__doors { gap: 0.6rem; }
+    .nf__title { max-width: 10ch; }
+  }
+</style>

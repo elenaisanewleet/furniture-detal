@@ -1,0 +1,591 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { PRODUCTS } from '~/data/products';
+import { im, SIZES } from '~/data/images';
+import { site } from '~/data/site';
+import { FAQS } from '~/data/faq';
+import { faqPage } from '~/lib/schema';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+const { locale } = Astro.props as { locale: Locale };
+const ui = t(locale);
+
+
+/** Export markets are whatever site.ts lists outside the home market. */
+const exportMarkets = [...new Set(site.retailers.filter((r) => r.country !== site.country).map((r) => r.country))];
+const exportCount = exportMarkets.length;
+const exportList = exportCount > 1 ? `${exportMarkets.slice(0, -1).join(', ')} and ${exportMarkets[exportCount - 1]}` : exportMarkets.join('');
+
+/** Retail formats straight from the catalogue; bundles and gift sets are web-shop only. */
+const formats = PRODUCTS.filter((p) => p.collection !== 'gift-sets')
+  .sort((a, b) => a.order - b.order)
+  .map((p) => ({
+    slug: p.slug,
+    title: p.title,
+    brand: p.brand,
+    weight: `${p.weightGrams} g`,
+    flavours: p.variants.map((v) => ui.flavours[v.key]),
+    claims: p.diet.filter((d) => d === 'no-added-sugar' || d === 'gluten-free').map((d) => ui.diet[d]),
+    shelf: `${p.shelfLifeMonths} months`,
+  }));
+const skuCount = formats.reduce((n, f) => n + f.flavours.length, 0);
+
+const segments = [
+  { title: 'Retail chains', text: 'Already on the shelf at Maxima across Latvia. EAN-coded SKUs, shelf-ready cases and a bar that sells as well at the till as it does next to the dried fruit.' },
+  { title: 'Independent stores', text: 'Delis, health-food shops, farm shops, concept stores. A small first order by parcel, then reorders whenever the shelf runs low.' },
+  { title: 'Cafés & HoReCa', text: 'A sweet with no added sugar for the counter, the coffee saucer or the minibar. No fridge, no crumbs, nothing to throw away at closing time.' },
+  { title: 'Offices', text: 'A snack drawer that does not end in a four o’clock slump. Boxes of bars for kitchens, meetings and welcome packs.' },
+  { title: 'Distributors', text: `Our products are already sold in ${exportList}. Pallets from Riga, spec sheets for every SKU, one person to talk to.` },
+  { title: 'Private label', text: 'The same two-ingredient recipe under your own brand, for larger volumes. Your artwork, our ovens.' },
+] as const;
+
+const BALTICS = ['Latvia', 'Lithuania', 'Estonia'];
+const EU_REST = ['Austria', 'Belgium', 'Bulgaria', 'Croatia', 'Cyprus', 'Czechia', 'Denmark', 'Finland', 'France', 'Germany', 'Greece', 'Hungary', 'Ireland', 'Italy', 'Luxembourg', 'Malta', 'Netherlands', 'Poland', 'Portugal', 'Romania', 'Slovakia', 'Slovenia', 'Spain', 'Sweden'];
+const KINDS = ['Retail chain', 'Independent store', 'Café or HoReCa', 'Office', 'Distributor', 'Private label', 'Other'];
+const VOLUMES = ['Under 100 units a month', '100–1,000 units a month', '1,000–10,000 units a month', '10,000+ units a month'];
+
+/**
+ * The ladder: the four volume bands from the form, set as four numbers that
+ * grow down the page. Each rung says who it usually is and how it travels.
+ */
+const rungs = [
+  { n: 100, text: '100', label: VOLUMES[0], who: 'A café, a deli or an office kitchen, by parcel.' },
+  { n: 1000, text: '1,000', label: VOLUMES[1], who: 'An independent with a few branches, by parcel or pallet.' },
+  { n: 10000, text: '10,000', label: VOLUMES[2], who: 'A regional chain or a distributor, by pallet from Riga.' },
+  { n: 10000, text: '10,000+', label: VOLUMES[3], who: 'National listings and private label, planned together.' },
+];
+
+const wholesaleFaq = FAQS.find((f) => f.group === 'wholesale');
+const faqs = [
+  ...(wholesaleFaq ? [wholesaleFaq] : []),
+  { q: 'Is there a minimum order?', a: 'It depends on the format and on whether the order travels by parcel or by pallet. Tell us what you have in mind in the form and we will say straight away.' },
+  { q: 'Does it need a fridge?', a: 'No. Apple Bars, Flourless Bars, the App’Lite dessert and Belyov pastila keep for twelve months at room temperature, unopened. Meringues and zephyr have shorter shelf lives; see the formats table.' },
+  { q: 'Do you provide spec sheets and EAN codes?', a: 'Yes. Our SKUs are EAN-coded, and the line sheet comes with a spec sheet for each product: ingredients, allergens and nutrition per 100 g.' },
+  { q: 'Can we taste it before we order?', a: 'The quickest way is a Tasting Box from the web shop: four Apple Bars, two Flourless Bars, two bags of meringues and a 100 g pastila loaf, shipped free. Or mention samples in the form and we will tell you what we can send.' },
+  { q: 'Where do you already sell?', a: `In Latvia at Maxima and on Barbora, and through selected retailers in ${exportList}. See the Where to buy page for the list.` },
+];
+
+const mailHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wholesale enquiry')}`;
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+<Base
+  title="Wholesale apple bars & pastila for shops and cafés"
+  description="Wholesale apple bars, meringues and Belyov pastila with no added sugar for retailers, cafés, offices and distributors. Made in Riga, shipped EU-wide."
+  canonical="/wholesale/"
+  ogImage="retail-boxes"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Wholesale', href: '/wholesale/' }]}
+  schema={[faqPage(faqs)]}
+>
+  <!-- ============================== HERO: one enormous line, then the case ============================== -->
+  <section class="page-hero container ws-hero" aria-labelledby="page-title">
+    <p class="eyebrow">Wholesale &amp; B2B · {site.brand.legalName}, {site.locality}</p>
+    <h1 id="page-title" class="ws-hero__title" data-words>Put a 99% apple snack <em>on your shelf.</em></h1>
+    <div class="ws-hero__row">
+      <div class="ws-hero__copy" data-reveal>
+        <p class="lead">Semers supplies wholesale apple bars, apple meringues and Belyov pastila to retail chains, independent stores, cafés, offices and distributors across the EU. Two ingredients, no added sugar, twelve months on an ambient shelf. Already at Maxima and on Barbora in Latvia, and in stores in {exportList}.</p>
+        <div class="ws-hero__cta">
+          <a class="btn btn--lg" href="#enquiry">Request the line sheet <Icon name="arrow" size={20} class="arrow" /></a>
+          <a class="btn btn--lg btn--ghost" href="#formats">See the formats</a>
+        </div>
+        <div class="hero__proof">
+          <span><Icon name="check" size={16} /> No added sugar</span>
+          <span><Icon name="check" size={16} /> EAN-coded SKUs</span>
+          <span><Icon name="check" size={16} /> Ships from Riga, EU-wide</span>
+        </div>
+      </div>
+      <div class="hero__media ws-hero__media" data-reveal>
+        <div class="pf ws-hero__frame">
+          <img src={im('retail-boxes').src} srcset={im('retail-boxes').srcset} sizes={im('retail-boxes').srcset && SIZES.half} alt={im('retail-boxes').alt} width={im('retail-boxes').width} height={im('retail-boxes').height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.12" />
+        </div>
+        <div class="hero__float hero__float--a"><strong>Maxima</strong><span>on shelves across Latvia</span></div>
+        <div class="hero__float hero__float--b"><strong>{exportCount}</strong><span>export markets in the EU</span></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <div class="trust" data-stagger>
+      <div><Icon name="box" size={22} /><div><strong>Already on shelves</strong><span>Maxima, Barbora and stores in {exportCount} export markets</span></div></div>
+      <div><Icon name="globe" size={22} /><div><strong>Made in Riga, Latvia</strong><span>An EU producer: {site.brand.legalName}</span></div></div>
+      <div><Icon name="clock" size={22} /><div><strong>12 months ambient</strong><span>Bars and pastila need no cold chain</span></div></div>
+      <div><Icon name="mail" size={22} /><div><strong>Reply within one business day</strong><span>Line sheet, prices and spec sheets</span></div></div>
+    </div>
+  </div>
+
+  <!-- ============================== THE LADDER: four volumes as four growing numbers ============================== -->
+  <!--
+    The set piece. The volume bands from the enquiry form, set as numbers that
+    get bigger down the page; each counts up when it arrives and the rung
+    nearest the middle of the screen is lit. With reduced motion the ladder is
+    complete as it stands.
+  -->
+  <section class="section ladder" aria-labelledby="ladder-title">
+    <div class="container">
+      <div class="ladder__head">
+        <p class="eyebrow">Any volume</p>
+        <h2 id="ladder-title" data-words>Any volume, from one case to a pallet a week.</h2>
+      </div>
+      <ol class="ladder__list">
+        {rungs.map((r, i) => (
+          <li class="rung" style={`--i:${i}`} data-lit>
+            <b class="rung__n" data-count={r.n}>{r.text}</b>
+            <div class="rung__text" data-reveal>
+              <span class="eyebrow">{r.label}</span>
+              <p>{r.who}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <div class="ladder__foot" data-reveal>
+        <a class="btn" href="#enquiry">Request the line sheet <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="link" href="#formats">See the formats</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHO WE SUPPLY: a strip of lit cards ============================== -->
+  <section class="section container" aria-labelledby="who-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Who we supply</p>
+        <h2 id="who-title" data-words>From one café to a national chain.</h2>
+      </div>
+      <p class="muted" style="max-width:38ch">Same bars, same pastila, packed for the way you sell. Pick the line that sounds like you.</p>
+    </div>
+    <div class="strip" data-stagger tabindex="0">
+      {segments.map((s, i) => (
+        <article class="lit" data-tilt>
+          <span class="lit__n" aria-hidden="true">{pad(i + 1)}</span>
+          <h3>{s.title}</h3>
+          <p>{s.text}</p>
+        </article>
+      ))}
+    </div>
+  </section>
+
+  <!-- ============================== WHY IT SELLS ============================== -->
+  <section class="section band" aria-labelledby="why-title">
+    <div class="container split">
+      <div class="pf pf--4x5 pf--honey" data-reveal>
+        <img src={im('hero-bars').src} srcset={im('hero-bars').srcset} sizes={im('hero-bars').srcset && SIZES.third} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="lazy" decoding="async" data-parallax="0.15" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Why it sells</p>
+        <h2 id="why-title" data-words>The label does the selling.</h2>
+        <p class="lead mt-4">Shoppers read ingredient lists now. Ours has two entries, and the first one is 99% of the pack. That is the whole pitch, and it fits on the front.</p>
+        <div class="stats ws-stats" data-stagger>
+          <div class="stat"><strong data-count="99">99%</strong><span>baked Antonovka apples</span></div>
+          <div class="stat"><strong data-count="2">2</strong><span>ingredients: apples, egg white</span></div>
+          <div class="stat"><strong data-count="0">0 g</strong><span>added sugar</span></div>
+          <div class="stat"><strong data-count="12">12</strong><span>months on an ambient shelf</span></div>
+        </div>
+        <ul class="ticks">
+          <li><Icon name="check" size={18} /> No added sugar, no flour, no gluten, no preservatives</li>
+          <li><Icon name="check" size={18} /> No cooling: room temperature from our door to your shelf</li>
+          <li><Icon name="check" size={18} /> Small footprint: a 35 g bar takes the space of a chocolate bar</li>
+          <li><Icon name="check" size={18} /> EAN-coded SKUs, ready for your system</li>
+          <li><Icon name="check" size={18} /> Made in Riga, Latvia, by {site.brand.legalName}: an EU producer</li>
+          <li><Icon name="check" size={18} /> A recipe with a date on it: Belyov pastila, made commercially since 1888</li>
+        </ul>
+        <div class="cluster mt-4">
+          <a class="link" href="/why-pastila/">Why pastila</a>
+          <a class="link" href="/how-its-made/">How it’s made</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FORMATS ============================== -->
+  <section class="section container" id="formats" aria-labelledby="formats-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Formats</p>
+        <h2 id="formats-title" data-words>Seven formats. One apple behind all of them.</h2>
+      </div>
+      <p class="muted">{formats.length} formats · {skuCount} SKUs · <a href="/shop/">see them in the shop</a></p>
+    </div>
+    {/* Scrolls sideways when the columns do not fit, which a mouse can do and a keyboard cannot — unless the box itself can take focus. Named from the table's own caption, not the heading above it: the section already carries that heading as its name, and two landmarks with one name are two landmarks a screen reader cannot tell apart. */}
+    <div class="table-wrap ws-table" data-reveal tabindex="0" role="region" aria-labelledby="formats-caption">
+      <table class="table">
+        <caption class="sr-only" id="formats-caption">Every Semers format with its weight, flavours, label claims and shelf life</caption>
+        <thead>
+          <tr>
+            <th scope="col">Product</th>
+            <th scope="col">Weight</th>
+            <th scope="col">Flavours</th>
+            <th scope="col">On the label</th>
+            <th scope="col">Shelf life</th>
+          </tr>
+        </thead>
+        <tbody>
+          {formats.map((f) => (
+            <tr>
+              <td data-label="Product"><a class="ws-table__name" href={`/products/${f.slug}/`}>{f.title}</a><span class="tiny muted">{f.brand}</span></td>
+              <td class="nowrap" data-label="Weight">{f.weight}</td>
+              <td data-label="Flavours">{f.flavours.join(', ')}</td>
+              <td data-label="On the label"><div class="ws-table__claims">{f.claims.map((c) => <span class="chip chip--leaf">{c}</span>)}</div></td>
+              <td class="nowrap" data-label="Shelf life">{f.shelf}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted mt-4">Shelf life is unopened, at room temperature. Case sizes, pallet configurations and trade prices are in the line sheet; <a href="#enquiry">request it below</a>. Gift boxes and the Apple Bar 12-pack are web-shop formats, but ask if you want them for corporate gifting.</p>
+  </section>
+
+  <!-- ============================== HOW ORDERING WORKS ============================== -->
+  <section class="section container section--tight" aria-labelledby="how-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">How ordering works</p>
+        <h2 id="how-title" data-words>Three steps, no portal, no password.</h2>
+      </div>
+    </div>
+    <div class="steps ws-steps" data-stagger>
+      <div class="step">
+        <h3>Tell us about you</h3>
+        <p>Fill in the form below: who you are, where you sell and roughly what volume you have in mind. Two minutes, no attachments needed.</p>
+      </div>
+      <div class="step">
+        <h3>We send the line sheet and prices</h3>
+        <p>Within one business day you get the line sheet with formats, case sizes and trade prices, plus a spec sheet per product with ingredients, allergens, nutrition and EAN codes.</p>
+      </div>
+      <div class="step">
+        <h3>First order ships from Riga</h3>
+        <p>Confirm the order and we pack it. Small orders travel by parcel, larger ones by pallet, anywhere in the EU. Reorders are one e-mail.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== LOGISTICS: three outlined numerals ============================== -->
+  <section class="section band ws-log" aria-labelledby="log-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Logistics</p>
+          <h2 id="log-title" data-words>Ships from Riga. Lands anywhere in the EU.</h2>
+        </div>
+        <p class="muted ws-log__lead">We make and ship everything from Riga, Latvia. From here, goods move by road and sea to the whole European Union, and our web-shop parcels already leave within 1–2 business days.</p>
+      </div>
+      <ol class="numerals" data-stagger>
+        <li>
+          <span class="numerals__n" aria-hidden="true">01</span>
+          <h3>Parcels</h3>
+          <p>For first orders, independents, cafés and offices. Sent by courier from Riga, the same route our web-shop orders take.</p>
+        </li>
+        <li>
+          <span class="numerals__n" aria-hidden="true">02</span>
+          <h3>Pallets</h3>
+          <p>For chains and distributors. Pallets from Riga to your warehouse anywhere in the EU. Lead times and pallet configurations are in the line sheet.</p>
+        </li>
+        <li>
+          <span class="numerals__n" aria-hidden="true">03</span>
+          <h3>Paperwork</h3>
+          <p>A spec sheet for every SKU with ingredients, allergens, nutrition per 100 g and EAN codes. Twelve-month shelf life on bars and pastila; no cold chain to arrange.</p>
+        </li>
+      </ol>
+      <p class="ws-log__foot small muted">Already stocked at Maxima and Barbora in Latvia, and by selected retailers in {exportList}. <a href="/where-to-buy/">Where to buy</a></p>
+    </div>
+  </section>
+
+  <!-- ============================== PRIVATE LABEL: the year on the back of the pack ============================== -->
+  <section class="section container" aria-labelledby="pl-title">
+    <div class="split split--rev">
+      <div class="pl__media" data-reveal>
+        <span class="pl__year" aria-hidden="true">1888</span>
+        <div class="pf pf--4x5">
+          <img src={im('gift-box').src} srcset={im('gift-box').srcset} sizes={im('gift-box').srcset && SIZES.third} alt={im('gift-box').alt} width={im('gift-box').width} height={im('gift-box').height} loading="lazy" decoding="async" data-parallax="0.15" />
+        </div>
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Private label</p>
+        <h2 id="pl-title" data-words>Your name on the pack. Our apples inside.</h2>
+        <p class="lead mt-4">For larger volumes we make the same baked-apple bars, meringues and pastila under your brand. You bring the name and the artwork; we bring the recipe, the ovens in Riga and packaging ready for your EAN codes.</p>
+        <p class="muted">Start from any format in the table above, from a 35 g bar to a 180 g loaf. Tell us the format and the monthly volume in the form and we will tell you what is possible, and how soon.</p>
+        <ol class="pl__ticks">
+          <li><span class="pl__tn" aria-hidden="true">01</span><span>Same two-ingredient recipe, no added sugar</span></li>
+          <li><span class="pl__tn" aria-hidden="true">02</span><span>Made in the EU, in Riga, with a twelve-month ambient shelf life</span></li>
+          <li><span class="pl__tn" aria-hidden="true">03</span><span>A story to print on the back: Belyov pastila, since 1888</span></li>
+        </ol>
+        <div class="cluster mt-4">
+          <a class="btn btn--ghost" href="#enquiry">Ask about private label</a>
+          <a class="link" href="/story/">Read our story</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== FAQ ============================== -->
+  <section class="section container section--tight" aria-labelledby="faq-title">
+    <div class="ws-faq">
+      <div>
+        <p class="eyebrow">Questions buyers ask</p>
+        <h2 id="faq-title">Before the first purchase order.</h2>
+        <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+      </div>
+      <div class="acc" data-reveal>
+        {faqs.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== ENQUIRY FORM: a lit panel ============================== -->
+  <section class="section container" id="enquiry" aria-labelledby="enq-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Wholesale enquiry</p>
+        <h2 id="enq-title" data-words>Tell us about your shelf.</h2>
+      </div>
+      <p class="muted" style="max-width:38ch">We reply within one business day with the line sheet, trade prices and spec sheets.</p>
+    </div>
+    <div class="ws-enq">
+      <div class="ws-form" data-reveal>
+        <form data-form="wholesale" data-success="Thanks — we reply within one business day with prices and the line sheet.">
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label for="ws-company">Company</label>
+              <input class="input" id="ws-company" name="company" type="text" autocomplete="organization" required />
+            </div>
+            <div class="field">
+              <label for="ws-name">Your name</label>
+              <input class="input" id="ws-name" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div class="field">
+              <label for="ws-email">Work e-mail</label>
+              <input class="input" id="ws-email" name="email" type="email" autocomplete="email" inputmode="email" required />
+            </div>
+            <div class="field">
+              <label for="ws-phone">Phone <span class="muted">(optional)</span></label>
+              <input class="input" id="ws-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" />
+            </div>
+            <div class="field">
+              <label for="ws-country">Country</label>
+              <select class="select" id="ws-country" name="country" required>
+                <option value="">Choose a country</option>
+                <optgroup label="Baltics">
+                  {BALTICS.map((c) => <option value={c}>{c}</option>)}
+                </optgroup>
+                <optgroup label="Rest of the EU">
+                  {EU_REST.map((c) => <option value={c}>{c}</option>)}
+                </optgroup>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="ws-kind">You are a</label>
+              <select class="select" id="ws-kind" name="kind" required>
+                <option value="">Choose one</option>
+                {KINDS.map((k) => <option value={k}>{k}</option>)}
+              </select>
+            </div>
+            <div class="field span-2">
+              <label for="ws-volume">Expected volume</label>
+              <select class="select" id="ws-volume" name="volume">
+                <option value="">Not sure yet</option>
+                {VOLUMES.map((v) => <option value={v}>{v}</option>)}
+              </select>
+              <span class="hint">A rough guess is fine. It helps us send the right price list.</span>
+            </div>
+            <div class="field span-2">
+              <label for="ws-message">Message <span class="muted">(optional)</span></label>
+              <textarea class="textarea" id="ws-message" name="message" rows="5" placeholder="Which formats interest you, how many locations, when you would like to start, whether you want samples or private label…"></textarea>
+            </div>
+            <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
+            <label class="checkbox span-2">
+              <input type="checkbox" name="consent" value="yes" required />
+              <span>I agree that Semers stores this enquiry to reply to it. Read the <a href="/legal/privacy/">privacy policy</a>.</span>
+            </label>
+            <div class="span-2">
+              <button class="btn btn--lg" type="submit">Request the line sheet</button>
+            </div>
+          </div>
+        </form>
+        <p class="small" data-form-note></p>
+      </div>
+
+      <aside class="ws-enq__aside" data-reveal>
+        <div class="pf ws-aside__img">
+          <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.third} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="lazy" decoding="async" data-parallax="0.1" />
+        </div>
+        <div class="ws-aside__card">
+          <h3>Prefer e-mail?</h3>
+          <p>Write to <a class="ws-aside__mail" href={mailHref}>{site.wholesaleEmail}</a> with your company name and country and we will send the line sheet the same way.</p>
+          <p class="eyebrow ws-aside__eyebrow">What happens next</p>
+          <ul class="ticks small">
+            <li><Icon name="check" size={16} /> A reply from a person within one business day</li>
+            <li><Icon name="check" size={16} /> Line sheet, trade prices and spec sheets</li>
+            <li><Icon name="check" size={16} /> First order by parcel or pallet from Riga</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================== TASTE FIRST: the one cream room ============================== -->
+  <section class="section container section--tight" aria-labelledby="taste-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Taste it first</p>
+      <h2 id="taste-title">Order a Tasting Box today. Talk wholesale tomorrow.</h2>
+      <p>Four Apple Bars, two Flourless Bars, two bags of meringues and a 100 g pastila loaf, shipped free from Riga. Bring it to your next range meeting.</p>
+      <div class="cluster mt-2">
+        <a class="btn btn--paper" href="/products/tasting-box/">Order a Tasting Box</a>
+        <a class="btn btn--ghost" href="/shop/">Shop all products</a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { ScrollTrigger, reduced } from '~/scripts/motion';
+
+  /*
+   * The ladder: the rung nearest the middle of the screen is lit. With reduced
+   * motion the ladder is complete as it is, every number outlined in cream.
+   */
+  if (!reduced) {
+    for (const el of Array.from(document.querySelectorAll<HTMLElement>('[data-lit]'))) {
+      ScrollTrigger.create({ trigger: el, start: 'top 60%', end: 'bottom 40%', toggleClass: 'is-lit' });
+    }
+  }
+</script>
+
+<style>
+  /* ---------------------------------------------------------- parallax frames */
+  /* A photograph that drifts is taller than its window, or the drift would show the ground behind it. */
+  .pf { position: relative; overflow: clip; border-radius: var(--r-xl); background: var(--bg-sunken); box-shadow: var(--shadow-2); }
+  .pf img { position: absolute; left: 0; right: 0; top: -12%; width: 100%; height: 124%; object-fit: cover; }
+  .pf--4x5 { aspect-ratio: 4 / 5; }
+  .pf--honey { box-shadow: var(--shadow-2), var(--glow-honey); }
+
+  /* ---------------------------------------------------------- hero */
+  .ws-hero { padding-bottom: clamp(2rem, 5vw, 4rem); }
+  .ws-hero .ws-hero__title { font-size: clamp(3rem, 2rem + 6.5vw, 8.5rem); line-height: 0.92; letter-spacing: -0.04em; max-width: 14ch; }
+  .ws-hero__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .ws-hero__row { display: grid; gap: clamp(2rem, 5vw, 4rem); margin-top: clamp(2rem, 5vw, 3.5rem); align-items: end; }
+  @media (min-width: 56rem) { .ws-hero__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .ws-hero__copy { max-width: 40rem; }
+  .ws-hero__copy .lead { margin: 0; }
+  .ws-hero__cta { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+  .ws-hero__frame { aspect-ratio: 4 / 3; box-shadow: var(--shadow-3); }
+  @media (min-width: 56rem) { .ws-hero__frame { aspect-ratio: 5 / 4; } }
+  .ws-hero__media { max-width: 40rem; width: 100%; justify-self: end; }
+
+  /* ---------------------------------------------------------- the ladder */
+  .ladder { overflow: clip; }
+  .ladder__head { display: grid; gap: var(--sp-4); max-width: 60rem; margin-bottom: clamp(1rem, 3vw, 2rem); }
+  .ladder__head h2 { max-width: 16ch; }
+  .ladder__list { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
+  .rung { --size: clamp(4rem, 12vw + var(--i) * 2vw, calc(5.5rem + var(--i) * 2rem)); display: grid; gap: var(--sp-3) var(--sp-6); padding-block: clamp(1.5rem, 4vw, 3rem); border-top: 1px solid var(--line); align-items: end; }
+  .rung__n { display: block; font-family: var(--font-display); font-size: var(--size); font-weight: 400; line-height: 0.85; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 30; transition: -webkit-text-stroke-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out), filter var(--dur-slow) var(--ease-out); }
+  .rung.is-lit .rung__n { -webkit-text-stroke-color: var(--accent); filter: drop-shadow(0 0 22px rgb(255 90 60 / 0.35)); }
+  .rung:hover .rung__n { color: var(--cream-0); -webkit-text-stroke-color: var(--cream-0); filter: drop-shadow(0 0 30px rgb(255 252 245 / 0.35)); }
+  .rung__text { display: grid; gap: 0.5rem; max-width: 34ch; }
+  .rung__text p { margin: 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 500; letter-spacing: -0.015em; line-height: 1.2; color: var(--cream-0); text-wrap: balance; }
+  @media (min-width: 56rem) {
+    .rung { grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr); }
+    .rung__text { padding-bottom: 0.4rem; }
+  }
+  .ladder__foot { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4) var(--sp-5); margin-top: clamp(2rem, 4vw, 3rem); }
+  @media (prefers-reduced-motion: reduce) { .rung__n { transition: none; } }
+
+  /* ---------------------------------------------------------- lit cards, in a strip */
+  .strip { display: grid; gap: var(--sp-5); }
+  @media (max-width: 55.99rem) {
+    /* A strip that scrolls sideways inside its own box; the page never does. */
+    .strip { grid-auto-flow: column; grid-auto-columns: min(78vw, 22rem); overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: var(--sp-3); margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: thin; scrollbar-color: var(--night-500) transparent; }
+    .strip > * { scroll-snap-align: start; }
+  }
+  @media (min-width: 56rem) { .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .lit { position: relative; isolation: isolate; overflow: clip; display: grid; gap: var(--sp-3); align-content: start; padding: clamp(1.4rem, 3vw, 2.25rem); border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
+  .lit::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(55% 50% at 100% 0%, rgb(240 176 74 / 0.14), transparent 70%); opacity: 0.7; transition: opacity var(--dur-slow); }
+  .lit:hover { box-shadow: var(--shadow-2), var(--glow-honey); }
+  .lit:hover::before { opacity: 1; }
+  .lit__n { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 400; line-height: 1; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); }
+  .lit h3 { font-size: var(--fs-xl); margin-top: 0.6rem; }
+  .lit p { margin: 0; color: var(--fg-2); font-size: var(--fs-md); }
+
+  /* ---------------------------------------------------------- why it sells */
+  .ws-stats { margin: var(--sp-6) 0; grid-template-columns: repeat(2, 1fr); }
+  .ws-stats .stat:first-child strong { color: var(--honey-500); }
+
+  /* ---------------------------------------------------------- formats table */
+  .ws-table { border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); padding: 0.5rem 1.25rem; }
+  .ws-table .table { min-width: 44rem; font-size: var(--fs-sm); }
+  .ws-table .table th { font-size: var(--fs-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); padding-block: 0.9em; }
+  .ws-table .table td { padding-block: 0.9em; }
+  .ws-table tbody tr:last-child td { border-bottom: 0; }
+  .ws-table__name { display: block; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-lg); text-decoration: none; line-height: 1.2; color: var(--cream-0); }
+  .ws-table__name:hover { color: var(--accent-ink); }
+  .ws-table__claims { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  /* Phones: the five-column table becomes a stack of labelled rows; flavours, label claims and shelf life stay on screen. */
+  @media (max-width: 40rem) {
+    .ws-table { padding: 0.25rem 1.1rem; }
+    .ws-table .table, .ws-table tbody { display: block; min-width: 0; width: 100%; }
+    .ws-table thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .ws-table tbody tr { display: grid; gap: 0.3rem; padding: 0.9rem 0; border-bottom: 1px solid var(--line); }
+    .ws-table tbody tr:last-child { border-bottom: 0; }
+    .ws-table .table td { display: grid; grid-template-columns: 6rem 1fr; gap: 0.5rem; padding: 0; border: 0; white-space: normal; }
+    .ws-table .table td::before { content: attr(data-label); padding-top: 0.2em; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg-3); }
+    .ws-table .table td:first-child { display: block; margin-bottom: 0.2rem; }
+    .ws-table .table td:first-child::before { display: none; }
+    .ws-table__name { display: inline; margin-right: 0.4em; }
+  }
+
+  /* ---------------------------------------------------------- steps: three, not four */
+  @media (min-width: 56rem) { .ws-steps { grid-template-columns: repeat(3, 1fr); gap: var(--sp-6); } }
+
+  /* ---------------------------------------------------------- logistics: outlined numerals on hairlines */
+  .ws-log .section-head { align-items: end; }
+  .ws-log__lead { max-width: 44ch; margin: 0; }
+  .numerals { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-6); border-top: 1px solid var(--line); }
+  .numerals li { display: grid; gap: 0.6rem; align-content: start; padding-top: var(--sp-5); }
+  .numerals__n { font-family: var(--font-display); font-size: var(--fs-3xl); font-weight: 400; line-height: 1; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); margin-bottom: 0.4rem; }
+  .numerals h3 { font-size: var(--fs-2xl); }
+  .numerals p { margin: 0; color: var(--fg-2); }
+  @media (min-width: 48rem) {
+    .numerals { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
+    .numerals li { padding: var(--sp-6) var(--sp-6) 0 0; }
+    .numerals li + li { padding-left: var(--sp-6); border-left: 1px solid var(--line); }
+  }
+  .ws-log__foot { margin-top: var(--sp-7); }
+  .ws-log__foot a { color: var(--cream-0); }
+
+  /* ---------------------------------------------------------- private label */
+  .pl__media { position: relative; padding-top: clamp(2rem, 6vw, 4rem); }
+  .pl__year { position: absolute; left: -0.04em; top: 0; z-index: 2; font-family: var(--font-display); font-size: clamp(5rem, 16vw, 12rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); pointer-events: none; font-variation-settings: 'opsz' 144, 'SOFT' 30; }
+  .pl__media .pf { margin-top: clamp(0.5rem, 3vw, 2.5rem); }
+  .pl__ticks { list-style: none; margin: var(--sp-5) 0 0; padding: 0; display: grid; gap: 0.7rem; border-top: 1px solid var(--line); }
+  .pl__ticks li { display: grid; grid-template-columns: 2.6rem 1fr; gap: var(--sp-4); align-items: baseline; padding-top: 0.7rem; color: var(--fg-2); }
+  .pl__ticks li + li { border-top: 1px solid var(--line); }
+  .pl__tn { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 400; letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); }
+
+  /* ---------------------------------------------------------- faq */
+  .ws-faq { display: grid; gap: 2rem; }
+  @media (min-width: 56rem) { .ws-faq { grid-template-columns: 1fr 1.4fr; gap: 4rem; } }
+
+  /* ---------------------------------------------------------- enquiry: a lit panel */
+  .ws-enq { display: grid; gap: var(--sp-6); align-items: start; }
+  @media (min-width: 60rem) { .ws-enq { grid-template-columns: 1.15fr 0.85fr; } .ws-enq__aside { position: sticky; top: 6rem; } }
+  .ws-form { position: relative; isolation: isolate; overflow: clip; padding: clamp(1.25rem, 3vw, 2.5rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-3), var(--glow-honey); }
+  .ws-form::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 40% at 0% 0%, rgb(240 176 74 / 0.12), transparent 70%); }
+  .ws-form .checkbox { align-items: flex-start; }
+  .ws-form [data-form-note]:not(:empty) { margin-top: var(--sp-4); }
+  .ws-enq__aside { display: grid; gap: var(--sp-5); }
+  .ws-aside__img { aspect-ratio: 3 / 2; border-radius: var(--r-lg); box-shadow: var(--shadow-1); }
+  .ws-aside__card { display: grid; gap: 0.75rem; padding: 1.5rem; border-radius: var(--r-lg); background: var(--bg-sunken); box-shadow: var(--shadow-1); }
+  .ws-aside__card h3 { font-size: var(--fs-xl); }
+  .ws-aside__card p { margin: 0; color: var(--fg-2); }
+  .ws-aside__mail { font-weight: 600; white-space: nowrap; color: var(--cream-0); }
+  .ws-aside__eyebrow { margin-top: 0.5rem; }
+  .ws-aside__card .ticks { gap: 0.45rem; }
+</style>

@@ -1,0 +1,160 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { site } from '~/data/site';
+
+import { localeParams } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+---
+<Base title="Thank you" description="We received your order request." canonical="/order/thank-you/" noindex>
+  <!--
+    A moment rather than a receipt: two words set as large as the page allows,
+    the order reference beneath them as display type, and only then the
+    practicalities. The right half of the screen belongs to the same thanks in
+    the language of the city the box ships from, set as one enormous outlined
+    word in honey light; the recap of the order, when the browser still has
+    it, takes that place as a lit panel instead.
+  -->
+  <section class="ty" aria-labelledby="ty-title">
+    <div class="ty__glow" aria-hidden="true"></div>
+    <div class="ty__word" aria-hidden="true" translate="no" lang="lv"><span>Paldies</span></div>
+    <div class="container ty__grid">
+      <div class="ty__say">
+        <p class="eyebrow ty__eyebrow"><Icon name="check" size={14} /> Order request received</p>
+        <h1 class="ty__title" id="ty-title" data-words>Thank you.</h1>
+        <p class="ty__ref" id="ty-ref-line" hidden><span class="ty__ref-lbl">Your reference is</span> <strong class="num ty__ref-n" id="ty-ref">—</strong></p>
+        <p class="lead ty__lead" data-reveal>Within one business day you will get an e-mail from {site.email} confirming availability, the delivery estimate and a secure payment link.</p>
+      </div>
+      <section class="ty__recap" id="ty-recap" aria-labelledby="ty-recap-title" hidden>
+        <h2 id="ty-recap-title">What you ordered</h2>
+        <ul id="ty-lines"></ul>
+        <dl id="ty-totals"></dl>
+        <p class="tiny muted" id="ty-recap-note"></p>
+      </section>
+    </div>
+  </section>
+
+  <section class="container ty__next" aria-labelledby="ty-next-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Three steps</p>
+        <h2 id="ty-next-title" data-words>What happens next</h2>
+      </div>
+    </div>
+    <ol class="ty__steps" data-stagger>
+      <li><strong>Confirmation e-mail</strong><span>Check spam if it doesn’t arrive within a few hours.</span></li>
+      <li><strong>Payment link</strong><span>Card or bank transfer, whichever you prefer.</span></li>
+      <li><strong>Packed in Riga</strong><span>Sealed and shipped within 1–2 business days of payment.</span></li>
+    </ol>
+  </section>
+
+  <section class="section container ty__back" aria-labelledby="ty-back-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">While you wait</p>
+      <h2 id="ty-back-title">Something to read while the kettle boils.</h2>
+      <p>The orchard, the recipe from 1888 and what pastila actually is — all in the journal.</p>
+      <div class="cluster mt-2">
+        <a class="btn" href="/journal/">Read the journal</a>
+        <a class="btn btn--ghost" href="/shop/">Back to the shop</a>
+      </div>
+    </div>
+  </section>
+
+  <script is:inline>
+    (function () {
+      var ref = new URLSearchParams(location.search).get('ref');
+      var el = document.getElementById('ty-ref');
+      var line = document.getElementById('ty-ref-line');
+      if (el && line && ref) { el.textContent = ref; line.hidden = false; }
+      // Recap of the order just placed (stashed by the checkout; stays until the tab closes).
+      try {
+        var raw = sessionStorage.getItem('semers.lastOrder');
+        var o = raw ? JSON.parse(raw) : null;
+        if (!o || !o.items || !o.items.length || (ref && o.ref && o.ref !== ref)) return;
+        var eur = function (n) { return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(n); };
+        var lines = document.getElementById('ty-lines');
+        o.items.forEach(function (i) {
+          var li = document.createElement('li');
+          var name = document.createElement('span');
+          name.textContent = i.qty + ' × ' + i.name + (i.variant ? ' (' + i.variant + ')' : '') + (i.note ? ' — ' + i.note : '');
+          var sum = document.createElement('strong');
+          sum.className = 'num';
+          sum.textContent = eur(i.total);
+          li.appendChild(name); li.appendChild(sum); lines.appendChild(li);
+        });
+        var totals = document.getElementById('ty-totals');
+        var row = function (k, v) { var dt = document.createElement('dt'); dt.textContent = k; var dd = document.createElement('dd'); dd.className = 'num'; dd.textContent = v; totals.appendChild(dt); totals.appendChild(dd); };
+        row('Subtotal', eur(o.subtotal));
+        row('Shipping', o.shippingNote ? 'quoted by e-mail' : o.shipping ? eur(o.shipping) : 'free');
+        row('Total', eur(o.total) + (o.shippingNote ? ' + shipping' : ''));
+        var note = document.getElementById('ty-recap-note');
+        note.textContent = (o.delivery ? o.delivery + '. ' : '') + (o.email ? 'Confirmation goes to ' + o.email + '.' : '');
+        document.getElementById('ty-recap').hidden = false;
+      } catch (e) { /* no recap without storage */ }
+    })();
+  </script>
+</Base>
+
+<style>
+  /* ------------------------------------------------------------ the moment */
+  .ty { position: relative; isolation: isolate; overflow: clip; padding-block: clamp(4rem, 10vw, 8rem) clamp(2.5rem, 6vw, 5rem); }
+  .ty__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background:
+      radial-gradient(50% 45% at 18% 35%, rgb(240 176 74 / 0.18), transparent 70%),
+      radial-gradient(40% 40% at 78% 80%, rgb(62 207 168 / 0.08), transparent 70%); }
+  .ty__grid { position: relative; display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: end; }
+  @media (min-width: 60rem) { .ty__grid:has(.ty__recap:not([hidden])) { grid-template-columns: minmax(0, 1.25fr) minmax(20rem, 0.75fr); } }
+  /* The set piece: the word fills the right half, lit from below; the recap panel, when there is one, takes its place. */
+  .ty__word { position: absolute; right: max(var(--gutter), calc((100% - var(--container)) / 2)); bottom: clamp(1rem, 4vw, 2.5rem); z-index: -1; pointer-events: none; font-family: var(--font-display); font-weight: 400; font-size: clamp(6rem, 17vw, 17rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.42); white-space: nowrap; }
+  .ty__word span { display: block; text-shadow: 0 0 80px rgb(240 176 74 / 0.35); }
+  .ty__word::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: -0.3em; height: 0.5em; border-radius: 50%; background: radial-gradient(50% 60% at 50% 45%, rgb(240 176 74 / 0.4), transparent 72%); filter: blur(10px); }
+  .ty:has(.ty__recap:not([hidden])) .ty__word { display: none; }
+  @media (max-width: 59.99rem) { .ty__word { position: static; margin: clamp(1.5rem, 6vw, 3rem) 0 0; font-size: clamp(5rem, 22vw, 9rem); text-align: right; padding-inline: var(--gutter); } .ty__word::after { display: none; } .ty { display: grid; } .ty__word { order: 2; } }
+  .ty__say { min-width: 0; }
+  .ty__eyebrow { color: var(--leaf-500); }
+  .ty__eyebrow::before { background: var(--leaf-500); }
+  .ty__eyebrow :global(svg) { color: var(--leaf-500); }
+  .ty__title { margin-top: 1.25rem; font-size: var(--fs-hero); letter-spacing: -0.045em; line-height: 0.88; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 80, 'WONK' 1; }
+  .ty__ref { display: grid; gap: 0.35rem; margin: clamp(1.5rem, 4vw, 2.5rem) 0 0; }
+  .ty__ref-lbl { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); }
+  .ty__ref-n { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-3xl); letter-spacing: -0.03em; line-height: 1; color: var(--honey-500); text-shadow: 0 0 36px rgb(240 176 74 / 0.45); overflow-wrap: anywhere; }
+  .ty__lead { margin-top: clamp(1.5rem, 4vw, 2.5rem); max-width: 48ch; }
+
+  .ty__recap { display: grid; gap: 0.5rem; padding: clamp(1.5rem, 3vw, 2rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-honey); min-width: 0; }
+  .ty__recap[hidden] { display: none; }
+  .ty__recap h2 { font-size: var(--fs-xl); margin-bottom: 0.5rem; }
+  .ty__recap ul { list-style: none; margin: 0; padding: 0; }
+  /* Rows and totals are created by the inline script, so they carry no scope attribute: :global() keeps the rules matching. */
+  .ty__recap :global(li) { display: flex; justify-content: space-between; gap: 1rem; padding: 0.55rem 0; border-bottom: 1px solid var(--line); font-size: var(--fs-sm); color: var(--fg-2); }
+  .ty__recap :global(li strong) { flex: none; color: var(--cream-0); }
+  .ty__recap dl { display: grid; grid-template-columns: 1fr auto; gap: 0.35rem 1rem; margin: 0.75rem 0 0; font-size: var(--fs-sm); color: var(--fg-2); }
+  .ty__recap :global(dd) { margin: 0; text-align: right; color: var(--cream-0); }
+  .ty__recap :global(dt:last-of-type) { font-weight: 600; color: var(--cream-0); }
+  .ty__recap :global(dd:last-of-type) { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 500; letter-spacing: -0.02em; line-height: 1; }
+  .ty__recap p { margin-top: 0.75rem; }
+
+  /* ------------------------------------------------------------ three steps */
+  .ty__next { padding-block: clamp(2rem, 5vw, 4rem) 0; }
+  /* A timeline: one unbroken hairline across the row, a stop for each step, the current one lit coral. */
+  .ty__steps { counter-reset: s; list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-5); position: relative; }
+  @media (min-width: 48rem) { .ty__steps { grid-template-columns: repeat(3, 1fr); gap: clamp(1.5rem, 4vw, 3rem); } .ty__steps::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, var(--coral-500) 0, var(--coral-500) 8%, var(--line) 30%, var(--line)); } }
+  .ty__steps li { counter-increment: s; position: relative; display: grid; gap: 0.5rem; align-content: start; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+  @media (min-width: 48rem) { .ty__steps li { border-top: 0; } }
+  .ty__steps li::before { content: counter(s, decimal-leading-zero); font-family: var(--font-display); font-weight: 400; font-size: var(--fs-3xl); line-height: 0.85; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); margin-bottom: 0.75rem; }
+  .ty__steps li:first-child::before { color: var(--coral-500); -webkit-text-stroke: 0; text-shadow: 0 0 30px rgb(255 122 136 / 0.5); }
+  .ty__steps strong { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xl); letter-spacing: -0.02em; line-height: var(--lh-snug); color: var(--cream-0); }
+  .ty__steps span { color: var(--fg-2); max-width: 32ch; }
+  .ty__steps li::after { content: ''; position: absolute; top: -0.3rem; left: 0; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--cream-3); box-shadow: 0 0 0 4px var(--bg); }
+  .ty__steps li:first-child::after { background: var(--coral-500); box-shadow: 0 0 0 4px var(--bg), 0 0 16px var(--coral-500); }
+
+  /* ------------------------------------------------------------ back out */
+  .ty__back { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(2rem, 4vw, 3rem); }
+  /* The footer's own margin would leave a room-sized void under the cream band; the newsletter band follows at the home page's rhythm instead. */
+  :global(.ftr) { margin-top: clamp(2.5rem, 5vw, 4rem); }
+  @media (max-width: 36rem) {
+    .ty__title { font-size: clamp(3.75rem, 20vw, 5.5rem); }
+  }
+</style>

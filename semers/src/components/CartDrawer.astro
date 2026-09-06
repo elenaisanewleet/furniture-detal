@@ -1,0 +1,70 @@
+---
+/**
+ * Slide-over cart. Markup only; state and rendering live in src/scripts/site.ts
+ * (localStorage cart, free-shipping progress, quantity controls).
+ */
+import Icon from './Icon.astro';
+import { site } from '~/data/site';
+import { PRODUCTS, formatPrice, formatThreshold } from '~/data/products';
+import { imgSmall } from '~/data/images';
+import { localePath, stripLocale } from '~/i18n/config';
+import { localizedProducts } from '~/data/copy';
+import { t, bold } from '~/i18n/ui';
+
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const L = (href: string) => localePath(href, locale);
+
+/** One-tap adds under the free-shipping bar: the cheapest single-piece products, hidden once they are in the box. */
+const upsell = localizedProducts(PRODUCTS, locale)
+  .filter((p) => p.pack === 1 && p.price < 3)
+  .sort((a, b) => a.price - b.price)
+  .slice(0, 3)
+  .map((p) => {
+    const v0 = p.variants[0];
+    return {
+      slug: p.slug,
+      name: p.name,
+      price: formatPrice(v0.price ?? p.price, locale),
+      image: imgSmall(p.images[0]),
+      add: JSON.stringify({ slug: p.slug, name: p.title, variant: v0.key, variantLabel: ui.flavours[v0.key], price: v0.price ?? p.price, image: imgSmall(p.images[0]), weight: p.weightGrams, url: `/products/${p.slug}/` }),
+      label: ui.addToBoxAria(p.title),
+    };
+  });
+---
+<div class="drawer" id="cart" role="dialog" aria-modal="true" aria-labelledby="cart-title" hidden>
+  <div class="drawer__scrim" data-cart-close></div>
+  <aside class="drawer__panel">
+    <header class="drawer__head">
+      <h2 id="cart-title">{ui.yourBox} <span class="drawer__n" id="cart-n"></span></h2>
+      <button class="drawer__close" type="button" data-cart-close aria-label={ui.closeCart}><Icon name="close" /></button>
+    </header>
+    <div class="drawer__ship" id="cart-ship" data-free-from={site.shipping.freeFrom}>
+      <div class="drawer__bar" aria-hidden="true"><span id="cart-ship-fill"></span></div>
+      <p id="cart-ship-text" set:html={bold(ui.freeShippingOver(formatThreshold(site.shipping.freeFrom, locale)))} />
+      {/* Filled by the cart when one more of something reaches the next volume step. */}
+      <p class="drawer__tier" id="cart-tier-text" hidden></p>
+      <ul class="drawer__upsell" id="cart-upsell" aria-label={ui.quickAdds} hidden>
+        {upsell.map((u) => (
+          <li class="up" data-up-slug={u.slug}>
+            <img class="up__img" src={u.image} alt="" width="44" height="44" loading="lazy" decoding="async" />
+            <span><span class="up__name">{u.name}</span><span class="up__price">{u.price}</span></span>
+            <button class="pc__add up__add" type="button" data-add={u.add} data-add-open="false" aria-label={u.label}><Icon name="plus" size={16} /></button>
+          </li>
+        ))}
+      </ul>
+    </div>
+    <ul class="drawer__items" id="cart-items"></ul>
+    <div class="drawer__empty" id="cart-empty">
+      <Icon name="box" size={40} />
+      <p><strong>{ui.boxEmpty}</strong><br />{ui.fillItWith}</p>
+      <a class="btn" href={L('/shop/')} data-cart-close>{ui.shopBestsellers}</a>
+    </div>
+    <footer class="drawer__foot">
+      <div class="drawer__row"><span>{ui.subtotal}</span><strong id="cart-subtotal" class="num">{formatPrice(0, locale)}</strong></div>
+      <p class="tiny muted" style="margin:0">{ui.shippingAtCheckout}</p>
+      <a class="btn btn--lg btn--block" href={L('/checkout/')} id="cart-checkout">{ui.checkout} <Icon name="arrow" size={18} class="arrow" /></a>
+      <button class="btn btn--ghost btn--block" type="button" data-cart-close>{ui.keepShopping}</button>
+    </footer>
+  </aside>
+</div>

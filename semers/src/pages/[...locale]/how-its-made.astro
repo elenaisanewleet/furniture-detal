@@ -1,0 +1,799 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { imgSrc, im, SIZES } from '~/data/images';
+import { formatThreshold } from '~/data/products';
+import { site } from '~/data/site';
+import { originOf } from '~/lib/origin';
+import { FORGE_LAST } from '~/data/forge';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const abs = (k: string) => {
+  const s = imgSrc(k);
+  return s.startsWith('http') ? s : new URL(s, origin).toString();
+};
+const num = (i: number) => String(i + 1).padStart(2, '0');
+
+/**
+ * The eight stages, in order. Also feeds the HowTo JSON-LD below. Each stage
+ * carries the photograph that stands beside its caption on the page.
+ */
+const stages = [
+  {
+    short: 'Apples',
+    name: 'Choosing the apples',
+    text: 'Antonovka, and only Antonovka. It is a tart, aromatic northern apple with plenty of pectin and acid, which is what lets the purée set without gelatine and taste of fruit rather than sugar. Sweet dessert apples make a flat, sticky pastila; sour ones make it sing.',
+    image: 'apples-orchard',
+  },
+  {
+    short: 'Bake',
+    name: 'Baking the apples whole',
+    text: 'The apples go into the oven whole, skins on. Slow heat softens the flesh and caramelises the fruit’s own sugars, turning the flavour from sharp and green to warm and honeyed. Every bit of sweetness in the finished pastila is made here; there is no other source.',
+    image: 'process-oven',
+  },
+  {
+    short: 'Purée',
+    name: 'Puréeing',
+    text: 'Once baked, the apples are passed through a fine sieve. Skins, cores and pips stay behind; the smooth, fibre-rich pulp goes on. Nothing is added at this stage, and nothing is taken away except the parts you would not eat anyway.',
+    image: 'apple-split',
+  },
+  {
+    short: 'Whip',
+    name: 'Whipping with egg white',
+    text: 'The warm purée is whipped with fresh egg white until it triples in volume and holds a soft peak. This is the step that turns fruit into pastila: air, caught in a web of apple pectin and egg protein. It is also why a bar weighs so little for its size.',
+    image: 'meringue',
+  },
+  {
+    short: 'Spread',
+    name: 'Spreading thin',
+    text: 'The foam is spread in thin, even sheets on trays. Thin matters. It lets moisture leave evenly, so each layer dries to the same texture with no wet centre and no hard crust.',
+    image: 'pastila-texture',
+  },
+  {
+    short: 'Dry',
+    name: 'Slow drying',
+    text: 'The sheets dry for hours at low heat — gently, never baked a second time. Water leaves; flavour stays and concentrates. The slow pace is why the finished pastila keeps for a year without a single preservative: once the water is gone, spoilage has nothing to work with.',
+    image: 'pastila-macro',
+  },
+  {
+    short: 'Layer',
+    name: 'Layering and pressing',
+    text: 'Dried sheets are brushed with a little of the same apple foam, stacked several high and pressed into a block. The foam glues the layers together, and the whole block goes back into the warmth to set. This layering is the Belyov signature, and the reason a cut face looks like the pages of a book.',
+    image: 'pastila-block',
+  },
+  {
+    short: 'Cut & pack',
+    name: 'Resting, cutting and packing',
+    text: 'The blocks rest until the texture settles, then are cut into bars, squares and loaves and sealed the same day, each pack stamped with a batch label. Nothing is dusted, dipped or sprayed on the way. What leaves the drying room is what you open at home.',
+    image: 'pastila-slices',
+  },
+];
+
+const never = [
+  ['Sugar', 'baking the apple does the sweetening'],
+  ['Syrups', 'no glucose, agave, date or rice syrup'],
+  ['Sweeteners', 'no stevia, erythritol or sucralose'],
+  ['Gelatine', 'apple pectin sets the foam'],
+  ['Flour', 'air does the lifting'],
+  ['Oils or fats', 'nothing pressed, sprayed or spread on'],
+  ['Preservatives', 'slow drying does the keeping'],
+  ['Colours', 'the gold is caramelised apple'],
+  ['Flavourings', 'not even “natural flavouring”'],
+];
+
+const pageUrl = `${origin}/how-its-made/`;
+const howTo = {
+  '@type': 'HowTo',
+  '@id': `${pageUrl}#howto`,
+  name: 'How Semers apple pastila is made',
+  description:
+    'The eight-stage Belyov method behind every Semers product: Antonovka apples baked whole, puréed, whipped with egg white, spread thin, slowly dried, layered, pressed and cut. No added sugar, no flour, no preservatives.',
+  image: abs('process-oven'),
+  totalTime: 'PT12H',
+  supply: [
+    { '@type': 'HowToSupply', name: 'Antonovka apples' },
+    { '@type': 'HowToSupply', name: 'Egg white' },
+  ],
+  step: stages.map((s, i) => ({
+    '@type': 'HowToStep',
+    position: i + 1,
+    name: s.name,
+    text: s.text,
+    url: `${pageUrl}#step-${i + 1}`,
+  })),
+};
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+---
+<Base
+  title="How apple pastila is made: baked apples & egg white"
+  description="How Semers makes apple pastila in Riga: Antonovka apples baked whole, whipped with egg white, dried thin and pressed. No added sugar, no flour, no tricks."
+  canonical="/how-its-made/"
+  ogImage="process-oven"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'How it’s made', href: '/how-its-made/' }]}
+  schema={[howTo]}
+>
+  <!-- ============================== HERO ============================== -->
+  <!-- One enormous line and air. The drawing that follows is the page's first picture. -->
+  <section class="page-hero container hiw-hero" aria-labelledby="hero-title">
+    <div class="hiw-hero__copy">
+      <p class="eyebrow">How it’s made · {site.locality}, {site.country}</p>
+      <h1 id="hero-title" data-words>Twelve hours. Four ingredients at most. <em>Nothing to hide.</em></h1>
+      <p class="lead">This is how our apple pastila is made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into loaves. The recipe was first sold commercially in Belyov in 1888. The ingredient list has not grown since.</p>
+      <ul class="cluster hiw-facts" aria-label="Key facts">
+        <li class="chip"><Icon name="apple" size={14} /> 99% baked apples</li>
+        <li class="chip"><Icon name="egg" size={14} /> 1% egg white</li>
+        <li class="chip"><Icon name="check" size={14} /> No added sugar</li>
+        <li class="chip"><Icon name="clock" size={14} /> 12 months, no fridge</li>
+      </ul>
+    </div>
+    <!-- The number is the picture on this first screen: the twelve hours, outlined, with the oven's light behind it. -->
+    <p class="hiw-hero__fig" data-reveal>
+      <span class="hiw-hero__num" aria-hidden="true" data-count="12">12</span>
+      <span class="hiw-hero__cap">Hours from a whole apple to a sealed bar.</span>
+    </p>
+  </section>
+
+  <!-- ============================== THE FORGE ============================== -->
+  <!--
+    An apple that becomes a bar as the reader scrolls. The section pins one
+    screen and the scroll position is the timeline: the silhouette morphs,
+    the colour turns from apple red to baked crumb, and the five captions
+    beside it change in step. The drawing is the light source of this screen;
+    its halo takes the colour of whatever stage the apple is in.
+
+    The silhouette is one path with 96 points, morphed between five key shapes
+    that were authored as ordinary SVG outlines and resampled by arc length at
+    load. Colour, steam, air bubbles and the wrapper ride the same progress
+    value. The drawing is aria-hidden on purpose: the five steps beside it say
+    the same thing in words, and a reader who cannot see the apple should get
+    the sentences rather than a description of an animation.
+
+    The flat version is the default and the pinned one is opted into by the
+    script (`forge--live`): with no JavaScript, or with reduced motion asked
+    for, the five steps are a list and the drawing rests on the bar.
+  -->
+  <section class="forge" aria-labelledby="forge-title" data-forge>
+    <div class="forge__sticky">
+      <div class="container forge__inner">
+        <div class="forge__art">
+          <div class="forge__halo" aria-hidden="true"></div>
+          <svg class="forge__svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
+            <defs>
+              <!-- The stage colour is a wash of light over a dark body, not a fill: the silhouette stays a lit window in the night. -->
+              <linearGradient id="forge-body" x1="0" y1="0" x2="0.35" y2="1">
+                <stop offset="0" data-forge-stop="1" stop-color="#e2452f" stop-opacity="0.55" />
+                <stop offset="1" data-forge-stop="2" stop-color="#9e2617" stop-opacity="0.2" />
+              </linearGradient>
+              <clipPath id="forge-clip"><path data-forge-clip d={FORGE_LAST} /></clipPath>
+            </defs>
+
+            <g data-forge-steam fill="none" stroke-width="3" stroke-linecap="round" opacity="0">
+              <path d="M 78 46 c -6 -12 6 -16 0 -28" />
+              <path d="M 100 38 c -6 -12 6 -16 0 -28" />
+              <path d="M 122 46 c -6 -12 6 -16 0 -28" />
+            </g>
+
+            <g data-forge-stem opacity="0" fill="none" stroke-linecap="round">
+              <path class="forge__stem" d="M 100 46 C 100 30 100 24 98 14" stroke-width="1.5" />
+              <path class="forge__leaf" d="M 100 26 C 116 12 138 14 142 22 C 134 36 112 36 100 26 Z" stroke-width="1.25" />
+            </g>
+
+            <path class="forge__body" data-forge-shape d={FORGE_LAST} />
+
+            <g clip-path="url(#forge-clip)">
+              <rect class="forge__wash" x="0" y="0" width="200" height="200" fill="url(#forge-body)" />
+              <g data-forge-foam opacity="0">
+                <circle cx="78" cy="86" r="7" opacity="0.55" /><circle cx="112" cy="72" r="5" opacity="0.45" />
+                <circle cx="132" cy="98" r="9" opacity="0.5" /><circle cx="66" cy="118" r="6" opacity="0.4" />
+                <circle cx="104" cy="120" r="8" opacity="0.45" /><circle cx="150" cy="76" r="4" opacity="0.4" />
+              </g>
+              <g data-forge-wrap>
+                <rect class="forge__sleeve" x="58" y="72" width="84" height="56" />
+                <rect class="forge__seam" x="58" y="72" width="84" height="5" opacity="0.55" />
+                <text class="forge__mark" x="100" y="105" text-anchor="middle" font-size="11" letter-spacing="1">APP&apos;LITE</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+
+        <div class="forge__say">
+          <p class="eyebrow">From orchard to wrapper</p>
+          <h2 class="forge__title" id="forge-title">What twelve hours do to <em>one apple.</em></h2>
+          <ol class="forge__steps" data-forge-steps>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">01</b><h3>One Antonovka apple.</h3><p>Tart, aromatic and full of pectin. Nothing has been added to it yet, and nothing will be.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">02</b><h3>Baked whole, until it collapses.</h3><p>Hours in a low oven. The sugars caramelise on their own — that is where all the sweetness comes from.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">03</b><h3>Whipped with egg white.</h3><p>Beaten until it triples in volume and holds the air. That is the entire second ingredient.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">04</b><h3>Spread thin, dried slowly.</h3><p>Twelve hours at low heat turn the foam into a fibrous sheet you can lift in one piece. That sheet is pastila.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">05</b><h3>Cut into a 35 g bar.</h3><p>About 97 kcal, two ingredients, sealed the same day it is cut.</p></li>
+          </ol>
+          <div class="forge__rail" aria-hidden="true">
+            <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
+            <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
+          </div>
+          <a class="btn forge__cta" href="/shop/applite/">Shop the bars <Icon name="arrow" size={18} class="arrow" /></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== THE EIGHT STAGES ============================== -->
+  <!--
+    One photograph that stays put while eight captions scroll past it. The
+    pictures sit stacked in a single sticky frame and the script lights the one
+    whose caption is in the middle of the screen; the numeral on the caption
+    and the counter on the frame turn over with it. With no script the frame
+    is a plain column of eight photographs beside eight captions. On a phone
+    the frame sits above the captions and holds at the top of the screen.
+    The ids feed the HowTo JSON-LD and the jump links.
+  -->
+  <section class="section stages-sec" id="process" aria-labelledby="process-title">
+    <div class="container">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">The process</p>
+          <h2 id="process-title" data-words>Eight stages, in order. None skipped, none hurried.</h2>
+        </div>
+        <p class="muted" style="max-width:34ch">Most of the twelve hours is waiting. The rest is baking, whipping and cutting by hand.</p>
+      </div>
+      <nav class="stages__nav" aria-label="Jump to a stage">
+        <div class="pills stages__pills">
+          {stages.map((s, i) => <a class="pill" href={`#step-${i + 1}`}><span class="process__n">{num(i)}</span> {s.short}</a>)}
+        </div>
+      </nav>
+      <div class="stages" data-stages>
+        <div class="stages__pic">
+          <div class="stages__stack">
+            {stages.map((s, i) => (
+              <div class={`stages__ph ${i === 0 ? 'is-on' : ''}`} data-stage-photo>
+                <div class="frame stages__frame">
+                  <img src={im(s.image).src} srcset={im(s.image).srcset} sizes={im(s.image).srcset && SIZES.half} alt={im(s.image).alt} width={im(s.image).width} height={im(s.image).height} loading={i === 0 ? 'eager' : 'lazy'} decoding="async" class="img-cover" />
+                </div>
+              </div>
+            ))}
+          </div>
+          <span class="stages__badge" aria-hidden="true"><b data-stage-badge>{num(0)}</b> / {num(stages.length - 1)}</span>
+        </div>
+        <ol class="stages__list">
+          {stages.map((s, i) => (
+            <li class={`stage ${i === 0 ? 'is-on' : ''}`} id={`step-${i + 1}`} data-stage>
+              <span class="stage__n" aria-hidden="true">{num(i)}</span>
+              <p class="eyebrow stage__short">{s.short}</p>
+              <h3>{s.name}</h3>
+              <p>{s.text}</p>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== THE ONE PER CENT ============================== -->
+  <!-- The number is the picture: one enormous outlined figure, and the three things it lets the apple do. -->
+  <section class="section band pct-sec" aria-labelledby="air-title">
+    <div class="container split pct">
+      <div class="pct__fig" aria-hidden="true" data-reveal>
+        <span class="pct__big">1<small>%</small></span>
+        <span class="pct__ghost">99</span>
+      </div>
+      <div>
+        <p class="eyebrow">The one per cent</p>
+        <h2 id="air-title" data-words>Egg white does one job. It holds the air.</h2>
+        <p class="lead" data-reveal>Egg white is about one per cent of the recipe and does exactly one thing: it traps air. Whipped into warm apple purée, its proteins stretch around each bubble the way they would in a meringue. The setting, though, is done by the apple’s own pectin, so there is no sugar to add and no gelatine to hide.</p>
+        <ul class="ticks hiw-ticks" data-stagger>
+          <li><Icon name="check" /> <span>Sets on its own — apple pectin, not gelatine</span></li>
+          <li><Icon name="check" /> <span>Sweet on its own — baking concentrates the fruit</span></li>
+          <li><Icon name="check" /> <span>Light on its own — air does the lifting, not flour</span></li>
+        </ul>
+        <p data-reveal>What comes out is springy and faintly tart, a little like sponge and a little like dried fruit. It is a texture you will not find in a bar made with flour and syrup.</p>
+        <a class="link" href="/why-pastila/">Why that matters for what you eat</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CUT ONE OPEN ============================== -->
+  <!-- The one full-bleed photograph on the page: the pastila apple, lit from inside, with the copy standing in its light. -->
+  <section class="open" aria-labelledby="open-title">
+    <div class="open__media">
+      <img class="open__img" src={im('apple-render-wide').src} srcset={im('apple-render-wide').srcset} sizes="100vw" alt={im('apple-render-wide').alt} width={im('apple-render-wide').width} height={im('apple-render-wide').height} loading="lazy" decoding="async" data-parallax="0.2" />
+    </div>
+    <div class="container open__in">
+      <div class="open__copy">
+        <p class="eyebrow">Transparency</p>
+        <h2 id="open-title" data-words>Cut one open. It is apple all the way through.</h2>
+        <p class="open__text" data-reveal>No coating, no filling, no binder. The layers in a slice of pastila are the same whipped apple, dried and stacked; the gold colour is caramelised fruit, not a colouring. What is printed on the label is the whole of what is inside, and none of it needs a footnote.</p>
+        <div class="stats open__stats" data-stagger>
+          <div class="stat"><strong data-count="99">99%</strong><span>baked Antonovka apples</span></div>
+          <div class="stat"><strong data-count="1">1%</strong><span>egg white</span></div>
+          <div class="stat"><strong>0 g</strong><span>added sugar</span></div>
+          <div class="stat"><strong>~12 h</strong><span>from oven to pack</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== WHAT WE NEVER ADD ============================== -->
+  <!-- Two columns. The short one is lit; the long one is nine words, each struck through in red. -->
+  <section class="section container" aria-labelledby="never-title">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">The short list</p>
+        <h2 id="never-title" data-words>What goes in, and what we never add.</h2>
+      </div>
+      <p class="muted" style="max-width:34ch">Two columns. One of them is very short on purpose.</p>
+    </div>
+    <div class="io">
+      <div class="io__col io__col--in" data-reveal>
+        <p class="eyebrow">Goes in</p>
+        <ul class="ticks io__list">
+          <li><Icon name="check" /> <span><strong>Baked Antonovka apples</strong> <span class="muted">— 99% of every bar and loaf</span></span></li>
+          <li><Icon name="check" /> <span><strong>Egg white</strong> <span class="muted">— the other 1%</span></span></li>
+          <li><Icon name="check" /> <span><strong>Whole berries, cinnamon or pine nuts</strong> <span class="muted">— in the flavoured versions only</span></span></li>
+        </ul>
+      </div>
+      <div class="io__col io__col--out">
+        <p class="eyebrow">Never does</p>
+        <ul class="ticks ticks--no io__list" data-stagger>
+          {never.map(([what, why]) => (
+            <li><Icon name="close" /> <span><strong>{what}</strong> <span class="muted">— {why}</span></span></li>
+          ))}
+        </ul>
+      </div>
+    </div>
+    <p class="small muted mt-4 io__note">This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.</p>
+  </section>
+
+  <!-- ============================== QUALITY & SHELF LIFE ============================== -->
+  <section class="section band" aria-labelledby="keep-title">
+    <div class="container split split--rev keep">
+      <div class="frame frame--1x1 keep__frame" data-reveal>
+        <img src={im('pastila-100-pack').src} srcset={im('pastila-100-pack').srcset} sizes={im('pastila-100-pack').srcset && SIZES.half} alt={im('pastila-100-pack').alt} width={im('pastila-100-pack').width} height={im('pastila-100-pack').height} loading="lazy" decoding="async" class="img-cover" />
+      </div>
+      <div>
+        <p class="eyebrow">Quality and shelf life</p>
+        <h2 id="keep-title" data-words>Kept by drying, not by chemistry.</h2>
+        <p class="lead" data-reveal>Slow drying removes the water that spoilage needs. That is the whole preservation system, and it is why a pack of pastila can sit in a drawer for a year and still taste of the oven.</p>
+        <div class="specs" data-stagger>
+          <div class="spec">
+            <span class="spec__icon"><Icon name="shield" /></span>
+            <h3>A batch label on every pack</h3>
+            <p>Batch code and best-before date, printed at packing, so any pack can be traced back to the batch it came from.</p>
+          </div>
+          <div class="spec">
+            <span class="spec__icon"><Icon name="clock" /></span>
+            <h3>Twelve months, unopened</h3>
+            <p>For bars, dessert squares and pastila, in a cool, dry cupboard. Meringues and zephyr keep for less; the date on the pack is the one to trust.</p>
+          </div>
+          <div class="spec">
+            <span class="spec__icon"><Icon name="box" /></span>
+            <h3>No fridge, ever</h3>
+            <p>Room temperature is right. Once opened, keep it wrapped and finish it within a few days; it dries slowly rather than spoils.</p>
+          </div>
+          <div class="spec">
+            <span class="spec__icon"><Icon name="check" /></span>
+            <h3>Packed the same day</h3>
+            <p>Cut and sealed on the day it leaves the drying room. Nothing sits around waiting for a box.</p>
+          </div>
+        </div>
+        <p class="small muted specs__note">Allergens: contains egg. May contain traces of nuts, and the Pine Nut loaf contains them outright. The full allergen line is on each product page.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CTA, then one line of onward links ============================== -->
+  <section class="section container cta-sec" aria-labelledby="cta-title">
+    <div class="cta-band" data-reveal>
+      <p class="eyebrow">Taste the twelve hours</p>
+      <h2 id="cta-title">Start with a loaf. The bars will follow.</h2>
+      <p>Belyov pastila is the recipe in its original shape: baked Antonovka apple, egg white, time. Parcels leave Riga in 1–2 business days, and orders over {freeFrom} ship free.</p>
+      <div class="cluster mt-2">
+        <a class="btn" href="/shop/pastila/">Shop Belyov pastila <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn btn--ghost" href="/shop/">All products</a>
+        <a class="link cta-band__link" href="/why-pastila/">Why pastila?</a>
+      </div>
+    </div>
+    <!-- Keep reading: three links in one line, not three more boxes. -->
+    <nav class="more" aria-labelledby="more-title" data-reveal>
+      <p class="eyebrow" id="more-title">Keep reading</p>
+      <ul class="more__list">
+        <li><a class="more__link" href="/why-pastila/">Why a baked apple beats the usual bar <Icon name="arrow" size={16} class="arrow" /></a></li>
+        <li><a class="more__link" href="/story/">From Belyov, 1888, to Riga <Icon name="arrow" size={16} class="arrow" /></a></li>
+        <li><a class="more__link" href="/journal/antonovka-apples/">Why Antonovka apples? <Icon name="arrow" size={16} class="arrow" /></a></li>
+      </ul>
+    </nav>
+  </section>
+</Base>
+
+<script>
+  /**
+   * The forge: an apple that becomes a bar as the reader scrolls.
+   *
+   * Work is done on a scroll, not on a clock: a rAF is scheduled only when the
+   * page has actually moved and only while the section is on screen, so a
+   * reader who stops scrolling costs nothing and one who never reaches the
+   * section costs a single IntersectionObserver.
+   */
+  import { FORGE_SHAPES, FORGE_COLOURS } from '~/data/forge';
+
+  const section = document.querySelector<HTMLElement>('[data-forge]');
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (section && !reduced.matches) {
+    section.classList.add('forge--live');
+    const svg = section.querySelector('svg')!;
+    const shape = section.querySelector<SVGPathElement>('[data-forge-shape]')!;
+    const clip = section.querySelector<SVGPathElement>('[data-forge-clip]')!;
+    const stops = [...section.querySelectorAll<SVGStopElement>('[data-forge-stop]')];
+    const steps = [...section.querySelectorAll<HTMLElement>('.forge__step')];
+    const ticks = [...section.querySelectorAll<HTMLElement>('.forge__tick i')];
+    const layer = (name: string) => section.querySelector<SVGElement>(`[data-forge-${name}]`);
+    const stem = layer('stem'), steam = layer('steam'), foam = layer('foam'), wrap = layer('wrap');
+
+    /* The header is sticky and sits on top of the pin; the pinned screen starts under it, whatever height the header has today. */
+    const header = document.querySelector<HTMLElement>('header');
+    const measure = () => section.style.setProperty('--hdr', `${header ? header.offsetHeight : 0}px`);
+    measure();
+
+    /** How many points each silhouette is cut into. Enough that the curve reads smooth at 26rem. */
+    const N = 96;
+    /*
+     * getPointAtLength needs a path in the document, and this one must never be
+     * seen: it is a measuring tape, not a drawing.
+     */
+    const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    svg.appendChild(probe);
+    const frames = FORGE_SHAPES.map((d) => {
+      probe.setAttribute('d', d);
+      const len = probe.getTotalLength();
+      const pts: number[] = [];
+      for (let i = 0; i < N; i++) {
+        const pt = probe.getPointAtLength((i / N) * len);
+        pts.push(pt.x, pt.y);
+      }
+      return pts;
+    });
+    probe.remove();
+
+    const clamp = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
+    /** Which pair of stages `t` falls between, and how far across that pair it is. */
+    const span = (t: number) => {
+      const s = Math.min(frames.length - 1.0001, clamp(t) * (frames.length - 1));
+      const i = Math.floor(s);
+      return [i, s - i] as const;
+    };
+    /** 1 while `t` is inside [b, c], ramping up from a and back down to d. */
+    const window_ = (t: number, a: number, b: number, c: number, d: number) =>
+      Math.min(clamp((t - a) / (b - a)), clamp((d - t) / (d - c)));
+
+    /*
+     * A closed Catmull-Rom spline through the blended points. Straight segments
+     * between 96 samples are visibly faceted on the apple's shoulders; the same
+     * points read as one continuous curve once each is given tangents.
+     */
+    const toPath = (p: number[]) => {
+      const at = (i: number) => {
+        const j = ((i % N) + N) % N;
+        return [p[j * 2], p[j * 2 + 1]] as const;
+      };
+      let d = `M ${at(0)[0].toFixed(2)} ${at(0)[1].toFixed(2)}`;
+      for (let i = 0; i < N; i++) {
+        const [x0, y0] = at(i - 1), [x1, y1] = at(i), [x2, y2] = at(i + 1), [x3, y3] = at(i + 2);
+        d += ` C ${(x1 + (x2 - x0) / 6).toFixed(2)} ${(y1 + (y2 - y0) / 6).toFixed(2)}`
+          + ` ${(x2 - (x3 - x1) / 6).toFixed(2)} ${(y2 - (y3 - y1) / 6).toFixed(2)}`
+          + ` ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+      }
+      return `${d} Z`;
+    };
+
+    const blend = new Array(N * 2);
+    let shown = -1;
+
+    const draw = () => {
+      const box = section.getBoundingClientRect();
+      const travel = section.offsetHeight - window.innerHeight;
+      const t = travel > 0 ? clamp(-box.top / travel) : 0;
+
+      const [i, f] = span(t);
+      const a = frames[i], b = frames[i + 1] || a;
+      for (let k = 0; k < N * 2; k++) blend[k] = a[k] + (b[k] - a[k]) * f;
+      const d = toPath(blend);
+      shape.setAttribute('d', d);
+      clip.setAttribute('d', d);
+
+      const ca = FORGE_COLOURS[i], cb = FORGE_COLOURS[i + 1] || ca;
+      stops.forEach((stop, s) => {
+        const [r, g, bl] = ca[s].map((v, c) => Math.round(v + (cb[s][c] - v) * f));
+        stop.setAttribute('stop-color', `rgb(${r} ${g} ${bl})`);
+        // The halo behind the drawing is lit by the drawing's own top colour.
+        if (s === 0) section.style.setProperty('--halo', `${r} ${g} ${bl}`);
+      });
+
+      // Each layer belongs to one part of the story and is only paid for there.
+      if (stem) stem.style.opacity = String(window_(t, -1, 0, 0.05, 0.15));
+      if (steam) steam.style.opacity = String(window_(t, 0.12, 0.22, 0.34, 0.46));
+      if (foam) foam.style.opacity = String(window_(t, 0.38, 0.5, 0.66, 0.78));
+      if (wrap) wrap.style.opacity = String(window_(t, 0.9, 0.99, 9, 10));
+
+      const step = Math.min(steps.length - 1, Math.floor(t * steps.length * 0.9999));
+      if (step !== shown) {
+        steps.forEach((el, k) => el.classList.toggle('is-on', k === step));
+        shown = step;
+      }
+      ticks.forEach((el, k) => el.style.setProperty('--f', String(clamp(t * ticks.length - k))));
+    };
+
+    let queued = false;
+    const schedule = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(() => {
+        queued = false;
+        draw();
+      });
+    };
+
+    let watching = false;
+    const onScroll = () => watching && schedule();
+    new IntersectionObserver(
+      ([entry]) => {
+        watching = entry.isIntersecting;
+        schedule();
+      },
+      { rootMargin: '10% 0px' },
+    ).observe(section);
+
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', () => { measure(); schedule(); }, { passive: true });
+    draw();
+  }
+  /*
+   * The stages: whichever caption sits in the middle band of the screen is the
+   * one whose photograph shows. One observer, a band rather than a threshold,
+   * so a long caption and a short one are treated alike.
+   */
+  const stagesEl = document.querySelector<HTMLElement>('[data-stages]');
+  if (stagesEl && 'IntersectionObserver' in window) {
+    const captions = [...stagesEl.querySelectorAll<HTMLElement>('[data-stage]')];
+    const photos = [...stagesEl.querySelectorAll<HTMLElement>('[data-stage-photo]')];
+    const badge = stagesEl.querySelector<HTMLElement>('[data-stage-badge]');
+    let current = 0;
+    const show = (i: number) => {
+      if (i === current) return;
+      current = i;
+      captions.forEach((el, k) => el.classList.toggle('is-on', k === i));
+      photos.forEach((el, k) => el.classList.toggle('is-on', k === i));
+      if (badge) badge.textContent = String(i + 1).padStart(2, '0');
+    };
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) show(captions.indexOf(entry.target as HTMLElement));
+        }
+      },
+      { rootMargin: '-38% 0px -42% 0px', threshold: 0 },
+    );
+    captions.forEach((el) => io.observe(el));
+  }
+</script>
+
+<style>
+  /* ------------------------------------------------------------- hero */
+  .hiw-hero { display: grid; gap: clamp(2rem, 4vw, 3rem); align-items: end; }
+  .hiw-hero h1 { max-width: 16ch; }
+  .hiw-facts { list-style: none; margin: 2rem 0 0; padding: 0; }
+  .hiw-facts .chip :global(svg) { color: var(--leaf-500); }
+  /* The twelve hours as one outlined numeral, lit from behind in honey. */
+  .hiw-hero__fig { position: relative; display: grid; gap: 0.5rem; margin: 0; justify-items: start; width: max-content; max-width: 100%; }
+  .hiw-hero__fig::before { content: ''; position: absolute; left: -10%; top: -10%; width: 120%; height: 110%; z-index: -1; background: radial-gradient(closest-side, rgb(253 185 19 / 0.26), transparent 72%); pointer-events: none; }
+  .hiw-hero__num { display: block; font-family: var(--font-display); font-weight: 400; font-size: clamp(8rem, 26vw, 22rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; filter: drop-shadow(0 0 28px rgb(253 185 19 / 0.25)); }
+  .hiw-hero__cap { font-size: var(--fs-md); color: var(--fg-2); max-width: 20ch; }
+  @media (min-width: 64rem) {
+    .hiw-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); column-gap: clamp(2rem, 6vw, 6rem); }
+    .hiw-hero__fig { justify-self: end; justify-items: end; text-align: right; padding-bottom: 0.5rem; }
+  }
+  @media (max-width: 63.99rem) { .hiw-hero__fig { margin-top: 0.5rem; } }
+
+  /* ------------------------------------------------------------- the forge */
+  /*
+   * The flat version is the default and the pinned one is opted into, not the
+   * other way round. A reader with no JavaScript would otherwise get three
+   * screens of scroll holding one frozen apple and four paragraphs at opacity
+   * zero — the section is only worth its height once something is driving it,
+   * so `forge--live` is added by the script and by nothing else.
+   */
+  .forge { position: relative; isolation: isolate; background: var(--night-950); border-block: 1px solid var(--line); padding-block: clamp(2.5rem, 5vw, 4.5rem); --halo: 208 138 69; }
+  .forge__inner { display: grid; gap: clamp(1.4rem, 3vw, 2.5rem); align-items: center; }
+  .forge__art { position: relative; justify-self: center; width: min(34rem, 46vw); }
+  /* The drawing is the light on this screen: a soft halo in the colour of the stage it is in. */
+  .forge__halo { position: absolute; inset: -30%; z-index: -1; pointer-events: none; background: radial-gradient(closest-side, rgb(var(--halo) / 0.42), rgb(var(--halo) / 0.12) 45%, transparent 72%); }
+  .forge__svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 32px rgb(var(--halo) / 0.55)); }
+  /*
+   * The drawing's colours live here rather than on the SVG elements: var() in a
+   * presentation attribute is not something every engine resolves, and these
+   * are the shop's own tokens rather than numbers invented for one picture.
+   */
+  /* A dark body with a cream hairline; the stage colour is a translucent wash inside it, and the halo does the lighting. */
+  .forge__body { fill: var(--night-800); stroke: var(--cream-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  [data-forge-steam] { stroke: var(--cream-2); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+  [data-forge-foam] { fill: var(--cream-0); }
+  .forge__stem { stroke: var(--cream-3); vector-effect: non-scaling-stroke; }
+  .forge__leaf { fill: none; stroke: var(--leaf-500); vector-effect: non-scaling-stroke; }
+  .forge__sleeve { fill: rgb(62 207 168 / 0.14); stroke: var(--mint-500); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .forge__seam { fill: var(--mint-500); }
+  .forge__mark { font-family: var(--font-sans); font-weight: 700; fill: var(--mint-500); }
+
+  .forge__title { font-size: var(--fs-3xl); line-height: var(--lh-tight); letter-spacing: -0.03em; max-width: 15ch; margin-top: 0.75rem; }
+  .forge__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+
+  .forge__steps { list-style: none; margin: clamp(1.2rem, 3vw, 1.8rem) 0 0; padding: 0; display: grid; gap: 1.1rem; }
+  .forge__n { display: block; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.16em; color: var(--accent-ink); }
+  .forge__step h3 { font-size: var(--fs-xl); margin: 0.25rem 0 0.4rem; letter-spacing: -0.01em; line-height: var(--lh-snug); color: var(--cream-0); }
+  .forge__step p { color: var(--cream-2); max-width: 44ch; margin: 0; font-size: var(--fs-md); }
+  .forge__rail { display: none; }
+  .forge__cta { margin-top: clamp(1.2rem, 3vw, 1.8rem); }
+
+  /*
+   * Pinned. The height IS the timeline: five stages need room to be read, and a
+   * phone gets a shorter one because a thumb covers ground faster than a wheel.
+   * All five steps sit in the same box so the block cannot change height as the
+   * reader scrolls — a stage that resizes its own container drags the pinned
+   * artwork up and down with it.
+   */
+  .forge--live { height: 320vh; padding-block: 0; }
+  /* The pinned screen starts under the sticky header (`--hdr` is measured by the script), so nothing of the drawing hides behind it. */
+  .forge--live .forge__sticky { position: sticky; top: var(--hdr, 0px); height: calc(100vh - var(--hdr, 0px)); height: calc(100svh - var(--hdr, 0px)); display: grid; align-items: center; overflow: clip; }
+  /* Tall enough for a two-line heading and three lines of Russian; the rail sits below it, never on it. */
+  .forge--live .forge__steps { position: relative; display: block; min-height: 17rem; }
+  .forge--live .forge__step { position: absolute; inset: 0; opacity: 0; transform: translateY(12px); transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out); }
+  .forge--live .forge__step.is-on { opacity: 1; transform: none; }
+  .forge--live .forge__rail { display: flex; gap: 0.35rem; margin-top: 0.4rem; }
+  .forge__tick { flex: 1; height: 3px; border-radius: 2px; background: rgb(243 233 214 / 0.12); overflow: hidden; }
+  .forge__tick i { display: block; height: 100%; background: var(--accent); box-shadow: 0 0 12px var(--accent); transform: scaleX(var(--f, 0)); transform-origin: left; }
+
+  @media (min-width: 56rem) {
+    .forge__inner { grid-template-columns: 1.05fr 0.95fr; gap: clamp(2rem, 5vw, 4.5rem); }
+  }
+  @media (max-width: 55.99rem) {
+    .forge--live { height: 280vh; }
+    .forge__art { width: min(15rem, 48vw); }
+    .forge--live .forge__steps { min-height: 15.5rem; }
+    .forge--live .forge__title { font-size: var(--fs-2xl); }
+    .forge--live .forge__step h3 { font-size: var(--fs-xl); }
+    .forge--live .forge__step p { font-size: var(--fs-md); }
+  }
+  /* A short phone screen gets a smaller drawing so the five captions and the button still fit in one pinned screen. */
+  @media (max-width: 55.99rem) and (max-height: 44rem) {
+    .forge--live .forge__art { width: min(11rem, 34vw); }
+    .forge--live .forge__inner { gap: 1rem; }
+  }
+
+  /* ------------------------------------------------------------- the eight stages */
+  .stages-sec { background: radial-gradient(50% 40% at 85% 10%, rgb(240 176 74 / 0.07), transparent 65%), var(--bg); }
+  .stages__nav { margin: calc(-1 * clamp(1rem, 3vw, 2rem)) 0 clamp(2rem, 5vw, 3.5rem); overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
+  .stages__nav::-webkit-scrollbar { display: none; }
+  .stages__pills { flex-wrap: nowrap; width: max-content; padding-bottom: 0.25rem; }
+  @media (min-width: 56rem) { .stages__nav { margin-inline: 0; padding-inline: 0; overflow: visible; } .stages__pills { flex-wrap: wrap; width: auto; } }
+  .pill { min-height: 2.75rem; display: inline-flex; align-items: center; }
+  .process__n { color: var(--accent-ink); font-family: var(--font-display); font-weight: 500; margin-right: 0.15em; }
+  .pill:hover .process__n { color: inherit; }
+
+  /* The header is sticky and about 7rem tall with its announcement; the frame parks just under it. */
+  .stages { --park: 7.5rem; display: grid; gap: 2rem; align-items: start; }
+  .stages__pic { position: sticky; top: var(--park); z-index: 2; }
+  .stages__stack { display: grid; }
+  .stages__ph { grid-area: 1 / 1; opacity: 0; transition: opacity 0.7s var(--ease-out); }
+  .stages__ph.is-on { opacity: 1; }
+  .stages__frame { border-radius: var(--r-xl); box-shadow: var(--shadow-2); aspect-ratio: 16 / 10; }
+  .stages__badge { position: absolute; left: 1rem; top: 1rem; z-index: 3; padding: 0.4em 0.8em; border-radius: var(--r-pill); background: rgb(11 18 14 / 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); font-family: var(--font-display); font-size: var(--fs-sm); color: var(--cream-1); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+  .stages__badge b { font-weight: 500; color: var(--cream-0); }
+  .stages__list { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(3rem, 8vw, 5rem); }
+  .stage { position: relative; scroll-margin-top: calc(var(--park) + 1rem); }
+  .stage__n { display: block; font-family: var(--font-display); font-size: clamp(4.5rem, 12vw, 11rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.35); margin-bottom: -0.1em; transition: color var(--dur-slow) var(--ease-out), -webkit-text-stroke-color var(--dur-slow) var(--ease-out); }
+  .stage.is-on .stage__n { color: var(--accent); -webkit-text-stroke-color: var(--accent); }
+  .stage__short { margin-top: 1.25rem; }
+  .stage h3 { font-size: var(--fs-2xl); letter-spacing: -0.02em; margin-top: 0.75rem; max-width: 16ch; }
+  .stage p:not(.eyebrow) { margin: 1rem 0 0; color: var(--fg-2); font-size: var(--fs-lg); max-width: 46ch; }
+  /* Phone: the frame is a short window that holds at the top while the captions pass under it. */
+  @media (max-width: 55.99rem) {
+    .stages__pic { top: var(--park); padding-top: 0.5rem; background: var(--bg); }
+    .stages__pic::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 2.5rem; background: linear-gradient(to bottom, var(--bg), transparent); pointer-events: none; }
+    .stages__badge { top: 1.5rem; }
+    .stages__list { padding-top: 1rem; }
+    .stage { scroll-margin-top: calc(var(--park) + 0.5rem + 62.5vw + 2.5rem); }
+  }
+  @media (min-width: 56rem) {
+    .stages { grid-template-columns: 0.8fr 1.2fr; gap: clamp(2rem, 6vw, 6rem); }
+    .stages__frame { aspect-ratio: 4 / 5; }
+    .stages__list { gap: 0; }
+    /* Each caption is most of a screen, so the photograph beside it gets time to be looked at. */
+    .stage { min-height: 82svh; display: grid; align-content: center; padding-block: 2rem; }
+    .stage:first-child { padding-top: 0; }
+    .stage:last-child { min-height: 0; padding-bottom: 0; }
+  }
+  /* With no script the frame is a plain column of eight photographs; nothing pins. */
+  html:not(.js) .stages__pic { position: static; }
+  html:not(.js) .stages__stack { gap: 1rem; }
+  html:not(.js) .stages__ph { grid-area: auto; opacity: 1; }
+  html:not(.js) .stages__badge { display: none; }
+  @media (prefers-reduced-motion: reduce) { .stages__ph, .stage__n { transition: none; } }
+
+  /* ------------------------------------------------------------- one per cent */
+  .pct-sec { background: radial-gradient(45% 50% at 20% 50%, rgb(240 176 74 / 0.1), transparent 65%), var(--bg-sunken); overflow: clip; }
+  @media (min-width: 56rem) { .pct { grid-template-columns: 0.9fr 1.1fr; } }
+  .pct__fig { position: relative; display: grid; place-items: center; min-height: 14rem; }
+  .pct__big { position: relative; z-index: 1; font-family: var(--font-display); font-size: clamp(9rem, 26vw, 22rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.06em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 50; text-shadow: 0 0 60px rgb(240 176 74 / 0.45); }
+  .pct__big small { font-size: 0.42em; font-style: italic; color: var(--honey-500); margin-left: 0.05em; }
+  .pct__ghost { position: absolute; inset: 0; display: grid; place-items: center; font-family: var(--font-display); font-size: clamp(14rem, 40vw, 34rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.08em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.14); pointer-events: none; }
+  .split .lead { margin-top: 1.25rem; }
+  .hiw-ticks { margin: 1.5rem 0; }
+  .hiw-ticks li { font-size: var(--fs-md); }
+
+  /* ------------------------------------------------------------- cut one open */
+  .open { position: relative; isolation: isolate; overflow: clip; min-height: min(100svh, 58rem); display: grid; align-items: end; }
+  .open__media { position: absolute; inset: -12% 0; z-index: 0; background: var(--night-950); }
+  .open__img { width: 100%; height: 100%; object-fit: cover; object-position: 68% 50%; opacity: 0.8; }
+  .open::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, var(--night-900) 6%, rgb(11 18 14 / 0.7) 40%, rgb(11 18 14 / 0.15) 75%, var(--night-900) 100%), linear-gradient(to right, rgb(11 18 14 / 0.6), transparent 55%); }
+  .open__in { position: relative; z-index: 2; padding-block: clamp(6rem, 16vw, 12rem) clamp(3rem, 8vw, 6rem); }
+  .open .eyebrow { color: var(--honey-500); }
+  .open .eyebrow::before { background: var(--honey-500); }
+  .open h2 { font-size: var(--fs-3xl); max-width: 16ch; margin-top: 0.75rem; }
+  .open__text { max-width: 50ch; margin-top: 1.5rem; font-size: var(--fs-lg); color: var(--cream-2); }
+  .open__stats { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--line); max-width: 44rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (min-width: 48rem) { .open__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .open .stat strong { color: var(--honey-500); font-variant-numeric: tabular-nums; text-shadow: 0 0 30px rgb(240 176 74 / 0.4); }
+
+  /* ------------------------------------------------------------- goes in / never does */
+  .io { display: grid; gap: 1.5rem; align-items: start; }
+  @media (min-width: 56rem) { .io { grid-template-columns: 0.8fr 1.2fr; gap: 2rem; } }
+  .io__col { display: grid; gap: 1.5rem; align-content: start; }
+  .io__col--in { padding: clamp(1.5rem, 3vw, 2.25rem); border-radius: var(--r-lg); background: linear-gradient(160deg, rgb(111 194 122 / 0.12), transparent 60%), var(--bg-raised); box-shadow: 0 0 0 1px rgb(111 194 122 / 0.5), 0 0 80px -20px rgb(111 194 122 / 0.45); }
+  .io__col--in .eyebrow { color: var(--leaf-500); }
+  .io__col--in .eyebrow::before { background: var(--leaf-500); }
+  .io__col--in .io__list li { font-size: var(--fs-md); }
+  .io__col--in strong { color: var(--cream-0); font-weight: 600; }
+  .io__col--out { padding-top: clamp(1.5rem, 3vw, 2.25rem); border-top: 1px solid var(--line); }
+  .io__col--out .eyebrow::before { background: var(--apple-500); }
+  /* Nine words in display type, each struck through in red; the reason sits beneath in small. */
+  .ticks--no { grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr)); gap: 1.5rem 2rem; }
+  .ticks--no li { display: grid; grid-template-columns: auto 1fr; gap: 0.6rem; align-items: start; }
+  .ticks--no :global(svg) { color: var(--apple-500); margin-top: 0.55em; }
+  .ticks--no li > span { display: grid; gap: 0.35rem; }
+  .ticks--no strong { position: relative; display: inline-block; width: max-content; max-width: 100%; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xl); letter-spacing: -0.02em; line-height: 1.1; color: var(--cream-0); }
+  .ticks--no strong::after { content: ''; position: absolute; left: -0.1em; right: -0.1em; top: 55%; height: 2px; background: var(--apple-500); box-shadow: 0 0 10px var(--apple-500); transform: rotate(-3deg); }
+  .ticks--no .muted { font-size: var(--fs-sm); color: var(--fg-3); }
+  /* The footnote sits under the "Goes in" column at a readable measure, not across the whole page. */
+  .io__note { max-width: 62ch; }
+
+  /* ------------------------------------------------------------- quality */
+  .keep__frame { border-radius: var(--r-xl); box-shadow: var(--shadow-2), var(--glow-honey); }
+  @media (min-width: 56rem) { .keep { grid-template-columns: 0.9fr 1.1fr; } }
+  .specs { display: grid; gap: 1.5rem 2rem; margin: 1.75rem 0; }
+  @media (min-width: 40rem) { .specs { grid-template-columns: 1fr 1fr; } }
+  .spec { display: grid; gap: 0.5rem; align-content: start; padding-top: 1rem; border-top: 1px solid var(--line); }
+  .spec__icon { display: grid; place-items: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; margin-bottom: 0.25rem; color: var(--honey-500); box-shadow: 0 0 0 1px rgb(240 176 74 / 0.35), 0 0 30px -8px rgb(240 176 74 / 0.6); }
+  .spec h3 { font-size: var(--fs-lg); }
+  .spec p { margin: 0; font-size: var(--fs-sm); color: var(--fg-2); }
+  .specs__note { max-width: 52ch; }
+
+  /* ------------------------------------------------------------- cta, and the line of onward links */
+  /* The band's own padding does the spacing before the footer; the section adds none of its own. */
+  .cta-sec { padding-bottom: var(--sp-6); }
+  .cta-band__link { color: var(--night-900); border-color: var(--apple-600); }
+  .more { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem clamp(1.5rem, 3vw, 2.5rem); margin-top: clamp(1.5rem, 3vw, 2.25rem); padding-top: 1.25rem; border-top: 1px solid var(--line); }
+  .more .eyebrow { margin: 0; }
+  .more__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem clamp(1.25rem, 3vw, 2.5rem); }
+  .more__link { display: inline-flex; align-items: center; gap: 0.4em; min-height: 2.75rem; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-lg); letter-spacing: -0.01em; color: var(--cream-1); text-decoration: none; border-bottom: 1px solid rgb(243 233 214 / 0.3); transition: color var(--dur-fast), border-color var(--dur-fast); }
+  .more__link :global(svg) { color: var(--accent); transition: transform var(--dur-fast) var(--ease-out); }
+  .more__link:hover { color: var(--cream-0); border-color: var(--accent); }
+  .more__link:hover :global(svg) { transform: translateX(3px); }
+</style>

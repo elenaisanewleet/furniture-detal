@@ -1,0 +1,353 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import { im, SIZES } from '~/data/images';
+import { site } from '~/data/site';
+import { FAQS } from '~/data/faq';
+import { formatThreshold } from '~/data/products';
+import { originOf } from '~/lib/origin';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+
+const title = 'Contact Semers in Riga: orders, wholesale, press';
+const description =
+  'Contact Semers, maker of baked-apple bars and pastila in Riga, about an order, wholesale or press. Write to us and a person replies within a business day.';
+
+/** Channels. Empty strings in site.ts mean "not rendered". */
+const hasWhatsapp = site.whatsapp.length > 0;
+const whatsappHref = hasWhatsapp ? `https://wa.me/${site.whatsapp.replace(/[^\d]/g, '')}` : '';
+const hasInstagram = site.social.instagram.length > 0;
+const mailHref = `mailto:${site.email}`;
+const wholesaleHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wholesale enquiry')}`;
+
+const TOPICS = ['Order question', 'Wholesale', 'Press & partnerships', 'Something else'];
+
+/** The questions that would otherwise land in the inbox. */
+const quick = FAQS.filter((f) => f.group === 'orders');
+
+/** The bakery's own e-mail, split so the display line can break after the @ on a phone without a hyphen. */
+const [mailUser, mailHost] = site.email.split('@');
+const [salesUser, salesHost] = site.wholesaleEmail.split('@');
+
+const press = im('gift-box');
+const taste = im('tasting-box');
+
+const contactPage = {
+  '@type': 'ContactPage',
+  '@id': `${origin}/contact/#webpage`,
+  url: `${origin}/contact/`,
+  name: 'Contact Semers',
+  description,
+  inLanguage: 'en',
+  isPartOf: { '@id': `${origin}/#website` },
+  about: { '@id': `${origin}/#org` },
+  mainEntity: { '@id': `${origin}/#org` },
+};
+---
+<Base
+  title={title}
+  description={description}
+  canonical="/contact/"
+  ogImage="lifestyle-desk"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Contact', href: '/contact/' }]}
+  schema={[contactPage]}
+>
+  <!-- ============================== HERO ============================== -->
+  <!-- One enormous greeting, then air. The proof line sits on a hairline underneath, quiet. -->
+  <section class="page-hero container cx-hero" aria-labelledby="page-title">
+    <p class="eyebrow">Contact · {site.locality}, {site.country}</p>
+    <h1 id="page-title" class="cx-title" data-words>Say <em>hello.</em></h1>
+    <div class="cx-hero__row">
+      <p class="lead">Contact Semers about an order, a wholesale shelf, a press piece, or the right way to slice a loaf of pastila. A person in Riga reads every message and replies within one business day.</p>
+      <a class="cx-hero__jump" href="#write" data-reveal><span class="cx-hero__jump-t">Write to us</span><Icon name="arrow" size={18} class="arrow" /></a>
+    </div>
+    <div class="trust cx-trust" data-stagger>
+      <div><Icon name="mail" size={22} /><div><strong>Reply within one business day</strong><span>From a person, not a ticket queue</span></div></div>
+      <div><Icon name="truck" size={22} /><div><strong>Parcels leave Riga in 1–2 business days</strong><span>Shipped across the EU</span></div></div>
+      <div><Icon name="box" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Otherwise a flat €3.90 in the Baltics</span></div></div>
+      <div><Icon name="globe" size={22} /><div><strong>Made in {site.locality}, {site.country}</strong><span>{site.brand.legalName}</span></div></div>
+    </div>
+  </section>
+
+  <!-- ============================== FORM + CHANNELS ============================== -->
+  <!--
+    The set piece: a lit panel to write in on one side; on the other, every
+    way to reach the bakery set as display type, then a map of one glowing
+    point. No embed, no tiles, no third party: a night sky with Riga in it.
+  -->
+  <section class="section container cx-write" id="write" aria-labelledby="write-title">
+    <div class="cx-grid">
+      <div class="cx-form" data-reveal>
+        <div class="cx-form__head">
+          <p class="eyebrow">Write to us</p>
+          <h2 id="write-title">Tell us what’s on your mind.</h2>
+          <p class="cx-form__note">Two minutes to write. One business day to hear back. If it is about an order, the reference from your confirmation e-mail saves a round trip.</p>
+        </div>
+        <form data-form="contact" data-success="Thanks — we reply within one business day.">
+          <div class="form-grid form-grid--2">
+            <div class="field">
+              <label for="cx-name">Your name</label>
+              <input class="input" id="cx-name" name="name" type="text" autocomplete="name" required />
+            </div>
+            <div class="field">
+              <label for="cx-email">E-mail</label>
+              <input class="input" id="cx-email" name="email" type="email" autocomplete="email" inputmode="email" required />
+            </div>
+            <div class="field span-2">
+              <label for="cx-topic">Topic</label>
+              <select class="select" id="cx-topic" name="topic" required>
+                <option value="">Choose one</option>
+                {TOPICS.map((t) => <option value={t}>{t}</option>)}
+              </select>
+              <span class="hint">Wholesale enquiries go straight to the person who handles them. Everything else lands in the same inbox.</span>
+            </div>
+            <div class="field span-2">
+              <label for="cx-message">Message</label>
+              <textarea class="textarea" id="cx-message" name="message" rows="6" required placeholder="What happened, what you would like, and anything that helps us answer in one go: an order reference, a shop name, a deadline…"></textarea>
+            </div>
+            <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
+            <label class="checkbox span-2">
+              <input type="checkbox" name="consent" value="yes" required />
+              <span>I agree that Semers stores this message in order to reply to it. Read the <a href="/legal/privacy/">privacy policy</a>.</span>
+            </label>
+            <div class="span-2 cx-submit">
+              <button class="btn btn--lg btn--accent" type="submit">Send message <Icon name="arrow" size={20} class="arrow" /></button>
+              <span class="small muted">Or e-mail <a href={mailHref}>{site.email}</a> directly.</span>
+            </div>
+          </div>
+        </form>
+        <p class="small cx-note" data-form-note></p>
+      </div>
+
+      <aside class="cx-ways" aria-labelledby="ways-title">
+        <h2 id="ways-title" class="sr-only">Other ways to reach us</h2>
+        <dl class="cx-dl" data-stagger>
+          <div class="cx-dl__row">
+            <dt>E-mail</dt>
+            <dd>
+              <a class="cx-big" href={mailHref}><span translate="no">{mailUser}<wbr />@{mailHost}</span></a>
+              <span class="cx-dl__sub">Orders, press and partnerships, everything else</span>
+            </dd>
+          </div>
+          <div class="cx-dl__row">
+            <dt>Wholesale</dt>
+            <dd>
+              <a class="cx-big" href={wholesaleHref}><span translate="no">{salesUser}<wbr />@{salesHost}</span></a>
+              <span class="cx-dl__sub">Retailers, cafés, offices, distributors · <a href="/wholesale/">Wholesale page</a></span>
+            </dd>
+          </div>
+          {hasWhatsapp && (
+            <div class="cx-dl__row">
+              <dt>WhatsApp</dt>
+              <dd>
+                <a class="cx-big" href={whatsappHref} rel="noopener">Message us on WhatsApp</a>
+                <span class="cx-dl__sub">Quick questions, photos of a dented parcel</span>
+              </dd>
+            </div>
+          )}
+          <div class="cx-dl__row">
+            <dt>Reply time</dt>
+            <dd>
+              <span class="cx-big cx-big--time"><span class="cx-one" aria-hidden="true" translate="no">1</span>Within one business day</span>
+              <span class="cx-dl__sub">Wholesale replies come with the line sheet and prices.</span>
+            </dd>
+          </div>
+          <div class="cx-dl__row">
+            <dt>Where we are</dt>
+            <dd>
+              <span class="cx-big">{site.locality}, {site.country}</span>
+              <span class="cx-dl__sub">{site.brand.legalName}. Bars and pastila are baked here and shipped from here.</span>
+            </dd>
+          </div>
+        </dl>
+
+        <!-- A quiet map: hairlines for the grid, one lit point for the bakery. Decorative; the address above is the information. -->
+        <div class="cx-map" data-reveal aria-hidden="true">
+          <div class="cx-map__grid"></div>
+          <div class="cx-map__sea"></div>
+          <div class="cx-map__pin"><i></i></div>
+          <p class="cx-map__label" translate="no">Riga</p>
+          <p class="cx-map__coord" translate="no">56.95° N · 24.11° E</p>
+          <p class="cx-map__north" translate="no">N</p>
+        </div>
+
+        <div class="cx-links">
+          <a class="link" href="/faq/">Read the FAQ</a>
+          <a class="link" href="/legal/shipping-returns/">Shipping &amp; returns</a>
+          <a class="link" href="/where-to-buy/">Where to buy</a>
+          {hasInstagram && (
+            <a class="cx-ig" href={site.social.instagram} rel="noopener"><Icon name="instagram" size={18} /> Follow Semers on Instagram</a>
+          )}
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ============================== QUICK ANSWERS ============================== -->
+  <section class="section band" aria-labelledby="quick-title">
+    <div class="container cx-faq">
+      <div class="cx-faq__side" data-reveal>
+        <p class="eyebrow">Before you write</p>
+        <h2 id="quick-title">The questions we answer most.</h2>
+        <p class="muted mt-2">If yours is here, you have your answer already. If not, the <a href="#write">form</a> is one scroll up, and the <a href="/faq/">full FAQ</a> covers the rest, from egg white to shelf life.</p>
+        <div class="cx-faq__links">
+          <a class="link" href="/shop/">Shop all products</a>
+          <a class="link" href="/shop/apple-bars/">Apple bars</a>
+          <a class="link" href="/shop/pastila/">Belyov pastila</a>
+          <a class="link" href="/how-its-made/">How it’s made</a>
+        </div>
+      </div>
+      <div class="acc cx-acc" data-reveal>
+        {quick.map((f) => (
+          <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== PRESS & PARTNERS ============================== -->
+  <section class="section container cx-press" aria-labelledby="press-title">
+    <div class="split">
+      <div class="cx-press__img" data-reveal>
+        <img src={press.src} srcset={press.srcset} sizes={press.srcset && SIZES.half} alt={press.alt} width={press.width} height={press.height} loading="lazy" decoding="async" data-parallax="0.15" />
+      </div>
+      <div data-reveal>
+        <p class="eyebrow">Press &amp; partnerships</p>
+        <h2 id="press-title" class="cx-press__title">Writing about apples? We can help.</h2>
+        <p class="lead">Journalists, food writers, gift-guide editors and brands with a good idea: pick “Press &amp; partnerships” in the form or write to <a href={mailHref}>{site.email}</a>. We send product photos, the facts behind the recipe and, if you ask nicely, a box to taste.</p>
+        <ul class="ticks">
+          <li><Icon name="check" size={18} /> 99% baked Antonovka apples and egg white, no added sugar, no flour, no gluten</li>
+          <li><Icon name="check" size={18} /> A recipe with a date on it: Belyov pastila, made commercially since 1888</li>
+          <li><Icon name="check" size={18} /> Baked in Riga, sold at Maxima and on Barbora, exported across the EU</li>
+        </ul>
+        <div class="cluster mt-4">
+          <a class="btn btn--ghost" href="/story/">Read our story</a>
+          <a class="link" href="/journal/">The journal</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container section--tight cx-end" aria-labelledby="cta-title">
+    <div class="cta-band cx-band" data-reveal>
+      <div class="cx-band__copy">
+        <p class="eyebrow">Or skip the e-mail</p>
+        <h2 id="cta-title">The fastest answer to “what does it taste like?”</h2>
+        <p>A Tasting Box holds four Apple Bars, two Flourless Bars, two bags of apple meringues and a 100 g loaf of Belyov pastila. It ships free from Riga in 1–2 business days.</p>
+        <div class="cluster mt-2">
+          <a class="btn btn--paper" href="/shop/">Shop all products</a>
+          <a class="btn btn--ghost" href="/products/tasting-box/">Order a Tasting Box</a>
+        </div>
+      </div>
+      <div class="cx-band__media">
+        <img src={taste.src} srcset={taste.srcset} sizes={taste.srcset && SIZES.third} alt={taste.alt} width={taste.width} height={taste.height} loading="lazy" decoding="async" data-parallax="0.1" />
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* ------------------------------------------------------------ hero */
+  .cx-hero { padding-bottom: 0; }
+  .cx-title { font-size: var(--fs-hero); line-height: 0.88; letter-spacing: -0.045em; max-width: none; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .cx-title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .cx-hero__row { display: grid; gap: 1.5rem; align-items: end; margin-top: clamp(1.5rem, 4vw, 3rem); }
+  @media (min-width: 56rem) { .cx-hero__row { grid-template-columns: minmax(0, 1fr) auto; gap: 4rem; } }
+  .cx-hero__row .lead { margin: 0; max-width: 52ch; }
+  .cx-hero__jump { display: inline-flex; align-items: center; gap: 0.6rem; min-height: 2.75rem; width: fit-content; text-decoration: none; color: var(--cream-0); font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 500; letter-spacing: -0.01em; }
+  .cx-hero__jump-t { border-bottom: 1px solid var(--accent); padding-bottom: 0.1em; transition: border-color var(--dur-fast); }
+  .cx-hero__jump :global(svg) { color: var(--accent); transition: transform var(--dur-fast) var(--ease-out); }
+  .cx-hero__jump:hover .cx-hero__jump-t { border-color: var(--cream-0); }
+  .cx-hero__jump:hover :global(svg) { transform: translate(4px, 4px) rotate(45deg); }
+  .cx-trust { margin-top: clamp(2.5rem, 6vw, 4.5rem); border-bottom: 0; }
+
+  /* ------------------------------------------------------------ form + ways */
+  .cx-write { padding-top: clamp(2rem, 5vw, 4rem); }
+  .cx-grid { display: grid; gap: clamp(2.5rem, 6vw, 5rem); align-items: start; }
+  @media (min-width: 62rem) { .cx-grid { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(3rem, 7vw, 7rem); } }
+
+  /* The lit panel: a raised card with a hairline, and a faint apple-red light leaking from its top-left corner. */
+  .cx-form { position: relative; isolation: isolate; padding: clamp(1.5rem, 3.5vw, 3rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-accent); overflow: clip; }
+  .cx-form::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(60% 40% at 0% 0%, rgb(255 90 60 / 0.16), transparent 70%); pointer-events: none; }
+  .cx-form__head { display: grid; gap: 0.75rem; margin-bottom: clamp(1.5rem, 3vw, 2.25rem); }
+  .cx-form__head h2 { font-size: var(--fs-2xl); max-width: 14ch; }
+  .cx-form__note { margin: 0; color: var(--fg-2); max-width: 44ch; font-size: var(--fs-sm); }
+  .cx-form .field .hint { line-height: 1.4; }
+  .cx-form .input, .cx-form .select, .cx-form .textarea { background: rgb(255 252 245 / 0.04); }
+  .cx-submit { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3) var(--sp-5); margin-top: 0.5rem; }
+  .cx-note { margin-top: var(--sp-4); }
+  .cx-note:empty { display: none; }
+
+  /* The other side: an index of channels in display type. */
+  .cx-ways { display: grid; gap: clamp(1.5rem, 3vw, 2.25rem); padding-top: 0.5rem; }
+  .cx-dl { margin: 0; display: grid; }
+  .cx-dl__row { display: grid; gap: 0.35rem; padding-block: clamp(1rem, 2.4vw, 1.5rem); border-top: 1px solid var(--line); }
+  .cx-dl__row:first-child { border-top: 0; padding-top: 0; }
+  .cx-dl dt { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); }
+  .cx-dl dd { margin: 0; display: grid; gap: 0.5rem; justify-items: start; }
+  .cx-big { font-family: var(--font-display); font-weight: 500; font-size: clamp(1.6rem, 1.1rem + 1.9vw, 2.75rem); line-height: 1.02; letter-spacing: -0.03em; color: var(--cream-0); text-decoration: none; overflow-wrap: anywhere; font-variation-settings: 'opsz' 96, 'SOFT' 40; }
+  a.cx-big { background-image: linear-gradient(var(--accent), var(--accent)); background-repeat: no-repeat; background-size: 100% 1px; background-position: 0 100%; padding-bottom: 0.08em; transition: color var(--dur-fast), background-size var(--dur) var(--ease-out); }
+  a.cx-big:hover { color: var(--accent-ink); background-size: 100% 2px; }
+  /* The outlined 1 sits in its own column with a real gap, so the glyph and the first word never touch. */
+  .cx-big--time { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 0.6em; align-items: center; }
+  .cx-one { font-weight: 400; font-size: 2.1em; line-height: 0.75; letter-spacing: 0; padding-right: 0.06em; color: transparent; -webkit-text-stroke: 1px var(--accent); text-shadow: 0 0 26px rgb(255 90 60 / 0.35); font-variation-settings: 'opsz' 144, 'SOFT' 60; margin-top: -0.05em; }
+  .cx-dl__sub { font-size: var(--fs-sm); color: var(--fg-2); max-width: 44ch; line-height: 1.45; }
+  .cx-dl__sub a { color: var(--cream-1); }
+  .cx-links { display: flex; flex-wrap: wrap; gap: var(--sp-3) var(--sp-5); align-items: center; font-size: var(--fs-sm); }
+  .cx-ig { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.75rem; font-weight: 600; text-decoration: none; color: var(--fg-2); }
+  .cx-ig:hover { color: var(--cream-0); }
+
+  /* The map: a dark tile, a hairline graticule, the gulf as a softer field, and one point that breathes. */
+  .cx-map { position: relative; overflow: clip; aspect-ratio: 16 / 10; border-radius: var(--r-lg); background: var(--night-800); box-shadow: var(--shadow-1); isolation: isolate; }
+  .cx-map__grid { position: absolute; inset: 0; background-image: linear-gradient(rgb(243 233 214 / 0.06) 1px, transparent 1px), linear-gradient(90deg, rgb(243 233 214 / 0.06) 1px, transparent 1px); background-size: 12.5% 20%; mask-image: radial-gradient(90% 90% at 62% 55%, #000 30%, transparent 100%); }
+  .cx-map__sea { position: absolute; left: -35%; top: -45%; width: 78%; height: 110%; border-radius: 48% 52% 60% 40% / 55% 45% 55% 45%; background: radial-gradient(80% 80% at 60% 60%, rgb(62 207 168 / 0.1), rgb(62 207 168 / 0.03) 60%, transparent 75%); border: 1px solid rgb(62 207 168 / 0.18); transform: rotate(-12deg); }
+  .cx-map__pin { position: absolute; left: 62%; top: 55%; width: 0; height: 0; }
+  .cx-map__pin i { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px rgb(255 90 60 / 0.25), 0 0 32px 6px rgb(255 90 60 / 0.5); }
+  .cx-map__pin::before, .cx-map__pin::after { content: ''; position: absolute; left: -22px; top: -22px; width: 44px; height: 44px; border-radius: 50%; border: 1px solid rgb(255 90 60 / 0.6); animation: cx-pulse 3.2s var(--ease-out) infinite; }
+  .cx-map__pin::after { animation-delay: 1.6s; }
+  @keyframes cx-pulse { 0% { transform: scale(0.25); opacity: 1; } 100% { transform: scale(2.2); opacity: 0; } }
+  .cx-map__label { position: absolute; left: calc(62% + 1.1rem); top: calc(55% - 0.6em); margin: 0; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-2xl); line-height: 1; letter-spacing: -0.03em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 60; }
+  .cx-map__coord { position: absolute; left: 1.25rem; bottom: 1rem; margin: 0; font-size: var(--fs-xs); letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); font-variant-numeric: tabular-nums; }
+  .cx-map__north { position: absolute; right: 1.25rem; top: 0.9rem; margin: 0; font-family: var(--font-display); font-size: var(--fs-sm); color: var(--fg-3); padding-top: 1.2rem; }
+  .cx-map__north::before { content: ''; position: absolute; left: 50%; top: 0; width: 1px; height: 1rem; background: var(--fg-3); }
+  @media (prefers-reduced-motion: reduce) { .cx-map__pin::before, .cx-map__pin::after { animation: none; transform: scale(1); opacity: 0.5; } }
+
+  /* ------------------------------------------------------------ quick answers */
+  .cx-faq { display: grid; gap: var(--sp-6); }
+  @media (min-width: 56rem) { .cx-faq { grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr); gap: clamp(3rem, 7vw, 7rem); align-items: start; } .cx-faq__side { position: sticky; top: 6rem; } }
+  .cx-faq__side h2 { font-size: var(--fs-2xl); max-width: 14ch; }
+  .cx-faq__links { display: grid; gap: var(--sp-3); justify-items: start; margin-top: var(--sp-5); }
+  .cx-acc summary { font-size: var(--fs-xl); }
+
+  /* ------------------------------------------------------------ press */
+  .cx-press__img { position: relative; overflow: clip; aspect-ratio: 4 / 5; border-radius: var(--r-xl); background: var(--bg-sunken); box-shadow: var(--shadow-2), var(--glow-honey); max-width: 30rem; }
+  .cx-press__img img { position: absolute; inset: -12% 0; width: 100%; height: 124%; object-fit: cover; }
+  @media (min-width: 56rem) { .cx-press__img { max-width: none; } }
+  .cx-press__title { font-size: var(--fs-3xl); max-width: 14ch; }
+  .cx-press .ticks { margin: var(--sp-5) 0; }
+  .cx-press .lead a { color: var(--cream-0); text-decoration-color: var(--accent); }
+
+  /* ------------------------------------------------------------ the one cream room */
+  .cx-end { padding-bottom: clamp(3rem, 8vw, 7rem); }
+  /* The band is a room with a lit picture on the right wall; below 64rem the picture is left out and the copy has the room. */
+  .cx-band { align-items: center; }
+  .cx-band__copy { display: grid; gap: 1rem; }
+  .cx-band__media { display: none; }
+  @media (min-width: 64rem) {
+    .cx-band { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); column-gap: clamp(2rem, 5vw, 4rem); }
+    .cx-band__media { position: relative; display: block; overflow: clip; aspect-ratio: 1 / 1; width: min(100%, 26rem); justify-self: end; border-radius: var(--r-lg); background: var(--cream-2); box-shadow: 0 0 0 1px rgb(27 22 18 / 0.08), 0 30px 70px -30px rgb(27 22 18 / 0.6); }
+    .cx-band__media img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; }
+  }
+</style>

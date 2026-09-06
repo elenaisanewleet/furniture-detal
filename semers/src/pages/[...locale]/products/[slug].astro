@@ -1,0 +1,647 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, FLAVORS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, type FlavorKey, formatThreshold } from '~/data/products';
+import { img, imgSrc, im, imgSmall, imgSrcset, SIZES } from '~/data/images';
+import { productSchema, faqPage } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { site } from '~/data/site';
+import { withLocales } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedProduct, localizedCollection } from '~/data/copy';
+import { t } from '~/i18n/ui';
+
+export function getStaticPaths() {
+  return withLocales(PRODUCTS.map((p) => ({ params: { slug: p.slug }, props: { product: p } })));
+}
+const { product: rawProduct, locale } = Astro.props as { product: Product; locale: Locale };
+const ui = t(locale);
+const p = localizedProduct(rawProduct, locale);
+const col = localizedCollection(collectionByKey(rawProduct.collection)!, locale);
+const origin = originOf(Astro.site);
+const gallery = p.images.map((k) => ({ key: k, ...im(k), small: imgSmall(k) }));
+const first = p.variants[0];
+const addPayload = JSON.stringify({
+  slug: p.slug,
+  name: p.title,
+  variant: first.key,
+  variantLabel: ui.flavours[first.key],
+  price: first.price ?? p.price,
+  image: gallery[0].src,
+  weight: p.weightGrams,
+  url: `/products/${p.slug}/`,
+  // Gift sets and multi-packs are already priced as a bundle; stacking the
+  // volume ladder on top of them would discount the same thing twice.
+  tier: p.collection !== 'gift-sets',
+});
+const related = [
+  ...productsInCollection(p.collection).filter((x) => x.slug !== p.slug),
+  ...PRODUCTS.filter((x) => x.collection !== p.collection && x.bestseller),
+  ...PRODUCTS.filter((x) => x.collection !== p.collection && !x.bestseller),
+].slice(0, 3);
+const multi = p.variants.length > 1;
+/**
+ * The trust line may only quote a number for the base recipe (the first sentence of the ingredient
+ * list, brackets removed): "Baked apples, egg white" → 2. Flavour additions, mixed boxes and
+ * "see individual products" fall back to the wording that is true for every variant.
+ */
+const baseRecipe = p.ingredients.split(/[.;]/)[0].replace(/\([^)]*\)/g, '');
+const ingredientCount = /egg white/i.test(baseRecipe) ? baseRecipe.split(',').length : 0;
+const ingredientLine =
+  ingredientCount === 2 ? `2 ingredients${multi && p.variants.some((v) => v.key === 'classic') ? ' in the Classic' : ''}` : 'Short ingredient list';
+/** "Belyov Pastila · Belyov pastila" reads like a stutter when the brand is the collection. */
+const showBrand = p.brand.toLowerCase() !== col.name.toLowerCase();
+const isBundle = p.collection === 'gift-sets';
+/** Zephyr is the one product made with sugar; every claim below is switched on it. */
+const noAddedSugar = p.diet.includes('no-added-sugar');
+/** kcalPerUnit is per single piece (bar, loaf, box); multi-packs list the piece weight. A 0 means "mixed box, see each item". */
+const hasKcal = p.kcalPerUnit > 0;
+const unitGrams = p.pack > 1 ? Math.round(p.weightGrams / p.pack) : p.weightGrams;
+const kcalLine = p.pack > 1 ? `${p.kcalPerUnit} kcal per ${unitGrams} g piece` : `${p.kcalPerUnit} kcal per ${unitGrams} g`;
+
+/*
+ * The three big numbers. They are counted from the English catalogue entry so
+ * that every language shows the same figures: a loaf or a box quotes kcal per
+ * 100 g rather than a whole-pack total nobody eats in one go, and a mixed box
+ * that cannot count its ingredients quotes its shelf life instead.
+ */
+const isBar = p.collection === 'apple-bars' || p.collection === 'flourless-bars';
+const per100 = !hasKcal || (p.pack === 1 && p.weightGrams >= 150);
+const bigKcal = per100 ? p.nutrition.energyKcal : p.kcalPerUnit;
+const bigKcalLabel = per100 ? 'kcal per 100 g' : p.pack > 1 ? 'kcal a piece' : isBar ? 'kcal a bar' : 'kcal a pack';
+const rawRecipe = rawProduct.ingredients.split(/[.;]/)[0].replace(/\([^)]*\)/g, '');
+const rawCount = /egg white/i.test(rawRecipe) ? rawRecipe.split(',').length : 0;
+const bigMid = rawCount > 0 ? rawCount : p.shelfLifeMonths;
+const bigMidLabel = rawCount > 0 ? 'ingredients' : 'months on the shelf';
+/** The swatch may be a gradient (Assorted); the glow needs one colour. */
+const swatch = (k: FlavorKey) => FLAVORS[k].color;
+const glow = (k: FlavorKey) => (k === 'assorted' ? 'var(--honey-500)' : FLAVORS[k].color);
+const longName = p.name.length > 14;
+
+const faqs = [
+  ...(hasKcal
+    ? [
+        p.pack > 1
+          ? { q: 'How many calories are in each piece?', a: `About ${p.kcalPerUnit} kcal per ${unitGrams} g piece, so around ${p.kcalPerUnit * p.pack} kcal in the whole pack of ${p.pack}. Per 100 g: ${p.nutrition.energyKcal} kcal.` }
+          : { q: isBar ? 'How many calories are in one bar?' : 'How many calories are in one pack?', a: `About ${p.kcalPerUnit} kcal per ${p.weightGrams} g. Per 100 g: ${p.nutrition.energyKcal} kcal.` },
+      ]
+    : []),
+  noAddedSugar
+    ? { q: 'Does it contain added sugar?', a: 'No. The sweetness comes from the baked Antonovka apples themselves. Nothing else is added.' }
+    : { q: 'Does it contain added sugar?', a: 'Yes. Belevini zephyr is a traditional recipe made with apple purée, egg white, agar and sugar, and the pack says so. Our bars, meringues, dessert squares and Belyov pastila are the no-added-sugar range.' },
+  { q: 'How long does it keep?', a: `${p.shelfLifeMonths} months in a cool, dry place. Once opened, enjoy within a few days.` },
+  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatThreshold(site.shipping.freeFrom, locale)} ship free.` },
+];
+
+const rows: [string, string][] = [
+  ['Energy', `${p.nutrition.energyKcal} kcal`],
+  ['Fat', `${p.nutrition.fat} g`],
+  ['of which saturates', `${p.nutrition.saturates} g`],
+  ['Carbohydrate', `${p.nutrition.carbs} g`],
+  ['of which sugars', `${p.nutrition.sugars} g`],
+  ['Fibre', `${p.nutrition.fibre} g`],
+  ['Protein', `${p.nutrition.protein} g`],
+  ['Salt', `${p.nutrition.salt} g`],
+];
+---
+<Base
+  title={p.title}
+  description={p.summary}
+  canonical={`/products/${p.slug}/`}
+  ogImage={p.images[0]}
+  ogType="product"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: col.name, href: `/shop/${col.key}/` }, { name: p.name, href: `/products/${p.slug}/` }]}
+  schema={[productSchema(origin, p, ui.flavours), faqPage(faqs)]}
+  bodyClass="has-sticky-buy"
+>
+  <Fragment slot="head">
+    <meta property="product:price:amount" content={(first.price ?? p.price).toFixed(2)} />
+    <meta property="product:price:currency" content={site.currency} />
+    <meta property="product:availability" content="in stock" />
+    <meta property="product:brand" content={p.brand} />
+  </Fragment>
+  <article class="pdp" data-pdp data-slug={p.slug}>
+    <!-- ============================== THE STAGE ==============================
+         The photograph stays put on the left while the buy panel and the
+         story scroll past it. --fl is the colour of the chosen flavour: the
+         frame's glow and the chips read it. On a phone the two columns stack,
+         photograph first. -->
+    <div class="stage container" data-stage style={`--fl:${glow(first.key)}`}>
+      <div class="stage__gal">
+        <div class="gal" style={`--gal-accent:${p.accent}`}>
+          <div class={`gal__main ${gallery[0].fit === 'contain' ? 'is-contain' : ''}`} data-gal-wrap>
+            {p.badge || p.bestseller ? <span class="badge">{p.badge || 'Bestseller'}</span> : null}
+            <img data-gal-main src={gallery[0].src} alt={gallery[0].alt} width={gallery[0].width} height={gallery[0].height} loading="eager" fetchpriority="high" decoding="async" />
+          </div>
+          {gallery.length > 1 && (
+            <div class="gal__thumbs" role="group" aria-label={ui.productImages}>
+              {gallery.map((g, i) => (
+                <button type="button" data-gal-thumb data-src={g.src} data-alt={g.alt} data-fit={g.fit || 'cover'} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={`Image ${i + 1} of ${gallery.length}`} class={g.fit === 'contain' ? 'is-contain' : ''}>
+                  <img src={g.small} alt="" width="72" height="72" loading="lazy" decoding="async" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div class="stage__buy">
+        <div class="buy">
+          <p class="eyebrow">{showBrand && <Fragment><span translate="no">{p.brand}</span> · </Fragment>}<a href={`/shop/${col.key}/`}>{col.name}</a></p>
+          <h1 class={`pdp__title ${longName ? 'pdp__title--long' : ''}`}>{p.name} <span class="pdp__w">{p.weightGrams} g{p.pack > 1 ? ` · ${p.pack} pcs` : ''}</span></h1>
+          <p class="pdp__hook">{p.hook}</p>
+
+          <div class="pdp__price">
+            <span class="pdp__amount num" data-price>{formatPrice(first.price ?? p.price, locale)}</span>
+            {p.compareAt && <s class="pdp__was num">{formatPrice(p.compareAt, locale)}</s>}
+            <span class="pdp__unit">{p.pack > 1 ? `${ui.perPiece(formatPrice((first.price ?? p.price) / p.pack, locale))} · ` : ''}{unitPrice(p, locale)} {ui.per100g} · {ui.inclVat}</span>
+          </div>
+
+          <ul class="pdp__facts" aria-label={ui.keyFacts}>
+            {hasKcal && <li><Icon name="apple" size={16} /> {kcalLine}</li>}
+            {p.diet.slice(0, 3).map((d) => <li><Icon name="check" size={16} /> {ui.diet[d]}</li>)}
+          </ul>
+
+          {multi && (
+            <fieldset class="pdp__vars">
+              <legend>{ui.flavour}: <strong data-variant-name>{ui.flavours[first.key]}</strong></legend>
+              <div class="vars">
+                {p.variants.map((v, i) => (
+                  <label class="var" style={`--sw:${swatch(v.key)};--sg:${glow(v.key)}`}>
+                    <input type="radio" name="flavour" value={v.key} data-variant data-price={v.price ?? p.price} data-label={ui.flavours[v.key]} data-gtin={v.gtin || ''} data-glow={glow(v.key)} checked={i === 0} disabled={v.inStock === false} />
+                    <span><i></i>{ui.flavours[v.key]}</span>
+                  </label>
+                ))}
+              </div>
+              <p class="tiny pdp__varnote">{p.variants.map((v) => `${ui.flavours[v.key]}: ${ui.flavourNotes[v.key]}`).join(' · ')}</p>
+            </fieldset>
+          )}
+
+          {site.storefront.tiersOn && !isBundle && (
+            <div class="tiers" data-tiers role="group" aria-label={ui.quantityDiscounts}>
+              {[
+                { qty: 1, pct: 0 },
+                { qty: site.storefront.tier1Qty, pct: site.storefront.tier1Pct },
+                { qty: site.storefront.tier2Qty, pct: site.storefront.tier2Pct },
+              ].map((t, i) => (
+                <button type="button" class={`tier ${i === 0 ? 'is-on' : ''}`} data-tier data-tier-qty={t.qty} data-tier-pct={t.pct} aria-pressed={i === 0 ? 'true' : 'false'}>
+                  <b>{t.qty} {t.qty === 1 ? 'pack' : 'packs'}</b>
+                  <span class="tier__unit num" data-tier-unit>{formatPrice(((first.price ?? p.price) * (100 - t.pct)) / 100, locale)}</span>
+                  <span class="tier__note">{t.pct ? `each · save ${t.pct}%` : 'each'}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div class="pdp__cta" data-buy-anchor>
+            <div class="qty" role="group" aria-label={ui.quantity}>
+              <button type="button" data-qty-dec aria-label={ui.decreaseShort}>−</button>
+              <input data-qty-input type="number" min="1" max="99" value="1" inputmode="numeric" aria-label="Quantity" />
+              <button type="button" data-qty-inc aria-label={ui.increaseShort}>+</button>
+            </div>
+            <button class="btn btn--lg btn--accent pdp__add" type="button" data-add={addPayload}>
+              <Icon name="cart" size={20} /> Add to box
+            </button>
+          </div>
+
+          {/* Revealed by the storefront sync when an override marks this product out of stock. */}
+          <form class="restock" data-restock hidden>
+            <p class="restock__t"><strong>Out of stock right now.</strong> Leave your e-mail and we will write to you the day the next batch is ready — nothing else.</p>
+            <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
+            <div class="restock__row">
+              <label class="sr-only" for="restock-email">E-mail</label>
+              <input id="restock-email" type="email" name="email" required maxlength="160" autocomplete="email" placeholder="you@example.com" class="input" />
+              <button class="btn" type="submit">{ui.notifyMe}</button>
+            </div>
+            <p class="restock__note" data-restock-note hidden></p>
+          </form>
+
+          {site.storefront.guaranteeOn && (
+            <p class="pdp__promise" data-guarantee>
+              <Icon name="shield" size={18} /> <span data-guarantee-text>{site.storefront.guarantee}</span>
+            </p>
+          )}
+
+          <ul class="pdp__trust">
+            <li><Icon name="truck" size={18} /> Free shipping over {formatThreshold(site.shipping.freeFrom, locale)} · ships from Riga in 1–2 business days</li>
+            <li><Icon name="leaf" size={18} /> {noAddedSugar ? `${ingredientLine}, nothing artificial` : 'Made with sugar and agar, and the label says so'}</li>
+            <li><Icon name="clock" size={18} /> Keeps {p.shelfLifeMonths} months — no fridge needed</li>
+            <li data-batch hidden><Icon name="apple" size={18} /> <span data-batch-text></span></li>
+          </ul>
+        </div>
+
+        <!-- The story: it scrolls past the photograph. -->
+        <div class="story">
+          <div class="pdp__desc prose" data-reveal>
+            {p.description.map((d) => <p>{d}</p>)}
+          </div>
+
+          <div class="acc pdp__acc">
+            <details>
+              <summary>{ui.shippingReturnsTitle}</summary>
+              <div class="acc__body">
+                <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom, locale)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.slice(0, 3).join(', ')} and the rest of the EU.</p>
+                <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">{ui.fullPolicy}</a>.</p>
+              </div>
+            </details>
+            {isBundle && (
+              <details>
+                <summary>{ui.whatsInTheBox}</summary>
+                <div class="acc__body"><p>{p.summary}</p></div>
+              </details>
+            )}
+          </div>
+
+          <div class="why" data-reveal>
+            {noAddedSugar ? (
+              <div>
+                <p class="eyebrow">Why it works</p>
+                <h2 class="why__title">Sweet because apples are sweet.</h2>
+                <p class="lead">We bake Antonovka apples until their sugars caramelise, whip the purée with egg white, and dry it in thin layers. That is the whole trick: concentrate the fruit, add air, add nothing else.</p>
+                <ul class="ticks">
+                  <li><Icon name="check" /> No added sugar, sweeteners or syrups</li>
+                  <li><Icon name="check" /> No flour, no gluten, no fat added</li>
+                  <li><Icon name="check" /> Source of fibre from the whole fruit</li>
+                </ul>
+                <a class="link" href="/how-its-made/">See how it’s made</a>
+              </div>
+            ) : (
+              <div>
+                <p class="eyebrow">Good to know</p>
+                <h2 class="why__title">Apple first, even here.</h2>
+                <p class="lead">Zephyr is set with agar rather than gelatine and, unlike the rest of our range, it is made with sugar. We start it from the same Antonovka purée as our pastila, and the pack says exactly what is in it.</p>
+                <ul class="ticks">
+                  <li><Icon name="check" /> Antonovka apple purée, egg white, agar, sugar</li>
+                  <li><Icon name="check" /> Set with agar, not gelatine</li>
+                  <li><Icon name="check" /> The one Semers product with sugar in it, labelled as such</li>
+                </ul>
+                <a class="link" href="/shop/apple-bars/">The no-added-sugar range</a>
+              </div>
+            )}
+            <div class="why__frame">
+              <img src={imgSrc('pastila-texture')} srcset={imgSrcset('pastila-texture')} sizes={imgSrcset('pastila-texture') && SIZES.half} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" data-parallax="0.2" />
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================== THREE NUMBERS ==============================
+         The label, set as display type. The numbers count up as they come into view. -->
+    <section class="big3" aria-labelledby="big3-title">
+      <div class="container">
+        <div class="big3__head">
+          <p class="eyebrow">By the numbers</p>
+          <h2 id="big3-title" class="big3__title" data-words>The whole label, in three numbers.</h2>
+        </div>
+        <div class="big3__row" data-stagger>
+          <div class="big3__cell">
+            <b class="big3__n" data-count={bigKcal}>{bigKcal}</b>
+            <span class="big3__l">{bigKcalLabel}</span>
+          </div>
+          <div class="big3__cell big3__cell--em">
+            <em class="big3__n" data-count={bigMid}>{bigMid}</em>
+            <span class="big3__l">{bigMidLabel}</span>
+          </div>
+          <div class="big3__cell">
+            <b class="big3__n" data-count={p.weightGrams}>{p.weightGrams}</b>
+            <span class="big3__l">grams</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== WHAT'S INSIDE ============================== -->
+    <section class="pdp-inside section" aria-labelledby="inside-title">
+      <div class="container pdp-inside__grid">
+        <div class="pdp-inside__text">
+          <p class="eyebrow">What’s inside</p>
+          <h2 id="inside-title" data-words>Read the label. <em>All of it.</em></h2>
+          <p class="pdp-inside__ing"><strong>{ui.ingredients}</strong> {p.ingredients}</p>
+          <p class="pdp-inside__all"><strong>{ui.allergens}</strong> {p.allergens}</p>
+          {multi && <p class="small muted pdp-inside__ean">EAN for the selected flavour: <span data-gtin translate="no">{first.gtin || '—'}</span></p>}
+          <ul class="pdp-inside__diet" aria-label={ui.keyFacts}>
+            {p.diet.map((d) => <li class="chip chip--leaf">{ui.diet[d]}</li>)}
+          </ul>
+        </div>
+        <div class="lit" data-reveal>
+          <h3 class="lit__title">{ui.nutritionPer100}</h3>
+          <table class="nutri">
+            <thead><tr><th>{ui.typicalValues}</th><th>{ui.per100g}</th></tr></thead>
+            <tbody>
+              {rows.map(([k, v]) => <tr class={k.startsWith('of which') ? 'sub' : ''}><td>{k}</td><td>{v}</td></tr>)}
+            </tbody>
+          </table>
+          <p class="tiny muted lit__note">{hasKcal ? `Approximate per ${unitGrams} g: ${p.kcalPerUnit} kcal. ` : 'Typical values for the baked-apple pastila base; each product in the box carries its own nutrition label. '}Values are typical for the recipe; see the pack for the batch label.</p>
+        </div>
+      </div>
+    </section>
+
+    {site.storefront.reviewsOn && (
+      <section class="pdp__reviews section--tight container" data-reviews aria-labelledby="pdp-reviews-title">
+        <div class="pdp__revhead">
+          <h2 id="pdp-reviews-title">{ui.reviewsTitle}</h2>
+          <p class="pdp__revsum" data-review-summary hidden></p>
+        </div>
+        <div class="pdp__revbody">
+          <div>
+            <div data-review-list></div>
+            <p class="muted" data-review-empty hidden>{ui.noReviewsYet(p.name)}</p>
+          </div>
+          <details class="revform">
+            <summary>{ui.writeReview}</summary>
+            <form data-review-form novalidate>
+              <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
+              <div class="revform__row">
+                <label>
+                  Rating
+                  <select name="rating" required class="select">
+                    <option value="5">5 — excellent</option>
+                    <option value="4">4 — good</option>
+                    <option value="3">3 — fine</option>
+                    <option value="2">2 — poor</option>
+                    <option value="1">1 — bad</option>
+                  </select>
+                </label>
+                <label>{ui.yourName}<input type="text" name="author" required maxlength="60" autocomplete="name" class="input" /></label>
+                <label>City <span class="muted">(optional)</span><input type="text" name="city" maxlength="60" class="input" /></label>
+              </div>
+              <label>Headline <span class="muted">(optional)</span><input type="text" name="title" maxlength="120" class="input" /></label>
+              <label>{ui.yourReview}<textarea name="body" required minlength="10" maxlength="2000" rows="4" class="textarea"></textarea></label>
+              <label>E-mail <span class="muted">(not published — only so we can reply)</span><input type="email" name="email" maxlength="160" autocomplete="email" class="input" /></label>
+              <p class="tiny muted">We read every review before it appears, so it will not show up straight away.</p>
+              <button class="btn" type="submit">Send review</button>
+              <p class="revform__note" data-review-note hidden></p>
+            </form>
+          </details>
+        </div>
+      </section>
+    )}
+
+    <section class="section--tight container" aria-labelledby="rel-title">
+      <div class="section-head">
+        <h2 id="rel-title">Pairs well with</h2>
+        <a class="link" href="/shop/">All products</a>
+      </div>
+      <div class="grid pdp__related" data-stagger>
+        {related.map((r) => <ProductCard product={r} compact />)}
+        <a class="boxtile" href="/shop/build-your-box/" data-cursor="Build">
+          <span class="boxtile__six" aria-hidden="true">6</span>
+          <span class="boxtile__body">
+            <span class="eyebrow">Build your box</span>
+            <span class="boxtile__title">Pick six bars, save 10%.</span>
+            <span class="boxtile__cta">Start building <Icon name="arrow" size={18} class="arrow" /></span>
+          </span>
+        </a>
+      </div>
+    </section>
+
+    <section class="section--tight container pdp__faq" aria-labelledby="pdp-faq-title">
+      <div class="pdp__faq-grid">
+        <div>
+          <p class="eyebrow">{p.name}</p>
+          <h2 id="pdp-faq-title">Questions people ask.</h2>
+          <p class="muted mt-2">More in the <a href="/faq/">full FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+        </div>
+        <div class="acc" data-reveal>
+          {faqs.map((f) => (
+            <details><summary>{f.q}</summary><div class="acc__body"><p>{f.a}</p></div></details>
+          ))}
+        </div>
+      </div>
+    </section>
+  </article>
+
+  <div class="sticky-buy" data-sticky-buy>
+    <div class="sticky-buy__in container">
+      <img class="sticky-buy__img" src={gallery[0].small} alt="" width="48" height="48" loading="lazy" />
+      <div class="sticky-buy__t"><strong>{p.title}</strong><span><span data-price>{formatPrice(first.price ?? p.price, locale)}</span> · <span data-variant-name>{ui.flavours[first.key]}</span></span></div>
+      <button class="btn btn--accent" type="button" data-add={addPayload}>Add to box</button>
+    </div>
+  </div>
+</Base>
+
+<script>
+  /*
+   * The stage takes the colour of the flavour in hand: the frame's glow and
+   * the chosen chip both read --fl. The picker itself lives in site.ts; this
+   * only follows it. Without it the stage keeps the first flavour's colour.
+   */
+  const stage = document.querySelector<HTMLElement>('[data-stage]');
+  if (stage) {
+    const radios = Array.from(stage.querySelectorAll<HTMLInputElement>('[data-variant]'));
+    const paint = (r: HTMLInputElement) => {
+      if (r.dataset.glow) stage.style.setProperty('--fl', r.dataset.glow);
+    };
+    radios.forEach((r) => r.addEventListener('change', () => paint(r)));
+    const preset = new URL(location.href).searchParams.get('flavour');
+    const on = radios.find((r) => r.value === preset) || radios.find((r) => r.checked);
+    if (on) paint(on);
+  }
+</script>
+
+<style>
+  /* ------------------------------------------------------------- stage */
+  .stage { display: grid; gap: clamp(1.5rem, 4vw, 4.5rem); padding-block: 0.5rem clamp(3rem, 6vw, 5rem); }
+  @media (min-width: 56rem) {
+    .stage { grid-template-columns: 1.05fr 0.95fr; align-items: start; }
+    .stage__gal { position: sticky; top: 7rem; }
+  }
+  .stage__buy { min-width: 0; }
+
+  /* The frame: a lit window with the flavour's own light behind it. */
+  .gal { position: relative; }
+  .gal::before { content: ''; position: absolute; inset: 8% 4% -4%; z-index: 0; border-radius: 50%; background: var(--fl); opacity: 0.16; filter: blur(70px); pointer-events: none; transition: background var(--dur-slow) var(--ease-out); }
+  .gal__main { position: relative; z-index: 1; max-height: calc(100svh - 8.5rem); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
+  .gal__main img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .gal__thumbs { position: relative; z-index: 1; padding: 0.15rem; }
+  .gal__thumbs button { background: var(--gal-accent, var(--bg-sunken)); }
+  .gal__thumbs button[aria-pressed="true"] { border-color: var(--fl); box-shadow: 0 0 18px -4px var(--fl); }
+  @media (min-width: 56rem) {
+    .gal:has(.gal__thumbs) { grid-template-columns: 4.5rem minmax(0, 1fr); }
+    .gal:has(.gal__thumbs) .gal__main { grid-column: 2; grid-row: 1; }
+    .gal__thumbs { grid-column: 1; grid-row: 1; flex-direction: column; overflow: visible; align-content: start; }
+  }
+
+  /* ------------------------------------------------------------- buy panel */
+  .buy { display: grid; gap: 0; }
+  .buy .eyebrow { margin-bottom: 0.75rem; }
+  .buy .eyebrow a { text-decoration: none; color: var(--cream-2); }
+  .buy .eyebrow a:hover { color: var(--cream-0); }
+  .pdp__title { font-size: var(--fs-4xl); letter-spacing: -0.04em; line-height: var(--lh-tight); max-width: 12ch; }
+  .pdp__title--long { font-size: var(--fs-3xl); max-width: 16ch; }
+  .pdp__w { display: inline-block; font-family: var(--font-sans); font-weight: 500; font-size: var(--fs-md); letter-spacing: 0.02em; color: var(--fg-3); white-space: nowrap; vertical-align: 0.35em; margin-left: 0.15em; }
+  .pdp__hook { font-family: var(--font-display); font-style: normal; font-weight: 400; font-size: var(--fs-xl); line-height: 1.2; color: var(--cream-2); margin: 0.85rem 0 0; max-width: 28ch; }
+
+  .pdp__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.9rem; margin: 1.35rem 0 1.1rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
+  .pdp__amount { font-family: var(--font-display); font-size: var(--fs-3xl); font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 50; }
+  .pdp__was { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 400; color: var(--fg-3); text-decoration-color: var(--accent); }
+  .pdp__unit { flex-basis: 100%; font-size: var(--fs-sm); color: var(--fg-3); }
+
+  .pdp__facts { list-style: none; margin: 0 0 1.2rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; font-size: var(--fs-sm); font-weight: 600; color: var(--fg-2); }
+  .pdp__facts li { display: inline-flex; align-items: center; gap: 0.35em; }
+  .pdp__facts :global(svg) { color: var(--leaf-500); }
+
+  /* Chips glow in their own flavour when chosen. */
+  .pdp__vars { border: 0; padding: 0; margin: 0 0 1.2rem; }
+  .pdp__vars legend { font-size: var(--fs-sm); color: var(--fg-2); margin-bottom: 0.7rem; padding: 0; }
+  .pdp__vars legend strong { color: var(--cream-0); }
+  .var span { min-height: 2.75rem; padding: 0.55em 1.05em 0.55em 0.85em; background: rgb(255 252 245 / 0.03); transition: border-color var(--dur), background var(--dur), color var(--dur), box-shadow var(--dur-slow) var(--ease-out); }
+  .var i { flex: none; width: 0.7em; height: 0.7em; }
+  .var input:checked + span { border-color: var(--sg); background: color-mix(in srgb, var(--sg) 16%, transparent); color: var(--cream-0); box-shadow: 0 0 0 1px var(--sg), 0 0 28px -6px var(--sg); }
+  .var input:checked + span i { box-shadow: 0 0 12px var(--sg); }
+  .pdp__varnote { margin: 0.6rem 0 0; color: var(--fg-3); }
+
+  /* The ladder: three steps, the current one lit in cream so the button stays the only red thing. */
+  .tiers { margin: 0 0 1rem; gap: 0.4rem; }
+  .tier { padding: 0.6rem 0.5rem; background: rgb(255 252 245 / 0.03); border-color: rgb(243 233 214 / 0.14); border-radius: var(--r-md); }
+  .tier:nth-child(2) { border-top-width: 2px; }
+  .tier:nth-child(3) { border-top-width: 3px; }
+  .tier.is-on { border-color: var(--cream-1); background: rgb(243 233 214 / 0.08); box-shadow: 0 0 0 1px var(--cream-1), 0 0 30px -10px rgb(243 233 214 / 0.5); }
+  .tier.is-on b { color: var(--cream-2); }
+  .tier__unit { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 500; letter-spacing: -0.01em; }
+
+  /*
+   * Flex with a wrap: a grid's `auto` track shrinks under a `1fr` neighbour and
+   * the stepper, which clips its own overflow, once had the add button drawn
+   * across its "+". "Добавить в коробку" is long enough to do that at 390px.
+   */
+  .pdp__cta { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: stretch; margin-top: 0.25rem; }
+  .pdp__cta .qty { flex: 0 0 auto; min-width: max-content; min-height: 3.75rem; height: auto; grid-template-columns: 3rem 3rem 3rem; }
+  .pdp__cta .qty button { min-height: 3.75rem; }
+  .pdp__cta .pdp__add { flex: 1 1 12rem; gap: 0.6em; box-shadow: var(--glow-accent); }
+  .pdp__add:hover { box-shadow: 0 0 0 1px rgb(255 252 245 / 0.2), 0 0 90px -14px rgb(255 90 60 / 0.9); }
+  .pdp__add:global(.is-done) { --btn-bg: var(--leaf-500); --btn-fg: var(--night-900); box-shadow: var(--glow-mint); }
+
+  .pdp__promise { margin-top: 1.1rem; color: var(--fg-2); }
+  .pdp__promise :global(svg) { color: var(--honey-500); }
+  .pdp__trust { list-style: none; margin: 1.25rem 0 0; padding: 1.1rem 0 0; border-top: 1px solid var(--line); display: grid; gap: 0.55rem; font-size: var(--fs-sm); color: var(--fg-2); }
+  .pdp__trust li { display: flex; gap: 0.6em; align-items: flex-start; }
+  .pdp__trust :global(svg) { flex: none; color: var(--cream-3); margin-top: 0.1em; }
+  .restock { margin-top: 1.25rem; }
+  .restock .btn { min-height: 3.2rem; }
+
+  /* ------------------------------------------------------------- story */
+  .story { margin-top: clamp(2.5rem, 5vw, 4rem); display: grid; gap: clamp(2rem, 4vw, 3rem); }
+  .pdp__desc p:first-child { font-size: var(--fs-lg); color: var(--cream-2); }
+  .pdp__acc { border-top: 1px solid var(--line); }
+  .pdp__acc :global(summary) { font-size: var(--fs-lg); padding: 1.1rem 0; }
+  .why { display: grid; gap: 1.75rem; padding-top: clamp(1.5rem, 3vw, 2.5rem); border-top: 1px solid var(--line); }
+  .why__title { font-size: var(--fs-2xl); margin-top: 0.8rem; max-width: 16ch; }
+  .why .lead { margin-top: 1rem; font-size: var(--fs-md); }
+  .why .ticks { margin: 1.25rem 0 1.5rem; }
+  .why__frame { position: relative; aspect-ratio: 16 / 9; border-radius: var(--r-lg); overflow: clip; background: var(--bg-sunken); box-shadow: var(--shadow-1), var(--glow-honey); }
+  .why__frame img { position: absolute; inset: -12% 0; width: 100%; height: 124%; object-fit: cover; }
+
+  /* ------------------------------------------------------------- three numbers */
+  .big3 { position: relative; overflow: clip; padding-block: clamp(3rem, 7vw, 6rem); background: var(--night-950); border-block: 1px solid var(--line); }
+  .big3::before { content: ''; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(50% 70% at 50% 100%, rgb(240 176 74 / 0.1), transparent 70%); }
+  .big3 .container { position: relative; }
+  .big3__head { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.75rem 2rem; margin-bottom: clamp(1.5rem, 4vw, 3rem); }
+  .big3__title { font-size: var(--fs-2xl); font-weight: 500; font-style: normal; letter-spacing: -0.03em; color: var(--cream-1); max-width: 18ch; margin: 0; }
+  .big3__row { display: grid; border-top: 1px solid var(--line); }
+  /* Phones keep the numerals big: one number per row, its label beneath, so the wall stays a wall. */
+  .big3__cell { display: grid; grid-template-columns: 1fr; align-content: start; gap: 0.6rem; padding: 1.1rem 0; border-bottom: 1px solid var(--line); }
+  @media (max-width: 39.99rem) { .big3__n { font-size: clamp(4.5rem, 24vw, 7rem); } }
+  .big3__n { font-family: var(--font-display); font-size: var(--fs-hero); font-weight: 500; font-style: normal; line-height: 0.85; letter-spacing: -0.06em; color: var(--cream-0); font-variant-numeric: tabular-nums; }
+  /* The display face has no italic; the emphasis is carried by the honey light alone. */
+  .big3__cell--em .big3__n { font-style: normal; color: var(--honey-500); text-shadow: 0 0 60px rgb(240 176 74 / 0.5); }
+  .big3__l { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-2); }
+  @media (min-width: 40rem) {
+    .big3__row { grid-template-columns: repeat(3, 1fr); border-top: 0; }
+    .big3__cell { grid-template-columns: 1fr; align-content: start; gap: 1rem; padding: 0.5rem 1.5rem 0.5rem 0; border-bottom: 0; border-left: 1px solid var(--line); padding-left: 1.5rem; }
+    .big3__cell:first-child { border-left: 0; padding-left: 0; }
+  }
+
+  /* ------------------------------------------------------------- what's inside */
+  .pdp-inside__grid { display: grid; gap: clamp(2rem, 5vw, 5rem); align-items: start; }
+  @media (min-width: 56rem) { .pdp-inside__grid { grid-template-columns: 1.1fr 0.9fr; } .pdp-inside__text { position: sticky; top: 7rem; } }
+  .pdp-inside__text h2 { max-width: 14ch; margin-top: 0.8rem; }
+  .pdp-inside__text h2 em { font-style: normal; color: var(--honey-500); }
+  .pdp-inside__ing { margin: clamp(1.5rem, 3vw, 2.25rem) 0 0; font-family: var(--font-display); font-weight: 400; font-size: var(--fs-xl); line-height: 1.3; letter-spacing: -0.01em; color: var(--cream-1); max-width: 30ch; text-wrap: pretty; font-variation-settings: 'opsz' 48, 'SOFT' 60; }
+  .pdp-inside__ing strong, .pdp-inside__all strong { display: block; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 0.5rem; }
+  .pdp-inside__all { margin: 1.75rem 0 0; color: var(--fg-2); max-width: 44ch; }
+  .pdp-inside__ean { margin: 1.25rem 0 0; }
+  .pdp-inside__diet { list-style: none; margin: 1.75rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .pdp-inside__diet li { min-height: 2.25rem; }
+
+  /* The lit panel: the table sits in a pool of honey light. */
+  .lit { position: relative; isolation: isolate; padding: clamp(1.5rem, 3vw, 2.5rem); border-radius: var(--r-xl); background: var(--night-800); box-shadow: 0 0 0 1px rgb(240 176 74 / 0.3), var(--glow-honey); overflow: clip; }
+  .lit::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(90% 60% at 50% -10%, rgb(240 176 74 / 0.16), transparent 70%); pointer-events: none; }
+  .lit__title { font-size: var(--fs-xl); margin-bottom: 1rem; }
+  .lit .nutri { font-size: var(--fs-md); }
+  .lit .nutri :global(th) { font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-3); }
+  .lit .nutri :global(td) { padding: 0.75rem 0; color: var(--cream-1); }
+  .lit .nutri :global(td:last-child) { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 500; letter-spacing: -0.01em; color: var(--cream-0); }
+  .lit .nutri :global(tr.sub td) { color: var(--fg-3); }
+  .lit .nutri :global(tr.sub td:last-child) { font-family: var(--font-sans); font-size: var(--fs-md); font-weight: 400; color: var(--fg-2); }
+  .lit .nutri :global(tbody tr:first-child td) { color: var(--honey-500); }
+  .lit__note { margin-top: 1.1rem; }
+
+  /* ------------------------------------------------------------- reviews */
+  .pdp__reviews { border-top: 1px solid var(--line); }
+  /* No reviews yet: one quiet band — the sentence on the left, the invitation as a ghost button on the right — instead of a hole the size of a set piece. */
+  .pdp__reviews:has([data-review-empty]:not([hidden])) { padding-block: clamp(2rem, 4vw, 3rem); }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .pdp__revhead { margin-bottom: 1rem; }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .pdp__revhead h2 { font-size: var(--fs-2xl); }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .pdp__revbody { grid-template-columns: minmax(0, 1fr) auto; gap: 1rem 2rem; align-items: center; padding: 1.1rem 0; border-block: 1px solid var(--line); }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) [data-review-empty] { margin: 0; }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .revform { border: 0; padding: 0; background: none; border-radius: 0; }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .revform > summary { display: inline-flex; align-items: center; justify-content: center; gap: 0.6em; min-height: 2.75rem; padding: 0.55em 1.25em; border: 1px solid rgb(243 233 214 / 0.35); border-radius: var(--r-pill); font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 600; color: var(--cream-0); cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .revform > summary:hover { background: var(--cream-1); color: var(--night-900); border-color: var(--cream-1); }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .revform > summary::after { font-size: 1.2em; color: inherit; }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .revform[open] { grid-column: 1 / -1; padding-top: 0.5rem; }
+  .pdp__reviews:has([data-review-empty]:not([hidden])) .revform[open] > summary { margin-bottom: 0.5rem; }
+  @media (max-width: 40rem) { .pdp__reviews:has([data-review-empty]:not([hidden])) .pdp__revbody { grid-template-columns: minmax(0, 1fr); } }
+  .pdp__revhead { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 0.5rem 2rem; margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+  .pdp__revsum { font-size: var(--fs-md); }
+  .pdp__revbody { display: grid; gap: 2rem; align-items: start; }
+  @media (min-width: 56rem) { .pdp__revbody { grid-template-columns: 1.1fr 0.9fr; gap: 4rem; } }
+  .pdp__revbody :global(.rev:first-child) { border-top: 0; }
+  .revform { border: 1px solid var(--line); border-radius: var(--r-lg); padding: 1.25rem 1.5rem; background: rgb(255 252 245 / 0.025); }
+  .revform > summary { display: flex; align-items: center; justify-content: space-between; gap: 1rem; font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 500; list-style: none; }
+  .revform > summary::-webkit-details-marker { display: none; }
+  .revform > summary::after { content: '+'; content: '+' / ''; font-family: var(--font-display); font-size: 1.4em; font-weight: 300; line-height: 1; color: var(--accent); transition: transform var(--dur) var(--ease-out); }
+  .revform[open] > summary::after { transform: rotate(45deg); }
+  .revform :global(form) { max-width: none; padding-top: 1rem; }
+
+  /* ------------------------------------------------------------- related & faq */
+  /* Four fixed tracks — three products and the box tile — so the row is always complete and the cards never balloon. */
+  .pdp__related { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  @media (max-width: 56rem) { .pdp__related { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; } }
+  /* On a phone the row becomes a strip that scrolls sideways; the cut-off card is the hint. */
+  @media (max-width: 40rem) {
+    .pdp__related { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 0.75rem; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); padding-bottom: 0.5rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .pdp__related::-webkit-scrollbar { display: none; }
+    .pdp__related > :global(*) { flex: 0 0 72vw; min-width: 0; scroll-snap-align: start; }
+  }
+  .boxtile { position: relative; isolation: isolate; display: flex; align-items: flex-end; min-height: 100%; padding: 1.4rem; border-radius: var(--r-lg); overflow: clip; text-decoration: none; color: var(--night-900); background: var(--cream-1); box-shadow: var(--shadow-1); transition: transform var(--dur) var(--ease-out), box-shadow var(--dur); }
+  .boxtile:hover { transform: translateY(-4px); box-shadow: var(--shadow-1), var(--glow-honey); }
+  .boxtile__six { position: absolute; right: -0.05em; top: -0.12em; z-index: -1; font-family: var(--font-display); font-weight: 400; font-size: clamp(9rem, 18vw, 15rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(27 22 18 / 0.22); pointer-events: none; }
+  .boxtile__body { display: grid; gap: 0.6rem; }
+  .boxtile .eyebrow { color: var(--ink-500); }
+  .boxtile .eyebrow::before { background: var(--apple-600); }
+  .boxtile__title { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-2xl); line-height: 1; letter-spacing: -0.03em; max-width: 9ch; }
+  .boxtile__cta { display: inline-flex; align-items: center; gap: 0.4em; margin-top: 0.4rem; font-weight: 600; font-size: var(--fs-sm); }
+  @media (max-width: 40rem) { .boxtile { aspect-ratio: 4 / 5; } }
+  .pdp__faq { border-top: 1px solid var(--line); }
+  .pdp__faq-grid { display: grid; gap: 2rem; }
+  @media (min-width: 56rem) { .pdp__faq-grid { grid-template-columns: 1fr 1.4fr; gap: 4rem; } }
+  .pdp__faq h2 { margin-top: 0.8rem; }
+
+  /* ------------------------------------------------------------- sticky bar */
+  .sticky-buy__t strong { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-md); }
+  .sticky-buy .btn { min-height: 2.9rem; padding-inline: 1.3em; }
+  /* A long localised button ("Добавить в коробку") must not crush the title to one syllable. */
+  @media (max-width: 30rem) {
+    .sticky-buy__in { gap: 0.75rem; }
+    .sticky-buy__t strong { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--fs-sm); line-height: 1.2; }
+    .sticky-buy__t > span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sticky-buy .btn { padding-inline: 1em; font-size: var(--fs-sm); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .gal::before, .gal__main, .var span { transition: none; }
+  }
+</style>
