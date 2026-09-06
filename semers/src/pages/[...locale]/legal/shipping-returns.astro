@@ -245,7 +245,9 @@ const webPage = {
   .legal-hero .eyebrow { margin-bottom: 1.25rem; }
   .legal-title { font-size: var(--fs-4xl); line-height: var(--lh-tight); letter-spacing: -0.04em; max-width: 13ch; text-wrap: balance; }
   /* Phones: a long Cyrillic or Latvian word must still fit one line at a size the ground can carry. */
-  @media (max-width: 48rem) { .legal-title { font-size: clamp(2.25rem, 9.5vw, 3.25rem); overflow-wrap: anywhere; hyphens: auto; } }
+  @media (max-width: 48rem) { .legal-title { max-width: none; font-size: clamp(2.25rem, 9.5vw, 3.25rem); overflow-wrap: anywhere; hyphens: auto; } }
+  /* Russian legal nouns run to 19 letters; a step smaller keeps them whole on a 390 px screen. */
+  @media (max-width: 48rem) { .legal-title:lang(ru) { font-size: clamp(2rem, 8.2vw, 3rem); } }
   .legal-title em { font-style: italic; font-weight: 400; color: var(--honey-500); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .legal-hero__row { display: grid; gap: 1.25rem; margin-top: clamp(1.5rem, 4vw, 3rem); }
   .legal-hero__lead { max-width: 65ch; }

@@ -76,7 +76,7 @@ const columns = [
   .ftr ul a { text-decoration: none; color: var(--cream-2); transition: color var(--dur-fast); }
   .ftr ul a:hover { color: var(--accent-ink); }
   /* The name, as wide as the page. Clipped at the baseline so it reads as carved into the bottom edge. */
-  .ftr__word { font-family: var(--font-display); font-weight: 500; font-size: clamp(6rem, 24vw, 26rem); line-height: 0.78; letter-spacing: -0.05em; text-align: center; color: var(--cream-1); opacity: 0.08; margin-top: 2rem; margin-bottom: -0.16em; user-select: none; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .ftr__word { font-family: var(--font-display); font-weight: 500; font-size: clamp(6rem, 24vw, 26rem); line-height: 0.78; letter-spacing: -0.05em; text-align: center; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.16); margin-top: 2rem; margin-bottom: -0.16em; user-select: none; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .ftr__legal { position: relative; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 2rem; padding-block: 1.5rem 2rem; border-top: 1px solid var(--line); font-size: var(--fs-xs); color: var(--fg-3); background: var(--night-950); }
   .ftr__legal p { margin: 0; }
   .ftr__legal a { color: var(--fg-2); }

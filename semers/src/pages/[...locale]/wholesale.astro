@@ -161,7 +161,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
       </div>
       <p class="muted" style="max-width:38ch">Same bars, same pastila, packed for the way you sell. Pick the line that sounds like you.</p>
     </div>
-    <div class="strip" data-stagger>
+    <div class="strip" data-stagger tabindex="0" role="region" aria-labelledby="who-title">
       {segments.map((s, i) => (
         <article class="lit" data-tilt>
           <span class="lit__n" aria-hidden="true">{pad(i + 1)}</span>
