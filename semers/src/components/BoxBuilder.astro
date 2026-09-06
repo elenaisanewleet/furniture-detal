@@ -5,8 +5,12 @@
  * subscription shops sell a 4-, 6- and 8-pack: a set you can advertise, not a
  * number hidden in a dropdown.
  *
+ * The box is a lit tray: each slot lights up honey as it fills, the count and
+ * the price are set as display type, and on a phone the tray sticks to the
+ * bottom of the screen as a strip of glass while the pickers scroll under it.
+ *
  * All the state lives in src/scripts/site.ts, which reads `size` and `discount`
- * off the data attributes below.
+ * off the data attributes below and renders into the slots and the list.
  */
 import Icon from './Icon.astro';
 import { productBySlug, FLAVORS, formatPrice, formatThreshold } from '~/data/products';
@@ -47,43 +51,48 @@ const boxImg = { ...img('gift-box'), src: imgSrc('gift-box') };
 const cheapest = Math.min(...items.map((i) => i.price));
 const minPrice = cheapest * size * (1 - discount);
 const pct = Math.round(discount * 100);
+const sizes = [{ size, discount, href: '' }, ...siblings].sort((a, b) => a.size - b.size);
+/** Slots sit in two rows: 2×2, 3×2, 4×2. */
+const cols = Math.ceil(size / 2);
 ---
 
-<section class="container builder" data-builder data-size={size} data-discount={discount} data-image={boxImg.src}>
-  <div class="builder__list">
+<section class="container builder bb" data-builder data-size={size} data-discount={discount} data-image={boxImg.src}>
+  <div class="builder__list bb__list">
     {siblings.length > 0 && (
       <div class="boxsizes" role="group" aria-label={ui.boxSize}>
-        <span class="boxsizes__label">{ui.boxSize}</span>
-        {[{ size, discount, href: '' }, ...siblings]
-          .sort((a, b) => a.size - b.size)
-          .map((s) =>
+        <span class="boxsizes__label eyebrow">{ui.boxSize}</span>
+        <div class="boxsizes__row">
+          {sizes.map((s) =>
             s.href ? (
               <a class="boxsize" href={s.href}>
+                <span class="boxsize__n" aria-hidden="true">{s.size}</span>
                 <b>{ui.pieces(s.size)}</b>
                 <span>{ui.savePct(Math.round(s.discount * 100))}</span>
               </a>
             ) : (
               <span class="boxsize is-on" aria-current="page">
+                <span class="boxsize__n" aria-hidden="true">{s.size}</span>
                 <b>{ui.pieces(s.size)}</b>
                 <span>{ui.savePct(pct)}</span>
               </span>
             ),
           )}
+        </div>
       </div>
     )}
 
-    {groups.map((g) => (
+    {groups.map((g, gi) => (
       <div class="builder__group">
-        <h2 class="builder__h">{g}</h2>
+        <h2 class="builder__h"><span class="builder__hn" aria-hidden="true">0{gi + 1}</span>{g}</h2>
         <div class="builder__items">
           {items.filter((i) => i.group === g).map((i) => (
-            <div class="bi">
-              <img class="bi__img" src={i.image} alt="" width="64" height="64" loading="lazy" decoding="async" />
-              <div>
-                <div class="bi__name"><span class="bi__dot" style={`--sw:${i.color}`}></span>{i.name}</div>
-                <div class="bi__sub">{i.sub}</div>
-              </div>
-              <button class="btn btn--sm btn--ink" type="button" data-builder-pick data-id={i.id} data-name={i.name} data-price={i.price} data-image={i.image} data-weight={i.weight} aria-label={ui.addToBoxAria(i.name)}><Icon name="plus" size={16} /> {ui.add}</button>
+            <div class="bi" style={`--sw:${i.color}`}>
+              <span class="bi__pic"><img class="bi__img" src={i.image} alt="" width="96" height="96" loading="lazy" decoding="async" /></span>
+              <span class="bi__txt">
+                <span class="bi__name"><span class="bi__dot"></span>{i.name}</span>
+                <span class="bi__sub">{i.sub}</span>
+              </span>
+              <button class="bi__add" type="button" data-builder-pick data-id={i.id} data-name={i.name} data-price={i.price} data-image={i.image} data-weight={i.weight} aria-label={ui.addToBoxAria(i.name)}><Icon name="plus" size={18} /><span>{ui.add}</span></button>
             </div>
           ))}
         </div>
@@ -91,40 +100,107 @@ const pct = Math.round(discount * 100);
     ))}
   </div>
 
-  <aside class="builder__aside">
-    <div class="builder__box">
-      <div class="co__row"><h2>{ui.yourBox}</h2><strong data-builder-count>0 / {size}</strong></div>
-      <div class="builder__slots" aria-live="polite">
-        {Array.from({ length: size }).map(() => <div class="builder__slot" data-builder-slot></div>)}
+  <aside class="builder__aside bb__aside">
+    <div class="builder__box bb__tray">
+      <div class="bb__head">
+        <h2 class="bb__title">{ui.yourBox}</h2>
+        <strong class="bb__count num" data-builder-count>0 / {size}</strong>
       </div>
-      <ul class="builder__picked small" data-builder-list></ul>
-      <div class="co__row co__total"><span>{ui.boxPrice}</span><span><s class="muted small" data-builder-was></s> <span class="num" data-builder-price>{formatPrice(0, locale)}</span></span></div>
-      <button class="btn btn--lg btn--block" type="button" data-builder-add disabled>{ui.addBoxToCart}</button>
-      <p class="tiny muted">{ui.boxNote(pct, formatPrice(minPrice, locale), formatPrice(minPrice / size, locale), formatThreshold(site.shipping.freeFrom, locale))}</p>
+      <div class="builder__slots bb__slots" aria-live="polite" style={`--cols:${cols};--n:${size}`}>
+        {Array.from({ length: size }).map(() => <div class="builder__slot bb__slot" data-builder-slot></div>)}
+      </div>
+      <ul class="builder__picked bb__picked small" data-builder-list></ul>
+      <div class="bb__total">
+        <span class="bb__label">{ui.boxPrice}</span>
+        <span class="bb__sum"><s class="bb__was num" data-builder-was></s> <span class="bb__price num" data-builder-price>{formatPrice(0, locale)}</span></span>
+      </div>
+      <button class="btn btn--lg btn--block bb__add" type="button" data-builder-add disabled>{ui.addBoxToCart}</button>
+      <p class="tiny muted bb__note">{ui.boxNote(pct, formatPrice(minPrice, locale), formatPrice(minPrice / size, locale), formatThreshold(site.shipping.freeFrom, locale))}</p>
     </div>
   </aside>
 </section>
 
 <style>
-  .builder__group + .builder__group { margin-top: 1.75rem; }
-  .builder__h { font-size: var(--fs-lg); margin-bottom: 0.75rem; }
-  .builder__items { display: grid; gap: 0.6rem; }
-  .bi__dot { display: inline-block; width: 0.6em; height: 0.6em; border-radius: 50%; background: var(--sw); margin-right: 0.4em; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1); }
-  .builder__picked { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.25rem; }
-  /* Rows are rendered by the client script, outside Astro's style scope. */
-  .builder__picked :global(li) { display: flex; justify-content: space-between; gap: 1rem; }
-  .builder__box .co__row h2 { font-size: var(--fs-xl); }
+  /* ------------------------------------------------------------- layout */
+  .bb { gap: clamp(2rem, 4vw, 3.5rem); padding-bottom: clamp(3rem, 8vw, 6rem); }
+  @media (min-width: 56rem) { .bb { grid-template-columns: minmax(0, 1fr) 25rem; } .bb__aside { top: 5.5rem; } }
+  @media (min-width: 72rem) { .bb { grid-template-columns: minmax(0, 1fr) 27rem; } }
+  .bb__list { min-width: 0; }
 
-  /* Size switcher: each size is a real page, so these are links, not a control. */
-  .boxsizes { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; margin-bottom: 1.75rem; }
-  .boxsizes__label { font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.07em; color: var(--fg-3); margin-right: 0.25rem; }
-  .boxsize {
-    display: grid; gap: 0.05rem; padding: 0.45rem 0.85rem; text-align: center; text-decoration: none; color: inherit;
-    border: 1px solid var(--line); border-radius: var(--r-md); background: var(--bg-raised); line-height: 1.25;
+  /* ------------------------------------------------------------- sizes: three numerals, one lit */
+  .boxsizes { margin-bottom: clamp(2rem, 4vw, 3rem); }
+  .boxsizes__label { margin-bottom: 0.9rem; }
+  .boxsizes__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; max-width: 34rem; }
+  .boxsize { position: relative; display: grid; gap: 0.15rem; justify-items: start; padding: 1rem 1.1rem 0.95rem; text-decoration: none; color: inherit; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); line-height: 1.25; transition: transform var(--dur) var(--ease-out), box-shadow var(--dur); }
+  .boxsize:hover { transform: translateY(-3px); box-shadow: var(--shadow-1), var(--glow-honey); }
+  .boxsize__n { font-family: var(--font-display); font-size: clamp(2.75rem, 6vw, 4rem); font-weight: 400; line-height: 0.9; letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; margin-bottom: 0.35rem; transition: color var(--dur-fast); }
+  .boxsize b { font-size: var(--fs-sm); color: var(--cream-0); }
+  .boxsize > span:last-child { font-size: var(--fs-xs); color: var(--fg-3); }
+  .boxsize.is-on { box-shadow: 0 0 0 1px rgb(240 176 74 / 0.55), var(--glow-honey); background: linear-gradient(180deg, var(--honey-100), var(--bg-raised)); }
+  .boxsize.is-on .boxsize__n { color: var(--honey-500); -webkit-text-stroke: 0; }
+  .boxsize.is-on > span:last-child { color: var(--honey-500); }
+
+  /* ------------------------------------------------------------- pickers: compact lit cards */
+  .builder__group + .builder__group { margin-top: clamp(1.75rem, 4vw, 2.75rem); }
+  .builder__h { display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 1rem; font-size: var(--fs-2xl); letter-spacing: -0.03em; }
+  .builder__hn { font-size: 0.5em; font-weight: 400; letter-spacing: 0.02em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 48, 'SOFT' 0; }
+  .builder__items { display: grid; gap: 0.6rem; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); }
+  .bi { grid-template-columns: 3.5rem minmax(0, 1fr) auto; gap: 0.8rem; padding: 0.65rem 0.65rem 0.65rem 0.65rem; border-radius: var(--r-md); background: var(--bg-raised); box-shadow: var(--shadow-1); transition: transform var(--dur) var(--ease-out), box-shadow var(--dur); }
+  .bi:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgb(243 233 214 / 0.18), 0 0 40px -18px var(--sw); }
+  .bi__pic { position: relative; display: block; aspect-ratio: 1; border-radius: var(--r-sm); overflow: clip; background: color-mix(in oklab, var(--sw) 16%, var(--night-700)); box-shadow: inset 0 0 0 1px rgb(243 233 214 / 0.06), 0 0 24px -10px var(--sw); }
+  .bi__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .bi__txt { display: grid; gap: 0.15rem; min-width: 0; }
+  .bi__name { font-weight: 600; font-size: var(--fs-sm); line-height: 1.25; color: var(--cream-0); }
+  .bi__dot { display: inline-block; width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--sw); margin-right: 0.45em; box-shadow: 0 0 10px var(--sw); vertical-align: 0.05em; }
+  .bi__sub { font-size: var(--fs-xs); color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bi__add { display: inline-flex; align-items: center; justify-content: center; gap: 0.3em; min-height: 2.75rem; min-width: 2.75rem; padding: 0 0.95rem 0 0.7rem; border-radius: var(--r-pill); border: 1px solid rgb(243 233 214 / 0.3); color: var(--cream-0); font-size: var(--fs-sm); font-weight: 600; line-height: 1; white-space: nowrap; transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out); }
+  .bi__add:hover { background: var(--cream-1); color: var(--night-900); border-color: var(--cream-1); }
+  .bi__add:active { transform: scale(0.96); }
+  .bi__add[disabled] { opacity: 0.35; pointer-events: none; }
+
+  /* ------------------------------------------------------------- the tray */
+  .bb__tray { display: grid; gap: 1rem; padding: 1.5rem; border-radius: var(--r-xl); background: linear-gradient(180deg, var(--night-700), var(--night-800) 60%); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
+  .bb__tray:has(.bb__slot:last-child.is-filled) { box-shadow: 0 0 0 1px rgb(240 176 74 / 0.55), 0 24px 60px -30px rgb(0 0 0 / 0.8), var(--glow-honey); }
+  .bb__head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+  .bb__title { font-size: var(--fs-xl); }
+  .bb__count { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-3xl); line-height: 1; letter-spacing: -0.04em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 50; white-space: nowrap; }
+  .bb__slots { grid-template-columns: repeat(var(--cols, 3), minmax(0, 1fr)); gap: 0.5rem; padding: 0.6rem; border-radius: var(--r-lg); background: var(--night-900); box-shadow: inset 0 0 0 1px rgb(243 233 214 / 0.07), inset 0 12px 30px rgb(0 0 0 / 0.45); }
+  .bb__slot { position: relative; aspect-ratio: 1; border-radius: var(--r-md); background: var(--night-800); border: 1px dashed rgb(243 233 214 / 0.22); overflow: clip; transition: box-shadow var(--dur), border-color var(--dur), background var(--dur); }
+  .bb__slot::after { content: ''; position: absolute; inset: 0; background: radial-gradient(60% 60% at 50% 40%, rgb(240 176 74 / 0.22), transparent 70%); opacity: 0; transition: opacity var(--dur); }
+  .bb__slot.is-filled { border: 1px solid rgb(240 176 74 / 0.6); background: var(--honey-100); box-shadow: var(--glow-honey), 0 0 22px -4px rgb(240 176 74 / 0.6); animation: bb-on 0.7s var(--ease-out); }
+  .bb__slot.is-filled::after { opacity: 1; }
+  /* Rendered by the client script, outside Astro's style scope. */
+  .bb__slot :global(img) { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  @keyframes bb-on { 0% { transform: scale(0.8); filter: brightness(2.2); } 60% { transform: scale(1.06); } 100% { transform: none; filter: none; } }
+  .bb__picked { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+  .bb__picked:empty { display: none; }
+  .bb__picked :global(li) { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; color: var(--fg-2); }
+  .bb__picked :global(.ci__rm) { min-height: 1.75rem; }
+  .bb__total { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding-top: 0.9rem; border-top: 1px solid var(--line); }
+  .bb__label { font-size: var(--fs-sm); color: var(--fg-2); }
+  .bb__sum { display: inline-flex; align-items: baseline; gap: 0.5rem; }
+  .bb__was { font-size: var(--fs-sm); color: var(--fg-3); }
+  .bb__was:empty { display: none; }
+  .bb__price { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-2xl); line-height: 1; letter-spacing: -0.03em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 50; }
+  .bb__note { line-height: 1.5; }
+  @media (prefers-reduced-motion: reduce) { .bb__slot.is-filled { animation: none; } }
+
+  /* ------------------------------------------------------------- phone: the tray is a glass bar at the foot of the screen */
+  @media (max-width: 55.99rem) {
+    .bb { display: block; }
+    .bb__aside { position: sticky; bottom: 0; z-index: 30; margin-top: 1.5rem; margin-inline: calc(-1 * var(--gutter)); }
+    .bb__tray { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'head head' 'slots count' 'picked picked' 'total total' 'add add'; align-items: center; gap: 0.55rem 0.9rem; padding: 0.8rem var(--gutter) calc(0.8rem + env(safe-area-inset-bottom)); border-radius: var(--r-lg) var(--r-lg) 0 0; background: rgb(16 25 19 / 0.82); backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2); border-top: 1px solid var(--line); box-shadow: 0 -24px 60px -30px rgb(0 0 0 / 0.9); }
+    .bb__tray:has(.bb__slot:last-child.is-filled) { box-shadow: 0 -1px 0 rgb(240 176 74 / 0.55), 0 -24px 70px -30px rgb(240 176 74 / 0.45); }
+    .bb__head { grid-area: head; display: none; }
+    .bb__slots { grid-area: slots; grid-template-columns: repeat(var(--n, 6), minmax(0, 1fr)); gap: 0.3rem; padding: 0.35rem; border-radius: var(--r-md); }
+    .bb__slot { border-radius: var(--r-sm); }
+    .bb__count { grid-area: count; font-size: var(--fs-2xl); }
+    .bb__picked { grid-area: picked; display: flex; gap: 0.4rem; overflow-x: auto; scrollbar-width: none; padding-bottom: 0.1rem; }
+    .bb__picked::-webkit-scrollbar { display: none; }
+    .bb__picked :global(li) { flex: none; gap: 0.4rem; padding: 0.25rem 0.5rem 0.25rem 0.7rem; border-radius: var(--r-pill); border: 1px solid var(--line); font-size: var(--fs-xs); white-space: nowrap; }
+    .bb__total { grid-area: total; padding-top: 0.55rem; }
+    .bb__price { font-size: var(--fs-xl); }
+    .bb__add { grid-area: add; min-height: 3.1rem; font-size: var(--fs-md); padding-block: 0.8em; }
+    .bb__note { display: none; }
   }
-  .boxsize:hover { border-color: var(--fg-3); }
-  .boxsize.is-on { border-color: var(--accent); background: color-mix(in oklab, var(--accent) 8%, var(--bg-raised)); }
-  .boxsize b { font-size: var(--fs-sm); }
-  .boxsize span { font-size: var(--fs-xs); color: var(--fg-3); }
-  .boxsize.is-on span { color: var(--accent-ink); }
 </style>

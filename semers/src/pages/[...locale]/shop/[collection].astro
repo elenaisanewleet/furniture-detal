@@ -2,24 +2,30 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
-import { COLLECTIONS, productsInCollection, type Collection } from '~/data/products';
+import { COLLECTIONS, PRODUCTS, productsInCollection, type Collection, type CollectionKey } from '~/data/products';
 import { img, imgSrc, im, imgSrcset, SIZES } from '~/data/images';
 import { itemList } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
 import { withLocales } from '~/i18n/config';
 import type { Locale } from '~/i18n/config';
 import { localizedCollection, localizedCollections } from '~/data/copy';
+import { t } from '~/i18n/ui';
 
 export function getStaticPaths() {
   return withLocales(COLLECTIONS.map((c) => ({ params: { collection: c.key }, props: { collection: c } })));
 }
 const { collection: rawCollection, locale } = Astro.props as { collection: Collection; locale: Locale };
+const ui = t(locale);
 const c = localizedCollection(rawCollection, locale);
 const products = productsInCollection(rawCollection.key);
 const others = localizedCollections(COLLECTIONS.filter((x) => x.key !== rawCollection.key), locale);
 const origin = originOf(Astro.site);
 const hero = im(c.image);
 const isZephyr = c.key === 'zephyr';
+const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as const;
+const countIn = (key: CollectionKey) => PRODUCTS.filter((p) => p.collection === key).length;
+/** The word after the number ("products", "товаров"…) so the outlined numeral and its label can be set separately. */
+const countWord = ui.productCount(products.length).replace(/^[\d\s ]+/, '');
 /** Shelf life differs by format (zephyr 3 months, meringues 9), so the tick reads from the catalogue. */
 const months = products.map((p) => p.shelfLifeMonths);
 const shelfLine =
@@ -28,6 +34,16 @@ const shelfLine =
     : Math.min(...months) === Math.max(...months)
       ? `Keeps ${months[0]} months without a fridge`
       : `Keeps ${Math.min(...months)}–${Math.max(...months)} months without a fridge`;
+/** The light each collection throws: its own colour, used as a glow, never a fill. */
+const glow: Record<CollectionKey, string> = {
+  'apple-bars': 'rgb(62 207 168 / 0.55)',
+  'flourless-bars': 'rgb(240 176 74 / 0.55)',
+  meringues: 'rgb(255 122 136 / 0.5)',
+  applite: 'rgb(227 213 187 / 0.45)',
+  pastila: 'rgb(208 138 69 / 0.55)',
+  zephyr: 'rgb(255 122 136 / 0.5)',
+  'gift-sets': 'rgb(240 176 74 / 0.5)',
+};
 ---
 <Base
   title={c.title}
@@ -37,54 +53,282 @@ const shelfLine =
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: c.name, href: `/shop/${c.key}/` }]}
   schema={[itemList(origin, products)]}
 >
-  <section class="container col-hero" style={`--col-accent:${c.accent}`}>
-    <div class="col-hero__copy">
+  <!-- ============================== THE NAME ============================== -->
+  <!-- The collection's name set as large as the page allows; the length of the name (in this language) decides the size. -->
+  <section class="col-hero" aria-labelledby="col-title" style={`--col-accent:${c.accent}; --col-glow:${glow[c.key]}; --n:${c.name.length}`}>
+    <div class="col-hero__glow" aria-hidden="true"></div>
+    <div class="container col-hero__in">
       <p class="eyebrow">Collection</p>
-      <h1>{c.name}</h1>
-      <p class="lead">{c.intro}</p>
-    </div>
-    <div class={`col-hero__media ${hero.fit === 'contain' ? 'is-contain' : ''}`}>
-      <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.half} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" />
+      <h1 class="col-hero__title" id="col-title" data-words>{c.name}</h1>
+      <p class="lead col-hero__lead" data-reveal>{c.intro}</p>
     </div>
   </section>
 
-  <section class="container" data-shop data-collection={c.key}>
-    <div class="pills col-nav" role="navigation" aria-label="Other collections">
-      <a class="pill is-active" href={`/shop/${c.key}/`} aria-current="page">{c.name}</a>
-      {others.map((o) => <a class="pill" href={`/shop/${o.key}/`}>{o.name}</a>)}
+  <!-- ============================== THE WINDOW ============================== -->
+  <!-- One full-bleed photograph, set back in the dark, with the size of the collection written on it in outlined light. -->
+  <div class="col-photo" style={`--col-accent:${c.accent}`}>
+    <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.full} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.2" />
+    <div class="col-photo__count" aria-hidden="true">
+      <b data-count={products.length}>{products.length}</b>
+      <span>{countWord}</span>
     </div>
-    <h2 class="sr-only">Products</h2>
-    <div class="grid grid--4 col-grid mt-4" data-shop-grid>
-      {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+  </div>
+
+  <!-- ============================== THE GRID ============================== -->
+  <section class="shop" id="products" data-shop data-collection={c.key} aria-labelledby="products-title">
+    <div class="gbar__sentinel" data-gbar-sentinel aria-hidden="true"></div>
+    <div class="gbar" data-gbar>
+      <div class="container gbar__in">
+        <div class="gbar__filters">
+          <nav class="pills gbar__cols" aria-label="Other collections">
+            <a class="pill is-active" href={`/shop/${c.key}/`} aria-current="page">{c.name}</a>
+            {others.map((o) => <a class="pill" href={`/shop/${o.key}/`}>{o.name}</a>)}
+          </nav>
+          <div class="pills gbar__diet" role="group" aria-label="Dietary filters">
+            {dietKeys.map((k) => <button class="pill pill--diet" type="button" data-filter-diet={k} aria-pressed="false">{ui.diet[k]}</button>)}
+          </div>
+        </div>
+        <div class="gbar__tools">
+          <form class="gbar__search" role="search" action="/shop/" method="get">
+            <Icon name="search" size={18} />
+            <label class="sr-only" for="shop-q">Search products</label>
+            <input class="input" id="shop-q" type="search" name="q" placeholder="Search…" data-search autocomplete="off" />
+          </form>
+          <label class="gbar__sort">
+            <span class="sr-only">Sort by</span>
+            <select class="select" data-sort>
+              <option value="featured">Featured</option>
+              <option value="price-asc">Price: low to high</option>
+              <option value="price-desc">Price: high to low</option>
+              <option value="kcal">Lowest calories</option>
+              <option value="name">Name A–Z</option>
+            </select>
+          </label>
+        </div>
+        <p class="gbar__count" data-shop-count aria-live="polite">{products.length} products</p>
+      </div>
     </div>
-    {products.length === 0 && <p class="muted">Nothing here yet — <a href="/shop/">see all products</a>.</p>}
+
+    <div class="container shop__body">
+      <h2 class="sr-only" id="products-title">Products</h2>
+      <div class="grid grid--4 col-grid" data-shop-grid data-stagger>
+        {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+      </div>
+      {products.length === 0 && <p class="muted">Nothing here yet — <a href="/shop/">see all products</a>.</p>}
+      <div class="shop__empty" data-shop-empty hidden>
+        <p><strong>Nothing matches those filters.</strong></p>
+        <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
+      </div>
+    </div>
   </section>
 
-  <section class="section container">
-    <div class="split">
+  <!-- ============================== GOOD TO KNOW ============================== -->
+  <section class="section container" aria-labelledby="know-title">
+    <div class="split know">
       <div>
         <p class="eyebrow">Good to know</p>
-        <h2>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
-        <p class="lead">{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
-        <ul class="ticks mt-4">
+        <h2 id="know-title" class="know__title" data-words>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
+        <p class="lead" data-reveal>{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
+        <ul class="ticks mt-4" data-reveal>
           <li><Icon name="check" /> {shelfLine}</li>
           <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
           <li><Icon name="check" /> Free shipping over €25</li>
         </ul>
       </div>
-      <div class="frame frame--4x5 rounded"><img src={imgSrc('pastila-texture')} srcset={imgSrcset('pastila-texture')} sizes={imgSrcset('pastila-texture') && SIZES.half} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" class="img-cover" /></div>
+      <div class="frame frame--4x5 know__frame"><img src={imgSrc('pastila-macro')} srcset={imgSrcset('pastila-macro')} sizes={imgSrcset('pastila-macro') && SIZES.half} alt={img('pastila-macro').alt} width={img('pastila-macro').width} height={img('pastila-macro').height} loading="lazy" decoding="async" /></div>
     </div>
+  </section>
+
+  <!-- ============================== THE OTHER WINDOWS ============================== -->
+  <section class="shelf" aria-labelledby="shelf-title">
+    <div class="container section-head shelf__head">
+      <div>
+        <p class="eyebrow">Other collections</p>
+        <h2 id="shelf-title" data-words>You might also like</h2>
+      </div>
+      <a class="link" href="/shop/">Shop all products</a>
+    </div>
+    <div class="shelf__viewport">
+      <div class="shelf__scroll" data-shelf data-stagger>
+        {others.map((o) => (
+          <div class="shelf__slot" style={`--win-glow:${glow[o.key]}`}>
+            <a class="ct shelf__win" href={`/shop/${o.key}/`} style={`--ct-accent:${o.accent}`} data-cursor={o.name}>
+              <img src={imgSrc(o.image)} srcset={imgSrcset(o.image)} sizes={imgSrcset(o.image) && SIZES.tile} alt="" width={img(o.image).width} height={img(o.image).height} loading="lazy" decoding="async" />
+              <div class="ct__body">
+                <span class="shelf__n">{ui.productCount(countIn(o.key))}</span>
+                <h3>{o.name}</h3>
+                <p>{o.description.split('.')[0]}.</p>
+              </div>
+            </a>
+          </div>
+        ))}
+      </div>
+      <button class="shelf__arrow shelf__arrow--prev" type="button" data-shelf-prev aria-hidden="true" tabindex="-1"><Icon name="chevron" size={22} /></button>
+      <button class="shelf__arrow shelf__arrow--next" type="button" data-shelf-next aria-hidden="true" tabindex="-1"><Icon name="chevron" size={22} /></button>
+    </div>
+    <div class="shelf__ledge" aria-hidden="true"></div>
+    <div class="shelf__foot"></div>
   </section>
 </Base>
 
+<script>
+  /*
+   * The glass bar sticks exactly under the header (whose height depends on the
+   * announcement line and the viewport), takes a shadow once it is actually
+   * stuck, and the shelf can be dragged sideways with a mouse.
+   */
+  const hdr = document.getElementById('hdr');
+  const setH = () => document.documentElement.style.setProperty('--hdr-h', `${hdr?.offsetHeight ?? 0}px`);
+  setH();
+  if (hdr && 'ResizeObserver' in window) new ResizeObserver(setH).observe(hdr);
+  addEventListener('resize', setH);
+
+  const bar = document.querySelector<HTMLElement>('[data-gbar]');
+  const sentinel = document.querySelector<HTMLElement>('[data-gbar-sentinel]');
+  if (bar && sentinel && 'IntersectionObserver' in window) {
+    const watch = () => {
+      const io = new IntersectionObserver(([e]) => bar.classList.toggle('is-stuck', !e.isIntersecting && e.boundingClientRect.top < 0), { rootMargin: `-${(hdr?.offsetHeight ?? 0) + 1}px 0px 0px 0px` });
+      io.observe(sentinel);
+      return io;
+    };
+    let io = watch();
+    addEventListener('resize', () => { io.disconnect(); io = watch(); });
+  }
+
+  for (const strip of Array.from(document.querySelectorAll<HTMLElement>('[data-shelf]'))) {
+    const wrap = strip.parentElement!;
+    const prev = wrap.querySelector<HTMLButtonElement>('[data-shelf-prev]');
+    const next = wrap.querySelector<HTMLButtonElement>('[data-shelf-next]');
+    const step = () => (strip.querySelector<HTMLElement>('.shelf__slot')?.offsetWidth ?? 300) + 16;
+    const sync = () => {
+      const max = strip.scrollWidth - strip.clientWidth;
+      wrap.classList.toggle('at-start', strip.scrollLeft <= 2);
+      wrap.classList.toggle('at-end', strip.scrollLeft >= max - 2);
+      wrap.classList.toggle('no-overflow', max <= 2);
+    };
+    prev?.addEventListener('click', () => strip.scrollBy({ left: -step() * 2, behavior: 'smooth' }));
+    next?.addEventListener('click', () => strip.scrollBy({ left: step() * 2, behavior: 'smooth' }));
+    strip.addEventListener('scroll', sync, { passive: true });
+    addEventListener('resize', sync);
+    sync();
+
+    // Drag with a mouse; a real click on a window still opens it.
+    let x0 = 0, s0 = 0, dragged = false, down = false;
+    strip.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      down = true; dragged = false; x0 = e.clientX; s0 = strip.scrollLeft;
+      strip.classList.add('is-drag');
+    });
+    strip.addEventListener('pointermove', (e) => {
+      if (!down) return;
+      const dx = e.clientX - x0;
+      if (Math.abs(dx) > 6) dragged = true;
+      if (dragged) strip.scrollLeft = s0 - dx;
+    });
+    const up = () => { down = false; strip.classList.remove('is-drag'); };
+    strip.addEventListener('pointerup', up);
+    strip.addEventListener('pointercancel', up);
+    strip.addEventListener('pointerleave', up);
+    strip.addEventListener('click', (e) => { if (dragged) { e.preventDefault(); e.stopPropagation(); dragged = false; } }, true);
+    strip.addEventListener('dragstart', (e) => e.preventDefault());
+  }
+</script>
+
 <style>
-  .col-hero { display: grid; gap: 2rem; align-items: center; padding-block: clamp(2rem, 5vw, 4rem) 2rem; }
-  @media (min-width: 56rem) { .col-hero { grid-template-columns: 1.1fr 0.9fr; } }
-  .col-hero h1 { font-size: var(--fs-4xl); margin: 0.5rem 0 1rem; }
-  .col-hero__media { aspect-ratio: 4 / 3; border-radius: var(--r-xl); overflow: clip; background: var(--col-accent, var(--bg-sunken)); }
-  .col-hero__media img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .col-hero__media.is-contain img { object-fit: contain; padding: 6%; }
-  .col-nav { padding-top: 1rem; border-top: 1px solid var(--line); }
+  /* ------------------------------------------------------------- the name */
+  .col-hero { position: relative; isolation: isolate; overflow: clip; padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 4rem); }
+  .col-hero__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(50% 70% at 15% 30%, var(--col-glow), transparent 70%); opacity: 0.22; }
+  .col-hero__in { display: grid; gap: 0; }
+  .col-hero .eyebrow { margin-bottom: 1.25rem; }
+  /* --n is the length of the name in this language: long names step down so they never run to three lines. */
+  .col-hero__title { font-size: clamp(2.75rem, calc(230vw / var(--n, 12)), var(--fs-hero)); line-height: 0.9; letter-spacing: -0.045em; color: var(--cream-0); max-width: 22ch; text-wrap: balance; font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .col-hero__lead { margin-top: 1.75rem; max-width: 56ch; }
+
+  /* ------------------------------------------------------------- the window */
+  .col-photo { position: relative; isolation: isolate; overflow: clip; aspect-ratio: 21 / 9; background: var(--col-accent, var(--bg-sunken)); }
+  .col-photo img { position: absolute; inset: -12% 0; width: 100%; height: 124%; object-fit: cover; opacity: 0.9; }
+  .col-photo::after { content: ''; position: absolute; inset: 0; z-index: 1; pointer-events: none; background: linear-gradient(to top, var(--night-900), rgb(11 18 14 / 0.35) 30%, rgb(11 18 14 / 0.05) 60%, rgb(11 18 14 / 0.55) 100%); }
+  .col-photo__count { position: absolute; right: var(--gutter); bottom: clamp(1rem, 4vw, 3rem); z-index: 2; display: grid; justify-items: end; text-align: right; }
+  .col-photo__count b { font-family: var(--font-display); font-weight: 400; font-size: clamp(7rem, 22vw, 21rem); line-height: 0.78; letter-spacing: -0.07em; color: transparent; -webkit-text-stroke: 1px var(--cream-2); font-variant-numeric: tabular-nums; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 0; }
+  .col-photo__count span { margin-top: 1rem; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--cream-2); }
+  @media (max-width: 56rem) {
+    .col-photo { aspect-ratio: 4 / 5; }
+    .col-photo__count b { font-size: clamp(6rem, 30vw, 9rem); }
+  }
+
+  /* ------------------------------------------------------------- glass bar */
+  .shop { position: relative; }
+  .gbar__sentinel { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
+  .gbar { position: sticky; top: var(--hdr-h, 6.6rem); z-index: 30; background: rgb(11 18 14 / 0.74); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border-block: 1px solid var(--line); transition: box-shadow var(--dur), background var(--dur); }
+  .gbar.is-stuck { background: rgb(11 18 14 / 0.82); box-shadow: 0 24px 40px -32px rgb(0 0 0 / 0.9); }
+  .gbar__in { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'cols tools' 'diet count'; gap: 0.6rem 1.5rem; align-items: center; padding-block: 0.8rem; }
+  .gbar__filters { display: contents; }
+  .gbar__cols { grid-area: cols; }
+  .gbar__diet { grid-area: diet; }
+  .gbar__tools { grid-area: tools; display: flex; gap: 0.5rem; align-items: center; justify-self: end; }
+  .gbar__count { grid-area: count; justify-self: end; margin: 0; font-size: var(--fs-sm); color: var(--fg-2); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .gbar .pill { display: inline-flex; align-items: center; gap: 0.5em; min-height: 2.75rem; padding-block: 0.4em; white-space: nowrap; }
+  .pill--diet { font-weight: 500; color: var(--fg-2); }
+  .pill--diet::before { content: ''; width: 0.45em; height: 0.45em; border-radius: 50%; background: var(--leaf-500); box-shadow: 0 0 8px var(--leaf-500); flex: none; }
+  .pill--diet[aria-pressed="true"]::before { background: var(--night-900); box-shadow: none; }
+  .gbar__search { position: relative; }
+  .gbar__search :global(svg) { position: absolute; left: 0.95rem; top: 50%; transform: translateY(-50%); color: var(--fg-3); pointer-events: none; }
+  .gbar__search .input { min-height: 2.75rem; padding: 0.5em 1em 0.5em 2.6rem; width: 14rem; border-radius: var(--r-pill); font-size: var(--fs-sm); }
+  .gbar__sort .select { min-height: 2.75rem; width: auto; padding: 0.5em 2.4rem 0.5em 1.1rem; border-radius: var(--r-pill); font-size: var(--fs-sm); font-weight: 600; }
+  .shop__body { padding-top: clamp(1.5rem, 4vw, 3rem); }
   /* Most collections hold 1-3 products: cap at three columns so a lone product reads as a feature, not a stamp. */
   .col-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, max(18rem, calc((100% - 2 * var(--sp-5)) / 3))), 1fr)); }
+  .col-grid > :global([hidden]) { display: none; }
+  .shop__empty { padding: 4rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
+  .shop__empty[hidden] { display: none; }
+  @media (max-width: 56rem) {
+    .gbar { top: var(--hdr-h, 6.1rem); }
+    .gbar__in { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'tools tools' 'filters count'; gap: 0.5rem 0.75rem; padding-block: 0.6rem; }
+    .gbar__filters { display: flex; grid-area: filters; flex-wrap: nowrap; gap: 0.5rem; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-left: calc(-1 * var(--gutter)); padding-left: var(--gutter); scroll-padding-left: var(--gutter); -webkit-overflow-scrolling: touch; }
+    .gbar__filters::-webkit-scrollbar { display: none; }
+    .gbar__cols, .gbar__diet { flex: none; flex-wrap: nowrap; }
+    .gbar__diet { border-left: 1px solid var(--line); padding-left: 0.5rem; }
+    .gbar__tools { justify-self: stretch; }
+    .gbar__search { flex: 1 1 auto; min-width: 0; }
+    .gbar__search .input { width: 100%; }
+    .gbar__sort { flex: 0 0 auto; }
+    .gbar__sort .select { max-width: 42vw; }
+    .gbar__count { font-size: var(--fs-xs); }
+  }
+
+  /* ------------------------------------------------------------- good to know */
+  .know__title { font-size: var(--fs-3xl); max-width: 14ch; letter-spacing: -0.03em; }
+  .know .lead { margin-top: 1.25rem; }
+  .know__frame { box-shadow: var(--shadow-1), var(--glow-honey); }
+  @media (min-width: 56rem) { .know { grid-template-columns: 1.1fr 0.9fr; } }
+
+  /* ------------------------------------------------------------- shelf */
+  .shelf { --edge: max(var(--gutter), calc((100% - var(--container)) / 2)); position: relative; padding-top: clamp(1rem, 3vw, 2rem); }
+  .shelf__head { margin-bottom: clamp(1.5rem, 3vw, 2.5rem); }
+  .shelf__viewport { position: relative; }
+  .shelf__scroll { display: flex; gap: clamp(0.75rem, 1.6vw, 1.5rem); overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; padding-inline: var(--edge); scroll-padding-inline: var(--edge); padding-block: 0.5rem 3.25rem; scrollbar-width: none; cursor: grab; -webkit-overflow-scrolling: touch; }
+  .shelf__scroll::-webkit-scrollbar { display: none; }
+  .shelf__scroll.is-drag { cursor: grabbing; scroll-snap-type: none; user-select: none; }
+  .shelf__scroll::after { content: ''; flex: 0 0 calc(var(--edge) - clamp(0.75rem, 1.6vw, 1.5rem)); }
+  .shelf__slot { position: relative; flex: 0 0 auto; width: clamp(15rem, 23vw, 22rem); scroll-snap-align: start; }
+  .shelf__slot::after { content: ''; position: absolute; left: 6%; right: 6%; bottom: -1.9rem; height: 2.6rem; border-radius: 50%; background: radial-gradient(50% 60% at 50% 45%, var(--win-glow), transparent 72%); filter: blur(8px); pointer-events: none; }
+  .shelf__win { box-shadow: var(--shadow-1), 0 40px 90px -40px var(--win-glow); }
+  .shelf__win:hover { box-shadow: var(--shadow-2), 0 40px 90px -30px var(--win-glow); }
+  .shelf__win .ct__body { padding: 1.4rem; padding-top: 5rem; }
+  .shelf__win .ct__body h3 { font-size: var(--fs-2xl); letter-spacing: -0.02em; line-height: 1.02; }
+  .shelf__win .ct__body p { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .shelf__n { display: block; margin-bottom: 0.6rem; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cream-2); }
+  .shelf__ledge { height: 1px; margin-top: -2.1rem; background: linear-gradient(90deg, transparent, rgb(243 233 214 / 0.32) 12%, rgb(243 233 214 / 0.32) 88%, transparent); }
+  .shelf__foot { height: clamp(3rem, 8vw, 6rem); }
+  .shelf__arrow { position: absolute; top: calc(50% - 2rem); z-index: 2; width: 3rem; height: 3rem; border-radius: 50%; display: none; place-items: center; background: rgb(11 18 14 / 0.75); color: var(--cream-1); border: 1px solid rgb(243 233 214 / 0.3); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); transition: opacity var(--dur), transform var(--dur-fast) var(--ease-spring), background var(--dur-fast); }
+  .shelf__arrow:hover { background: var(--cream-1); color: var(--night-900); transform: scale(1.08); }
+  .shelf__arrow--prev { left: calc(var(--edge) - 1.5rem); }
+  .shelf__arrow--prev :global(svg) { transform: rotate(180deg); }
+  .shelf__arrow--next { right: calc(var(--edge) - 1.5rem); }
+  @media (pointer: fine) { .shelf__arrow { display: grid; } }
+  .shelf__viewport.at-start .shelf__arrow--prev, .shelf__viewport.at-end .shelf__arrow--next, .shelf__viewport.no-overflow .shelf__arrow { opacity: 0; pointer-events: none; }
+  @media (max-width: 56rem) {
+    .shelf__slot { width: min(76vw, 20rem); }
+    .shelf__win .ct__body { padding: 1.1rem; padding-top: 4rem; }
+  }
 </style>
