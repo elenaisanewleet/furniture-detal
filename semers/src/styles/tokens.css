@@ -1,21 +1,32 @@
 /* =========================================================================
-   SEMERS design tokens — "Baked apple, whipped."
-   Warm cream paper, near-black ink, and a shelf of product colors taken from
-   the real packaging: App'Lite mint (Classic), coral (Berry Mix), plus
-   flavor hues for cinnamon, cherry, blueberry, lingonberry, black currant,
-   pine nut, cranberry. One signal color per screen; product colors are
-   reserved for product surfaces.
+   SEMERS design tokens — "The orchard at night."
+   A deep green-black ground the colour of an orchard after dark, cream light
+   for everything that speaks, and the fruit's own colours — apple red, baked
+   honey, App'Lite mint — used as light sources rather than fills. Photographs
+   sit on this ground as lit windows. One accent per screen.
+
+   The token NAMES are stable: every page and component is written against
+   the roles below, so the whole site takes the new ground from this file.
    ========================================================================= */
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 
-  /* ---- Paper ---------------------------------------------------------- */
+  /* ---- Night (the ground) --------------------------------------------- */
+  --night-950: #060a08;
+  --night-900: #0b120e;
+  --night-800: #101913;
+  --night-700: #172219;
+  --night-600: #202d24;
+  --night-500: #2c3b31;
+  --night-400: #4b5c51;
+
+  /* ---- Cream (the light) ---------------------------------------------- */
   --cream-0: #fffcf5;
-  --cream-1: #faf3e4;
-  --cream-2: #f3e8d2;
-  --cream-3: #e9dabc;
+  --cream-1: #f3e9d6;
+  --cream-2: #e3d5bb;
+  --cream-3: #c8b697;
 
-  /* ---- Ink ------------------------------------------------------------ */
+  /* ---- Ink: kept for the few places that are literally dark-on-light ---- */
   --ink-900: #1b1612;
   --ink-800: #2a231d;
   --ink-700: #3d342c;
@@ -23,100 +34,92 @@
   --ink-300: #a3978a;
   --ink-100: #d8cfc2;
 
-  /* ---- Brand / product colors ----------------------------------------- */
-  --apple-500: #e2452f; /* fresh apple red — CTA + signal */
-  --apple-600: #c4321f;
-  --apple-700: #9e2617;
-  --apple-100: #fbe1db;
+  /* ---- Brand / product colours, tuned to glow on the night ground ------- */
+  --apple-500: #ff5a3c; /* the signal — a red that reads as light, not paint */
+  --apple-600: #e2452f;
+  --apple-700: #b8301c;
+  --apple-100: #3a1a14; /* a "soft" red is now a red-lit shadow */
 
-  --leaf-500: #2e7d4f;
-  --leaf-600: #23653f;
-  --leaf-100: #dcefe1;
+  --leaf-500: #6fc27a;
+  --leaf-600: #4fa35b;
+  --leaf-100: #16261b;
 
-  --mint-500: #2bb597; /* App'Lite Classic wrapper */
-  --mint-600: #21957c;
-  --mint-100: #d6f2ea;
+  --mint-500: #3ecfa8; /* App'Lite Classic wrapper */
+  --mint-600: #2bb597;
+  --mint-100: #10302a;
 
-  --coral-500: #f26b7a; /* App'Lite Berry Mix wrapper */
-  --coral-600: #d84f5f;
-  --coral-100: #fde3e6;
+  --coral-500: #ff7a88; /* App'Lite Berry Mix wrapper */
+  --coral-600: #f26b7a;
+  --coral-100: #3a1a20;
 
-  --honey-500: #e9a23b; /* baked apple amber */
-  --honey-100: #fbe9c7;
+  --honey-500: #f0b04a; /* baked apple amber */
+  --honey-100: #33260f;
 
   --bar-700: #a8602a; /* pastila crumb */
   --bar-500: #d08a45;
   --bar-300: #ecc48f;
 
-  /* ---- Flavor hues (cards, chips, variant swatches) -------------------- */
+  /* ---- Flavour hues (cards, chips, variant swatches) ------------------ */
   --fl-classic: var(--mint-500);
   --fl-berry: var(--coral-500);
-  --fl-cinnamon: #b86a2b;
-  --fl-cherry: #c8253f;
-  --fl-blueberry: #4f5ba6;
-  --fl-lingonberry: #d9483f;
-  --fl-blackcurrant: #5e2a6e;
-  --fl-pine: #6f7f3a;
-  --fl-cranberry: #b21e4b;
-  --fl-apple: #8cc34b;
-  --fl-vanilla: #d9b56a;
-  --fl-chocolate: #4b2c20;
-  --fl-assorted: linear-gradient(135deg, #f26b7a, #e9a23b 50%, #2bb597);
+  --fl-cinnamon: #d0834a;
+  --fl-cherry: #e0435c;
+  --fl-blueberry: #7d89d9;
+  --fl-lingonberry: #ef6a60;
+  --fl-blackcurrant: #a86bc0;
+  --fl-pine: #a3b35a;
+  --fl-cranberry: #e2456f;
+  --fl-apple: #a4d95e;
+  --fl-vanilla: #e8c77a;
+  --fl-chocolate: #8a5a42;
+  --fl-assorted: linear-gradient(135deg, #ff7a88, #f0b04a 50%, #3ecfa8);
 
   /* ---- Roles ---------------------------------------------------------- */
-  --bg: var(--cream-1);
-  --bg-raised: var(--cream-0);
-  --bg-sunken: var(--cream-2);
-  --bg-invert: var(--ink-900);
+  --bg: var(--night-900);
+  --bg-raised: var(--night-800);
+  --bg-sunken: var(--night-700);
+  --bg-invert: var(--cream-1);
 
-  --fg: var(--ink-900);
-  --fg-2: var(--ink-500);
-  --fg-3: #726557; /* 5.1:1 on cream-1, 4.65:1 on cream-2 bands, ≥4.5:1 on the tinted -100 bands */
-  --fg-invert: var(--cream-0);
+  --fg: var(--cream-1);
+  --fg-2: #bdb09a;
+  --fg-3: #958b78; /* 5.4:1 on night-900, 4.7:1 on night-700 */
+  --fg-invert: var(--night-900);
 
-  --line: rgb(27 22 18 / 0.12);
-  --line-strong: var(--ink-900);
+  --line: rgb(243 233 214 / 0.12);
+  --line-strong: var(--cream-1);
 
   --accent: var(--apple-500);
-  /*
-   * The same red, dark enough to be read at 12px. --accent is a signal colour
-   * chosen against white and large type: on the tinted grounds it makes for
-   * itself it lands at 3.3:1, under the 4.5:1 small text needs. Anywhere the
-   * accent IS the text — a pill, a chip, a highlighted number — this is the one
-   * to use; --accent stays the fill, the border and the large display red.
-   */
-  --accent-ink: #b82d1a;
+  /* The accent as *text*: lifted a step so 12 px of it still clears 4.5:1 on the ground. */
+  --accent-ink: #ff8266;
   --accent-fill: var(--apple-600);
-  --accent-fill-hover: var(--apple-700);
-  --accent-on: #ffffff;
+  --accent-fill-hover: var(--apple-500);
+  --accent-on: #fffcf5;
   --accent-soft: var(--apple-100);
 
-  --focus: #1d6fe6;
+  --focus: #7cc0ff;
 
   /* ---- Type ----------------------------------------------------------- */
   /*
    * Two families per role, not one. Fraunces and Instrument Sans have no
-   * Cyrillic, so a Russian page would otherwise fall out of the brand entirely;
-   * Literata and Inter are declared over the Cyrillic ranges only and pick up
-   * exactly the glyphs the first pair cannot draw. They must come before the
-   * metric-matched fallbacks, which are Georgia and Arial and would happily
-   * take the Cyrillic themselves.
+   * Cyrillic; Literata and Inter are declared over the Cyrillic ranges only and
+   * pick up exactly the glyphs the first pair cannot draw.
    */
   --font-display: 'Fraunces', 'Literata', 'Fraunces Fallback', 'Iowan Old Style', 'Palatino Linotype', Georgia, serif;
   --font-sans: 'Instrument Sans', 'Inter', 'Instrument Sans Fallback', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
+  /* Bigger at every step: on a dark ground, type is the light. */
   --fs-xs: 0.75rem;
   --fs-sm: 0.875rem;
-  --fs-md: 1rem;
-  --fs-lg: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
-  --fs-xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.625rem);
-  --fs-2xl: clamp(1.625rem, 1.3rem + 1.5vw, 2.5rem);
-  --fs-3xl: clamp(2.125rem, 1.6rem + 2.6vw, 3.75rem);
-  --fs-4xl: clamp(2.75rem, 1.8rem + 4.6vw, 5.75rem);
-  --fs-hero: clamp(3rem, 1.6rem + 7vw, 8rem);
+  --fs-md: 1.0625rem;
+  --fs-lg: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+  --fs-xl: clamp(1.375rem, 1.15rem + 0.9vw, 1.875rem);
+  --fs-2xl: clamp(1.875rem, 1.4rem + 1.9vw, 3rem);
+  --fs-3xl: clamp(2.5rem, 1.7rem + 3.2vw, 4.75rem);
+  --fs-4xl: clamp(3.25rem, 1.9rem + 5.6vw, 7.25rem);
+  --fs-hero: clamp(3.75rem, 1.5rem + 10.5vw, 13rem);
 
-  --lh-tight: 0.98;
-  --lh-snug: 1.15;
+  --lh-tight: 0.92;
+  --lh-snug: 1.1;
   --lh-body: 1.55;
 
   /* ---- Space & shape -------------------------------------------------- */
@@ -131,23 +134,28 @@
   --sp-9: 7rem;
 
   --r-sm: 6px;
-  --r-md: 12px;
-  --r-lg: 22px;
-  --r-xl: 34px;
+  --r-md: 14px;
+  --r-lg: 24px;
+  --r-xl: 36px;
   --r-pill: 999px;
 
-  --shadow-1: 0 1px 2px rgb(27 22 18 / 0.06), 0 2px 8px rgb(27 22 18 / 0.06);
-  --shadow-2: 0 10px 30px -10px rgb(27 22 18 / 0.25);
-  --shadow-3: 0 30px 60px -20px rgb(27 22 18 / 0.35);
+  /* Shadows do not read on the night ground; depth is glow and hairline instead. */
+  --shadow-1: 0 0 0 1px rgb(243 233 214 / 0.08);
+  --shadow-2: 0 0 0 1px rgb(243 233 214 / 0.1), 0 24px 60px -30px rgb(0 0 0 / 0.8);
+  --shadow-3: 0 0 0 1px rgb(243 233 214 / 0.12), 0 40px 90px -30px rgb(0 0 0 / 0.9);
+  --glow-accent: 0 0 80px -20px rgb(255 90 60 / 0.55);
+  --glow-honey: 0 0 80px -20px rgb(240 176 74 / 0.5);
+  --glow-mint: 0 0 80px -20px rgb(62 207 168 / 0.5);
 
-  --container: 80rem;
-  --gutter: clamp(1rem, 4vw, 2.5rem);
+  --container: 84rem;
+  --gutter: clamp(1.25rem, 4vw, 3rem);
 
   /* ---- Motion --------------------------------------------------------- */
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --dur-fast: 160ms;
-  --dur: 320ms;
-  --dur-slow: 700ms;
+  --dur: 360ms;
+  --dur-slow: 900ms;
 }

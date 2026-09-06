@@ -107,7 +107,7 @@ const nodes = [
       </Fragment>
     )}
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'} />
-    <meta name="theme-color" content="#faf3e4" />
+    <meta name="theme-color" content="#0b120e" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="author" content={site.brand.legalName} />
 
@@ -164,11 +164,14 @@ const nodes = [
     </main>
     <Footer />
     <CartDrawer />
+    {/* Film grain over the whole page; the drawn cursor is appended by motion.ts on fine pointers. */}
+    <div class="grain" aria-hidden="true"></div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sr-only" id="cart-live" role="status" aria-live="polite"></div>
 
     <script>
       import '~/scripts/site';
+      import '~/scripts/motion';
     </script>
 
     {site.analytics.plausibleDomain && (

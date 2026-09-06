@@ -38,6 +38,7 @@ const en = {
   headerBar: (from: string) => `**Free shipping** on orders over ${from} · Ships from Riga in 1–2 business days · 99% apples, 0 added sugar`,
   shop: 'Shop',
   shopAll: 'Shop all',
+  view: 'View',
   breadcrumb: 'Breadcrumb',
   homeCrumb: 'Home',
   /* The 404 page. Its own strings, because it is built as a page per language. */
@@ -324,6 +325,7 @@ const ru: Partialised = {
   headerBar: (from: string) => `**Бесплатная доставка** от ${from} · Отправляем из Риги за 1–2 рабочих дня · 99% яблок, 0 добавленного сахара`,
   shop: 'Магазин',
   shopAll: 'Весь ассортимент',
+  view: 'Смотреть',
   breadcrumb: 'Навигационная цепочка',
   homeCrumb: 'Главная',
   notFoundTitle: 'Страница не найдена',
@@ -590,6 +592,7 @@ const lv: Partialised = {
   headerBar: (from: string) => `**Bezmaksas piegāde** pasūtījumiem no ${from} · Nosūtām no Rīgas 1–2 darba dienās · 99% ābolu, 0 pievienota cukura`,
   shop: 'Veikals',
   shopAll: 'Visas preces',
+  view: 'Skatīt',
   breadcrumb: 'Navigācijas ceļš',
   homeCrumb: 'Sākums',
   notFoundTitle: 'Lapa nav atrasta',

@@ -38,6 +38,8 @@ const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
 ---
 <article
   class={`pc ${compact ? 'pc--compact' : ''}`}
+  data-tilt
+  data-cursor={ui.view}
   style={`--pc-accent:${p.accent}`}
   data-product-card
   data-slug={p.slug}
