@@ -329,8 +329,9 @@ const webPage = {
   .legal__body .table tr:last-child td { border-bottom: 0; }
   .legal__body .table td:first-child { font-weight: 600; color: var(--cream-0); }
 
-  .legal__ghost { --btn-fg: var(--cream-0); border-color: rgb(250 243 228 / 0.4); }
-  .legal__ghost:hover { background: var(--cream-0); color: var(--ink-900); }
+  /* On the cream band a ghost button is dark-on-cream, or it vanishes into the room. */
+  .legal__ghost { --btn-fg: var(--night-900); border-color: rgb(11 18 14 / 0.35); }
+  .legal__ghost:hover { background: var(--night-900); color: var(--cream-0); border-color: var(--night-900); }
 
   /* Ordered steps inside the reading column: two across, never four. */
   .legal__steps { list-style: none; padding: 0; margin: 1.5rem 0; grid-template-columns: 1fr; gap: 1.25rem 2rem; }

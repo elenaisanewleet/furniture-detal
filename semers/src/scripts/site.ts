@@ -568,7 +568,8 @@ if ('IntersectionObserver' in window && revealEls.length) {
         }
       }
     },
-    { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
+    // Threshold zero: a block taller than the viewport (a legal page's body) can never reach an 8% ratio and would stay unrevealed for good.
+    { rootMargin: '0px 0px -8% 0px', threshold: 0 },
   );
   revealEls.forEach((el) => io.observe(el));
 } else revealEls.forEach((el) => el.classList.add('is-in'));
