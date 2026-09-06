@@ -650,7 +650,8 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
    */
   .forge--live { height: 320vh; padding-block: 0; }
   .forge--live .forge__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; align-items: center; overflow: clip; }
-  .forge--live .forge__steps { position: relative; display: block; min-height: 13.5rem; }
+  /* Tall enough for a two-line heading and three lines of Russian; the rail sits below it, never on it. */
+  .forge--live .forge__steps { position: relative; display: block; min-height: 17rem; }
   .forge--live .forge__step { position: absolute; inset: 0; opacity: 0; transform: translateY(12px); transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out); }
   .forge--live .forge__step.is-on { opacity: 1; transform: none; }
   .forge--live .forge__rail { display: flex; gap: 0.35rem; margin-top: 0.4rem; }
@@ -663,10 +664,15 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   @media (max-width: 55.99rem) {
     .forge--live { height: 280vh; }
     .forge__art { width: min(17rem, 54vw); }
-    .forge--live .forge__steps { min-height: 14rem; }
+    .forge--live .forge__steps { min-height: 15.5rem; }
     .forge--live .forge__title { font-size: var(--fs-2xl); }
     .forge--live .forge__step h3 { font-size: var(--fs-xl); }
     .forge--live .forge__step p { font-size: var(--fs-md); }
+  }
+  /* A short phone screen gets a smaller drawing so the five captions and the button still fit in one pinned screen. */
+  @media (max-width: 55.99rem) and (max-height: 44rem) {
+    .forge--live .forge__art { width: min(12rem, 36vw); }
+    .forge--live .forge__inner { gap: 1rem; }
   }
 
   /* ------------------------------------------------------------- the eight stages */
