@@ -115,7 +115,9 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .co-hero h1 { font-size: var(--fs-hero); letter-spacing: -0.045em; line-height: 0.9; max-width: 10ch; }
 
   /* ------------------------------------------------------------ the stage */
-  .co-stage { display: grid; gap: var(--sp-6); align-items: start; padding-bottom: clamp(3rem, 8vw, 7rem); }
+  .co-stage { display: grid; gap: var(--sp-6); align-items: start; padding-bottom: clamp(2rem, 4vw, 3rem); }
+  /* The footer's own margin would leave a room-sized void under the form; the newsletter band follows at the home page's rhythm instead. */
+  :global(.ftr) { margin-top: clamp(2.5rem, 5vw, 4rem); }
   @media (min-width: 60rem) { .co-stage { grid-template-columns: minmax(0, 1.2fr) minmax(20rem, 0.8fr); gap: clamp(2rem, 5vw, 5rem); } .co-aside { position: sticky; top: 6rem; } }
   .co-form { position: relative; display: grid; gap: 0; min-width: 0; }
 

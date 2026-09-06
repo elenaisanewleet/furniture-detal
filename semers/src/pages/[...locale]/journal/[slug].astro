@@ -237,7 +237,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
     )}
 
     <!-- ============================== CTA ============================== -->
-    <section class="section container art__end" aria-labelledby="cta-title">
+    <section class="section container art__end cta-sec" aria-labelledby="cta-title">
       <div class="cta-band" data-reveal>
         <p class="eyebrow">Taste the subject</p>
         <h2 id="cta-title">Reading about apples is the slow way to find out.</h2>
@@ -299,7 +299,8 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   @media (min-width: 72rem) { .art__title { font-size: clamp(3.5rem, 2rem + 4.2vw, 6rem); } }
   .art__headrow { display: grid; gap: 1.5rem; align-items: end; margin-top: clamp(1.5rem, 3vw, 2.5rem); }
   @media (min-width: 56rem) { .art__headrow { grid-template-columns: minmax(0, 1fr) auto; gap: 4rem; } }
-  .art__dek { margin: 0; max-width: 56ch; font-family: var(--font-display); font-weight: 400; font-size: var(--fs-xl); line-height: 1.3; letter-spacing: -0.01em; color: var(--cream-2); font-variation-settings: 'opsz' 48, 'SOFT' 50; }
+  /* The deck is body prose, set in the text face one size up; only the headline is display type. */
+  .art__dek { margin: 0; max-width: 56ch; font-family: var(--font-sans); font-weight: 400; font-size: var(--fs-lg); line-height: 1.5; color: var(--fg-2); }
   .art__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.6rem; margin: 0; font-size: var(--fs-sm); color: var(--fg-3); }
   .art__meta span { display: inline-flex; align-items: center; gap: 0.35em; }
   .art__meta time { color: var(--cream-1); font-weight: 600; }
@@ -307,8 +308,8 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
 
   /* ------------------------------------------------------------ hero: a lit window as wide as the page */
   .art__hero { position: relative; isolation: isolate; overflow: clip; height: min(72svh, 46rem); min-height: 22rem; background: var(--night-800); }
-  .art__hero-media { position: absolute; inset: -12% 0; z-index: 0; }
-  .art__hero-media img { width: 100%; height: 100%; object-fit: cover; }
+  .art__hero-media { position: absolute; inset: -12% 0; z-index: 0; background: radial-gradient(45% 55% at 50% 50%, rgb(253 185 19 / 0.12), transparent 70%), var(--night-800); }
+  .art__hero-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .art__hero::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to bottom, var(--night-900) 0%, transparent 18%, transparent 70%, var(--night-900) 100%); pointer-events: none; }
   @media (max-width: 48rem) { .art__hero { height: auto; aspect-ratio: 4 / 5; min-height: 0; } }
 
@@ -318,8 +319,9 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   .toc { order: 1; }
   .art__body { order: 2; min-width: 0; }
   .art__share { order: 3; }
+  /* The rail sits beside the prose, not at the far edge of the page: a measured column, one gap, the rail, then air. */
   @media (min-width: 64rem) {
-    .art__grid { grid-template-columns: minmax(0, 1fr) 17rem; gap: clamp(3rem, 7vw, 8rem); align-items: start; }
+    .art__grid { grid-template-columns: minmax(0, 68ch) 15rem; justify-content: start; column-gap: clamp(3rem, 6vw, 6rem); align-items: start; }
     .art__body { order: 0; }
     .art__rail { display: grid; gap: 2rem; position: sticky; top: 6rem; order: 1; }
   }
@@ -342,7 +344,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   .art__share-btn:hover :global(svg) { color: var(--night-900); }
 
   /* ------------------------------------------------------------ prose: a 65ch measure, generous leading, a drop cap, numbered chapters, pull quotes at display size */
-  .art__prose { max-width: 65ch; font-size: var(--fs-lg); line-height: 1.7; color: var(--fg-2); counter-reset: chapter; }
+  .art__prose { max-width: 68ch; font-size: var(--fs-lg); line-height: 1.7; color: var(--fg-2); counter-reset: chapter; }
   .art__prose :global(p) { margin-bottom: 1.25em; }
   .art__prose > :global(p:first-of-type)::first-letter { float: left; font-family: var(--font-display); font-weight: 500; font-size: 4.4em; line-height: 0.78; padding: 0.06em 0.12em 0 0; margin-bottom: -0.1em; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
   .art__prose :global(h2) { counter-increment: chapter; margin-top: 2.4em; margin-bottom: 0.6em; font-size: var(--fs-2xl); line-height: 1.02; letter-spacing: -0.025em; color: var(--cream-0); scroll-margin-top: 6rem; text-wrap: balance; }
@@ -361,13 +363,14 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   .art__prose :global(th), .art__prose :global(td) { padding: 0.75em 0.9em; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
   .art__prose :global(tr:last-child td) { border-bottom: 0; }
   .art__prose :global(th) { font-weight: 600; color: var(--cream-0); background: rgb(243 233 214 / 0.04); }
-  .art__prose :global(blockquote) { position: relative; margin: 2.2em 0; padding: 0.4em 0 0 0; border: 0; font-family: var(--font-display); font-weight: 400; font-style: italic; font-size: var(--fs-2xl); line-height: 1.12; letter-spacing: -0.02em; color: var(--cream-0); text-wrap: balance; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
-  .art__prose :global(blockquote)::before { content: '“'; position: absolute; left: -0.04em; top: -0.5em; font-size: 2.6em; line-height: 1; font-style: normal; color: transparent; -webkit-text-stroke: 1px var(--accent); opacity: 0.9; pointer-events: none; }
+  /* The one typographic pause in the piece: a quote at display size, an accent mark in the text face, a hairline of light under it. */
+  .art__prose :global(blockquote) { position: relative; margin: 1.6em 0 2.2em; padding: 1.4rem 0 0 0; border: 0; max-width: 20ch; font-family: var(--font-display); font-weight: 400; font-style: italic; font-size: var(--fs-3xl); line-height: 1.02; letter-spacing: -0.025em; color: var(--cream-0); text-wrap: balance; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .art__prose :global(blockquote)::before { content: '“'; position: absolute; left: -0.02em; top: 0.1em; font-family: var(--font-sans); font-size: 5rem; line-height: 0.4; font-style: normal; font-weight: 700; color: var(--accent); text-shadow: 0 0 24px rgb(255 90 60 / 0.4); pointer-events: none; }
   .art__prose :global(blockquote)::after { content: ''; display: block; width: 3rem; height: 1px; margin-top: 0.7em; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
   .art__prose :global(blockquote p) { margin: 0; color: inherit; }
 
   /* footer of the article */
-  .art__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; max-width: 65ch; margin-top: clamp(2rem, 5vw, 3.5rem); padding-top: 1.25rem; border-top: 1px solid var(--line); }
+  .art__foot { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 1rem; max-width: 68ch; margin-top: clamp(2rem, 5vw, 3.5rem); padding-top: 1.25rem; border-top: 1px solid var(--line); }
   .art__tags { list-style: none; margin: 0; padding: 0; }
   .art__tags .chip { text-transform: capitalize; }
 
@@ -392,11 +395,13 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
   .art__rel-card { scroll-snap-align: start; }
   .art__rel-eyebrow { margin: 0; }
   .art__rel-card h3 { max-width: 20ch; text-wrap: balance; }
+  /* Two cards, two columns; a third would take the row below rather than leave a third of it empty. */
   @media (min-width: 56rem) {
-    .art__rel { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-columns: auto; gap: clamp(1.5rem, 3vw, 2.5rem); overflow: visible; width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; padding: 0; }
+    .art__rel { grid-auto-flow: row; grid-template-columns: repeat(auto-fit, minmax(16rem, 26rem)); grid-auto-columns: auto; gap: clamp(1.5rem, 3vw, 2.5rem); overflow: visible; width: min(100% - 2 * var(--gutter), var(--container)); margin-inline: auto; padding: 0; }
   }
 
   /* ------------------------------------------------------------ the one cream room */
-  .art__end { padding-top: 0; }
+  /* The band's own padding does the spacing before the footer; the section adds none of its own. */
+  .art__end { padding-top: 0; padding-bottom: var(--sp-6); }
   .cta-band__link { color: var(--night-900); border-color: var(--apple-600); }
 </style>

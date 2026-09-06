@@ -126,15 +126,22 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   <!-- ============================== HERO ============================== -->
   <!-- One enormous line and air. The drawing that follows is the page's first picture. -->
   <section class="page-hero container hiw-hero" aria-labelledby="hero-title">
-    <p class="eyebrow">How it’s made · {site.locality}, {site.country}</p>
-    <h1 id="hero-title" data-words>Twelve hours. Four ingredients at most. <em>Nothing to hide.</em></h1>
-    <p class="lead">This is how our apple pastila is made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into loaves. The recipe was first sold commercially in Belyov in 1888. The ingredient list has not grown since.</p>
-    <ul class="cluster hiw-facts" aria-label="Key facts">
-      <li class="chip"><Icon name="apple" size={14} /> 99% baked apples</li>
-      <li class="chip"><Icon name="egg" size={14} /> 1% egg white</li>
-      <li class="chip"><Icon name="check" size={14} /> No added sugar</li>
-      <li class="chip"><Icon name="clock" size={14} /> 12 months, no fridge</li>
-    </ul>
+    <div class="hiw-hero__copy">
+      <p class="eyebrow">How it’s made · {site.locality}, {site.country}</p>
+      <h1 id="hero-title" data-words>Twelve hours. Four ingredients at most. <em>Nothing to hide.</em></h1>
+      <p class="lead">This is how our apple pastila is made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into loaves. The recipe was first sold commercially in Belyov in 1888. The ingredient list has not grown since.</p>
+      <ul class="cluster hiw-facts" aria-label="Key facts">
+        <li class="chip"><Icon name="apple" size={14} /> 99% baked apples</li>
+        <li class="chip"><Icon name="egg" size={14} /> 1% egg white</li>
+        <li class="chip"><Icon name="check" size={14} /> No added sugar</li>
+        <li class="chip"><Icon name="clock" size={14} /> 12 months, no fridge</li>
+      </ul>
+    </div>
+    <!-- The number is the picture on this first screen: the twelve hours, outlined, with the oven's light behind it. -->
+    <p class="hiw-hero__fig" data-reveal>
+      <span class="hiw-hero__num" aria-hidden="true" data-count="12">12</span>
+      <span class="hiw-hero__cap">Hours from a whole apple to a sealed bar.</span>
+    </p>
   </section>
 
   <!-- ============================== THE FORGE ============================== -->
@@ -163,14 +170,11 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
           <div class="forge__halo" aria-hidden="true"></div>
           <svg class="forge__svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
             <defs>
+              <!-- The stage colour is a wash of light over a dark body, not a fill: the silhouette stays a lit window in the night. -->
               <linearGradient id="forge-body" x1="0" y1="0" x2="0.35" y2="1">
-                <stop offset="0" data-forge-stop="1" stop-color="#e2452f" />
-                <stop offset="1" data-forge-stop="2" stop-color="#9e2617" />
+                <stop offset="0" data-forge-stop="1" stop-color="#e2452f" stop-opacity="0.55" />
+                <stop offset="1" data-forge-stop="2" stop-color="#9e2617" stop-opacity="0.2" />
               </linearGradient>
-              <radialGradient id="forge-shine" cx="0.34" cy="0.3" r="0.45">
-                <stop offset="0" stop-color="#fff" stop-opacity="0.55" />
-                <stop offset="1" stop-color="#fff" stop-opacity="0" />
-              </radialGradient>
               <clipPath id="forge-clip"><path data-forge-clip d={FORGE_LAST} /></clipPath>
             </defs>
 
@@ -180,15 +184,15 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
               <path d="M 122 46 c -6 -12 6 -16 0 -28" />
             </g>
 
-            <g data-forge-stem opacity="0">
-              <path d="M 100 46 C 100 30 100 24 98 14" stroke="#6b4a2a" stroke-width="5" fill="none" stroke-linecap="round" />
-              <path class="forge__leaf" d="M 100 26 C 116 12 138 14 142 22 C 134 36 112 36 100 26 Z" />
+            <g data-forge-stem opacity="0" fill="none" stroke-linecap="round">
+              <path class="forge__stem" d="M 100 46 C 100 30 100 24 98 14" stroke-width="1.5" />
+              <path class="forge__leaf" d="M 100 26 C 116 12 138 14 142 22 C 134 36 112 36 100 26 Z" stroke-width="1.25" />
             </g>
 
-            <path data-forge-shape d={FORGE_LAST} fill="url(#forge-body)" />
+            <path class="forge__body" data-forge-shape d={FORGE_LAST} />
 
             <g clip-path="url(#forge-clip)">
-              <ellipse data-forge-gloss cx="76" cy="80" rx="34" ry="42" fill="url(#forge-shine)" opacity="0" />
+              <rect class="forge__wash" x="0" y="0" width="200" height="200" fill="url(#forge-body)" />
               <g data-forge-foam opacity="0">
                 <circle cx="78" cy="86" r="7" opacity="0.55" /><circle cx="112" cy="72" r="5" opacity="0.45" />
                 <circle cx="132" cy="98" r="9" opacity="0.5" /><circle cx="66" cy="118" r="6" opacity="0.4" />
@@ -346,7 +350,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
         </ul>
       </div>
     </div>
-    <p class="tiny muted mt-4">This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.</p>
+    <p class="small muted mt-4 io__note">This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.</p>
   </section>
 
   <!-- ============================== QUALITY & SHELF LIFE ============================== -->
@@ -386,38 +390,8 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     </div>
   </section>
 
-  <!-- ============================== KEEP READING ============================== -->
-  <section class="section section--tight container" aria-labelledby="more-title">
-    <div class="section-head">
-      <div>
-        <p class="eyebrow">Keep reading</p>
-        <h2 id="more-title" data-words>The rest of the story.</h2>
-      </div>
-    </div>
-    <div class="grid grid--3" data-stagger>
-      <a class="card more" href="/why-pastila/" data-tilt>
-        <span class="eyebrow">Why pastila</span>
-        <h3>Why a baked apple beats the usual bar</h3>
-        <p>Calories, sugar and fibre, side by side with the snacks it replaces.</p>
-        <span class="more__arrow"><Icon name="arrow" size={18} class="arrow" /></span>
-      </a>
-      <a class="card more" href="/story/" data-tilt>
-        <span class="eyebrow">Our story</span>
-        <h3>From Belyov, 1888, to Riga</h3>
-        <p>A merchant, a sour apple and a recipe that never needed improving.</p>
-        <span class="more__arrow"><Icon name="arrow" size={18} class="arrow" /></span>
-      </a>
-      <a class="card more" href="/journal/antonovka-apples/" data-tilt>
-        <span class="eyebrow">Journal</span>
-        <h3>Why Antonovka apples?</h3>
-        <p>The tart green apple behind every Semers bar, and why we will not swap it.</p>
-        <span class="more__arrow"><Icon name="arrow" size={18} class="arrow" /></span>
-      </a>
-    </div>
-  </section>
-
-  <!-- ============================== CTA ============================== -->
-  <section class="section container" aria-labelledby="cta-title">
+  <!-- ============================== CTA, then one line of onward links ============================== -->
+  <section class="section container cta-sec" aria-labelledby="cta-title">
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Taste the twelve hours</p>
       <h2 id="cta-title">Start with a loaf. The bars will follow.</h2>
@@ -428,6 +402,15 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
         <a class="link cta-band__link" href="/why-pastila/">Why pastila?</a>
       </div>
     </div>
+    <!-- Keep reading: three links in one line, not three more boxes. -->
+    <nav class="more" aria-labelledby="more-title" data-reveal>
+      <p class="eyebrow" id="more-title">Keep reading</p>
+      <ul class="more__list">
+        <li><a class="more__link" href="/why-pastila/">Why a baked apple beats the usual bar <Icon name="arrow" size={16} class="arrow" /></a></li>
+        <li><a class="more__link" href="/story/">From Belyov, 1888, to Riga <Icon name="arrow" size={16} class="arrow" /></a></li>
+        <li><a class="more__link" href="/journal/antonovka-apples/">Why Antonovka apples? <Icon name="arrow" size={16} class="arrow" /></a></li>
+      </ul>
+    </nav>
   </section>
 </Base>
 
@@ -454,7 +437,12 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     const steps = [...section.querySelectorAll<HTMLElement>('.forge__step')];
     const ticks = [...section.querySelectorAll<HTMLElement>('.forge__tick i')];
     const layer = (name: string) => section.querySelector<SVGElement>(`[data-forge-${name}]`);
-    const stem = layer('stem'), steam = layer('steam'), gloss = layer('gloss'), foam = layer('foam'), wrap = layer('wrap');
+    const stem = layer('stem'), steam = layer('steam'), foam = layer('foam'), wrap = layer('wrap');
+
+    /* The header is sticky and sits on top of the pin; the pinned screen starts under it, whatever height the header has today. */
+    const header = document.querySelector<HTMLElement>('header');
+    const measure = () => section.style.setProperty('--hdr', `${header ? header.offsetHeight : 0}px`);
+    measure();
 
     /** How many points each silhouette is cut into. Enough that the curve reads smooth at 26rem. */
     const N = 96;
@@ -532,7 +520,6 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
       // Each layer belongs to one part of the story and is only paid for there.
       if (stem) stem.style.opacity = String(window_(t, -1, 0, 0.05, 0.15));
-      if (gloss) gloss.style.opacity = String(window_(t, -1, 0, 0.1, 0.3));
       if (steam) steam.style.opacity = String(window_(t, 0.12, 0.22, 0.34, 0.46));
       if (foam) foam.style.opacity = String(window_(t, 0.38, 0.5, 0.66, 0.78));
       if (wrap) wrap.style.opacity = String(window_(t, 0.9, 0.99, 9, 10));
@@ -566,7 +553,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     ).observe(section);
 
     addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('resize', schedule, { passive: true });
+    addEventListener('resize', () => { measure(); schedule(); }, { passive: true });
     draw();
   }
   /*
@@ -601,9 +588,20 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
 <style>
   /* ------------------------------------------------------------- hero */
+  .hiw-hero { display: grid; gap: clamp(2rem, 4vw, 3rem); align-items: end; }
   .hiw-hero h1 { max-width: 16ch; }
   .hiw-facts { list-style: none; margin: 2rem 0 0; padding: 0; }
   .hiw-facts .chip :global(svg) { color: var(--leaf-500); }
+  /* The twelve hours as one outlined numeral, lit from behind in honey. */
+  .hiw-hero__fig { position: relative; display: grid; gap: 0.5rem; margin: 0; justify-items: start; }
+  .hiw-hero__fig::before { content: ''; position: absolute; left: -10%; top: -10%; width: 120%; height: 110%; z-index: -1; background: radial-gradient(closest-side, rgb(253 185 19 / 0.26), transparent 72%); pointer-events: none; }
+  .hiw-hero__num { display: block; font-family: var(--font-display); font-weight: 400; font-size: clamp(8rem, 26vw, 22rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; filter: drop-shadow(0 0 28px rgb(253 185 19 / 0.25)); }
+  .hiw-hero__cap { font-size: var(--fs-md); color: var(--fg-2); max-width: 20ch; }
+  @media (min-width: 64rem) {
+    .hiw-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); column-gap: clamp(2rem, 6vw, 6rem); }
+    .hiw-hero__fig { justify-self: end; justify-items: end; text-align: right; padding-bottom: 0.5rem; }
+  }
+  @media (max-width: 63.99rem) { .hiw-hero__fig { margin-top: 0.5rem; } }
 
   /* ------------------------------------------------------------- the forge */
   /*
@@ -618,18 +616,21 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .forge__art { position: relative; justify-self: center; width: min(34rem, 46vw); }
   /* The drawing is the light on this screen: a soft halo in the colour of the stage it is in. */
   .forge__halo { position: absolute; inset: -30%; z-index: -1; pointer-events: none; background: radial-gradient(closest-side, rgb(var(--halo) / 0.42), rgb(var(--halo) / 0.12) 45%, transparent 72%); }
-  .forge__svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 0 32px rgb(var(--halo) / 0.55)); }
+  .forge__svg { display: block; width: 100%; height: auto; overflow: visible; filter: drop-shadow(0 0 32px rgb(var(--halo) / 0.55)); }
   /*
    * The drawing's colours live here rather than on the SVG elements: var() in a
    * presentation attribute is not something every engine resolves, and these
    * are the shop's own tokens rather than numbers invented for one picture.
    */
-  [data-forge-steam] { stroke: var(--cream-2); }
+  /* A dark body with a cream hairline; the stage colour is a translucent wash inside it, and the halo does the lighting. */
+  .forge__body { fill: var(--night-800); stroke: var(--cream-3); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  [data-forge-steam] { stroke: var(--cream-2); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
   [data-forge-foam] { fill: var(--cream-0); }
-  .forge__leaf { fill: var(--leaf-500); }
-  .forge__sleeve { fill: var(--mint-500); }
-  .forge__seam { fill: var(--mint-600); }
-  .forge__mark { font-family: var(--font-sans); font-weight: 700; fill: var(--night-900); }
+  .forge__stem { stroke: var(--cream-3); vector-effect: non-scaling-stroke; }
+  .forge__leaf { fill: none; stroke: var(--leaf-500); vector-effect: non-scaling-stroke; }
+  .forge__sleeve { fill: rgb(62 207 168 / 0.14); stroke: var(--mint-500); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .forge__seam { fill: var(--mint-500); }
+  .forge__mark { font-family: var(--font-sans); font-weight: 700; fill: var(--mint-500); }
 
   .forge__title { font-size: var(--fs-3xl); line-height: var(--lh-tight); letter-spacing: -0.03em; max-width: 15ch; margin-top: 0.75rem; }
   .forge__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
@@ -649,7 +650,8 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
    * artwork up and down with it.
    */
   .forge--live { height: 320vh; padding-block: 0; }
-  .forge--live .forge__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; display: grid; align-items: center; overflow: clip; }
+  /* The pinned screen starts under the sticky header (`--hdr` is measured by the script), so nothing of the drawing hides behind it. */
+  .forge--live .forge__sticky { position: sticky; top: var(--hdr, 0px); height: calc(100vh - var(--hdr, 0px)); height: calc(100svh - var(--hdr, 0px)); display: grid; align-items: center; overflow: clip; }
   /* Tall enough for a two-line heading and three lines of Russian; the rail sits below it, never on it. */
   .forge--live .forge__steps { position: relative; display: block; min-height: 17rem; }
   .forge--live .forge__step { position: absolute; inset: 0; opacity: 0; transform: translateY(12px); transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out); }
@@ -663,7 +665,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   }
   @media (max-width: 55.99rem) {
     .forge--live { height: 280vh; }
-    .forge__art { width: min(17rem, 54vw); }
+    .forge__art { width: min(15rem, 48vw); }
     .forge--live .forge__steps { min-height: 15.5rem; }
     .forge--live .forge__title { font-size: var(--fs-2xl); }
     .forge--live .forge__step h3 { font-size: var(--fs-xl); }
@@ -671,7 +673,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   }
   /* A short phone screen gets a smaller drawing so the five captions and the button still fit in one pinned screen. */
   @media (max-width: 55.99rem) and (max-height: 44rem) {
-    .forge--live .forge__art { width: min(12rem, 36vw); }
+    .forge--live .forge__art { width: min(11rem, 34vw); }
     .forge--live .forge__inner { gap: 1rem; }
   }
 
@@ -769,6 +771,8 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .ticks--no strong { position: relative; display: inline-block; width: max-content; max-width: 100%; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xl); letter-spacing: -0.02em; line-height: 1.1; color: var(--cream-0); }
   .ticks--no strong::after { content: ''; position: absolute; left: -0.1em; right: -0.1em; top: 55%; height: 2px; background: var(--apple-500); box-shadow: 0 0 10px var(--apple-500); transform: rotate(-3deg); }
   .ticks--no .muted { font-size: var(--fs-sm); color: var(--fg-3); }
+  /* The footnote sits under the "Goes in" column at a readable measure, not across the whole page. */
+  .io__note { max-width: 62ch; }
 
   /* ------------------------------------------------------------- quality */
   .keep__frame { border-radius: var(--r-xl); box-shadow: var(--shadow-2), var(--glow-honey); }
@@ -781,15 +785,15 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .spec p { margin: 0; font-size: var(--fs-sm); color: var(--fg-2); }
   .specs__note { max-width: 52ch; }
 
-  /* ------------------------------------------------------------- keep reading */
-  .more { display: grid; gap: 0.5rem; align-content: start; padding: 1.75rem; text-decoration: none; color: inherit; transition: box-shadow var(--dur) var(--ease-out); }
-  .more:hover, .more:focus-visible { box-shadow: var(--shadow-2), var(--glow-accent); }
-  .more h3 { font-size: var(--fs-xl); margin-top: 0.5rem; }
-  .more p { margin: 0; color: var(--fg-2); font-size: var(--fs-sm); }
-  .more__arrow { display: grid; place-items: center; width: 2.75rem; height: 2.75rem; margin-top: 1rem; border-radius: 50%; border: 1px solid rgb(243 233 214 / 0.3); color: var(--cream-0); transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
-  .more:hover .more__arrow { background: var(--cream-1); color: var(--night-900); border-color: var(--cream-1); }
-  .more:hover .arrow { transform: translateX(3px); }
-
-  /* ------------------------------------------------------------- cta */
+  /* ------------------------------------------------------------- cta, and the line of onward links */
+  /* The band's own padding does the spacing before the footer; the section adds none of its own. */
+  .cta-sec { padding-bottom: var(--sp-6); }
   .cta-band__link { color: var(--night-900); border-color: var(--apple-600); }
+  .more { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.75rem clamp(1.5rem, 3vw, 2.5rem); margin-top: clamp(1.5rem, 3vw, 2.25rem); padding-top: 1.25rem; border-top: 1px solid var(--line); }
+  .more .eyebrow { margin: 0; }
+  .more__list { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem clamp(1.25rem, 3vw, 2.5rem); }
+  .more__link { display: inline-flex; align-items: center; gap: 0.4em; min-height: 2.75rem; font-family: var(--font-display); font-weight: 500; font-size: var(--fs-lg); letter-spacing: -0.01em; color: var(--cream-1); text-decoration: none; border-bottom: 1px solid rgb(243 233 214 / 0.3); transition: color var(--dur-fast), border-color var(--dur-fast); }
+  .more__link :global(svg) { color: var(--accent); transition: transform var(--dur-fast) var(--ease-out); }
+  .more__link:hover { color: var(--cream-0); border-color: var(--accent); }
+  .more__link:hover :global(svg) { transform: translateX(3px); }
 </style>

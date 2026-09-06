@@ -135,18 +135,11 @@ const glow: Record<CollectionKey, string> = {
         <p><strong>Nothing matches those filters.</strong></p>
         <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
       </div>
-
-      <div class="trust shop__trust">
-        <div><Icon name="truck" /><div><strong>Free shipping over €25</strong><span>Leaves Riga in 1–2 business days</span></div></div>
-        <div><Icon name="leaf" /><div><strong>Two ingredients</strong><span>Apples and egg white</span></div></div>
-        <div><Icon name="clock" /><div><strong>Up to 12 months shelf life</strong><span>No fridge needed</span></div></div>
-        <div><Icon name="shield" /><div><strong>Damaged? Replaced.</strong><span>Photo within 48 h</span></div></div>
-      </div>
     </div>
   </section>
 
   <!-- ============================== THE ONE LIT ROOM ============================== -->
-  <section class="section container section--tight" aria-labelledby="box-title">
+  <section class="section container section--tight shop-room" aria-labelledby="box-title">
     <div class="cta-band shop-cta" data-reveal>
       <p class="eyebrow">Build your box</p>
       <h2 id="box-title">Pick six bars, save 10%.</h2>
@@ -274,8 +267,9 @@ const glow: Record<CollectionKey, string> = {
   /* ------------------------------------------------------------- glass bar */
   .shop { position: relative; }
   .gbar__sentinel { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
-  .gbar { position: sticky; top: var(--hdr-h, 6.6rem); z-index: 30; background: rgb(11 18 14 / 0.74); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border-block: 1px solid var(--line); transition: box-shadow var(--dur), background var(--dur); }
-  .gbar.is-stuck { background: rgb(11 18 14 / 0.82); box-shadow: 0 24px 40px -32px rgb(0 0 0 / 0.9); }
+  /* Solid, not glass: even a 6% window lets the cards' cream titles print through the pills while the grid scrolls under it. */
+  .gbar { position: sticky; top: var(--hdr-h, 6.6rem); z-index: 30; background: var(--night-900); border-block: 1px solid var(--line); box-shadow: 0 1px 0 var(--line); transition: box-shadow var(--dur); }
+  .gbar.is-stuck { box-shadow: 0 1px 0 var(--line), 0 24px 40px -32px rgb(0 0 0 / 0.9); }
   .gbar__in { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'cols cols cols' 'diet count tools'; gap: 0.6rem 1.25rem; align-items: center; padding-block: 0.8rem; }
   .gbar__filters { display: contents; }
   .gbar__cols { grid-area: cols; }
@@ -294,10 +288,9 @@ const glow: Record<CollectionKey, string> = {
   .shop__grid > :global([hidden]) { display: none; }
   .shop__empty { padding: 4rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
   .shop__empty[hidden] { display: none; }
-  .shop__trust { margin-top: clamp(2.5rem, 6vw, 4rem); border-bottom: 0; }
   @media (max-width: 56rem) {
     .gbar { top: var(--hdr-h, 6.1rem); }
-    .gbar__in { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'tools tools' 'filters count'; gap: 0.5rem 0.75rem; padding-block: 0.6rem; }
+    .gbar__in { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'tools' 'filters' 'count'; gap: 0.45rem 0.75rem; padding-block: 0.6rem; }
     .gbar__filters { display: flex; grid-area: filters; flex-wrap: nowrap; gap: 0.5rem; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-left: calc(-1 * var(--gutter)); padding-left: var(--gutter); scroll-padding-left: var(--gutter); -webkit-overflow-scrolling: touch; mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent); }
     .gbar__filters::-webkit-scrollbar { display: none; }
     .gbar__cols, .gbar__diet { flex: none; flex-wrap: nowrap; }
@@ -307,10 +300,11 @@ const glow: Record<CollectionKey, string> = {
     .gbar__search .input { width: 100%; }
     .gbar__sort { flex: 0 0 auto; }
     .gbar__sort .select { max-width: 42vw; }
-    .gbar__count { font-size: var(--fs-xs); }
+    .gbar__count { grid-area: count; justify-self: start; font-size: var(--fs-xs); color: var(--fg-3); }
   }
 
   /* ------------------------------------------------------------- the lit room */
+  .shop-room { padding-top: clamp(3rem, 7vw, 6rem); }
   .shop-cta { isolation: isolate; }
   .shop-cta__six { position: absolute; right: clamp(1rem, 4vw, 3rem); bottom: -0.16em; z-index: -1; font-family: var(--font-display); font-weight: 400; font-size: clamp(10rem, 28vw, 24rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(27 22 18 / 0.22); pointer-events: none; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   @media (max-width: 56rem) { .shop-cta__six { font-size: 9rem; right: 0.5rem; bottom: -0.1em; } }

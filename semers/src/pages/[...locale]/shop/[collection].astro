@@ -26,6 +26,14 @@ const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as
 const countIn = (key: CollectionKey) => PRODUCTS.filter((p) => p.collection === key).length;
 /** The word after the number ("products", "товаров"…) so the outlined numeral and its label can be set separately. */
 const countWord = ui.productCount(products.length).replace(/^[\d\s ]+/, '');
+/*
+ * Most collections hold one or two products. A giant "1 product" over the
+ * photograph reads as an empty shelf, so a small collection writes something
+ * truer on the window: how many flavours it comes in, or how much it weighs.
+ */
+const few = products.length <= 2;
+const flavourCount = products.reduce((n, x) => n + x.variants.length, 0);
+const big = !few ? { n: products.length, word: countWord } : flavourCount > 1 ? { n: flavourCount, word: 'Flavours' } : { n: products[0]?.weightGrams ?? 0, word: 'grams' };
 /** Shelf life differs by format (zephyr 3 months, meringues 9), so the tick reads from the catalogue. */
 const months = products.map((p) => p.shelfLifeMonths);
 const shelfLine =
@@ -69,8 +77,8 @@ const glow: Record<CollectionKey, string> = {
   <div class="col-photo" style={`--col-accent:${c.accent}`}>
     <img src={hero.src} srcset={hero.srcset} sizes={hero.srcset && SIZES.full} alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.2" />
     <div class="col-photo__count" aria-hidden="true">
-      <b data-count={products.length}>{products.length}</b>
-      <span>{countWord}</span>
+      <b data-count={big.n}>{big.n}</b>
+      <span>{big.word}</span>
     </div>
   </div>
 
@@ -109,35 +117,52 @@ const glow: Record<CollectionKey, string> = {
       </div>
     </div>
 
-    <div class="container shop__body">
+    <div class={`container shop__body ${few ? 'shop__body--few' : ''}`}>
       <h2 class="sr-only" id="products-title">Products</h2>
-      <div class={`grid grid--4 col-grid ${products.length === 1 ? 'col-grid--one' : ''}`} data-shop-grid data-stagger>
-        {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+      <div class="shop__col">
+        <div class={`grid grid--4 col-grid ${few ? 'col-grid--few' : ''} ${products.length === 1 ? 'col-grid--one' : ''}`} data-shop-grid data-stagger>
+          {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+        </div>
+        {products.length === 0 && <p class="muted">Nothing here yet — <a href="/shop/">see all products</a>.</p>}
+        <div class="shop__empty" data-shop-empty hidden>
+          <p><strong>Nothing matches those filters.</strong></p>
+          <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
+        </div>
       </div>
-      {products.length === 0 && <p class="muted">Nothing here yet — <a href="/shop/">see all products</a>.</p>}
-      <div class="shop__empty" data-shop-empty hidden>
-        <p><strong>Nothing matches those filters.</strong></p>
-        <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
-      </div>
+      {/* A small collection is a feature, not a catalogue: the copy sits beside the card instead of in its own band below. */}
+      {few && (
+        <div class="know know--side" aria-labelledby="know-title">
+          <p class="eyebrow">Good to know</p>
+          <h2 id="know-title" class="know__title" data-words>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
+          <p class="lead" data-reveal>{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
+          <ul class="ticks mt-4" data-reveal>
+            <li><Icon name="check" /> {shelfLine}</li>
+            <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
+            <li><Icon name="check" /> Free shipping over €25</li>
+          </ul>
+        </div>
+      )}
     </div>
   </section>
 
   <!-- ============================== GOOD TO KNOW ============================== -->
-  <section class="section container" aria-labelledby="know-title">
-    <div class="split know">
-      <div>
-        <p class="eyebrow">Good to know</p>
-        <h2 id="know-title" class="know__title" data-words>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
-        <p class="lead" data-reveal>{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
-        <ul class="ticks mt-4" data-reveal>
-          <li><Icon name="check" /> {shelfLine}</li>
-          <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
-          <li><Icon name="check" /> Free shipping over €25</li>
-        </ul>
+  {!few && (
+    <section class="section container" aria-labelledby="know-title">
+      <div class="split know">
+        <div>
+          <p class="eyebrow">Good to know</p>
+          <h2 id="know-title" class="know__title" data-words>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
+          <p class="lead" data-reveal>{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
+          <ul class="ticks mt-4" data-reveal>
+            <li><Icon name="check" /> {shelfLine}</li>
+            <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
+            <li><Icon name="check" /> Free shipping over €25</li>
+          </ul>
+        </div>
+        <div class="frame frame--4x5 know__frame"><img src={imgSrc('pastila-macro')} srcset={imgSrcset('pastila-macro')} sizes={imgSrcset('pastila-macro') && SIZES.half} alt={img('pastila-macro').alt} width={img('pastila-macro').width} height={img('pastila-macro').height} loading="lazy" decoding="async" /></div>
       </div>
-      <div class="frame frame--4x5 know__frame"><img src={imgSrc('pastila-macro')} srcset={imgSrcset('pastila-macro')} sizes={imgSrcset('pastila-macro') && SIZES.half} alt={img('pastila-macro').alt} width={img('pastila-macro').width} height={img('pastila-macro').height} loading="lazy" decoding="async" /></div>
-    </div>
-  </section>
+    </section>
+  )}
 
   <!-- ============================== THE OTHER WINDOWS ============================== -->
   <section class="shelf" aria-labelledby="shelf-title">
@@ -236,7 +261,7 @@ const glow: Record<CollectionKey, string> = {
 
 <style>
   /* ------------------------------------------------------------- the name */
-  .col-hero { position: relative; isolation: isolate; overflow: clip; padding-block: clamp(3rem, 8vw, 6rem) clamp(2rem, 5vw, 4rem); }
+  .col-hero { position: relative; isolation: isolate; overflow: clip; min-height: auto; padding-block: clamp(3rem, 7vw, 6rem) clamp(2rem, 5vw, 4rem); }
   .col-hero__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(50% 70% at 15% 30%, var(--col-glow), transparent 70%); opacity: 0.22; }
   .col-hero__in { display: grid; gap: 0; }
   .col-hero .eyebrow { margin-bottom: 1.25rem; }
@@ -259,8 +284,9 @@ const glow: Record<CollectionKey, string> = {
   /* ------------------------------------------------------------- glass bar */
   .shop { position: relative; }
   .gbar__sentinel { position: absolute; top: 0; left: 0; width: 1px; height: 1px; }
-  .gbar { position: sticky; top: var(--hdr-h, 6.6rem); z-index: 30; background: rgb(11 18 14 / 0.74); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border-block: 1px solid var(--line); transition: box-shadow var(--dur), background var(--dur); }
-  .gbar.is-stuck { background: rgb(11 18 14 / 0.82); box-shadow: 0 24px 40px -32px rgb(0 0 0 / 0.9); }
+  /* Solid, not glass: even a 6% window lets the cards' cream titles print through the pills while the grid scrolls under it. */
+  .gbar { position: sticky; top: var(--hdr-h, 6.6rem); z-index: 30; background: var(--night-900); border-block: 1px solid var(--line); box-shadow: 0 1px 0 var(--line); transition: box-shadow var(--dur); }
+  .gbar.is-stuck { box-shadow: 0 1px 0 var(--line), 0 24px 40px -32px rgb(0 0 0 / 0.9); }
   .gbar__in { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; grid-template-areas: 'cols cols cols' 'diet count tools'; gap: 0.6rem 1.25rem; align-items: center; padding-block: 0.8rem; }
   .gbar__filters { display: contents; }
   .gbar__cols { grid-area: cols; }
@@ -279,13 +305,23 @@ const glow: Record<CollectionKey, string> = {
   /* Most collections hold 1-3 products: cap at three columns so a lone product reads as a feature, not a stamp. */
   .col-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, max(18rem, calc((100% - 2 * var(--sp-5)) / 3))), 1fr)); }
   .col-grid > :global([hidden]) { display: none; }
+  /* One or two products: the card(s) on the left, the collection's copy beside them, so the page reads as a feature rather than a thin catalogue. */
+  .shop__col { min-width: 0; }
+  .grid.grid--4.col-grid--few { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grid.grid--4.col-grid--few.col-grid--one { grid-template-columns: minmax(0, 1fr); max-width: 36rem; }
+  .know--side { min-width: 0; }
+  @media (min-width: 56rem) {
+    .shop__body--few { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(2rem, 5vw, 5rem); align-items: center; }
+    .know--side { padding-block: 1rem; }
+  }
+  @media (max-width: 55.99rem) { .know--side { margin-top: clamp(2.5rem, 6vw, 4rem); } }
   /* A collection with a single product shows it full width on a phone rather than as one small stamp in an empty pair. */
   @media (max-width: 40rem) { .grid.grid--4.col-grid--one { grid-template-columns: 1fr; } .col-grid--one :global(.pc__media) { aspect-ratio: 1; } }
   .shop__empty { padding: 4rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
   .shop__empty[hidden] { display: none; }
   @media (max-width: 56rem) {
     .gbar { top: var(--hdr-h, 6.1rem); }
-    .gbar__in { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: 'tools tools' 'filters count'; gap: 0.5rem 0.75rem; padding-block: 0.6rem; }
+    .gbar__in { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'tools' 'filters' 'count'; gap: 0.45rem 0.75rem; padding-block: 0.6rem; }
     .gbar__filters { display: flex; grid-area: filters; flex-wrap: nowrap; gap: 0.5rem; min-width: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; margin-left: calc(-1 * var(--gutter)); padding-left: var(--gutter); scroll-padding-left: var(--gutter); -webkit-overflow-scrolling: touch; mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent); -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 1.75rem), transparent); }
     .gbar__filters::-webkit-scrollbar { display: none; }
     .gbar__cols, .gbar__diet { flex: none; flex-wrap: nowrap; }
@@ -295,7 +331,7 @@ const glow: Record<CollectionKey, string> = {
     .gbar__search .input { width: 100%; }
     .gbar__sort { flex: 0 0 auto; }
     .gbar__sort .select { max-width: 42vw; }
-    .gbar__count { font-size: var(--fs-xs); }
+    .gbar__count { grid-area: count; justify-self: start; font-size: var(--fs-xs); color: var(--fg-3); }
   }
 
   /* ------------------------------------------------------------- good to know */

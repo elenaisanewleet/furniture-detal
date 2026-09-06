@@ -240,7 +240,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
       </div>
       <ol class="wall__list">
         {milestones.map((m, i) => (
-          <li class={`wall__stop ${i % 2 ? 'wall__stop--rev' : ''}`} data-lit>
+          <li class={`wall__stop ${i % 2 ? 'wall__stop--rev' : ''} ${m.long ? 'wall__stop--long' : ''}`} data-lit>
             {m.isYear
               ? <time class={`wall__year ${m.long ? 'wall__year--long' : ''}`} datetime={m.key}>{m.key}</time>
               : <span class={`wall__year ${m.long ? 'wall__year--long' : ''}`}>{m.key}</span>}
@@ -272,7 +272,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
     </div>
   </section>
 
-  <!-- ============================== WHAT WE BELIEVE: a quiet grid ============================== -->
+  <!-- ============================== WHAT WE BELIEVE: a ledger ============================== -->
+  <!-- One row per rule: the numeral outlined in the margin, the rule as a display line, the reason beside it, a hairline between rows. -->
   <section class="section container" aria-labelledby="believe-title">
     <div class="section-head">
       <div>
@@ -331,7 +332,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   </section>
 
   <!-- ============================== CTA: the one lit room ============================== -->
-  <section class="section container" aria-labelledby="cta-title">
+  <section class="section container cta-sec" aria-labelledby="cta-title">
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Taste the story</p>
       <h2 id="cta-title">Start with a bar. Or start with the loaf, as everyone did in 1888.</h2>
@@ -414,12 +415,13 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .wall__head h2 { max-width: 16ch; }
   .wall__note { max-width: 44ch; }
   .wall__list { list-style: none; margin: 0; padding: 0; }
-  .wall__stop { --year: clamp(4.5rem, 17vw, 15rem); position: relative; display: grid; gap: var(--sp-5); padding-block: clamp(2.5rem, 6vw, 5rem); border-top: 1px solid var(--line); }
+  /* `--overlap` is the share of the word's height the photograph is allowed to cover; most of every glyph stays in view. */
+  .wall__stop { --year: clamp(5.5rem, 24vw, 15rem); --overlap: 0.12; position: relative; display: grid; gap: var(--sp-5); padding-block: clamp(2.5rem, 6vw, 5rem); border-top: 1px solid var(--line); }
   .wall__year { display: block; margin: 0; font-family: var(--font-display); font-size: var(--year); font-weight: 400; line-height: 0.85; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); overflow-wrap: break-word; font-variation-settings: 'opsz' 144, 'SOFT' 30; transition: -webkit-text-stroke-color var(--dur-slow) var(--ease-out), filter var(--dur-slow) var(--ease-out); }
-  .wall__year--long { --year: clamp(3rem, 10.5vw, 9.5rem); }
-  .wall__stop:first-child { --year: clamp(5rem, 21vw, 19rem); }
+  .wall__stop--long { --year: clamp(3.5rem, 15vw, 9.5rem); }
+  .wall__stop:first-child { --year: clamp(6rem, 26vw, 19rem); }
   .wall__stop.is-lit .wall__year { -webkit-text-stroke-color: var(--accent); filter: drop-shadow(0 0 22px rgb(255 90 60 / 0.35)); }
-  .wall__media { position: relative; z-index: 1; margin-top: calc(var(--year) * -0.28); }
+  .wall__media { position: relative; z-index: 1; margin-top: calc(var(--year) * -1 * var(--overlap)); }
   .wall__frame { position: relative; aspect-ratio: 4 / 3; overflow: clip; border-radius: var(--r-xl); background: var(--bg-sunken); box-shadow: var(--shadow-3); }
   .wall__frame img { position: absolute; left: 0; right: 0; top: -12%; width: 100%; height: 124%; object-fit: cover; }
   .wall__text { display: grid; gap: 0.6rem; align-content: end; max-width: 42ch; }
@@ -429,7 +431,9 @@ const pad = (n: number) => String(n).padStart(2, '0');
   @media (min-width: 56rem) {
     .wall__stop { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: clamp(2rem, 6vw, 6rem); align-items: end; }
     .wall__year { grid-column: 1 / -1; }
-    .wall__media { grid-column: 1; grid-row: 2; margin-top: calc(var(--year) * -0.42); max-width: 36rem; width: 100%; }
+    .wall__stop { --overlap: 0.2; }
+    .wall__stop--long { --overlap: 0.14; }
+    .wall__media { grid-column: 1; grid-row: 2; max-width: 36rem; width: 100%; }
     .wall__text { grid-column: 2; grid-row: 2; padding-bottom: 1.25rem; }
     .wall__stop--rev .wall__year { text-align: right; }
     .wall__stop--rev .wall__media { grid-column: 2; justify-self: end; }
@@ -448,17 +452,20 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .fam__quote { margin-top: var(--sp-5); font-family: var(--font-display); font-style: italic; font-weight: 400; font-size: var(--fs-3xl); line-height: 1.02; letter-spacing: -0.025em; max-width: 21ch; text-wrap: balance; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .fam__by { margin-top: var(--sp-5); font-size: var(--fs-sm); color: var(--cream-2); max-width: 40ch; }
 
-  /* ---------------------------------------------------------- the creed: three columns, hairlines, outlined numerals */
-  .creed { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-6) var(--sp-6); border-top: 1px solid var(--line); }
-  .creed li { display: grid; gap: 0.7rem; align-content: start; padding-top: var(--sp-5); }
-  .creed__n { font-family: var(--font-display); font-size: var(--fs-3xl); font-weight: 400; line-height: 1; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); margin-bottom: 0.5rem; }
-  .creed h3 { font-size: var(--fs-2xl); }
-  .creed p { margin: 0; color: var(--fg-2); }
+  /* ---------------------------------------------------------- the creed: a ledger. Numeral in the margin, the rule as a display line, the reason beside it. */
+  .creed { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .creed li { display: grid; grid-template-columns: 3.5rem minmax(0, 1fr); grid-template-areas: 'n h' 'n p'; gap: 0.6rem 1rem; align-items: start; padding-block: var(--sp-5); border-bottom: 1px solid var(--line); }
+  .creed__n { grid-area: n; font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 400; line-height: 0.9; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; transition: -webkit-text-stroke-color var(--dur), text-shadow var(--dur); }
+  .creed h3 { grid-area: h; font-size: var(--fs-2xl); letter-spacing: -0.025em; line-height: 1; }
+  .creed p { grid-area: p; margin: 0; color: var(--fg-2); max-width: 52ch; }
+  .creed li:hover .creed__n { -webkit-text-stroke-color: var(--accent); text-shadow: 0 0 24px rgb(255 90 60 / 0.35); }
   @media (min-width: 48rem) {
-    .creed { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; }
-    .creed li { padding: var(--sp-6) var(--sp-6) 0 0; }
-    .creed li + li { padding-left: var(--sp-6); border-left: 1px solid var(--line); }
+    .creed li { grid-template-columns: 6rem minmax(0, 28ch) minmax(0, 1fr); grid-template-areas: 'n h p'; column-gap: clamp(1.5rem, 4vw, 3.5rem); padding-block: var(--sp-6); }
+    .creed__n { font-size: var(--fs-3xl); line-height: 0.85; }
+    .creed h3 { font-size: var(--fs-2xl); }
+    .creed p { padding-top: 0.35rem; }
   }
+  @media (prefers-reduced-motion: reduce) { .creed__n { transition: none; } }
 
   /* ---------------------------------------------------------- sub-brands */
   .lines { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
@@ -472,6 +479,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .line__products .chip--solid:hover { background: var(--cream-0); color: var(--night-900); }
 
   /* ---------------------------------------------------------- cta */
+  /* The band's own padding does the spacing before the footer; the section adds none of its own. */
+  .cta-sec { padding-bottom: var(--sp-6); }
   .cta-band__link { color: var(--night-900); border-color: var(--apple-600); }
   .cta-band__link:hover { color: var(--night-700); border-color: var(--night-900); }
 </style>

@@ -76,20 +76,24 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   <!-- ============================== HERO ============================== -->
   <!-- One enormous line, then air. The photograph below it is the first lit window. -->
   <section class="page-hero container wp-hero" aria-labelledby="page-title">
-    <p class="eyebrow">Why pastila</p>
-    <h1 id="page-title" data-words>Why pastila beats the snack bar <em>you’re holding.</em></h1>
-    <p class="lead">Pastila is a baked-apple snack with two ingredients: Antonovka apples and egg white. No added sugar, no flour, no gluten, about 97 kcal a bar. Here is what it is, why it needs nothing else, and how the numbers stack up against the usual suspects.</p>
-    <div class="hero-cta">
-      <a class="btn btn--lg btn--accent" href="/shop/apple-bars/">Shop apple bars <Icon name="arrow" size={20} class="arrow" /></a>
-      <a class="btn btn--lg btn--ghost" href="/how-its-made/">How it’s made</a>
+    <div class="wp-hero__copy">
+      <p class="eyebrow">Why pastila</p>
+      <h1 id="page-title" data-words>Why pastila beats the snack bar <em>you’re holding.</em></h1>
+      <p class="lead">Pastila is a baked-apple snack with two ingredients: Antonovka apples and egg white. No added sugar, no flour, no gluten, about 97 kcal a bar. Here is what it is, why it needs nothing else, and how the numbers stack up against the usual suspects.</p>
+      <div class="hero-cta">
+        <a class="btn btn--lg btn--accent" href="/shop/apple-bars/">Shop apple bars <Icon name="arrow" size={20} class="arrow" /></a>
+        <a class="btn btn--lg btn--ghost" href="/how-its-made/">How it’s made</a>
+      </div>
+    </div>
+    <!-- The first lit window, with the one number that matters standing on its corner. -->
+    <div class="wp-hero__media" data-reveal>
+      <div class="frame frame--4x5 wp-hero__frame">
+        <img src={im('apple-render-tall').src} srcset={im('apple-render-tall').srcset} sizes={im('apple-render-tall').srcset && SIZES.half} alt={im('apple-render-tall').alt} width={im('apple-render-tall').width} height={im('apple-render-tall').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" data-parallax="0.12" />
+      </div>
+      <p class="wp-hero__fig" aria-hidden="true"><b data-count="97">97</b><small>kcal</small></p>
     </div>
   </section>
   <div class="container">
-    <div class="wp-hero__media" data-reveal>
-      <div class="frame frame--16x9 frame--xl wp-hero__frame">
-        <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.full} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.15" />
-      </div>
-    </div>
     <div class="trust wp-trust" data-reveal>
       <div><Icon name="apple" size={22} /><div><strong>99% apples</strong><span>Antonovka, baked and whipped</span></div></div>
       <div><Icon name="check" size={22} /><div><strong>0 g added sugar</strong><span>Sweet from the fruit alone</span></div></div>
@@ -230,9 +234,11 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
         <p class="eyebrow">Who it’s for</p>
         <h2 id="who-title" data-words>Anyone who wants something sweet and would rather not think about it.</h2>
       </div>
+      <p class="eyebrow who__hint" aria-hidden="true">Drag <Icon name="arrow" size={14} /></p>
     </div>
     <p class="sr-only" id="who-strip-title">Five kinds of people, one bar.</p>
-    <div class="strip" data-strip role="region" aria-labelledby="who-strip-title" tabindex="0">
+    <div class="who__scroller">
+    <div class="strip" data-strip role="region" aria-labelledby="who-strip-title" tabindex="0" data-cursor="Drag">
       <ul class="strip__track" data-stagger>
         <li class="strip__card strip__card--photo">
           <div class="frame frame--4x5 strip__frame">
@@ -253,6 +259,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
           <a class="link" href="/shop/gift-sets/">Gift sets and boxes</a>
         </li>
       </ul>
+    </div>
     </div>
   </section>
 
@@ -306,7 +313,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   </section>
 
   <!-- ============================== CTA ============================== -->
-  <section class="section container" aria-labelledby="cta-title">
+  <section class="section container cta-sec" aria-labelledby="cta-title">
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Try it</p>
       <h2 id="cta-title">Start with a bar. The loaf can wait.</h2>
@@ -360,13 +367,22 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
 
 <style>
   /* ------------------------------------------------------------- hero */
+  .wp-hero { display: grid; gap: clamp(2rem, 5vw, 3.5rem); align-items: end; }
   .wp-hero h1 { max-width: 16ch; }
   .hero-cta { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 2rem; }
-  .wp-hero__media { margin-top: clamp(1rem, 3vw, 2rem); }
-  .wp-hero__frame { box-shadow: var(--shadow-3), var(--glow-honey); }
+  .wp-hero__media { position: relative; }
+  .wp-hero__frame { border-radius: var(--r-xl); background: var(--night-800); box-shadow: var(--shadow-3), var(--glow-honey); }
   /* Taller than its window so the parallax never shows an edge. */
   .wp-hero__frame img { position: absolute; inset: -10% 0; width: 100%; height: 120%; object-fit: cover; object-position: 50% 45%; }
-  @media (max-width: 40rem) { .wp-hero__frame { aspect-ratio: 4 / 3; } }
+  /* The calorie count, outlined, standing on the corner of the frame. */
+  .wp-hero__fig { position: absolute; left: clamp(-0.5rem, -2vw, -1.5rem); bottom: clamp(-0.6rem, -1.5vw, -1.2rem); z-index: 2; margin: 0; display: inline-flex; align-items: baseline; font-family: var(--font-display); font-weight: 400; font-size: clamp(5rem, 14vw, 10rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; filter: drop-shadow(0 0 24px rgb(11 18 14 / 0.8)); pointer-events: none; }
+  .wp-hero__fig b { font-weight: inherit; }
+  .wp-hero__fig small { font-family: var(--font-sans); font-size: 0.18em; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--honey-500); -webkit-text-stroke: 0; margin-left: 0.3em; text-shadow: 0 0 20px rgb(253 185 19 / 0.5); }
+  @media (max-width: 63.99rem) { .wp-hero__frame { aspect-ratio: 4 / 3; } .wp-hero__media { margin-top: 0.5rem; } }
+  @media (min-width: 64rem) {
+    .wp-hero { grid-template-columns: minmax(0, 1fr) minmax(0, 0.8fr); column-gap: clamp(2rem, 6vw, 6rem); }
+    .wp-hero__media { max-width: 30rem; justify-self: end; width: 100%; }
+  }
   .wp-trust { margin-top: clamp(1.5rem, 4vw, 2.5rem); border-bottom: 0; }
 
   /* ------------------------------------------------------------- what */
@@ -385,7 +401,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
 
   /* ------------------------------------------------------------- the whole label */
   .label { position: relative; isolation: isolate; overflow: clip; min-height: min(100svh, 58rem); display: grid; align-items: end; }
-  .label__media { position: absolute; inset: -12% 0; z-index: 0; }
+  .label__media { position: absolute; inset: -12% 0; z-index: 0; background: radial-gradient(50% 55% at 62% 50%, rgb(253 185 19 / 0.12), transparent 70%), var(--night-800); }
   .label__media img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; opacity: 0.75; }
   .label::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, var(--night-900) 6%, rgb(11 18 14 / 0.72) 42%, rgb(11 18 14 / 0.2) 78%, var(--night-900) 100%), linear-gradient(to right, rgb(11 18 14 / 0.55), transparent 55%); }
   .label__copy { position: relative; z-index: 2; padding-block: clamp(6rem, 16vw, 12rem) clamp(3rem, 8vw, 6rem); }
@@ -437,6 +453,14 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   /* ------------------------------------------------------------- who: the strip */
   .who { background: var(--bg-sunken); overflow: clip; }
   .who__head { margin-bottom: clamp(1.5rem, 4vw, 3rem); }
+  .who__hint { display: inline-flex; align-items: center; gap: 0.4em; margin: 0; color: var(--honey-500); white-space: nowrap; }
+  .who__hint::before { background: var(--honey-500); }
+  .who__hint :global(svg) { animation: who-nudge 1.8s var(--ease-out) infinite; }
+  @keyframes who-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+  /* The row runs off the right edge on purpose; the fade says so. */
+  .who__scroller { position: relative; }
+  .who__scroller::after { content: ''; position: absolute; top: 0; bottom: 0; right: 0; width: clamp(3rem, 8vw, 7rem); z-index: 2; background: linear-gradient(to left, var(--bg-sunken), transparent); pointer-events: none; }
+  @media (prefers-reduced-motion: reduce) { .who__hint :global(svg) { animation: none; } }
   .strip { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scrollbar-width: none; -webkit-overflow-scrolling: touch; --edge: max(var(--gutter), calc((100% - var(--container)) / 2)); scroll-padding-inline: var(--edge); cursor: grab; }
   .strip::-webkit-scrollbar { display: none; }
   .strip.is-drag { scroll-snap-type: none; cursor: grabbing; user-select: none; }
@@ -474,5 +498,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   .faq-grid h2 { margin-top: 0.5rem; }
 
   /* ------------------------------------------------------------- cta */
+  /* The band's own padding does the spacing before the footer; the section adds none of its own. */
+  .cta-sec { padding-bottom: var(--sp-6); }
   .cta-band__a { color: var(--night-900); }
 </style>

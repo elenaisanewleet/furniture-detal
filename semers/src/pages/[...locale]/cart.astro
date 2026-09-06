@@ -196,14 +196,17 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
   /* ------------------------------------------------------------ cross-sell strip */
   /* Runs edge to edge and scrolls sideways inside itself; the cut-off last card is the hint. */
-  .cart-more { padding-top: clamp(3rem, 7vw, 6rem); }
+  .cart-more { padding-top: clamp(3rem, 7vw, 6rem); padding-bottom: clamp(2rem, 4vw, 3rem); }
+  /* The footer's own margin would leave a room-sized void under the strip; the newsletter band follows at the home page's rhythm instead. */
+  :global(.ftr) { margin-top: clamp(2.5rem, 5vw, 4rem); }
   .cart-more__strip { display: flex; gap: var(--sp-5); overflow-x: auto; scroll-snap-type: x proximity; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); padding-bottom: 0.75rem; scrollbar-width: none; }
   .cart-more__strip::-webkit-scrollbar { display: none; }
-  .cart-more__strip > :global(*) { flex: 0 0 clamp(17rem, 22vw, 20rem); min-width: 0; scroll-snap-align: start; }
+  /* Cards grow to fill the row when the script has hidden the ones already in the box, and overflow into a scroll when they cannot. */
+  .cart-more__strip > :global(*) { flex: 1 0 clamp(17rem, 22vw, 20rem); max-width: 26rem; min-width: 0; scroll-snap-align: start; }
   .cart-more__strip > :global([hidden]) { display: none; }
   @media (max-width: 40rem) {
     .cart-more__strip { gap: 0.75rem; }
-    .cart-more__strip > :global(*) { flex-basis: 74%; }
+    .cart-more__strip > :global(*) { flex: 0 0 74%; max-width: none; }
   }
   @media (max-width: 36rem) {
     .cart-hero { padding-top: 3.5rem; }

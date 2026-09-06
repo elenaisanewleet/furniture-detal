@@ -14,11 +14,14 @@ export function getStaticPaths() {
   <!--
     A moment rather than a receipt: two words set as large as the page allows,
     the order reference beneath them as display type, and only then the
-    practicalities. The recap of the order, when the browser still has it,
-    sits beside the words as a lit panel.
+    practicalities. The right half of the screen belongs to the same thanks in
+    the language of the city the box ships from, set as one enormous outlined
+    word in honey light; the recap of the order, when the browser still has
+    it, takes that place as a lit panel instead.
   -->
   <section class="ty" aria-labelledby="ty-title">
     <div class="ty__glow" aria-hidden="true"></div>
+    <div class="ty__word" aria-hidden="true" translate="no" lang="lv"><span>Paldies</span></div>
     <div class="container ty__grid">
       <div class="ty__say">
         <p class="eyebrow ty__eyebrow"><Icon name="check" size={14} /> Order request received</p>
@@ -102,8 +105,14 @@ export function getStaticPaths() {
   .ty__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background:
       radial-gradient(50% 45% at 18% 35%, rgb(240 176 74 / 0.18), transparent 70%),
       radial-gradient(40% 40% at 78% 80%, rgb(62 207 168 / 0.08), transparent 70%); }
-  .ty__grid { display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: end; }
+  .ty__grid { position: relative; display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: end; }
   @media (min-width: 60rem) { .ty__grid:has(.ty__recap:not([hidden])) { grid-template-columns: minmax(0, 1.25fr) minmax(20rem, 0.75fr); } }
+  /* The set piece: the word fills the right half, lit from below; the recap panel, when there is one, takes its place. */
+  .ty__word { position: absolute; right: max(var(--gutter), calc((100% - var(--container)) / 2)); bottom: clamp(1rem, 4vw, 2.5rem); z-index: -1; pointer-events: none; font-family: var(--font-display); font-weight: 400; font-size: clamp(6rem, 17vw, 17rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.42); white-space: nowrap; }
+  .ty__word span { display: block; text-shadow: 0 0 80px rgb(240 176 74 / 0.35); }
+  .ty__word::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: -0.3em; height: 0.5em; border-radius: 50%; background: radial-gradient(50% 60% at 50% 45%, rgb(240 176 74 / 0.4), transparent 72%); filter: blur(10px); }
+  .ty:has(.ty__recap:not([hidden])) .ty__word { display: none; }
+  @media (max-width: 59.99rem) { .ty__word { position: static; margin: clamp(1.5rem, 6vw, 3rem) 0 0; font-size: clamp(5rem, 22vw, 9rem); text-align: right; padding-inline: var(--gutter); } .ty__word::after { display: none; } .ty { display: grid; } .ty__word { order: 2; } }
   .ty__say { min-width: 0; }
   .ty__eyebrow { color: var(--leaf-500); }
   .ty__eyebrow::before { background: var(--leaf-500); }
@@ -129,21 +138,22 @@ export function getStaticPaths() {
 
   /* ------------------------------------------------------------ three steps */
   .ty__next { padding-block: clamp(2rem, 5vw, 4rem) 0; }
-  .ty__steps { counter-reset: s; list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-5); }
-  @media (min-width: 48rem) { .ty__steps { grid-template-columns: repeat(3, 1fr); } }
-  .ty__steps li { counter-increment: s; position: relative; display: grid; gap: 0.5rem; align-content: start; padding-top: 1.25rem; border-top: 1px solid var(--line); }
+  /* A timeline: one unbroken hairline across the row, a stop for each step, the current one lit coral. */
+  .ty__steps { counter-reset: s; list-style: none; margin: 0; padding: 0; display: grid; gap: var(--sp-5); position: relative; }
+  @media (min-width: 48rem) { .ty__steps { grid-template-columns: repeat(3, 1fr); gap: clamp(1.5rem, 4vw, 3rem); } .ty__steps::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, var(--coral-500) 0, var(--coral-500) 8%, var(--line) 30%, var(--line)); } }
+  .ty__steps li { counter-increment: s; position: relative; display: grid; gap: 0.5rem; align-content: start; padding-top: 1.5rem; border-top: 1px solid var(--line); }
+  @media (min-width: 48rem) { .ty__steps li { border-top: 0; } }
   .ty__steps li::before { content: counter(s, decimal-leading-zero); font-family: var(--font-display); font-weight: 400; font-size: var(--fs-3xl); line-height: 0.85; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); margin-bottom: 0.75rem; }
-  .ty__steps li:first-child::before { color: var(--accent); -webkit-text-stroke: 0; text-shadow: 0 0 30px rgb(255 90 60 / 0.5); }
+  .ty__steps li:first-child::before { color: var(--coral-500); -webkit-text-stroke: 0; text-shadow: 0 0 30px rgb(255 122 136 / 0.5); }
   .ty__steps strong { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xl); letter-spacing: -0.02em; line-height: var(--lh-snug); color: var(--cream-0); }
   .ty__steps span { color: var(--fg-2); max-width: 32ch; }
-  @media (min-width: 48rem) {
-    /* A hairline runs the width of the row; the numerals sit on it like stops on a line. */
-    .ty__steps li::after { content: ''; position: absolute; top: -0.3rem; left: 0; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--cream-3); box-shadow: 0 0 0 4px var(--bg); }
-    .ty__steps li:first-child::after { background: var(--accent); box-shadow: 0 0 0 4px var(--bg), 0 0 16px var(--accent); }
-  }
+  .ty__steps li::after { content: ''; position: absolute; top: -0.3rem; left: 0; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--cream-3); box-shadow: 0 0 0 4px var(--bg); }
+  .ty__steps li:first-child::after { background: var(--coral-500); box-shadow: 0 0 0 4px var(--bg), 0 0 16px var(--coral-500); }
 
   /* ------------------------------------------------------------ back out */
-  .ty__back { padding-top: clamp(3rem, 8vw, 6rem); }
+  .ty__back { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(2rem, 4vw, 3rem); }
+  /* The footer's own margin would leave a room-sized void under the cream band; the newsletter band follows at the home page's rhythm instead. */
+  :global(.ftr) { margin-top: clamp(2.5rem, 5vw, 4rem); }
   @media (max-width: 36rem) {
     .ty__title { font-size: clamp(3.75rem, 20vw, 5.5rem); }
   }

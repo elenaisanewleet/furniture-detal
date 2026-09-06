@@ -151,6 +151,7 @@ const schema = [
   </section>
 
   <!-- ============================== NEWSLETTER ============================== -->
+  <!-- The form itself lives in the footer of every page; this panel only says what it is for and points there, so the reader is asked for an address once. -->
   <section class="section container" aria-labelledby="nl-title">
     <div class="nl" data-reveal>
       <div class="nl__grid">
@@ -159,22 +160,8 @@ const schema = [
           <h2 id="nl-title" class="nl__title">The next note, when it is written.</h2>
           <p class="muted mt-2">No countdown timers, no daily deals. An e-mail when there is a new article, and a line when a new flavour leaves the oven. Unsubscribe whenever you like.</p>
         </div>
-        <div>
-          <form class="nl__form" data-form="newsletter" data-success="Thanks — you’re on the list. We write rarely, and only when there is something to say.">
-            <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
-            <div class="field">
-              <label for="nl-email">E-mail address</label>
-              <div class="nl__row">
-                <input class="input" id="nl-email" name="email" type="email" required autocomplete="email" placeholder="you@example.com" />
-                <button class="btn" type="submit">Subscribe</button>
-              </div>
-            </div>
-            <label class="checkbox">
-              <input type="checkbox" name="consent" value="yes" required />
-              <span>I agree to receive occasional e-mails from {site.brand.legalName}. See our <a href="/legal/privacy/">privacy policy</a>.</span>
-            </label>
-          </form>
-          <p class="small" data-form-note></p>
+        <div class="nl__go">
+          <a class="btn btn--ghost" href="#ftr-email">Leave your e-mail below <Icon name="arrow" size={18} class="arrow" /></a>
         </div>
       </div>
     </div>
@@ -209,10 +196,12 @@ const schema = [
   /* ------------------------------------------------------------ the lead story */
   .jr-feat { padding-top: 0.5rem; }
   .jf { position: relative; isolation: isolate; overflow: clip; display: grid; align-items: end; border-radius: var(--r-xl); background: var(--night-800); box-shadow: var(--shadow-3), var(--glow-honey); aspect-ratio: 4 / 5; }
+  /* Without its photograph the window is still lit: a honey wash in the night-800 tint. */
+  .jf__media { background: radial-gradient(55% 70% at 70% 35%, rgb(253 185 19 / 0.14), transparent 70%), var(--night-800); }
   @media (min-width: 48rem) { .jf { aspect-ratio: 16 / 9; } }
   @media (min-width: 72rem) { .jf { aspect-ratio: 21 / 10; } }
   .jf__media { position: absolute; inset: -12% 0; z-index: 0; display: block; }
-  .jf__media img { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
+  .jf__media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.85; }
   .jf::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to top, rgb(6 10 8 / 0.96) 0%, rgb(6 10 8 / 0.7) 32%, rgb(6 10 8 / 0.15) 65%, rgb(6 10 8 / 0.25) 100%); pointer-events: none; }
   .jf__body { position: relative; z-index: 2; display: grid; gap: clamp(0.75rem, 1.5vw, 1.25rem); justify-items: start; padding: clamp(1.5rem, 4vw, 3.5rem); max-width: 62rem; pointer-events: none; }
   .jf__body a, .jf__body .btn { pointer-events: auto; }
@@ -231,7 +220,7 @@ const schema = [
   @media (min-width: 56rem) {
     .jr-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: start; }
     .jr-card--wide { grid-column: span 7; }
-    .jr-card--tall { grid-column: span 5; margin-top: clamp(3rem, 8vw, 7rem); }
+    .jr-card--tall { grid-column: span 5; margin-top: 3rem; }
     .jr-card--wide:nth-child(4n + 3) { grid-column: 2 / span 6; }
   }
   .jr-card { gap: 0.75rem; }
@@ -259,15 +248,13 @@ const schema = [
   .nl { position: relative; isolation: isolate; overflow: clip; border-radius: var(--r-xl); padding: clamp(1.5rem, 5vw, 3.5rem); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-honey); }
   .nl::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(55% 60% at 100% 0%, rgb(240 176 74 / 0.18), transparent 70%); pointer-events: none; }
   .nl__grid { display: grid; gap: clamp(1.5rem, 4vw, 3rem); align-items: center; }
-  @media (min-width: 56rem) { .nl__grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 6vw, 6rem); } }
+  @media (min-width: 56rem) { .nl__grid { grid-template-columns: minmax(0, 1.4fr) auto; gap: clamp(2rem, 6vw, 6rem); } }
   .nl__title { font-size: var(--fs-2xl); max-width: 16ch; }
-  .nl__form { display: grid; gap: 1rem; }
-  .nl__row { display: grid; gap: 0.6rem; }
-  @media (min-width: 40rem) { .nl__row { grid-template-columns: minmax(0, 1fr) auto; } }
-  .nl [data-form-note] { margin-top: 0.75rem; }
-  .nl [data-form-note]:empty { display: none; }
+  .nl__go { display: flex; }
+  @media (min-width: 56rem) { .nl__go { justify-content: end; } }
 
   /* ------------------------------------------------------------ the one cream room */
-  .jr-cta { padding-bottom: clamp(3rem, 8vw, 7rem); }
+  /* The band's own padding does the spacing before the footer; the section adds none of its own. */
+  .jr-cta { padding-bottom: var(--sp-6); }
   .cta-band__link { color: var(--night-900); border-color: var(--apple-600); }
 </style>
