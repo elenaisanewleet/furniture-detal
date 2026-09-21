@@ -71,6 +71,8 @@ export default defineConfig({
       // Vite 8's tsconfig discovery otherwise walks up to the parent repo's tsconfig and fails to resolve its `extends`.
       tsconfigPaths: false,
     },
-    build: { cssCodeSplit: false },
+    // Each page ships its own CSS. One shared bundle meant every page carried
+    // every other page's rules: the home page downloaded 280 KB to use 32 KB.
+    build: { cssCodeSplit: true },
   },
 });

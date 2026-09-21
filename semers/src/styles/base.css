@@ -238,7 +238,7 @@ a:hover .frame .zoom, .frame:hover .zoom { transform: scale(1.05); }
 .skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 100; padding: 0.6rem 1rem; background: var(--cream-1); color: var(--night-900); border-radius: var(--r-md); }
 .skip-link:focus { top: 1rem; }
 
-/* ---- The cursor and the grain ---------------------------------------- */
+/* ---- The cursor ------------------------------------------------------- */
 /* A fine pointer gets a drawn cursor; the system arrow stays on touch and where it is asked for. */
 @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
   .js.has-cursor, .js.has-cursor a, .js.has-cursor button, .js.has-cursor summary, .js.has-cursor label, .js.has-cursor input, .js.has-cursor select, .js.has-cursor textarea { cursor: none; }
@@ -253,9 +253,6 @@ a:hover .frame .zoom, .frame:hover .zoom { transform: scale(1.05); }
 .cursor.is-label .cursor__label { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .cursor.is-label .cursor__dot { opacity: 0; }
 .cursor.is-down .cursor__ring { transform: scale(0.85); }
-.grain { position: fixed; inset: -50%; z-index: 9998; pointer-events: none; opacity: 0.07; mix-blend-mode: overlay; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); background-size: 200px 200px; animation: grain 0.6s steps(6) infinite; }
-@keyframes grain { 0% { transform: translate(0, 0); } 20% { transform: translate(-2%, 3%); } 40% { transform: translate(3%, -2%); } 60% { transform: translate(-1%, -4%); } 80% { transform: translate(4%, 1%); } 100% { transform: translate(0, 0); } }
-@media (prefers-reduced-motion: reduce) { .grain { animation: none; } }
 
 /* ---- Page enter ------------------------------------------------------- */
 .js main > * { animation: enter 1s var(--ease-expo) both; }

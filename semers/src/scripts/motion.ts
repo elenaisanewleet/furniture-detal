@@ -1,61 +1,40 @@
 /**
- * The site's motion layer: smooth scrolling, the drawn cursor, word-by-word
- * headline reveals, and the GSAP/ScrollTrigger pairing the set pieces build on.
+ * The site's motion layer: word-by-word headline reveals, the drawn cursor,
+ * a little parallax, card tilt and counters that count up.
+ *
+ * It used to be Lenis plus GSAP with ScrollTrigger — 49 KB gzipped — to do work
+ * that IntersectionObserver and one rAF loop do for nothing. Smooth scrolling in
+ * particular was a net loss: it takes the scroll away from the browser, so the
+ * page answers a wheel or a trackpad a frame or two late and reads as lag, which
+ * is exactly what it was blamed for. Scrolling is the browser's again.
  *
  * All of it is an enhancement. With reduced motion asked for, or on a touch
- * device, scrolling is the browser's own, the cursor is the system's, and the
- * headlines are simply there. Nothing here is needed to buy a bar.
+ * device, or with no JavaScript at all, the page is simply there. Nothing here
+ * is needed to buy a bar.
  *
- * Exposed on window.semersMotion so the check scripts can stop the smoothing
- * before they measure scroll positions.
+ * Exposed on window.semersMotion so the check scripts can turn it off before
+ * they measure.
  */
-import Lenis from 'lenis';
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 declare global {
   interface Window {
-    semersMotion?: { lenis: Lenis | null; gsap: typeof gsap; ScrollTrigger: typeof ScrollTrigger; stop(): void };
+    semersMotion?: { reduced: boolean; stop(): void };
   }
 }
-
-gsap.registerPlugin(ScrollTrigger);
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const finePointer = matchMedia('(pointer: fine)').matches;
 const root = document.documentElement;
 
-/* --------------------------------------------------------------- scrolling */
-let lenis: Lenis | null = null;
-if (!reduced) {
-  lenis = new Lenis({
-    lerp: 0.09,
-    wheelMultiplier: 1,
-    // On touch, native scrolling is faster and never feels rubbery; Lenis only listens.
-    syncTouch: false,
-    anchors: true,
-  });
-  lenis.on('scroll', ScrollTrigger.update);
-  gsap.ticker.add((t) => lenis!.raf(t * 1000));
-  gsap.ticker.lagSmoothing(0);
-}
+/** Everything that must be undone when a check script asks for stillness. */
+const teardown: Array<() => void> = [];
 
-window.semersMotion = {
-  lenis,
-  gsap,
-  ScrollTrigger,
-  stop() {
-    lenis?.destroy();
-    lenis = null;
-  },
-};
-
-/* ------------------------------------------------------------ the cursor */
+/* ------------------------------------------------------------- the cursor */
 /*
- * A dot that is exactly where the pointer is and a ring that arrives a beat
- * later. Over a link the ring grows; over anything carrying data-cursor it
- * grows further and prints the word — "view", "add" — so a card does not need
- * a button to say what a click will do.
+ * A dot exactly where the pointer is and a ring that arrives a beat later. Over
+ * a link the ring grows; over anything carrying data-cursor it grows further and
+ * prints the word — "view", "add" — so a card need not wear a button to say what
+ * a click will do.
  */
 if (finePointer && !reduced) {
   const el = document.createElement('div');
@@ -66,9 +45,9 @@ if (finePointer && !reduced) {
   const ring = el.querySelector<HTMLElement>('.cursor__ring')!;
   const dot = el.querySelector<HTMLElement>('.cursor__dot')!;
   const label = el.querySelector<HTMLElement>('.cursor__label')!;
-  let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y, shown = false;
+  let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y, shown = false, raf = 0;
 
-  addEventListener('pointermove', (e) => {
+  const onMove = (e: PointerEvent) => {
     x = e.clientX;
     y = e.clientY;
     if (!shown) {
@@ -82,25 +61,45 @@ if (finePointer && !reduced) {
     el.classList.toggle('is-link', !!t && !word);
     el.classList.toggle('is-label', !!word);
     if (word) label.textContent = word;
-  }, { passive: true });
-  addEventListener('pointerdown', () => el.classList.add('is-down'));
-  addEventListener('pointerup', () => el.classList.remove('is-down'));
-  document.addEventListener('mouseleave', () => root.classList.remove('has-cursor'));
-  document.addEventListener('mouseenter', () => shown && root.classList.add('has-cursor'));
+  };
+  const down = () => el.classList.add('is-down');
+  const up = () => el.classList.remove('is-down');
+  const leave = () => root.classList.remove('has-cursor');
+  const enter = () => shown && root.classList.add('has-cursor');
 
-  gsap.ticker.add(() => {
+  addEventListener('pointermove', onMove, { passive: true });
+  addEventListener('pointerdown', down, { passive: true });
+  addEventListener('pointerup', up, { passive: true });
+  document.addEventListener('mouseleave', leave);
+  document.addEventListener('mouseenter', enter);
+
+  /* The ring eases towards the dot; the dot is exact. One rAF, two transforms. */
+  const tick = () => {
     rx += (x - rx) * 0.18;
     ry += (y - ry) * 0.18;
     dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
     ring.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
+    raf = requestAnimationFrame(tick);
+  };
+  raf = requestAnimationFrame(tick);
+
+  teardown.push(() => {
+    cancelAnimationFrame(raf);
+    removeEventListener('pointermove', onMove);
+    removeEventListener('pointerdown', down);
+    removeEventListener('pointerup', up);
+    document.removeEventListener('mouseleave', leave);
+    document.removeEventListener('mouseenter', enter);
+    root.classList.remove('has-cursor');
+    el.remove();
   });
 }
 
 /* ---------------------------------------------------- words, one at a time */
 /*
  * A headline marked data-words is split into words the CSS can stagger. The
- * split happens here rather than in the markup so the prose stays one string
- * for the translation pass; it runs after the page's text has been localised.
+ * split happens here rather than in the markup so the prose stays one string for
+ * the translation pass; it runs after the page's text has been localised.
  */
 for (const h of Array.from(document.querySelectorAll<HTMLElement>('[data-words]'))) {
   if (reduced) continue;
@@ -127,20 +126,78 @@ for (const h of Array.from(document.querySelectorAll<HTMLElement>('[data-words]'
     node.replaceWith(frag);
   }
 }
-const wordEls = document.querySelectorAll<HTMLElement>('[data-words]');
-if (wordEls.length && 'IntersectionObserver' in window) {
-  const io = new IntersectionObserver((es) => {
-    for (const e of es) if (e.isIntersecting) { (e.target as HTMLElement).classList.add('is-in'); io.unobserve(e.target); }
-  }, { threshold: 0.2 });
-  wordEls.forEach((el) => io.observe(el));
-} else wordEls.forEach((el) => el.classList.add('is-in'));
 
-/* ------------------------------------------------------------ parallax */
-/* An element with data-parallax="0.2" drifts a fifth as fast as the page. Cheap, and it makes the photographs feel set back in the dark. */
+/** Add a class the first time an element is seen, then stop watching it. */
+function onceInView(els: Iterable<Element>, cls: string, threshold = 0.2) {
+  const list = Array.from(els);
+  if (!list.length) return;
+  if (!('IntersectionObserver' in window)) {
+    list.forEach((el) => el.classList.add(cls));
+    return;
+  }
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        e.target.classList.add(cls);
+        io.unobserve(e.target);
+      }
+    },
+    { threshold },
+  );
+  list.forEach((el) => io.observe(el));
+  teardown.push(() => io.disconnect());
+}
+
+onceInView(document.querySelectorAll('[data-words]'), 'is-in');
+
+/* --------------------------------------------------------------- parallax */
+/*
+ * An element with data-parallax="0.2" drifts a fifth as fast as the page. One
+ * passive scroll listener, one rAF, and only the elements actually on screen are
+ * touched — an IntersectionObserver keeps the rest out of the loop entirely.
+ */
 if (!reduced) {
-  for (const el of Array.from(document.querySelectorAll<HTMLElement>('[data-parallax]'))) {
-    const k = Number(el.dataset.parallax || 0.15);
-    gsap.fromTo(el, { yPercent: -k * 40 }, { yPercent: k * 40, ease: 'none', scrollTrigger: { trigger: el.parentElement || el, start: 'top bottom', end: 'bottom top', scrub: true } });
+  const all = Array.from(document.querySelectorAll<HTMLElement>('[data-parallax]'));
+  if (all.length) {
+    const visible = new Set<HTMLElement>();
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) visible.add(e.target as HTMLElement);
+          else visible.delete(e.target as HTMLElement);
+        }
+      },
+      { rootMargin: '20% 0px' },
+    );
+    all.forEach((el) => io.observe(el));
+
+    let queued = false;
+    const paint = () => {
+      queued = false;
+      const h = innerHeight;
+      for (const el of visible) {
+        const k = Number(el.dataset.parallax || 0.15);
+        const box = el.getBoundingClientRect();
+        /* -1 when the element is entering at the bottom, +1 when it leaves at the top. */
+        const progress = (box.top + box.height / 2 - h / 2) / (h / 2 + box.height / 2);
+        el.style.transform = `translate3d(0, ${(progress * k * 40).toFixed(2)}%, 0)`;
+      }
+    };
+    const onScroll = () => {
+      if (queued) return;
+      queued = true;
+      requestAnimationFrame(paint);
+    };
+    addEventListener('scroll', onScroll, { passive: true });
+    addEventListener('resize', onScroll, { passive: true });
+    paint();
+    teardown.push(() => {
+      removeEventListener('scroll', onScroll);
+      removeEventListener('resize', onScroll);
+      io.disconnect();
+      all.forEach((el) => (el.style.transform = ''));
+    });
   }
 }
 
@@ -171,19 +228,50 @@ for (const el of Array.from(document.querySelectorAll<HTMLElement>('[data-count]
   const prefix = el.dataset.countPrefix || '';
   const settled = el.textContent || '';
   if (!Number.isFinite(target)) continue;
-  const io = new IntersectionObserver((es) => {
-    if (!es[0].isIntersecting) return;
-    io.disconnect();
-    const started = performance.now();
-    const step = (now: number) => {
-      const k = Math.min(1, (now - started) / 1100);
-      const eased = 1 - Math.pow(1 - k, 3);
-      el.textContent = k < 1 ? prefix + Math.round(target * eased) : settled;
-      if (k < 1) requestAnimationFrame(step);
-    };
-    requestAnimationFrame(step);
-  }, { threshold: 0.6 });
+  const io = new IntersectionObserver(
+    (es) => {
+      if (!es[0].isIntersecting) return;
+      io.disconnect();
+      const started = performance.now();
+      const step = (now: number) => {
+        const k = Math.min(1, (now - started) / 1100);
+        const eased = 1 - Math.pow(1 - k, 3);
+        el.textContent = k < 1 ? prefix + Math.round(target * eased) : settled;
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    },
+    { threshold: 0.6 },
+  );
   io.observe(el);
+  teardown.push(() => io.disconnect());
 }
 
-export { gsap, ScrollTrigger, lenis, reduced };
+/* ------------------------------------------------ lit while near the middle */
+/*
+ * Used by the story wall and the wholesale ladder: whichever element is crossing
+ * the middle band of the screen wears `is-lit`. This is what ScrollTrigger's
+ * toggleClass did, in one observer and no library.
+ */
+export function lit(selector = '[data-lit]', band = 38) {
+  if (reduced || !('IntersectionObserver' in window)) return;
+  const els = Array.from(document.querySelectorAll(selector));
+  if (!els.length) return;
+  const io = new IntersectionObserver(
+    (entries) => {
+      for (const e of entries) e.target.classList.toggle('is-lit', e.isIntersecting);
+    },
+    { rootMargin: `-${band}% 0px -${band}% 0px` },
+  );
+  els.forEach((el) => io.observe(el));
+  teardown.push(() => io.disconnect());
+}
+
+window.semersMotion = {
+  reduced,
+  stop() {
+    while (teardown.length) teardown.pop()!();
+  },
+};
+
+export { reduced };

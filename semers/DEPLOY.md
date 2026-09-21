@@ -283,15 +283,14 @@ a coarse pointer, or without JavaScript, the page is simply there. What it provi
 | `data-cursor="View"` on anything | the drawn cursor grows and prints the word. |
 | `data-count="97"` | the number counts up when it scrolls into view. |
 
-**The hero** (`src/scripts/hero.ts`, home page only) is a three.js point cloud:
-each of ~26 000 points carries a position on the skin of an apple and one on the
-skin of a bar, and how far the reader has scrolled through the pinned hero blends
-between them, with a swarm and a honey glow half way — the baking. It writes
-`--hp` (0–1) on the section so the headline crossfades in CSS from "One apple."
-to "One bar. Nothing else." Without WebGL, with reduced motion, or on a device
-that reports few cores, the poster photograph behind the canvas is the hero and
-the copy still swaps with scroll. On a portrait phone the body is scaled down
-rather than pushed away, so the points do not shrink to dust.
+**The hero** is a photograph in a lit frame beside the headline — markup and
+CSS, nothing else. It was a three.js point cloud of ~26 000 particles morphing an
+apple into a bar across a pinned 230 vh section. That cost 12 of the 45 per cent
+of frames the home page was dropping while it scrolled, shipped ~550 KB of
+JavaScript, and its fallback never worked: without WebGL the section stayed two
+screens tall with the canvas at opacity 0 and the poster at 0.22 behind a radial
+mask, so a reader with no WebGL scrolled past two screens of near-empty ground.
+The photograph is now simply the hero, at its own height, for everyone.
 
 **Adding a page.** Write it against the roles and the shared classes, open with
 one enormous line and air, give it one set piece of its own and keep the rest
@@ -300,11 +299,10 @@ must hold their shape without the image — `aspect-ratio` on the wrapper and th
 `<img>` positioned `absolute; inset: 0` — because a plain `width: 100%` image can
 push a grid item past its frame. Nothing may scroll sideways at 390 px.
 
-**Dependencies.** `three`, `gsap` and `lenis` are runtime dependencies (and
-`@types/three` a dev one). The Higgsfield project's `app/package.json` and
-`app/bun.lock` do not pick these up from a file copy: add them there with
-`bun add` in the same sync that carries the scripts, or the deploy fails at
-import time.
+**Dependencies.** There are none beyond Astro, its sitemap integration and
+sharp. `three`, `gsap` and `lenis` used to be runtime dependencies and had to be
+`bun add`-ed into the Higgsfield project by hand; they are gone. The motion layer
+is IntersectionObserver and one rAF loop, so a file copy is now the whole sync.
 
 ## Brand and fonts
 

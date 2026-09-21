@@ -36,26 +36,20 @@ const poster = im('hero-bars');
   <Fragment slot="head">
   </Fragment>
 
-  <!-- ============================== THE SKY ============================== -->
+  <!-- ============================== THE HERO ============================== -->
   <!--
-    An apple made of light that becomes a bar as the reader scrolls. The
-    section is tall and its one screen is pinned; --hp (0 to 1) is written by
-    the script and everything here — the two headlines, the hint, the canvas —
-    reads it. With no WebGL the poster photograph is the hero and the headline
-    still turns over.
+    One screen, one statement, one product, one button. It is plain HTML and a
+    photograph: there is no canvas to fail, no script to wait for and nothing to
+    fall back from, which is why it looks the same with JavaScript off, with
+    WebGL missing and with reduced motion asked for.
   -->
-  <section class="sky" data-hero aria-labelledby="hero-title">
-    <div class="sky__pin">
-      <div class="sky__glow" aria-hidden="true"></div>
-      <img class="sky__poster" src={poster.src} srcset={poster.srcset} sizes="100vw" alt="" width={poster.width} height={poster.height} loading="eager" fetchpriority="high" decoding="async" />
-      <canvas class="sky__gl" data-hero-canvas aria-hidden="true"></canvas>
-      <div class="container sky__copy">
+  <section class="sky" aria-labelledby="hero-title">
+    <div class="sky__glow" aria-hidden="true"></div>
+    <div class="container sky__grid">
+      <div class="sky__copy">
         <p class="eyebrow sky__eyebrow">Baked apple snacks · Riga, Latvia</p>
-        <h1 class="sky__title" id="hero-title">
-          <span class="sky__line sky__line--a">One apple.</span>
-          <span class="sky__line sky__line--b">One bar. <em>Nothing else.</em></span>
-        </h1>
-        <p class="sky__lead">Antonovka apples baked, whipped with egg white and slowly dried the Belyov way. No added sugar, no flour, no nonsense. About 97 kcal a bar.</p>
+        <h1 class="sky__title" id="hero-title">One apple. One bar. <em>Nothing else.</em></h1>
+        <p class="sky__lead">Antonovka apples, baked whole and whipped with egg white, then dried slowly into a bar. No added sugar, no flour, no nonsense. About 97 kcal a bar.</p>
         <div class="hero__cta">
           <a class="btn btn--lg btn--accent" href="/shop/">Shop the bars <Icon name="arrow" size={20} class="arrow" /></a>
           <a class="btn btn--lg btn--ghost" href="/why-pastila/">Why pastila?</a>
@@ -66,7 +60,9 @@ const poster = im('hero-bars');
           <span><Icon name="check" size={16} /> Free EU shipping over {formatThreshold(site.shipping.freeFrom, locale)}</span>
         </div>
       </div>
-      <div class="sky__hint" aria-hidden="true"><span>Scroll</span><i></i></div>
+      <div class="sky__shot">
+        <img src={poster.src} srcset={poster.srcset} sizes="(min-width: 64rem) 46vw, 92vw" alt={poster.alt} width={poster.width} height={poster.height} loading="eager" fetchpriority="high" decoding="async" />
+      </div>
     </div>
   </section>
 
@@ -117,7 +113,7 @@ const poster = im('hero-bars');
   -->
   <section class="walk" aria-labelledby="how-title" data-hscroll>
     <div class="walk__pin">
-      <div class="walk__track" data-hscroll-track>
+      <div class="walk__track" data-hscroll-track tabindex="0" role="group" aria-label="The four steps, side by side">
         <div class="walk__panel walk__panel--intro">
           <p class="eyebrow">How it’s made</p>
           <h2 id="how-title" class="walk__title">Twelve hours, four steps, zero shortcuts.</h2>
@@ -298,84 +294,24 @@ const poster = im('hero-bars');
   </section>
 </Base>
 
-<script>
-  import '~/scripts/hero';
-  import { gsap, ScrollTrigger, reduced } from '~/scripts/motion';
-
-  /*
-   * The walk: four panels move sideways under a pinned viewport. Only where
-   * there is room for it — on a phone the panels stack, which is what the CSS
-   * does when nothing here runs.
-   */
-  const walk = document.querySelector<HTMLElement>('[data-hscroll]');
-  const track = walk?.querySelector<HTMLElement>('[data-hscroll-track]');
-  if (walk && track && !reduced) {
-    const mm = gsap.matchMedia();
-    mm.add('(min-width: 56rem)', () => {
-      walk.classList.add('walk--live');
-      const distance = () => track.scrollWidth - walk.clientWidth;
-      const tween = gsap.to(track, {
-        x: () => -distance(),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: walk,
-          pin: true,
-          scrub: 0.8,
-          start: 'top top',
-          end: () => `+=${distance()}`,
-          invalidateOnRefresh: true,
-          anticipatePin: 1,
-        },
-      });
-      return () => {
-        tween.scrollTrigger?.kill();
-        tween.kill();
-        walk.classList.remove('walk--live');
-      };
-    });
-    ScrollTrigger.refresh();
-  }
-</script>
 
 <style>
-  /* ------------------------------------------------------------- the sky */
-  .sky { position: relative; height: 230vh; height: 230svh; background: var(--night-950); }
-  .sky__pin { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: clip; display: grid; align-items: end; isolation: isolate; }
-  .sky__glow { position: absolute; inset: 0; z-index: 0; background:
-      radial-gradient(60% 50% at 62% 42%, rgb(241 90 34 / calc(0.3 - var(--hp, 0) * 0.13)), transparent 70%),
-      radial-gradient(50% 40% at 40% 60%, rgb(253 185 19 / calc(0.06 + var(--hp, 0) * 0.15)), transparent 70%),
+  /* ------------------------------------------------------------ the hero */
+  .sky { position: relative; isolation: isolate; overflow: clip; background: var(--night-950); }
+  .sky__glow { position: absolute; inset: 0; z-index: 0; pointer-events: none; background:
+      radial-gradient(55% 45% at 72% 38%, rgb(241 90 34 / 0.22), transparent 70%),
+      radial-gradient(45% 40% at 30% 70%, rgb(253 185 19 / 0.1), transparent 70%),
       radial-gradient(120% 100% at 50% 100%, var(--night-900), transparent 60%); }
-  .sky__poster { position: absolute; inset: 0; z-index: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% 50%; opacity: 0.22; filter: saturate(0.6) contrast(1.1); transform: scale(calc(1.06 + var(--hp, 0) * 0.06)); mask-image: radial-gradient(80% 70% at 62% 45%, #000 30%, transparent 75%); }
-  .sky__gl { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; opacity: 0; transition: opacity 1.4s var(--ease-out); }
-  .sky__gl.is-ready { opacity: 1; }
-  .sky__gl.is-ready ~ .sky__poster { opacity: 0.1; }
-  .sky__copy { position: relative; z-index: 2; padding-bottom: clamp(3.5rem, 9vh, 7rem); padding-top: 8rem; pointer-events: none; }
-  .sky__copy a, .sky__copy .btn { pointer-events: auto; }
+  .sky__grid { position: relative; z-index: 1; display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: center; padding-block: clamp(3rem, 7vw, 6rem) clamp(3rem, 8vw, 6.5rem); }
+  @media (min-width: 64rem) { .sky__grid { grid-template-columns: 1.05fr 0.95fr; min-height: min(84svh, 50rem); } }
   .sky__eyebrow { color: var(--cream-2); margin-bottom: 1.2rem; }
-  /* The two headlines share one grid cell, so the block is as tall as the taller of them in any language and neither is ever clipped. */
-  .sky__title { position: relative; display: grid; font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.03em; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
-  .sky__line { grid-area: 1 / 1; display: block; text-wrap: balance; will-change: opacity, transform; }
-  .sky__line--a { opacity: clamp(0, calc((0.55 - var(--hp, 0)) * 5), 1); transform: translateY(calc(var(--hp, 0) * -0.35em)); }
-  .sky__line--b { opacity: clamp(0, calc((var(--hp, 0) - 0.45) * 5), 1); transform: translateY(calc((1 - var(--hp, 0)) * 0.35em)); }
-  .sky__line em { display: block; font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
-  .sky__lead { font-size: var(--fs-lg); max-width: 44ch; margin-top: 1.5rem; color: var(--cream-2); }
-  .sky__hint { position: absolute; right: var(--gutter); bottom: clamp(1.5rem, 5vh, 3rem); z-index: 2; display: flex; align-items: center; gap: 0.7rem; font-size: var(--fs-xs); letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg-3); opacity: clamp(0, calc(1 - var(--hp, 0) * 4), 1); }
-  .sky__hint i { width: 1px; height: 3rem; background: linear-gradient(to bottom, var(--cream-1), transparent); animation: hint 2.2s var(--ease-in-out) infinite; transform-origin: top; }
-  @keyframes hint { 0% { transform: scaleY(0); opacity: 0; } 30% { opacity: 1; } 100% { transform: scaleY(1); opacity: 0; } }
-  @media (prefers-reduced-motion: reduce) {
-    .sky { height: auto; }
-    .sky__pin { position: relative; height: auto; min-height: 80svh; }
-    .sky__poster { opacity: 0.35; transform: none; }
-    .sky__line { position: static; opacity: 1 !important; transform: none !important; }
-    .sky__hint { display: none; }
-  }
-  @media (max-width: 48rem) {
-    .sky { height: 200svh; }
-    .sky__copy { padding-top: 6rem; }
-    .sky__title { font-size: clamp(3.25rem, 14.5vw, 4.5rem); }
-    .sky__poster { object-position: 60% 40%; }
-    .sky__hint { display: none; }
-  }
+  .sky__title { font-size: var(--fs-4xl); line-height: 0.95; letter-spacing: -0.03em; color: var(--cream-0); text-wrap: balance; max-width: 13ch; }
+  .sky__title em { font-style: normal; color: var(--accent); }
+  .sky__lead { font-size: var(--fs-lg); max-width: 46ch; margin-top: 1.5rem; color: var(--cream-2); }
+  /* The photograph is the hero, so it is lit like one: a framed window, not a watermark. */
+  .sky__shot { position: relative; border-radius: var(--r-xl); overflow: clip; aspect-ratio: 4 / 3; box-shadow: var(--shadow-2), var(--glow-accent); }
+  .sky__shot img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  @media (max-width: 63.99rem) { .sky__shot { aspect-ratio: 16 / 10; order: -1; } }
 
   .tape { padding-block: clamp(1rem, 3vw, 2rem); border-block: 1px solid var(--line); background: var(--night-950); }
 
@@ -403,11 +339,17 @@ const poster = im('hero-bars');
   .walk__panel h3 { font-size: var(--fs-2xl); margin-top: 0.5rem; }
   .walk__panel p { margin: 0; color: var(--fg-2); max-width: 36ch; }
   /* Pinned: the panels stand side by side and the track slides. */
-  .walk--live .walk__pin { height: 100vh; height: 100svh; display: grid; align-items: center; }
-  .walk--live .walk__track { display: flex; gap: clamp(2rem, 5vw, 5rem); width: max-content; padding-block: 0; will-change: transform; }
-  .walk--live .walk__panel { width: min(32rem, 44vw); flex: none; }
-  .walk--live .walk__panel--intro { width: min(36rem, 46vw); padding-right: clamp(2rem, 5vw, 5rem); }
-  .walk--live .walk__panel:last-child { margin-right: var(--gutter); }
+  /* Wide screens read the four steps as a strip you push sideways. Native
+     overflow scrolling with snap points: it works on a trackpad, a touchscreen
+     and a keyboard, it never pins the page, and it costs no JavaScript. */
+  @media (min-width: 56rem) {
+    .walk__pin { overflow: visible; }
+    .walk__track { display: flex; gap: clamp(2rem, 5vw, 4rem); overflow-x: auto; scroll-snap-type: x mandatory; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: var(--night-500) transparent; padding-inline: var(--gutter); }
+    .walk__track::-webkit-scrollbar { height: 6px; }
+    .walk__track::-webkit-scrollbar-thumb { background: var(--night-500); border-radius: 3px; }
+    .walk__panel { width: min(30rem, 42vw); flex: none; scroll-snap-align: start; }
+    .walk__panel--intro { width: min(34rem, 44vw); padding-right: clamp(1.5rem, 4vw, 3rem); }
+  }
 
   /* ------------------------------------------------------------- maths */
   .maths { background: radial-gradient(60% 60% at 20% 30%, rgb(111 194 122 / 0.08), transparent 60%), var(--bg); }

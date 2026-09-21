@@ -446,17 +446,14 @@ const pad = (n: number) => String(n).padStart(2, '0');
 </Base>
 
 <script>
-  import { ScrollTrigger, reduced } from '~/scripts/motion';
+  import { lit } from '~/scripts/motion';
 
   /*
    * The ladder: the rung nearest the middle of the screen is lit. With reduced
-   * motion the ladder is complete as it is, every number outlined in cream.
+   * motion, or with no JavaScript, the ladder is complete as it is, every number
+   * outlined in cream. One IntersectionObserver; it used to be ScrollTrigger.
    */
-  if (!reduced) {
-    for (const el of Array.from(document.querySelectorAll<HTMLElement>('[data-lit]'))) {
-      ScrollTrigger.create({ trigger: el, start: 'top 60%', end: 'bottom 40%', toggleClass: 'is-lit' });
-    }
-  }
+  lit('[data-lit]', 40);
 </script>
 
 <style>
