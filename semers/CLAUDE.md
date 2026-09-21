@@ -12,9 +12,13 @@
     Sans is not on Google Fonts: its two subsets live in `public/fonts/lifehack-sans-*.woff2` and
     are declared by hand at the bottom of `src/styles/fonts.css`; `npm run fonts` regenerates only
     the PT Sans block above them. Both faces carry Cyrillic and the Latvian diacritics.
-- **Read `PLAN.md` first.** It is the project plan and work journal, in Russian, for the owner:
-  what is done, what is broken, what is waiting on an owner decision, and the next single step.
-  Add a line to its journal when you finish a piece of work; record owner decisions in its §4.
+- **Read `PLAN.md` first.** It points at the project's single plan — the Google Doc
+  "SEMERS САЙТ — план проекта и журнал работ" — which holds the roadmap, the protocol, the
+  handoff, the task cards, the risks and the history, in Russian, for the owner. The owner runs
+  both their projects from documents in that shape: read AI START HERE, then HANDOFF, then the
+  protocol, then the one task card you need. One task, one verifiable result, a ten-point
+  HUMAN REVIEW CARD, and a stop before the next stage. Update the task card, the history and the
+  handoff when a piece of work is finished; do not start a second plan anywhere else.
 - The live shop is the Higgsfield project (website id `ce8b3b43-da2f-4be4-8d97-05b5b8251797`,
   https://semers-store.higgsfield.app). See `DEPLOY.md` § 1b for the sync and the files that must
   survive it. The project has no runtime dependencies beyond Astro, its sitemap integration and
