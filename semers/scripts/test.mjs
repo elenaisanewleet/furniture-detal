@@ -12,6 +12,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { localizeHtml, isExempt } from './localize-links.mjs';
 import { scanProse, applyProse, isProse } from './prose-scan.mjs';
+import { priceCart, stripeForm, tiersOf, tierPctFor, verifyStripeSignature } from '../worker/server.js';
 
 const O = 'https://semers-store.higgsfield.app';
 let failed = 0;
@@ -632,6 +633,111 @@ group('font coverage');
   is('the preloads name real files', named.filter((n) => !files.has(n)), []);
   is('russian preloads its own subsets', named.filter((n) => n.includes('cyrillic')).length, 2);
 }
+
+
+/* ------------------------------------------------------------------ payment */
+/*
+ * The two places where a mistake costs real money: what the card is charged,
+ * and whether a "Stripe says it is paid" message is actually from Stripe.
+ */
+group('cart pricing');
+{
+  const CATALOG = {
+    currency: 'EUR',
+    freeFrom: 25,
+    flatRate: 3.9,
+    freeShipSlugs: ['tasting-box'],
+    items: {
+      'apple-bar-35g:classic': { slug: 'apple-bar-35g', name: 'Apple Bar', title: "App'Lite Apple Bar 35 g", variant: 'Classic', price: 1.45, gtin: '4751043820181', weight: 35, pack: 1, tier: true },
+      'apple-bar-12-pack': { slug: 'apple-bar-12-pack', name: 'Apple Bar 12-pack', title: 'Apple Bar 12-pack', variant: '', price: 14.9, gtin: '', weight: 420, pack: 12, tier: false },
+      'tasting-box': { slug: 'tasting-box', name: 'Tasting Box', title: 'Tasting Box', variant: '', price: 17.9, gtin: '', weight: 600, pack: 1, tier: false },
+    },
+  };
+  const SETTINGS = { freeFrom: 25, tiersOn: true, tier1Qty: 3, tier1Pct: 5, tier2Qty: 6, tier2Pct: 10 };
+  const price = (lines, settings = SETTINGS, overrides = {}, opts = {}) => priceCart(CATALOG, settings, overrides, lines, opts);
+
+  is('the ladder is read from settings', tiersOf(SETTINGS), [[3, 5], [6, 10]]);
+  is('the owner can switch the ladder off', tiersOf({ ...SETTINGS, tiersOn: false }), []);
+  is('a step below the first rung is full price', tierPctFor([[3, 5], [6, 10]], 2), 0);
+  is('the highest rung reached wins', tierPctFor([[3, 5], [6, 10]], 7), 10);
+
+  // The exact basket from the prototype: one bar, one 12-pack, under the
+  // threshold, so delivery is charged.
+  const basket = price([{ id: 'apple-bar-35g:classic', qty: 1 }, { id: 'apple-bar-12-pack', qty: 1 }]);
+  is('a two-line basket totals correctly', [basket.subtotal, basket.shipping, basket.total], [16.35, 3.9, 20.25]);
+
+  is('delivery is free at the threshold', price([{ id: 'apple-bar-12-pack', qty: 2 }]).shipping, 0);
+  is('the tasting box carries free delivery at any total', price([{ id: 'tasting-box', qty: 1 }]).shipping, 0);
+  is('pickup is never charged delivery', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { pickup: true }).shipping, 0);
+
+  // The ladder must reach the money, not only the label.
+  const three = price([{ id: 'apple-bar-35g:classic', qty: 3 }]);
+  is('three bars take 5% off the unit', [three.items[0].unit, three.subtotal], [1.38, 4.14]);
+  const six = price([{ id: 'apple-bar-35g:classic', qty: 6 }]);
+  is('six bars take 10% off the unit', [six.items[0].unit, six.subtotal], [1.31, 7.86]);
+  is('a line opted out of the ladder keeps its price', price([{ id: 'apple-bar-12-pack', qty: 6 }]).items[0].unit, 14.9);
+
+  // Everything a hostile cart could try.
+  is('a price sent by the browser is ignored', price([{ id: 'apple-bar-35g:classic', qty: 1, price: 0.01 }]).total, 5.35);
+  is('an unknown line is refused', price([{ id: 'free-lunch', qty: 1 }]).reason, 'unknown-item');
+  is('a zero quantity is refused', price([{ id: 'tasting-box', qty: 0 }]).reason, 'quantity');
+  is('a fractional quantity is refused', price([{ id: 'tasting-box', qty: 1.5 }]).reason, 'quantity');
+  is('a negative quantity is refused', price([{ id: 'tasting-box', qty: -3 }]).reason, 'quantity');
+  is('an absurd quantity is refused', price([{ id: 'tasting-box', qty: 500 }]).reason, 'quantity');
+  is('an empty cart is refused', price([]).reason, 'empty');
+  is('no catalogue means no charge', priceCart(null, SETTINGS, {}, [{ id: 'tasting-box', qty: 1 }]).reason, 'no-catalog');
+
+  // The admin's overrides are the live shop, so they decide the price too.
+  is("the owner's price wins", price([{ id: 'tasting-box', qty: 1 }], SETTINGS, { 'tasting-box': { price: 19.5 } }).subtotal, 19.5);
+  is('a hidden product cannot be bought', price([{ id: 'tasting-box', qty: 1 }], SETTINGS, { 'tasting-box': { hidden: true } }).reason, 'unavailable');
+  is('a sold-out product cannot be bought', price([{ id: 'tasting-box', qty: 1 }], SETTINGS, { 'tasting-box': { inStock: false } }).reason, 'unavailable');
+
+  // The GTIN is the only code the shop and the production floor share, so it
+  // has to survive into the line the operations base receives.
+  is('the line carries its GTIN', basket.items[0].gtin, '4751043820181');
+}
+
+group('stripe form encoding');
+{
+  const q = (o) => stripeForm(o).toString();
+  is('nesting becomes brackets', decodeURIComponent(q({ a: { b: 'c' } })), 'a[b]=c');
+  is('arrays are indexed', decodeURIComponent(q({ line_items: [{ quantity: 2 }] })), 'line_items[0][quantity]=2');
+  is('empty values are dropped', q({ a: '', b: null, c: undefined, d: 1 }), 'd=1');
+  is('a zero is not an empty value', q({ amount: 0 }), 'amount=0');
+}
+
+group('stripe webhook signature');
+{
+  const SECRET = 'whsec_test_deadbeef';
+  const PAYLOAD = '{"id":"evt_1","type":"checkout.session.completed"}';
+  const NOW = 1_700_000_000;
+  // Same HMAC the Worker computes, so the test signs exactly as Stripe does.
+  const sign = async (secret, message) => {
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
+    return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  };
+  const header = async (t, secret = SECRET, payload = PAYLOAD) => `t=${t},v1=${await sign(secret, `${t}.${payload}`)}`;
+  const check = (h, payload = PAYLOAD, now = NOW) => verifyStripeSignature(h, payload, SECRET, now, sign);
+
+  is('a genuine signature passes', (await check(await header(NOW))).ok, true);
+  is('a tampered payload fails', (await check(await header(NOW), '{"id":"evt_1","type":"refund"}')).reason, 'signature');
+  is('another secret fails', (await check(await header(NOW, 'whsec_someone_else'))).reason, 'signature');
+  is('an old capture cannot be replayed', (await check(await header(NOW - 600))).reason, 'stale');
+  is('a clock-skewed future stamp is refused', (await check(await header(NOW + 600))).reason, 'stale');
+  is('a stamp inside the tolerance passes', (await check(await header(NOW - 60))).ok, true);
+  is('a header with no signature fails', (await check(`t=${NOW}`)).reason, 'malformed');
+  is('a header with no timestamp fails', (await check('v1=abc')).reason, 'malformed');
+  is('an empty header fails', (await check('')).reason, 'malformed');
+  is('a non-numeric timestamp fails', (await check(`t=soon,v1=abc`)).reason, 'malformed');
+  is('no endpoint secret means no trust', (await verifyStripeSignature(await header(NOW), PAYLOAD, '', NOW, sign)).reason, 'not-configured');
+
+  // Stripe sends two v1 signatures while an endpoint secret is being rotated;
+  // the new one must be accepted without the old one being refused first.
+  const rotating = `t=${NOW},v1=${await sign('whsec_old_one', `${NOW}.${PAYLOAD}`)},v1=${await sign(SECRET, `${NOW}.${PAYLOAD}`)}`;
+  is('either signature of a rotating pair passes', (await check(rotating)).ok, true);
+}
+
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

@@ -121,7 +121,14 @@ function db(env) {
  * IF NOT EXISTS, so this is safe to call against a database that already has data.
  */
 /** [table, column, definition] for columns that postdate the first schema. */
-const ADDED_COLUMNS = [['reviews', 'locale', `TEXT NOT NULL DEFAULT 'en'`]];
+const ADDED_COLUMNS = [
+  ['reviews', 'locale', `TEXT NOT NULL DEFAULT 'en'`],
+  ['orders', 'stripe_session', `TEXT NOT NULL DEFAULT ''`],
+  ['orders', 'stripe_intent', `TEXT NOT NULL DEFAULT ''`],
+  ['orders', 'paid_at', `TEXT NOT NULL DEFAULT ''`],
+  /* 0 means the paid order has not reached the operations base yet, so it can be replayed. */
+  ['orders', 'ops_sent', `INTEGER NOT NULL DEFAULT 0`],
+];
 
 async function ensureSchema(env) {
   const d = db(env);
@@ -156,6 +163,12 @@ async function ensureSchema(env) {
     `CREATE INDEX IF NOT EXISTS login_attempts_ip ON login_attempts (ip, at)`,
     `CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, action TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '')`,
     `CREATE INDEX IF NOT EXISTS audit_at ON audit (at DESC)`,
+    /*
+     * Stripe retries a webhook until it gets a 2xx, so the same event arrives
+     * more than once as a matter of course. The event id being the primary key
+     * is what makes "mark it paid and tell the floor" happen exactly once.
+     */
+    `CREATE TABLE IF NOT EXISTS stripe_events (id TEXT PRIMARY KEY, at TEXT NOT NULL, type TEXT NOT NULL DEFAULT '')`,
   ];
   for (const q of stmts) await d.prepare(q).run();
   /*
@@ -954,6 +967,494 @@ async function handleOrder(request, env) {
   return json(200, { ok: true, ref: id });
 }
 
+/* -------------------------------------------------------------------- payment */
+
+/*
+ * Stripe over plain fetch, on purpose.
+ *
+ * The npm SDK's constructEvent() verifies a webhook with Node's crypto, which
+ * the Workers runtime does not have; the async path through a SubtleCrypto
+ * provider exists but drags a megabyte of SDK behind it for two REST calls. The
+ * REST API is form-encoded and stable, and the signature scheme is an HMAC this
+ * file already knows how to compute — so both are done here, and the Worker
+ * keeps having no dependencies at all.
+ */
+const STRIPE_API = 'https://api.stripe.com/v1';
+/** A captured webhook POST must not be replayable tomorrow. Stripe's own default. */
+const STRIPE_TOLERANCE_S = 300;
+/** Stripe Checkout's own translations; anything else falls back to its auto-detect. */
+const STRIPE_LOCALE = { en: 'en', ru: 'ru', lv: 'lv' };
+
+/**
+ * The catalogue the Worker charges from, fetched once per isolate.
+ *
+ * It is a build artefact of src/data/products.ts served beside the pages, so
+ * the price a reader was shown and the price a card is charged come from one
+ * file. Without the ASSETS binding there is no price list, and checkout refuses
+ * rather than trusting the browser's numbers.
+ */
+let catalogCache = null;
+
+async function loadCatalog(request, env) {
+  if (catalogCache) return catalogCache;
+  if (!env.ASSETS) return null;
+  try {
+    const res = await env.ASSETS.fetch(new URL('/catalog.json', request.url));
+    if (!res.ok) return null;
+    const data = await res.json();
+    if (!data || !data.items || typeof data.items !== 'object') return null;
+    catalogCache = data;
+    return catalogCache;
+  } catch {
+    return null;
+  }
+}
+
+/** The volume ladder as the owner has it set, so an admin change is what applies. */
+export function tiersOf(settings) {
+  if (!settings || !settings.tiersOn) return [];
+  return [
+    [Number(settings.tier1Qty) || 0, Number(settings.tier1Pct) || 0],
+    [Number(settings.tier2Qty) || 0, Number(settings.tier2Pct) || 0],
+  ]
+    .filter(([q, pct]) => q > 1 && pct > 0)
+    .sort((a, b) => a[0] - b[0]);
+}
+
+/** Percent off one line at this quantity — the same ladder the cart shows. */
+export function tierPctFor(tiers, qty) {
+  let pct = 0;
+  for (const [minQty, p] of tiers) if (qty >= minQty) pct = p;
+  return pct;
+}
+
+/**
+ * Turn what the browser sent into what the shop will actually charge.
+ *
+ * Only the line id and the quantity survive from the request. Everything with a
+ * number on it — unit price, discount, shipping, total — is recomputed here
+ * from the catalogue, the owner's overrides and the owner's settings. A cart
+ * edited in the console therefore buys the same goods at the same price as one
+ * that was not.
+ *
+ * Exported because this is the function that decides what a card is charged;
+ * scripts/test.mjs asserts it directly.
+ */
+export function priceCart(catalog, settings, overrides, lines, opts = {}) {
+  if (!catalog) return { ok: false, reason: 'no-catalog' };
+  if (!Array.isArray(lines) || !lines.length) return { ok: false, reason: 'empty' };
+  if (lines.length > MAX_ITEMS) return { ok: false, reason: 'too-many' };
+
+  const tiers = tiersOf(settings);
+  const freeFrom = Number(settings?.freeFrom ?? catalog.freeFrom ?? 25);
+  const flatRate = Number(catalog.flatRate ?? 3.9);
+  const freeSlugs = new Set(catalog.freeShipSlugs || []);
+  const items = [];
+  let subtotal = 0;
+  let free = false;
+
+  for (const raw of lines) {
+    const id = s(raw?.id, 128);
+    const entry = catalog.items[id];
+    if (!entry) return { ok: false, reason: 'unknown-item', id };
+    // Rounding here would invent a quantity nobody chose: "1.5" would be
+    // charged as two. The browser may tidy its own input; the endpoint that
+    // takes the money refuses anything that is not already a whole number.
+    const qty = Number(raw?.qty);
+    if (!Number.isInteger(qty) || qty < 1 || qty > 99) return { ok: false, reason: 'quantity', id };
+
+    // An override is the owner's live price for that product; a hidden or
+    // out-of-stock product must not be sellable through a stale tab.
+    const ov = overrides?.[entry.slug];
+    if (ov && (ov.hidden === true || ov.inStock === false)) return { ok: false, reason: 'unavailable', id };
+    const base = ov && ov.price !== null && ov.price !== undefined ? Number(ov.price) : Number(entry.price);
+    if (!Number.isFinite(base) || base <= 0) return { ok: false, reason: 'price', id };
+
+    const pct = entry.tier === false ? 0 : tierPctFor(tiers, qty);
+    const unit = pct ? Math.round(base * (100 - pct)) / 100 : Math.round(base * 100) / 100;
+    const line = Math.round(unit * qty * 100) / 100;
+    subtotal = Math.round((subtotal + line) * 100) / 100;
+    if (freeSlugs.has(entry.slug)) free = true;
+
+    items.push({
+      id,
+      slug: entry.slug,
+      name: entry.name,
+      title: entry.title || entry.name,
+      variant: entry.variant || '',
+      gtin: entry.gtin || '',
+      weight: Number(entry.weight) || 0,
+      qty,
+      unit,
+      line,
+      discountPct: pct,
+    });
+  }
+
+  const pickup = !!opts.pickup;
+  const shipping = pickup || free || subtotal >= freeFrom ? 0 : Math.round(flatRate * 100) / 100;
+  return {
+    ok: true,
+    currency: currency(catalog.currency),
+    items,
+    subtotal,
+    shipping,
+    total: Math.round((subtotal + shipping) * 100) / 100,
+    freeFrom,
+  };
+}
+
+/**
+ * Stripe's REST API takes bracketed form keys, not JSON. Flattening here keeps
+ * the call sites readable as the object shape Stripe documents.
+ */
+export function stripeForm(obj, prefix = '', out = new URLSearchParams()) {
+  for (const [k, v] of Object.entries(obj)) {
+    if (v === undefined || v === null || v === '') continue;
+    const key = prefix ? `${prefix}[${k}]` : k;
+    if (Array.isArray(v)) v.forEach((el, i) => (el !== null && typeof el === 'object' ? stripeForm(el, `${key}[${i}]`, out) : out.append(`${key}[${i}]`, String(el))));
+    else if (typeof v === 'object') stripeForm(v, key, out);
+    else out.append(key, String(v));
+  }
+  return out;
+}
+
+async function stripePost(env, path, params, idempotencyKey) {
+  const headers = {
+    authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
+    'content-type': 'application/x-www-form-urlencoded',
+  };
+  if (idempotencyKey) headers['idempotency-key'] = idempotencyKey;
+  const res = await fetch(`${STRIPE_API}${path}`, { method: 'POST', headers, body: stripeForm(params).toString() });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    // Stripe's message names the parameter it rejected, which is what makes a
+    // bad integration findable — but it goes to the log, never to the shopper.
+    console.error('stripe', path, res.status, data?.error?.message || '');
+    return { ok: false, status: res.status, code: data?.error?.code || '' };
+  }
+  return { ok: true, data };
+}
+
+/** Cents, because Stripe counts in the currency's smallest unit and 19.9 * 100 is 1989.9999. */
+const cents = (v) => Math.round(Number(v) * 100);
+
+/**
+ * Verify a Stripe webhook signature.
+ *
+ * The header carries the signed timestamp and one or more v1 signatures — more
+ * than one while an endpoint secret is being rotated, so every v1 is tried. The
+ * timestamp is part of the signed payload and is checked against the clock,
+ * which is what stops a captured request from being replayed later.
+ *
+ * `hmacFn` and `nowS` are parameters so the test can drive this with a known
+ * vector instead of the wall clock.
+ */
+export async function verifyStripeSignature(header, payload, secret, nowS, hmacFn = hmac) {
+  if (!secret) return { ok: false, reason: 'not-configured' };
+  let t = '';
+  const sigs = [];
+  for (const part of String(header || '').split(',')) {
+    const i = part.indexOf('=');
+    if (i < 0) continue;
+    const k = part.slice(0, i).trim();
+    const v = part.slice(i + 1).trim();
+    if (k === 't') t = v;
+    else if (k === 'v1') sigs.push(v.toLowerCase());
+  }
+  if (!t || !sigs.length) return { ok: false, reason: 'malformed' };
+  const ts = Number(t);
+  if (!Number.isFinite(ts)) return { ok: false, reason: 'malformed' };
+  if (Math.abs(nowS - ts) > STRIPE_TOLERANCE_S) return { ok: false, reason: 'stale' };
+  const expected = await hmacFn(secret, `${t}.${payload}`);
+  for (const sig of sigs) if (timingSafeEqual(expected, sig)) return { ok: true };
+  return { ok: false, reason: 'signature' };
+}
+
+/**
+ * The order as the Semers order regulation wants it.
+ *
+ * Retail buyers deliberately do not become rows in the client directory: the
+ * owner's own normalisation rule puts every web sale under one client,
+ * "Интернет-заказы", with the shop's reference in the external-number field, and
+ * says naming retail buyers is a separate job done from the shop's own export.
+ * That is also the kinder reading of GDPR — the operations base gets what it
+ * needs to pick and ship, and the buyer's details stay in the shop.
+ *
+ * The line key is the GTIN, because that is the one code the catalogue and the
+ * operations product master already share.
+ */
+function opsPayload(order) {
+  return {
+    source: 'semers-store',
+    version: 1,
+    channel: 'Интернет-магазин',
+    client: 'Интернет-заказы',
+    order_no: order.id,
+    external_no: order.id,
+    ordered_at: order.created_at,
+    paid_at: order.paid_at || '',
+    status: 'Принят',
+    payment_status: 'Оплачен',
+    currency: order.currency,
+    subtotal: order.subtotal,
+    shipping: order.shipping,
+    total: order.total,
+    payment: { provider: 'stripe', session: order.stripe_session || '', intent: order.stripe_intent || '' },
+    contact: { name: order.name, email: order.email, phone: order.phone },
+    delivery: { method: order.delivery, country: order.country, city: order.city, postcode: order.postcode, address: order.address },
+    note: order.note || '',
+    items: (order.items || []).map((i) => ({ gtin: i.gtin || '', name: i.title || i.name, variant: i.variant || '', qty: i.qty, unit: i.unit, line: i.line, weight_g: i.weight })),
+  };
+}
+
+/**
+ * Hand the paid order to whatever runs operations — Baserow, a Notion bridge,
+ * Zapier, Make. One signed POST, so the receiver can prove it came from us and
+ * nobody can post fake orders into the shop floor's queue.
+ *
+ * The D1 row is the durable record. If this fails the order is not lost: it is
+ * still in the database with ops_sent = 0, and the admin can replay it.
+ */
+async function pushToOps(env, order) {
+  if (!env.OPS_WEBHOOK_URL) return false;
+  const body = JSON.stringify(opsPayload(order));
+  const headers = { 'content-type': 'application/json' };
+  if (env.OPS_WEBHOOK_SECRET) {
+    const ts = Math.floor(Date.now() / 1000);
+    headers['x-semers-timestamp'] = String(ts);
+    headers['x-semers-signature'] = await hmac(env.OPS_WEBHOOK_SECRET, `${ts}.${body}`);
+  }
+  try {
+    const res = await fetch(env.OPS_WEBHOOK_URL, { method: 'POST', headers, body });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Start a payment.
+ *
+ * The order row is written before the redirect, so an abandoned checkout is a
+ * visible unpaid order rather than nothing at all, and the webhook has a row to
+ * find when the money lands.
+ */
+async function handleCheckout(request, env) {
+  if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+  if (request.method !== 'POST') return json(405, { ok: false, reason: 'method' });
+  if (!env.STRIPE_SECRET_KEY) return json(503, { ok: false, reason: 'not-configured' });
+
+  let body;
+  try {
+    body = await readJson(request);
+  } catch (e) {
+    return json(e?.status || 400, { ok: false, reason: e?.reason || 'bad-json' });
+  }
+  if (s(body.website) || s(body.customer?.website)) return json(200, { ok: true, url: '' });
+  if (await overLimit(env, `checkout:${clientIp(request)}`, SUBMIT_MAX, SUBMIT_WINDOW_S)) return json(429, { ok: false, reason: 'too-many' });
+
+  const c = body.customer || {};
+  const email = s(c.email, 160);
+  if (!EMAIL_RE.test(email)) return json(422, { ok: false, reason: 'email' });
+
+  const catalog = await loadCatalog(request, env);
+  const settings = await readSettings(env);
+  const store = await storefrontOverrides(env);
+  const delivery = s(c.delivery, 120);
+  const priced = priceCart(catalog, settings, store, body.items, { pickup: /pickup|самовывоз|saņemšana/i.test(delivery) });
+  if (!priced.ok) return json(priced.reason === 'no-catalog' ? 503 : 422, { ok: false, reason: priced.reason });
+
+  const id = ref();
+  const origin = new URL(request.url).origin;
+  const loc = locale(body.locale);
+  const prefix = loc === 'en' ? '' : `/${loc}`;
+
+  const params = {
+    mode: 'payment',
+    customer_email: email,
+    client_reference_id: id,
+    locale: STRIPE_LOCALE[loc] || 'auto',
+    success_url: `${origin}${prefix}/order/thank-you/?ref=${encodeURIComponent(id)}&paid=1`,
+    cancel_url: `${origin}${prefix}/cart/?ref=${encodeURIComponent(id)}`,
+    metadata: { order_ref: id, locale: loc },
+    payment_intent_data: { metadata: { order_ref: id } },
+    line_items: priced.items.map((i) => ({
+      quantity: i.qty,
+      price_data: {
+        currency: priced.currency.toLowerCase(),
+        unit_amount: cents(i.unit),
+        product_data: {
+          name: [i.title, i.variant].filter(Boolean).join(' — '),
+          metadata: { gtin: i.gtin, slug: i.slug },
+        },
+      },
+    })),
+  };
+  if (priced.shipping > 0) {
+    params.shipping_options = [
+      {
+        shipping_rate_data: {
+          type: 'fixed_amount',
+          display_name: s(delivery, 60) || 'Delivery',
+          fixed_amount: { amount: cents(priced.shipping), currency: priced.currency.toLowerCase() },
+        },
+      },
+    ];
+  }
+
+  // The reference is unique per attempt, so it is also the idempotency key: a
+  // double-clicked button reuses the same session instead of opening two.
+  const created = await stripePost(env, '/checkout/sessions', params, `checkout:${id}`);
+  if (!created.ok) return json(502, { ok: false, reason: 'payment-provider' });
+
+  await persistPending(env, id, body, priced, created.data.id).catch(() => false);
+  return json(200, { ok: true, ref: id, url: created.data.url });
+}
+
+/** The overrides the storefront already exposes, in the shape priceCart wants. */
+async function storefrontOverrides(env) {
+  const d = db(env);
+  if (!d) return {};
+  const out = {};
+  try {
+    const ov = await d.prepare(`SELECT slug, price, hidden, in_stock FROM product_overrides`).all();
+    for (const r of ov.results || []) {
+      out[r.slug] = {
+        price: r.price === null ? null : Number(r.price),
+        hidden: r.hidden === null ? null : !!r.hidden,
+        inStock: r.in_stock === null ? null : !!r.in_stock,
+      };
+    }
+  } catch {
+    /* no overrides table yet: catalogue prices stand */
+  }
+  return out;
+}
+
+async function persistPending(env, id, body, priced, session) {
+  const d = await ensureSchema(env);
+  if (!d) return false;
+  const c = body.customer || {};
+  await d
+    .prepare(
+      `INSERT INTO orders (id, created_at, type, status, name, email, phone, country, city, postcode, address, delivery, note, gift, currency, subtotal, shipping, total, items_json, payload_json, page, stripe_session)
+       VALUES (?, ?, 'order', 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    )
+    .bind(
+      id,
+      nowIso(),
+      s(c.name, 120),
+      s(c.email, 160),
+      s(c.phone, 60),
+      s(c.country, 80),
+      s(c.city, 80),
+      s(c.postcode, 30),
+      s(c.address, 200),
+      s(c.delivery, 120),
+      text(c.note, 2000),
+      s(c.gift, 300),
+      priced.currency,
+      priced.subtotal,
+      priced.shipping,
+      priced.total,
+      JSON.stringify(priced.items),
+      JSON.stringify({ locale: locale(body.locale), page: s(body.page, 200) }),
+      s(body.page, 200),
+      s(session, 120),
+    )
+    .run();
+  return true;
+}
+
+/**
+ * Stripe's word that the money arrived.
+ *
+ * This, not the browser landing on the thank-you page, is what marks an order
+ * paid — a shopper who closes the tab the moment the card clears still has a
+ * paid order, and a shopper who bookmarks the success URL cannot manufacture
+ * one. Stripe retries a webhook it did not get a 2xx for, so the handler has to
+ * survive seeing the same event twice: the event id is a primary key, and the
+ * second delivery finds the row already there and stops.
+ */
+async function handleStripeWebhook(request, env) {
+  if (request.method !== 'POST') return json(405, { ok: false, reason: 'method' });
+  const payload = await request.text();
+  if (payload.length > MAX_BODY) return tooLarge();
+  const verdict = await verifyStripeSignature(request.headers.get('stripe-signature'), payload, env.STRIPE_WEBHOOK_SECRET, Math.floor(Date.now() / 1000));
+  if (!verdict.ok) {
+    // 400 tells Stripe not to retry a request we will never accept, and the
+    // reason stays out of the response: an attacker probing the endpoint learns
+    // nothing about which half of the check they failed.
+    console.error('stripe webhook rejected', verdict.reason);
+    return json(400, { ok: false, reason: 'signature' });
+  }
+
+  let event;
+  try {
+    event = JSON.parse(payload);
+  } catch {
+    return json(400, { ok: false, reason: 'bad-json' });
+  }
+
+  const d = await ensureSchema(env);
+  if (d && event.id) {
+    const seen = await d.prepare(`INSERT OR IGNORE INTO stripe_events (id, at, type) VALUES (?, ?, ?)`).bind(s(event.id, 80), nowIso(), s(event.type, 80)).run();
+    // Nothing inserted means this delivery is a repeat. Answer 200 so Stripe
+    // stops retrying, and do the work no second time.
+    if (!seen?.meta?.changes) return json(200, { ok: true, duplicate: true });
+  }
+
+  if (event.type === 'checkout.session.completed') await onPaid(env, event.data?.object || {}).catch((e) => console.error('stripe paid', e));
+  return json(200, { ok: true });
+}
+
+async function onPaid(env, session) {
+  // A session can complete with payment still pending for some asynchronous
+  // methods; only a paid one is an order the floor should start picking.
+  if (session.payment_status && session.payment_status !== 'paid') return;
+  const id = s(session.client_reference_id || session.metadata?.order_ref, 40);
+  const d = await ensureSchema(env);
+  if (!d || !id) return;
+
+  await d
+    .prepare(`UPDATE orders SET status = 'paid', paid_at = ?, stripe_intent = ? WHERE id = ? AND status <> 'paid'`)
+    .bind(nowIso(), s(session.payment_intent, 120), id)
+    .run();
+
+  const row = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(id).first();
+  if (!row) return;
+  const order = { ...row, items: JSON.parse(row.items_json || '[]') };
+
+  const body = {
+    type: 'order',
+    customer: { name: row.name, email: row.email, phone: row.phone, country: row.country, city: row.city, postcode: row.postcode, address: row.address, delivery: row.delivery, note: row.note, gift: row.gift },
+    items: order.items.map((i) => ({ id: i.id, name: i.title || i.name, variant: i.variant, qty: i.qty, price: i.unit, total: i.line })),
+    subtotal: row.subtotal,
+    shipping: row.shipping,
+    total: row.total,
+    currency: row.currency,
+    locale: (() => {
+      try {
+        return locale(JSON.parse(row.payload_json || '{}').locale);
+      } catch {
+        return 'en';
+      }
+    })(),
+  };
+
+  const notice = render('order', body, id);
+  await Promise.all([
+    sendTelegram(env, `ОПЛАЧЕНО\n${notice}`).catch(() => false),
+    sendEmail(env, `Оплачен заказ ${id}`, notice, row.email).catch(() => false),
+    sendCustomerReceipt(env, body, id).catch(() => false),
+  ]);
+
+  const sent = await pushToOps(env, order);
+  await d.prepare(`UPDATE orders SET ops_sent = ? WHERE id = ?`).bind(sent ? 1 : 0, id).run().catch(() => {});
+  await audit(env, 'order-paid', `${id} ops=${sent ? 'ok' : 'pending'}`);
+}
+
 /* ------------------------------------------------------------------- admin API */
 
 const ORDER_FIELDS = `id, created_at, type, status, name, email, phone, country, city, postcode, address, delivery, note, gift, currency, subtotal, shipping, total, items_json, admin_note, page`;
@@ -1235,6 +1736,8 @@ export default {
     const path = url.pathname.replace(/\/+$/, '') || '/';
     try {
       if (path === '/api/order') return await handleOrder(request, env);
+      if (path === '/api/checkout') return await handleCheckout(request, env);
+      if (path === '/api/stripe/webhook') return await handleStripeWebhook(request, env);
       if (path === '/api/storefront') return await handleStorefront(request, env);
       if (path === '/api/reviews') {
         if (request.method === 'GET') return await handleReviewsGet(request, env);
