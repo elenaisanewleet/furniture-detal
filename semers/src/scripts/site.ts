@@ -21,6 +21,8 @@ declare global {
       tier2Pct?: number;
       tiersOn?: boolean;
       reviewsOn?: boolean;
+      /** True once the shop can charge a card; set by /api/storefront, never baked into the page. */
+      payments?: boolean;
       locale?: string;
       intl?: string;
       /** Runtime templates for the current locale; see src/i18n/ui.ts. */
@@ -43,6 +45,7 @@ const CFG = window.SEMERS || {
   tier2Qty: 0,
   tier2Pct: 0,
   tiersOn: false,
+  payments: false,
   reviewsOn: false,
   locale: 'en',
   intl: 'en-IE',
@@ -922,7 +925,10 @@ if (checkout) {
   const restoreBtn = () => {
     if (!submitBtn) return;
     submitBtn.disabled = cart.count() === 0;
-    submitBtn.innerHTML = submitHtml;
+    // paintCheckout keeps the original label on the element, so restoring after
+    // a failed attempt gives back "Pay by card" where that is the truth.
+    if (!submitBtn.dataset.label) submitBtn.dataset.label = submitHtml;
+    paintCheckout();
   };
   checkout.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -962,7 +968,60 @@ if (checkout) {
       page: location.pathname, locale: CFG.locale || 'en',
     };
     checkout.dataset.busy = '1';
-    if (btn) (btn.disabled = true), (btn.textContent = S('placingOrder', 'Placing order…'));
+    if (btn) (btn.disabled = true), (btn.textContent = CFG.payments ? S('openingPayment', 'Opening secure payment…') : S('placingOrder', 'Placing order…'));
+
+    /*
+     * Card payment. Only the line id and the quantity go up: the server prices
+     * the cart again from the published catalogue, so the totals shown above
+     * are what the customer was shown, not what they will be charged — and the
+     * two are the same number by construction rather than by trust.
+     *
+     * The cart is deliberately NOT cleared here. Stripe's cancel link comes
+     * back to /cart/, and a shopper who hesitates at the card form must find
+     * their box still packed. The thank-you page empties it on paid=1.
+     */
+    if (CFG.payments) {
+      try {
+        const res = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ customer: data, items: cart.items.map((i) => ({ id: i.id, qty: i.qty })), locale: CFG.locale || 'en', page: location.pathname }),
+        });
+        const paid = (await res.json().catch(() => ({}))) as { ok?: boolean; url?: string; ref?: string; reason?: string };
+        if (paid.ok && paid.url) {
+          try {
+            sessionStorage.setItem('semers.lastOrder', JSON.stringify({ ref: paid.ref || '', items: order.items, subtotal: order.subtotal, shipping, shippingNote: order.shippingNote, total: order.total, delivery: String(data.delivery || ''), email: String(data.email || '') }));
+          } catch {
+            /* private mode: the recap is a nicety */
+          }
+          location.href = paid.url;
+          return;
+        }
+        // A stale flag — the keys were removed since this page loaded — is the
+        // one failure worth falling through for: the old order-request path
+        // still works and the sale is not lost. Anything else is said out loud,
+        // because a shopper who thinks they paid and did not is the worst
+        // outcome this form can produce.
+        if (paid.reason !== 'not-configured') {
+          const msg = paid.reason === 'email' ? S('checkEmail', 'Please check the e-mail address and try again.') : S('somethingWrong', 'Something went wrong. Please try again.');
+          if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
+          toast(msg, 5000);
+          checkout.dataset.busy = '';
+          restoreBtn();
+          return;
+        }
+        CFG.payments = false;
+        paintCheckout();
+      } catch {
+        const msg = S('somethingWrong', 'Something went wrong. Please try again.');
+        if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
+        toast(msg, 5000);
+        checkout.dataset.busy = '';
+        restoreBtn();
+        return;
+      }
+    }
+
     try {
       const res = await post(order);
       checkout.dataset.done = '1';
@@ -1063,6 +1122,8 @@ interface StorefrontOverride {
 }
 interface StorefrontData {
   settings: Record<string, string | number | boolean>;
+  /** Whether the Worker has payment keys. The button must not promise a card form that is not there. */
+  payments?: boolean;
   products: Record<string, StorefrontOverride>;
   reviews: Record<string, { count: number; avg: number }>;
 }
@@ -1196,8 +1257,29 @@ function applyOverrideToPdp(pdpEl: HTMLElement, o: StorefrontOverride) {
   }
 }
 
+/**
+ * The checkout button says what will actually happen.
+ *
+ * Whether cards are live is a property of the deployment, not of the page, so
+ * the built HTML says "Place order" and this repaints it once /api/storefront
+ * answers. The original label is kept on the element because the page was
+ * rendered in the reader's language and re-deriving it here would not be.
+ */
+function paintCheckout() {
+  const btn = $<HTMLButtonElement>('form[data-checkout] [type="submit"]');
+  if (btn) {
+    if (!btn.dataset.label) btn.dataset.label = btn.innerHTML;
+    if (CFG.payments) btn.textContent = S('payByCard', 'Pay by card');
+    else btn.innerHTML = btn.dataset.label;
+  }
+  const note = $('[data-pay-note]');
+  if (note && CFG.payments) note.textContent = S('payHandoff', 'You will be taken to Stripe’s secure page to pay. We never see your card details.');
+}
+
 function applyStorefront(data: StorefrontData) {
   const st = data.settings || {};
+  CFG.payments = data.payments === true;
+  paintCheckout();
   if (typeof st.freeFrom === 'number' && st.freeFrom > 0) CFG.freeFrom = st.freeFrom;
   CFG.tiersOn = st.tiersOn !== false;
   CFG.tier1Qty = Number(st.tier1Qty) || CFG.tier1Qty;

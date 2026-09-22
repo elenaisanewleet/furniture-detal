@@ -21,6 +21,7 @@
     "check:html": "node scripts/check-html.mjs",
     "check:a11y": "node scripts/check-a11y.mjs",
     "check:flow": "node scripts/check-flow.mjs",
+    "check:pay": "node scripts/check-pay.mjs",
     "check:admin": "node scripts/check-admin.mjs",
     "check:motion": "node scripts/check-motion.mjs",
     "check:schema": "node scripts/check-schema.mjs",

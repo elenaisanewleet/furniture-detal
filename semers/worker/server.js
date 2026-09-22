@@ -489,7 +489,13 @@ function ownerChangedOnly(settings) {
 
 async function handleStorefront(request, env) {
   const settings = await readSettings(env);
-  const out = { settings: ownerChangedOnly(settings), products: {}, reviews: {} };
+  /*
+   * Whether the shop can charge a card is a property of this deployment, not
+   * of the built page, so it is reported here rather than baked in. The
+   * checkout button reads it and stops promising a card form that is not
+   * there — or an e-mailed payment link once there is one.
+   */
+  const out = { settings: ownerChangedOnly(settings), payments: !!env.STRIPE_SECRET_KEY, products: {}, reviews: {} };
   const d = db(env);
   if (d) {
     const [ov, rv] = await Promise.all([

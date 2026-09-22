@@ -66,7 +66,20 @@ export function getStaticPaths() {
 
   <script is:inline>
     (function () {
-      var ref = new URLSearchParams(location.search).get('ref');
+      var q = new URLSearchParams(location.search);
+      var ref = q.get('ref');
+      /*
+       * Card payments leave the cart alone on the way out, because Stripe's
+       * cancel link comes back to /cart/ and an emptied cart would lose the
+       * sale of anyone who changed their mind at the card form. Landing here
+       * with paid=1 is the first moment the box is safe to empty.
+       */
+      if (q.get('paid')) {
+        try {
+          localStorage.removeItem('semers.cart.v1');
+          if (window.semersCart) { window.semersCart.items = []; window.semersCart.save(); }
+        } catch (e) { /* private mode */ }
+      }
       var el = document.getElementById('ty-ref');
       var line = document.getElementById('ty-ref-line');
       if (el && line && ref) { el.textContent = ref; line.hidden = false; }
