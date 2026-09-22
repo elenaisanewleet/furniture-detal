@@ -697,6 +697,29 @@ group('cart pricing');
   is('the line carries its GTIN', basket.items[0].gtin, '4751043820181');
 }
 
+group('free shipping, in every place that decides it');
+{
+  /*
+   * Which products ship free regardless of the total is written down three
+   * times: the cart summary the shopper reads, the structured data Google
+   * reads, and the catalogue the card is charged from. Three copies of one
+   * fact is how a shop comes to show one total and bill another, so they are
+   * compared here rather than trusted to stay in step.
+   */
+  const read = async (file, re) => {
+    const src = await readFile(new URL(`../src/${file}`, import.meta.url), 'utf-8');
+    return [...(re.exec(src)?.[1].matchAll(/'([^']+)'/g) || [])].map((m) => m[1]).sort();
+  };
+  const [cart, schema, catalogue] = await Promise.all([
+    read('scripts/site.ts', /const FREE_SHIP_SLUGS = new Set\(\[([^\]]*)\]\)/),
+    read('lib/schema.ts', /const FREE_SHIP_SLUGS = new Set\(\[([^\]]*)\]\)/),
+    read('pages/catalog.json.ts', /freeShipSlugs: \[([^\]]*)\]/),
+  ]);
+  is('the cart and the price the card is charged agree', catalogue, cart);
+  is('the structured data agrees too', schema, cart);
+  is('and the list is not empty, which would pass by accident', cart.length > 0, true);
+}
+
 group('delivery method');
 {
   /*

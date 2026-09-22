@@ -1204,10 +1204,16 @@ export async function verifyStripeSignature(header, payload, secret, nowS, hmacF
  * The line key is the GTIN, because that is the one code the catalogue and the
  * operations product master already share.
  */
-function opsPayload(order) {
+function opsPayload(order, session) {
   return {
     source: 'semers-store',
     version: 1,
+    /*
+     * Whether this was real money. Test-mode orders look exactly like live ones
+     * on the shop floor otherwise, and the week before a launch is precisely
+     * when the floor will be sent a dozen of them.
+     */
+    livemode: session?.livemode === true,
     channel: 'Интернет-магазин',
     client: 'Интернет-заказы',
     order_no: order.id,
@@ -1224,6 +1230,7 @@ function opsPayload(order) {
     contact: { name: order.name, email: order.email, phone: order.phone },
     delivery: { method: order.delivery, country: order.country, city: order.city, postcode: order.postcode, address: order.address },
     note: order.note || '',
+    locale: order.locale || '',
     items: (order.items || []).map((i) => ({ gtin: i.gtin || '', name: i.title || i.name, variant: i.variant || '', qty: i.qty, unit: i.unit, line: i.line, weight_g: i.weight })),
   };
 }
@@ -1236,9 +1243,9 @@ function opsPayload(order) {
  * The D1 row is the durable record. If this fails the order is not lost: it is
  * still in the database with ops_sent = 0, and the admin can replay it.
  */
-async function pushToOps(env, order) {
+async function pushToOps(env, order, session) {
   if (!env.OPS_WEBHOOK_URL) return false;
-  const body = JSON.stringify(opsPayload(order));
+  const body = JSON.stringify(opsPayload(order, session));
   const headers = { 'content-type': 'application/json' };
   if (env.OPS_WEBHOOK_SECRET) {
     const ts = Math.floor(Date.now() / 1000);
@@ -1324,8 +1331,13 @@ async function handleCheckout(request, env) {
     ];
   }
 
-  // The reference is unique per attempt, so it is also the idempotency key: a
-  // double-clicked button reuses the same session instead of opening two.
+  /*
+    * The key makes Stripe's own retries safe, and nothing more: the reference
+    * is freshly random per request, so a double-click produces two references,
+    * two keys and two sessions. The form's busy flag is what stops that in
+    * practice, and the loser of the race stays an unpaid row the owner can see
+    * — which is the harmless half of the two ways this could go wrong.
+    */
   const created = await stripePost(env, '/checkout/sessions', params, `checkout:${id}`);
   if (!created.ok) return json(502, { ok: false, reason: 'payment-provider' });
 
@@ -1414,7 +1426,9 @@ async function persistPending(env, id, body, priced, session, method) {
 async function handleStripeWebhook(request, env) {
   if (request.method !== 'POST') return json(405, { ok: false, reason: 'method' });
   const payload = await request.text();
-  if (payload.length > MAX_BODY) return tooLarge();
+  // tooLarge() builds an Error meant for `throw`; returning it hands the
+  // runtime something that is not a Response, which becomes an opaque 500.
+  if (payload.length > MAX_BODY) return json(413, { ok: false, reason: 'too-large' });
   const verdict = await verifyStripeSignature(request.headers.get('stripe-signature'), payload, env.STRIPE_WEBHOOK_SECRET, Math.floor(Date.now() / 1000));
   if (!verdict.ok) {
     // 400 tells Stripe not to retry a request we will never accept, and the
@@ -1445,7 +1459,11 @@ async function handleStripeWebhook(request, env) {
   }
 
   try {
-    if (event.type === 'checkout.session.completed') await onPaid(env, event.data?.object || {});
+    // A card clears inside the session. Bank-backed methods complete the
+    // session first and pay afterwards, and that second event is the one
+    // carrying the money — onPaid ignores a session that is not paid yet, so
+    // both have to be listened for or a delayed payment is never recorded.
+    if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') await onPaid(env, event.data?.object || {});
   } catch (err) {
     console.error('stripe paid', (err && err.stack) || err);
     if (d && event.id) await d.prepare(`DELETE FROM stripe_events WHERE id = ?`).bind(s(event.id, 80)).run().catch(() => {});
@@ -1520,6 +1538,10 @@ async function onPaid(env, session) {
     })(),
   };
 
+  // The language the buyer was reading in lives in the stored payload, not in a
+  // column; operations needs it to answer in the same one.
+  order.locale = body.locale;
+
   /*
    * Telling people is best-effort and is recorded, so a retry of this webhook
    * does not send the same receipt twice. A mail provider being down must not
@@ -1543,7 +1565,7 @@ async function onPaid(env, session) {
    * notifications already marked done.
    */
   if (!row.ops_sent) {
-    const sent = await pushToOps(env, order);
+    const sent = await pushToOps(env, order, session);
     await d.prepare(`UPDATE orders SET ops_sent = ? WHERE id = ?`).bind(sent ? 1 : 0, id).run().catch(() => {});
     await audit(env, 'order-paid', `${id} ops=${sent ? 'ok' : env.OPS_WEBHOOK_URL ? 'failed' : 'no-endpoint'}`);
     if (!sent && env.OPS_WEBHOOK_URL) throw new Error(`operations webhook refused order ${id}`);
