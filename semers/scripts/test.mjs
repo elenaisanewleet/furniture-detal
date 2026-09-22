@@ -12,7 +12,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { localizeHtml, isExempt } from './localize-links.mjs';
 import { scanProse, applyProse, isProse } from './prose-scan.mjs';
-import { priceCart, stripeForm, tiersOf, tierPctFor, verifyStripeSignature } from '../worker/server.js';
+import { priceCart, stripeForm, tiersOf, tierPctFor, verifyStripeSignature, deliveryMethod } from '../worker/server.js';
 
 const O = 'https://semers-store.higgsfield.app';
 let failed = 0;
@@ -695,6 +695,21 @@ group('cart pricing');
   // The GTIN is the only code the shop and the production floor share, so it
   // has to survive into the line the operations base receives.
   is('the line carries its GTIN', basket.items[0].gtin, '4751043820181');
+}
+
+group('delivery method');
+{
+  /*
+   * Free postage used to be reachable by typing the word "pickup" into the
+   * address field: the server read the method out of that free text, waived
+   * the postage, and a courier went out anyway. Only the three keys decide.
+   */
+  is('a real key is kept', [deliveryMethod('locker'), deliveryMethod('courier'), deliveryMethod('pickup')], ['locker', 'courier', 'pickup']);
+  is('prose is not a key', deliveryMethod('Pickup in Riga'), 'locker');
+  is('a word typed into an address is not a key', deliveryMethod('Brīvības iela 42, pickup'), 'locker');
+  is('the russian word is not a key either', deliveryMethod('самовывоз'), 'locker');
+  is('nothing sent falls back to the paid option', [deliveryMethod(''), deliveryMethod(undefined), deliveryMethod(null)], ['locker', 'locker', 'locker']);
+  is('an object cannot slip through', deliveryMethod({ toString: () => 'pickup' }), 'locker');
 }
 
 group('stripe form encoding');

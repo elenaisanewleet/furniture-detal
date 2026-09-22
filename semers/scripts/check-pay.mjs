@@ -84,7 +84,8 @@ const fill = async (page) =>
     set('[name="name"]', 'Anna Bērziņa');
     set('[name="email"]', 'anna@example.com');
     set('[name="phone"]', '+37120000000');
-    set('[name="address"]', 'Brīvības iela 42-5');
+    // Free postage used to be reachable by typing this word into the address.
+    set('[name="address"]', 'Brīvības iela 42-5, pickup, самовывоз');
     set('[name="city"]', 'Rīga');
     set('[name="postcode"]', 'LV-1010');
     const country = document.querySelector('[name="country"]');
@@ -168,6 +169,10 @@ for (const loc of ['', '/ru', '/lv']) {
       if (seen.checkout[money] !== undefined) note(tag, `the request carried "${money}" from the browser`);
     }
     if (!seen.checkout.customer?.email) note(tag, 'the request carried no e-mail');
+    // The delivery method must travel as a key. The label is prose and is
+    // translated; the address is whatever the shopper typed, and the form was
+    // filled in above with "pickup" inside it on purpose.
+    if (seen.checkout.method !== 'locker') note(tag, `the request reports method "${seen.checkout.method}" where the parcel-locker option was selected`);
   }
   if (seen.order) note(tag, 'the old order-request endpoint was called as well as the card one');
   if (seen.navigated !== STRIPE_URL) note(tag, `the browser went to "${seen.navigated || 'nowhere'}" instead of the payment page`);
@@ -241,6 +246,19 @@ for (const [q, want, tag] of [
   if (state.button !== PAY_LABEL['']) note(tag, `the button was left reading "${state.button}" instead of offering another try`);
   if (state.disabled) note(tag, 'the button was left disabled, so nobody can try again');
   if (!state.left) note(tag, 'the cart was emptied by a payment that never happened');
+  await ctx.close();
+}
+
+{
+  // Checkout could not write the order down. Handing back a payment link here
+  // would charge a card against an order that does not exist.
+  const tag = 'order not recorded';
+  const { page, ctx, seen } = await walk({ tag, checkout: { status: 503, contentType: 'application/json', body: JSON.stringify({ ok: false, reason: 'not-recorded' }) } });
+  await page.evaluate(() => document.querySelector('form [type="submit"]')?.click());
+  await page.waitForTimeout(1200);
+  if (seen.navigated) note(tag, 'the browser was sent to pay for an order that was never written down');
+  const said = await page.evaluate(() => document.querySelector('[data-checkout-note]')?.textContent?.trim() || '');
+  if (!said) note(tag, 'the page said nothing when the order could not be recorded');
   await ctx.close();
 }
 

@@ -214,10 +214,22 @@ const FREE_SHIP_SLUGS = new Set(['tasting-box']);
 function shipsFree(total: number) {
   return total >= CFG.freeFrom || cart.items.some((i) => FREE_SHIP_SLUGS.has(i.slug));
 }
+/**
+ * Which delivery method is chosen, as a stable key.
+ *
+ * The visible label is prose and is translated, so matching on its text would
+ * be a different test in every language — and, once it reaches the server, a
+ * free-text field the browser fills in. The key on the input is the same in
+ * all three languages and is the only thing sent up.
+ */
+function deliveryMethod(): 'locker' | 'courier' | 'pickup' {
+  const r = $<HTMLInputElement>('form[data-checkout] input[name="delivery"]:checked');
+  const key = r?.dataset.method;
+  return key === 'pickup' || key === 'courier' ? key : 'locker';
+}
 /** "Pick up in Riga" is offered as free on the checkout form, so the summary must not add postage to it. */
 function pickupSelected() {
-  const r = $<HTMLInputElement>('form[data-checkout] input[name="delivery"]:checked');
-  return !!r && /pick ?up/i.test(r.value);
+  return deliveryMethod() === 'pickup';
 }
 /** The flat rate below the free threshold only covers the Baltics; other EU destinations are quoted in the confirmation e-mail. */
 const BALTICS = new Set(['Latvia', 'Lithuania', 'Estonia']);
@@ -985,7 +997,7 @@ if (checkout) {
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customer: data, items: cart.items.map((i) => ({ id: i.id, qty: i.qty })), locale: CFG.locale || 'en', page: location.pathname }),
+          body: JSON.stringify({ customer: data, method: deliveryMethod(), items: cart.items.map((i) => ({ id: i.id, qty: i.qty })), locale: CFG.locale || 'en', page: location.pathname }),
         });
         const paid = (await res.json().catch(() => ({}))) as { ok?: boolean; url?: string; ref?: string; reason?: string };
         if (paid.ok && paid.url) {

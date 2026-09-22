@@ -128,6 +128,8 @@ const ADDED_COLUMNS = [
   ['orders', 'paid_at', `TEXT NOT NULL DEFAULT ''`],
   /* 0 means the paid order has not reached the operations base yet, so it can be replayed. */
   ['orders', 'ops_sent', `INTEGER NOT NULL DEFAULT 0`],
+  /* When the notifications went out. Empty means a retry still owes them; set means it must not send them twice. */
+  ['orders', 'notified_at', `TEXT NOT NULL DEFAULT ''`],
 ];
 
 async function ensureSchema(env) {
@@ -990,6 +992,18 @@ const STRIPE_API = 'https://api.stripe.com/v1';
 const STRIPE_TOLERANCE_S = 300;
 /** Stripe Checkout's own translations; anything else falls back to its auto-detect. */
 const STRIPE_LOCALE = { en: 'en', ru: 'ru', lv: 'lv' };
+/*
+ * Delivery methods, as keys rather than as the words on the button.
+ *
+ * The label a shopper reads is prose, and it is translated, so matching on it
+ * would be a different test in every language — and it arrives in a free-text
+ * field the browser fills in. Reading "pickup" out of that text meant anyone
+ * who typed the word into their address got their postage waived and a courier
+ * anyway. Only these three keys decide anything, and anything else is the
+ * cheapest paid option rather than the free one.
+ */
+const DELIVERY_METHODS = new Set(['locker', 'courier', 'pickup']);
+export const deliveryMethod = (v) => (DELIVERY_METHODS.has(v) ? v : 'locker');
 
 /**
  * The catalogue the Worker charges from, fetched once per isolate.
@@ -1268,7 +1282,8 @@ async function handleCheckout(request, env) {
   const settings = await readSettings(env);
   const store = await storefrontOverrides(env);
   const delivery = s(c.delivery, 120);
-  const priced = priceCart(catalog, settings, store, body.items, { pickup: /pickup|самовывоз|saņemšana/i.test(delivery) });
+  const method = deliveryMethod(s(body.method, 20));
+  const priced = priceCart(catalog, settings, store, body.items, { pickup: method === 'pickup' });
   if (!priced.ok) return json(priced.reason === 'no-catalog' ? 503 : 422, { ok: false, reason: priced.reason });
 
   const id = ref();
@@ -1314,7 +1329,20 @@ async function handleCheckout(request, env) {
   const created = await stripePost(env, '/checkout/sessions', params, `checkout:${id}`);
   if (!created.ok) return json(502, { ok: false, reason: 'payment-provider' });
 
-  await persistPending(env, id, body, priced, created.data.id).catch(() => false);
+  /*
+   * The row comes before the payment link, and a failure here stops the sale.
+   *
+   * Handing back the link anyway would mean a card charged against an order
+   * that was never written down: the webhook arrives, finds no row, and the
+   * money exists with nothing attached to it. A shopper told "try again in a
+   * minute" is a far better outcome than that, so the write is allowed to
+   * refuse the sale.
+   */
+  const stored = await persistPending(env, id, body, priced, created.data.id, method).catch((e) => {
+    console.error('checkout persist', e);
+    return false;
+  });
+  if (!stored) return json(503, { ok: false, reason: 'not-recorded' });
   return json(200, { ok: true, ref: id, url: created.data.url });
 }
 
@@ -1338,7 +1366,7 @@ async function storefrontOverrides(env) {
   return out;
 }
 
-async function persistPending(env, id, body, priced, session) {
+async function persistPending(env, id, body, priced, session, method) {
   const d = await ensureSchema(env);
   if (!d) return false;
   const c = body.customer || {};
@@ -1365,7 +1393,7 @@ async function persistPending(env, id, body, priced, session) {
       priced.shipping,
       priced.total,
       JSON.stringify(priced.items),
-      JSON.stringify({ locale: locale(body.locale), page: s(body.page, 200) }),
+      JSON.stringify({ locale: locale(body.locale), method, page: s(body.page, 200) }),
       s(body.page, 200),
       s(session, 120),
     )
@@ -1404,14 +1432,27 @@ async function handleStripeWebhook(request, env) {
   }
 
   const d = await ensureSchema(env);
+  /*
+   * Claim the event before the work, so two deliveries racing each other cannot
+   * both act on it — and give the claim back if the work fails. Keeping a claim
+   * that outlived a failure was the subtler bug: Stripe retries a webhook for
+   * three days, and answering 200 while the handler had thrown spent all three
+   * days' worth of retries on an order nobody had recorded.
+   */
   if (d && event.id) {
-    const seen = await d.prepare(`INSERT OR IGNORE INTO stripe_events (id, at, type) VALUES (?, ?, ?)`).bind(s(event.id, 80), nowIso(), s(event.type, 80)).run();
-    // Nothing inserted means this delivery is a repeat. Answer 200 so Stripe
-    // stops retrying, and do the work no second time.
-    if (!seen?.meta?.changes) return json(200, { ok: true, duplicate: true });
+    const claimed = await d.prepare(`INSERT OR IGNORE INTO stripe_events (id, at, type) VALUES (?, ?, ?)`).bind(s(event.id, 80), nowIso(), s(event.type, 80)).run();
+    if (!claimed?.meta?.changes) return json(200, { ok: true, duplicate: true });
   }
 
-  if (event.type === 'checkout.session.completed') await onPaid(env, event.data?.object || {}).catch((e) => console.error('stripe paid', e));
+  try {
+    if (event.type === 'checkout.session.completed') await onPaid(env, event.data?.object || {});
+  } catch (err) {
+    console.error('stripe paid', (err && err.stack) || err);
+    if (d && event.id) await d.prepare(`DELETE FROM stripe_events WHERE id = ?`).bind(s(event.id, 80)).run().catch(() => {});
+    // Anything but a 2xx makes Stripe come back. That is what should happen:
+    // the alternative is money taken and nobody told.
+    return json(500, { ok: false, reason: 'not-processed' });
+  }
   return json(200, { ok: true });
 }
 
@@ -1421,17 +1462,46 @@ async function onPaid(env, session) {
   if (session.payment_status && session.payment_status !== 'paid') return;
   const id = s(session.client_reference_id || session.metadata?.order_ref, 40);
   const d = await ensureSchema(env);
-  if (!d || !id) return;
+  if (!d) throw new Error('no database to record the payment in');
+  if (!id) throw new Error('paid session carries no order reference');
 
   await d
     .prepare(`UPDATE orders SET status = 'paid', paid_at = ?, stripe_intent = ? WHERE id = ? AND status <> 'paid'`)
     .bind(nowIso(), s(session.payment_intent, 120), id)
     .run();
 
-  const row = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(id).first();
-  if (!row) return;
-  const order = { ...row, items: JSON.parse(row.items_json || '[]') };
+  let row = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(id).first();
+  if (!row) {
+    /*
+     * Money with no order attached to it. Checkout refuses to hand out a
+     * payment link it could not record, so this should be unreachable — but if
+     * it ever happens, losing the sale silently is the one outcome worth
+     * writing defensive code against. Stripe knows the total and the buyer's
+     * e-mail, which is enough to raise a row a human can finish.
+     */
+    await d
+      .prepare(
+        `INSERT OR IGNORE INTO orders (id, created_at, type, status, name, email, currency, total, items_json, payload_json, paid_at, stripe_session, stripe_intent, admin_note)
+         VALUES (?, ?, 'order', 'paid', '', ?, ?, ?, '[]', '{}', ?, ?, ?, ?)`,
+      )
+      .bind(
+        id,
+        nowIso(),
+        s(session.customer_details?.email || session.customer_email, 160),
+        currency((session.currency || 'eur').toUpperCase()),
+        n((Number(session.amount_total) || 0) / 100),
+        nowIso(),
+        s(session.id, 120),
+        s(session.payment_intent, 120),
+        'RECOVERED: paid, but the order was never recorded at checkout. Contact the customer for the lines.',
+      )
+      .run();
+    row = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(id).first();
+    await audit(env, 'order-recovered', id);
+    if (!row) throw new Error(`could not record payment for ${id}`);
+  }
 
+  const order = { ...row, items: JSON.parse(row.items_json || '[]') };
   const body = {
     type: 'order',
     customer: { name: row.name, email: row.email, phone: row.phone, country: row.country, city: row.city, postcode: row.postcode, address: row.address, delivery: row.delivery, note: row.note, gift: row.gift },
@@ -1440,6 +1510,7 @@ async function onPaid(env, session) {
     shipping: row.shipping,
     total: row.total,
     currency: row.currency,
+    paid: true,
     locale: (() => {
       try {
         return locale(JSON.parse(row.payload_json || '{}').locale);
@@ -1449,16 +1520,34 @@ async function onPaid(env, session) {
     })(),
   };
 
-  const notice = render('order', body, id);
-  await Promise.all([
-    sendTelegram(env, `ОПЛАЧЕНО\n${notice}`).catch(() => false),
-    sendEmail(env, `Оплачен заказ ${id}`, notice, row.email).catch(() => false),
-    sendCustomerReceipt(env, body, id).catch(() => false),
-  ]);
+  /*
+   * Telling people is best-effort and is recorded, so a retry of this webhook
+   * does not send the same receipt twice. A mail provider being down must not
+   * hold up the order, and it must not cost the customer a second e-mail when
+   * the operations push is what brings Stripe back.
+   */
+  if (!row.notified_at) {
+    const notice = render('order', body, id);
+    await Promise.all([
+      sendTelegram(env, `ОПЛАЧЕНО\n${notice}`).catch(() => false),
+      sendEmail(env, `Оплачен заказ ${id}`, notice, row.email).catch(() => false),
+      sendCustomerReceipt(env, body, id).catch(() => false),
+    ]);
+    await d.prepare(`UPDATE orders SET notified_at = ? WHERE id = ?`).bind(nowIso(), id).run().catch(() => {});
+  }
 
-  const sent = await pushToOps(env, order);
-  await d.prepare(`UPDATE orders SET ops_sent = ? WHERE id = ?`).bind(sent ? 1 : 0, id).run().catch(() => {});
-  await audit(env, 'order-paid', `${id} ops=${sent ? 'ok' : 'pending'}`);
+  /*
+   * The operations base is the one follow-up worth a retry: an order the floor
+   * never hears about is an order that never ships. Throwing hands the problem
+   * back to Stripe, which comes back over the next three days with the
+   * notifications already marked done.
+   */
+  if (!row.ops_sent) {
+    const sent = await pushToOps(env, order);
+    await d.prepare(`UPDATE orders SET ops_sent = ? WHERE id = ?`).bind(sent ? 1 : 0, id).run().catch(() => {});
+    await audit(env, 'order-paid', `${id} ops=${sent ? 'ok' : env.OPS_WEBHOOK_URL ? 'failed' : 'no-endpoint'}`);
+    if (!sent && env.OPS_WEBHOOK_URL) throw new Error(`operations webhook refused order ${id}`);
+  }
 }
 
 /* ------------------------------------------------------------------- admin API */
