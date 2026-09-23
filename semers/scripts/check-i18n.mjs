@@ -12,15 +12,16 @@
  * dead weight, not errors, but they hide the fact that the sentence they were
  * written for now renders in English.
  *
- * Usage: node scripts/check-i18n.mjs [dist] [--max N]
- *   --max N   fail when more than N strings are still English (default: report only)
+ * Usage: node scripts/check-i18n.mjs [dist] [--max N] [--dump FILE]
+ *   --max N      fail when more than N strings are still English (default: report only)
+ *   --dump FILE  also write the missing strings and the unused keys, per language, as JSON
  */
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, writeFile } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 import { scanProse } from './prose-scan.mjs';
 
 const args = process.argv.slice(2);
-const ROOT = args.find((a) => !a.startsWith('--')) || 'dist';
+const ROOT = args.find((a, i) => !a.startsWith('--') && !['--max', '--dump'].includes(args[i - 1])) || 'dist';
 const maxArg = args.indexOf('--max');
 const MAX = maxArg > -1 ? Number(args[maxArg + 1]) : null;
 const LOCALES = ['ru', 'lv'];
@@ -133,6 +134,26 @@ if (top.length) {
   console.log('\nmost common:');
   top.slice(0, 15).forEach((e) => console.log(`  ${String(e.count).padStart(3)}× [${e.kind}] ${JSON.stringify(e.text.slice(0, 72))}  ${e.pages[0]}`));
   if (top.length > 15) console.log(`  … and ${top.length - 15} more`);
+}
+
+/*
+ * --dump FILE writes the gap as JSON for whoever translates it next: per
+ * language, the exact strings still English (as the localised page spells
+ * them, so a price is already in that language's format and the text can be
+ * pasted in as a key unchanged) and the memory keys that match nothing.
+ */
+const dumpArg = args.indexOf('--dump');
+if (dumpArg > -1) {
+  const out = {};
+  for (const locale of present) {
+    const keys = Object.keys(memories[locale]);
+    out[locale] = {
+      missing: found[locale].map((e) => ({ text: e.text, kind: e.kind, pages: e.pages })),
+      dead: keys.filter((k) => !englishRaw.has(k) && !onAnyPage.has(k) && !onAnyPage.has(memories[locale][k])),
+    };
+  }
+  await writeFile(args[dumpArg + 1], JSON.stringify(out, null, 1));
+  console.log(`\nwrote ${args[dumpArg + 1]}`);
 }
 
 if (MAX !== null && everywhere.length > MAX) {

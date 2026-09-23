@@ -14,8 +14,8 @@
  * shopping in Latvian.
  *
  * It also reads src/data/products.ts, for the one thing a page cannot reveal —
- * whether the numbers on it are real. Eleven products currently share three
- * nutrition tables between them, and the file says so itself.
+ * whether the numbers on it are real: two products pointing at one table of
+ * figures means at least one of them was never measured.
  *
  * Two exit codes, because two different things are wrong:
  *   plain     lists what is missing and exits 0 while the gaps are all "the
@@ -176,6 +176,13 @@ for (const slug of SLUGS) {
     ]) {
       if (!re.test(text)) miss(slug, 'nutrition', `the ${lang} nutrition table has no ${row} row`);
     }
+    /*
+     * A row that is there but says "Not yet declared" is honest, and still not a
+     * declaration: the label words above are all present, so without this a
+     * product with no figures at all passed.
+     */
+    const undeclared = (html.match(/class="nutri__nd\b/g) || []).length;
+    if (undeclared) miss(slug, 'nutrition', `${undeclared} value(s) not yet declared on the ${lang} page`);
 
     // The Latvian page has to be Latvian: an ingredient list left in English is
     // not one for the reader it was meant for (Valsts valodas likums, 21. p.).
@@ -193,14 +200,24 @@ for (const slug of SLUGS) {
  * and eight products point at one shared table. Printing a shared table as "per
  * 100 g of this product" is a statement about food that nobody has weighed.
  */
+/*
+ * Only a named table counts: `{ ...BASE, energyKcal: 370 }` is the product's own
+ * figures laid over a base. And a table that declares nothing — every value null
+ * — claims nothing when two products share it; the rows it leaves empty are
+ * already reported one by one from the page above.
+ */
+const declaresNothing = (table) => {
+  const body = productsSrc.match(new RegExp(`const ${table}\\b[^=]*=\\s*\\{([^}]*)\\}`))?.[1];
+  return !!body && /:\s*null\b/.test(body) && !/:\s*-?\d/.test(body);
+};
 const shared = new Map();
-for (const m of productsSrc.matchAll(/slug:\s*'([^']+)'[\s\S]*?nutrition:\s*([A-Z_]+|\{\s*\.\.\.([A-Z_]+))/g)) {
-  const table = m[3] || m[2];
+for (const m of productsSrc.matchAll(/slug:\s*'([^']+)'(?:(?!slug:)[\s\S])*?nutrition:\s*([A-Z_]+)\b/g)) {
+  const table = m[2];
   if (!shared.has(table)) shared.set(table, []);
   shared.get(table).push(m[1]);
 }
 for (const [table, users] of shared) {
-  if (users.length > 1) {
+  if (users.length > 1 && !declaresNothing(table)) {
     for (const slug of users) miss(slug, 'nutrition', `shares ${table} with ${users.length - 1} other product(s) — not measured for this one`);
   }
 }
