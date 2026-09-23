@@ -35,6 +35,8 @@ const add = JSON.stringify({
 });
 const flavours = p.variants.map((v) => ui.flavours[v.key]).join(', ');
 const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
+/** Only a figure a card backs is printed; a product without one shows nothing rather than "null kcal". */
+const kcal = p.kcalPerUnit != null && p.kcalPerUnit > 0 ? p.kcalPerUnit : null;
 ---
 <article
   class={`pc ${compact ? 'pc--compact' : ''}`}
@@ -49,7 +51,7 @@ const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
   data-order={p.order}
   data-name={p.title}
   data-best={p.bestseller ? '1' : '0'}
-  data-kcal={p.kcalPerUnit}
+  data-kcal={kcal ?? undefined}
   data-flavours={flavours}
   data-hook={p.hook}
 >
@@ -63,7 +65,7 @@ const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
     </h3>
     <p class="pc__hook">{p.hook}</p>
     <div class="pc__meta">
-      {p.kcalPerUnit > 0 && <span>{p.kcalPerUnit} kcal</span>}
+      {kcal && <span>{kcal} kcal</span>}
       {p.diet.slice(0, 2).map((d) => <span>{ui.diet[d]}</span>)}
     </div>
     <div class="pc__foot">

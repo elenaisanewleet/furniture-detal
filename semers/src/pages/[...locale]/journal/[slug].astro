@@ -82,8 +82,8 @@ const pageTitle = SEO_TITLES[a.slug] ?? shortTitle(a.title);
 
 /** Meta descriptions 120–155 chars; the card description is allowed to run longer. */
 const SEO_DESC: Record<string, string> = {
-  'what-is-pastila': 'Pastila is a baked-apple sweet from Belyov: apple purée whipped with egg white, dried in thin layers. Where it comes from and why it needs no added sugar.',
-  'healthy-snacks-no-added-sugar': 'Most “sugar-free” snack bars hide syrups, sweeteners or fruit concentrates. How to read an ingredient list properly, and a short list of snacks that pass.',
+  'what-is-pastila': 'Pastila is a baked-apple sweet: apple purée whipped with egg white, dried in thin layers. How it is made and why it needs no added sugar.',
+  'healthy-snacks-no-added-sugar': 'Plenty of “healthy” snack bars hide syrups, sweeteners or fruit concentrates. How to read an ingredient list properly, and a short list that pass.',
   'antonovka-apples': 'Antonovka is a hardy, tart, aromatic apple from the north. Its pectin and acidity are exactly what pastila needs. Why we will not bake with anything else.',
 };
 const trimDesc = (d: string) => {
@@ -103,9 +103,9 @@ const waShare = `https://wa.me/?text=${encodeURIComponent(`${a.title} ${canonica
 const others = ARTICLES_SORTED.filter((x) => x.slug !== a.slug).slice(0, 3);
 const hasOthers = others.length > 0;
 
-/** The product most of the journal is about; used in the panel after the body. */
+/** The product most of the journal is about; used in the panel after the body. Every line is on the Apple Bar's card or pack. */
 const shopcard = im('packshot-classic');
-const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no flour, no gluten', 'About 97 kcal per 35 g bar', 'Keeps 12 months without a fridge'];
+const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gluten free', 'Classic or Berry Mix, 35 g a bar', 'Keeps 12 months'];
 ---
 <Base
   title={pageTitle}
@@ -241,7 +241,7 @@ const facts = ['99% baked Antonovka apples, 1% egg white', 'No added sugar, no f
       <div class="cta-band" data-reveal>
         <p class="eyebrow">Taste the subject</p>
         <h2 id="cta-title">Reading about apples is the slow way to find out.</h2>
-        <p>Apple bars, meringues and Belyov pastila, baked in {site.locality} from two ingredients. Parcels leave in 1–2 business days and ship across the EU; orders over {freeFrom} ship free.</p>
+        <p>Apple bars, meringues and baked-apple desserts, made in {site.locality} with no added sugar. Parcels leave in 1–2 business days and ship across the EU; orders over {freeFrom} ship free.</p>
         <div class="cluster mt-2">
           <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
           <a class="btn btn--ghost" href="/why-pastila/">Why pastila</a>

@@ -10,15 +10,15 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
   ru: {
     "What is pastila?": {
       q: "Что такое пастила?",
-      a: "Пастила — традиционное лакомство из печёных яблок из города Белёв, впервые появившееся в продаже в 1888 году. Яблоки запекают, протирают в пюре, взбивают с яичным белком, выкладывают тонкими слоями и медленно сушат, пока слои не схватятся в мягкий воздушный брусок. Наши батончики, меренги и десерты сделаны на этой же основе.",
+      a: "Пастила — традиционное лакомство из печёных яблок. Яблоки запекают, протирают в пюре, взбивают с яичным белком, выкладывают тонкими слоями и медленно сушат, пока слои не схватятся в мягкий воздушный брусок. Наши батончики, меренги и десерты сделаны на этой же основе.",
     },
     "What is in an Apple Bar?": {
       q: "Что входит в состав яблочного батончика?",
-      a: "Печёные яблоки антоновка (99%) и яичный белок. В «Ягодном миксе» добавлены черника и клюква, в «Корице» — корица. Это весь список: без сахара, без муки, без масел, без консервантов.",
+      a: "Печёные яблоки (99%) и яичный белок. В «Ягодном миксе» добавлены чёрная смородина, клюква, брусника и черника. Это весь список: без добавленного сахара, без муки, без масел, без консервантов.",
     },
     "Is there really no added sugar?": {
       q: "Правда без добавленного сахара?",
-      a: "Да — в батончиках, меренгах, десертных квадратиках и белёвской пастиле. Вся сладость идёт от самих яблок: при запекании их природная фруктоза концентрируется, поэтому батончик на вкус как десерт, хотя в нём всего около 97 ккал. Единственное исключение — зефир Belevini, традиционный рецепт с сахаром и агаром, и на упаковке это написано.",
+      a: "Да — в яблочных батончиках, безе, десертах из печёных яблок и яблочных пирожных без муки. Вся сладость идёт от самих яблок: при запекании их природные сахара концентрируются. Поэтому на упаковке написано и «без добавленного сахара», и «содержит природные сахара».",
     },
     "Is it gluten free?": {
       q: "Это без глютена?",
@@ -30,11 +30,11 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "How many calories?": {
       q: "Сколько калорий?",
-      a: "Около 97 ккал в яблочном батончике 35 г, около 140 ккал в батончике без муки 50 г и примерно 278 ккал в 100 г пастилы. В обычной плитке молочного шоколада 45 г — около 240 ккал.",
+      a: "На 100 г: 370 ккал в классическом безе, 360 ккал в безе «Ягодный микс», 276 ккал в десерте из печёных яблок 50 г и 320 ккал в яблочном пирожном без муки. Для всего остального ориентируйтесь на этикетку на упаковке.",
     },
     "How long does it keep and how should I store it?": {
       q: "Какой срок хранения и как хранить?",
-      a: "12 месяцев в прохладном сухом месте, в закрытой упаковке — это про батончики, десертные квадратики и белёвскую пастилу. Меренги и зефир хранятся меньше, и верить нужно дате на упаковке. Холодильник не нужен ничему. После открытия держите упаковку закрытой и съешьте в течение нескольких дней: продукт скорее медленно подсохнет, чем испортится.",
+      a: "Зависит от продукта, и верить нужно дате на упаковке. Яблочные батончики хранятся 12 месяцев. Десерт из печёных яблок 50 г хранится 9 месяцев при температуре от +8 до +10 °C или 4 месяца при температуре от +10 до +25 °C; упаковка 500 г — 18 месяцев при температуре от +8 до +25 °C. Безе храните при температуре не выше 25 °C, вдали от продуктов с сильным запахом, а яблочные пирожные без муки — в сухом прохладном месте при температуре от +8 до +21 °C. После открытия держите упаковку закрытой и съешьте в течение нескольких дней: продукт скорее медленно подсохнет, чем испортится.",
     },
     "Where do you ship?": {
       q: "Куда вы доставляете?",
@@ -60,15 +60,15 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
   lv: {
     "What is pastila?": {
       q: "Kas ir pastila?",
-      a: "Pastila ir tradicionāls saldums no ceptiem āboliem, kura izcelsme ir Beļovas pilsētā un ko komerciāli sāka pārdot 1888. gadā. Ābolus izcep, saberž biezenī, saputo ar olu baltumu, izklāj plānās kārtās un lēni žāvē, līdz tie sastingst mīkstā, gaisīgā klaipā. Visi mūsu batoniņi, marengas un deserti ir gatavoti no tās pašas pamatmasas.",
+      a: "Pastila ir tradicionāls saldums no ceptiem āboliem. Ābolus izcep, saberž biezenī, saputo ar olu baltumu, izklāj plānās kārtās un lēni žāvē, līdz tie sastingst mīkstā, gaisīgā klaipā. Visi mūsu batoniņi, marengas un deserti ir gatavoti no tās pašas pamatmasas.",
     },
     "What is in an Apple Bar?": {
       q: "Kas ir Ābolu batoniņā?",
-      a: "Cepti Antonovka āboli (99%) un olu baltums. Ogu miksam ir pievienotas mellenes un dzērvenes; Kanēlim — kanēlis. Tas arī ir viss saraksts — bez cukura, bez miltiem, bez eļļām, bez konservantiem.",
+      a: "Cepti āboli (99%) un olu baltums. Ogu maisījumam ir pievienotas upenes, dzērvenes, brūklenes un mellenes. Tas arī ir viss saraksts — bez pievienota cukura, bez miltiem, bez eļļām, bez konservantiem.",
     },
     "Is there really no added sugar?": {
       q: "Vai tiešām nav pievienota cukura?",
-      a: "Jā, tas attiecas uz batoniņiem, marengām, desertu kvadrātiņiem un Beļovas pastilu. Viss saldums nāk no pašiem āboliem: cepšana koncentrē to dabīgo fruktozi, tāpēc batoniņš garšo kā deserts, lai gan tajā ir tikai ap 97 kcal. Vienīgais izņēmums ir Belevini zefīrs — tradicionāla recepte, kas gatavota ar cukuru un agaru, un uz iepakojuma tas ir norādīts.",
+      a: "Jā, tas attiecas uz ābolu batoniņiem, bezē, cepto ābolu desertiem un ābolu kūciņām bez miltiem. Viss saldums nāk no pašiem āboliem: cepšana koncentrē to dabīgos cukurus. Tāpēc uz iepakojuma ir rakstīts gan „bez pievienota cukura”, gan „satur dabīgi sastopamus cukurus”.",
     },
     "Is it gluten free?": {
       q: "Vai tas ir bez glutēna?",
@@ -80,11 +80,11 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "How many calories?": {
       q: "Cik daudz kaloriju?",
-      a: "Aptuveni 97 kcal vienā 35 g Ābolu batoniņā, apmēram 140 kcal vienā 50 g batoniņā bez miltiem un ap 278 kcal uz 100 g pastilas. Tipiskā 45 g piena šokolādes tāfelītē ir apmēram 240 kcal.",
+      a: "Uz 100 g: 370 kcal klasiskajā bezē, 360 kcal bezē „Ogu maisījums”, 276 kcal 50 g cepto ābolu desertā un 320 kcal ābolu kūciņā bez miltiem. Visam pārējam uzticieties etiķetei uz iepakojuma.",
     },
     "How long does it keep and how should I store it?": {
       q: "Cik ilgi tas glabājas un kā to uzglabāt?",
-      a: "12 mēnešus vēsā, sausā vietā neatvērtā iepakojumā — batoniņi, desertu kvadrātiņi un Beļovas pastila. Marengas un zefīrs glabājas mazāk, un ticēt vajag datumam uz iepakojuma. Ledusskapis nav vajadzīgs nevienam no tiem. Pēc atvēršanas turiet to iesaiņotu un izbaudiet dažu dienu laikā; tas drīzāk lēni izžūs, nevis sabojāsies.",
+      a: "Tas atkarīgs no produkta, un ticēt vajag datumam uz iepakojuma. Ābolu batoniņi glabājas 12 mēnešus. 50 g cepto ābolu deserts glabājas 9 mēnešus no +8 līdz +10 °C vai 4 mēnešus no +10 līdz +25 °C; 500 g iepakojums — 18 mēnešus no +8 līdz +25 °C. Bezē uzglabājiet temperatūrā līdz 25 °C, ne blakus produktiem ar spēcīgu smaržu, bet ābolu kūciņas bez miltiem — sausā, vēsā vietā no +8 līdz +21 °C. Pēc atvēršanas turiet to iesaiņotu un izbaudiet dažu dienu laikā; tas drīzāk lēni izžūs, nevis sabojāsies.",
     },
     "Where do you ship?": {
       q: "Kur jūs piegādājat?",

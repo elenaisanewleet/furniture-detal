@@ -20,13 +20,13 @@ const { locale } = Astro.props as { locale: Locale };
 const origin = originOf(Astro.site);
 const best = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 4);
 const homeFaqs = localizedFaqs(FAQS.filter((f) => ['product', 'nutrition', 'orders'].includes(f.group)).slice(0, 5), locale);
-const tiles = localizedCollections(COLLECTIONS.filter((c) => c.key !== 'applite'), locale);
-const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a bar', 'Made in Riga', 'Recipe from 1888', 'Ships across the EU', 'Egg white, nothing else'];
+const tiles = localizedCollections(COLLECTIONS, locale);
+const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a bar', 'Made in Riga', 'Ships across the EU', 'Egg white, nothing else'];
 const poster = im('hero-bars');
 ---
 <Base
-  title="Semers — Apple bars & pastila. 99% apples, no added sugar"
-  description="Baked apple snacks from Riga: Apple Bars, Flourless Bars, meringues and Belyov pastila. 99% apples, egg white, no added sugar, about 97 kcal a bar."
+  title="Semers — Baked apple bars & desserts. 99% apples, no added sugar"
+  description="Baked apple snacks from Riga: Apple Bars, Flourless Bars, meringues and baked apple desserts. 99% apples, egg white, no added sugar, about 97 kcal a bar."
   canonical="/"
   ogImage="hero-bars"
   schema={[itemList(origin, best), faqPage(homeFaqs)]}
@@ -100,7 +100,7 @@ const poster = im('hero-bars');
         <p>We cut that loaf into bars, bake it into meringues and press it into desserts. Same two ingredients every time.</p>
         <div class="cluster mt-4">
           <a class="btn" href="/how-its-made/">How it’s made</a>
-          <a class="link" href="/shop/pastila/">Shop pastila</a>
+          <a class="link" href="/shop/">Shop all products</a>
         </div>
       </div>
     </div>
@@ -139,9 +139,9 @@ const poster = im('hero-bars');
         </div>
         <div class="walk__panel">
           <span class="walk__n" aria-hidden="true">04</span>
-          <div class="walk__img"><img src={im('pastila-slices').src} srcset={im('pastila-slices').srcset} sizes="(min-width: 56rem) 40vw, 100vw" alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="lazy" decoding="async" /></div>
+          <div class="walk__img"><img src={im('pastila-block').src} srcset={im('pastila-block').srcset} sizes="(min-width: 56rem) 40vw, 100vw" alt={im('pastila-block').alt} width={im('pastila-block').width} height={im('pastila-block').height} loading="lazy" decoding="async" /></div>
           <h3>Cut &amp; pack</h3>
-          <p>Bars, squares and loaves are cut by hand and sealed the same day.</p>
+          <p>Bars and squares are cut by hand and sealed the same day.</p>
         </div>
       </div>
     </div>
@@ -170,7 +170,7 @@ const poster = im('hero-bars');
       <article class="feat feat--img">
         <div class="frame frame--3x2"><img src={im('flourless-bar').src} srcset={im('flourless-bar').srcset} sizes={im('flourless-bar').srcset && SIZES.third} alt={im('flourless-bar').alt} width={im('flourless-bar').width} height={im('flourless-bar').height} loading="lazy" decoding="async" /></div>
         <h3>Berries &amp; spice <span class="muted">optional</span></h3>
-        <p>Blueberry, cranberry, cherry, lingonberry, black currant, cinnamon, pine nuts. Whole fruit, not “natural flavouring”.</p>
+        <p>Blueberry, cranberry, lingonberry, black currant, cinnamon. Whole fruit, not “natural flavouring”.</p>
       </article>
     </div>
   </section>
@@ -229,7 +229,7 @@ const poster = im('hero-bars');
     <div class="section-head">
       <div>
         <p class="eyebrow">Shop by shape</p>
-        <h2 id="col-title" data-words>One apple, six ways to eat it.</h2>
+        <h2 id="col-title" data-words>One apple, a handful of ways to eat it.</h2>
       </div>
       <a class="link" href="/shop/">See everything</a>
     </div>

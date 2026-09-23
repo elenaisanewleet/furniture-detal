@@ -62,20 +62,20 @@ const stages = [
   {
     short: 'Dry',
     name: 'Slow drying',
-    text: 'The sheets dry for hours at low heat — gently, never baked a second time. Water leaves; flavour stays and concentrates. The slow pace is why the finished pastila keeps for a year without a single preservative: once the water is gone, spoilage has nothing to work with.',
+    text: 'The sheets dry for hours at low heat — gently, never baked a second time. Water leaves; flavour stays and concentrates. The slow pace is why a finished Apple Bar keeps for a year without a single preservative: once the water is gone, spoilage has nothing to work with.',
     image: 'pastila-macro',
   },
   {
     short: 'Layer',
     name: 'Layering and pressing',
-    text: 'Dried sheets are brushed with a little of the same apple foam, stacked several high and pressed into a block. The foam glues the layers together, and the whole block goes back into the warmth to set. This layering is the Belyov signature, and the reason a cut face looks like the pages of a book.',
+    text: 'Dried sheets are brushed with a little of the same apple foam, stacked several high and pressed into a block. The foam glues the layers together, and the whole block goes back into the warmth to set. This layering is the reason a cut face looks like the pages of a book.',
     image: 'pastila-block',
   },
   {
     short: 'Cut & pack',
     name: 'Resting, cutting and packing',
-    text: 'The blocks rest until the texture settles, then are cut into bars, squares and loaves and sealed the same day, each pack stamped with a batch label. Nothing is dusted, dipped or sprayed on the way. What leaves the drying room is what you open at home.',
-    image: 'pastila-slices',
+    text: 'The blocks rest until the texture settles, then are cut into bars and squares and sealed the same day, each pack stamped with a batch label. Nothing is dusted, dipped or sprayed on the way. What leaves the drying room is what you open at home.',
+    image: 'hero-bars',
   },
 ];
 
@@ -95,9 +95,9 @@ const pageUrl = `${origin}/how-its-made/`;
 const howTo = {
   '@type': 'HowTo',
   '@id': `${pageUrl}#howto`,
-  name: 'How Semers apple pastila is made',
+  name: 'How Semers baked apple snacks are made',
   description:
-    'The eight-stage Belyov method behind every Semers product: Antonovka apples baked whole, puréed, whipped with egg white, spread thin, slowly dried, layered, pressed and cut. No added sugar, no flour, no preservatives.',
+    'The eight stages behind a Semers Apple Bar: apples baked whole, puréed, whipped with egg white, spread thin, slowly dried, layered, pressed and cut. No added sugar, no flour, no preservatives.',
   image: abs('process-oven'),
   totalTime: 'PT12H',
   supply: [
@@ -116,8 +116,8 @@ const howTo = {
 const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 ---
 <Base
-  title="How apple pastila is made: baked apples & egg white"
-  description="How Semers makes apple pastila in Riga: Antonovka apples baked whole, whipped with egg white, dried thin and pressed. No added sugar, no flour, no tricks."
+  title="How our apple snacks are made: baked apples & egg white"
+  description="How Semers makes its baked apple snacks in Riga: apples baked whole, whipped with egg white, dried thin and pressed. No added sugar, no flour, no tricks."
   canonical="/how-its-made/"
   ogImage="process-oven"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'How it’s made', href: '/how-its-made/' }]}
@@ -129,7 +129,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     <div class="hiw-hero__copy">
       <p class="eyebrow">How it’s made · {site.locality}, {site.country}</p>
       <h1 id="hero-title" data-words>Twelve hours. Four ingredients at most. <em>Nothing to hide.</em></h1>
-      <p class="lead">This is how our apple pastila is made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into loaves. The recipe was first sold commercially in Belyov in 1888. The ingredient list has not grown since.</p>
+      <p class="lead">This is how our baked apple snacks are made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into blocks.</p>
       <ul class="cluster hiw-facts" aria-label="Key facts">
         <li class="chip"><Icon name="apple" size={14} /> 99% baked apples</li>
         <li class="chip"><Icon name="egg" size={14} /> 1% egg white</li>
@@ -221,7 +221,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
             <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
             <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
           </div>
-          <a class="btn forge__cta" href="/shop/applite/">Shop the bars <Icon name="arrow" size={18} class="arrow" /></a>
+          <a class="btn forge__cta" href="/shop/apple-bars/">Shop the bars <Icon name="arrow" size={18} class="arrow" /></a>
         </div>
       </div>
     </div>
@@ -311,7 +311,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
       <div class="open__copy">
         <p class="eyebrow">Transparency</p>
         <h2 id="open-title" data-words>Cut one open. It is apple all the way through.</h2>
-        <p class="open__text" data-reveal>No coating, no filling, no binder. The layers in a slice of pastila are the same whipped apple, dried and stacked; the gold colour is caramelised fruit, not a colouring. What is printed on the label is the whole of what is inside, and none of it needs a footnote.</p>
+        <p class="open__text" data-reveal>No coating, no filling, no binder. The layers in a cut bar are the same whipped apple, dried and stacked; the gold colour is caramelised fruit, not a colouring. What is printed on the label is the whole of what is inside, and none of it needs a footnote.</p>
         <div class="stats open__stats" data-stagger>
           <div class="stat"><strong data-count="99">99%</strong><span>baked Antonovka apples</span></div>
           <div class="stat"><strong data-count="1">1%</strong><span>egg white</span></div>
@@ -336,9 +336,9 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
       <div class="io__col io__col--in" data-reveal>
         <p class="eyebrow">Goes in</p>
         <ul class="ticks io__list">
-          <li><Icon name="check" /> <span><strong>Baked Antonovka apples</strong> <span class="muted">— 99% of every bar and loaf</span></span></li>
+          <li><Icon name="check" /> <span><strong>Baked Antonovka apples</strong> <span class="muted">— 99% of every Apple Bar, meringue and dessert</span></span></li>
           <li><Icon name="check" /> <span><strong>Egg white</strong> <span class="muted">— the other 1%</span></span></li>
-          <li><Icon name="check" /> <span><strong>Whole berries, cinnamon or pine nuts</strong> <span class="muted">— in the flavoured versions only</span></span></li>
+          <li><Icon name="check" /> <span><strong>Whole berries or cinnamon</strong> <span class="muted">— in the flavoured versions only</span></span></li>
         </ul>
       </div>
       <div class="io__col io__col--out">
@@ -350,19 +350,19 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
         </ul>
       </div>
     </div>
-    <p class="small muted mt-4 io__note">This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.</p>
+    <p class="small muted mt-4 io__note">This is the recipe for our Apple Bars, Flourless Bars, meringues and baked apple desserts. Full ingredient lines are on every product page and every pack.</p>
   </section>
 
   <!-- ============================== QUALITY & SHELF LIFE ============================== -->
   <section class="section band" aria-labelledby="keep-title">
     <div class="container split split--rev keep">
       <div class="frame frame--1x1 keep__frame" data-reveal>
-        <img src={im('pastila-100-pack').src} srcset={im('pastila-100-pack').srcset} sizes={im('pastila-100-pack').srcset && SIZES.half} alt={im('pastila-100-pack').alt} width={im('pastila-100-pack').width} height={im('pastila-100-pack').height} loading="lazy" decoding="async" class="img-cover" />
+        <img src={im('packshot-classic').src} srcset={im('packshot-classic').srcset} sizes={im('packshot-classic').srcset && SIZES.half} alt={im('packshot-classic').alt} width={im('packshot-classic').width} height={im('packshot-classic').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div>
         <p class="eyebrow">Quality and shelf life</p>
         <h2 id="keep-title" data-words>Kept by drying, not by chemistry.</h2>
-        <p class="lead" data-reveal>Slow drying removes the water that spoilage needs. That is the whole preservation system, and it is why a pack of pastila can sit in a drawer for a year and still taste of the oven.</p>
+        <p class="lead" data-reveal>Slow drying removes the water that spoilage needs. That is the whole preservation system, and it is why a pack of Apple Bars can sit in a drawer for a year and still taste of the oven.</p>
         <div class="specs" data-stagger>
           <div class="spec">
             <span class="spec__icon"><Icon name="shield" /></span>
@@ -372,7 +372,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
           <div class="spec">
             <span class="spec__icon"><Icon name="clock" /></span>
             <h3>Twelve months, unopened</h3>
-            <p>For bars, dessert squares and pastila, in a cool, dry cupboard. Meringues and zephyr keep for less; the date on the pack is the one to trust.</p>
+            <p>For Apple Bars, in a cool, dry cupboard. The other products keep for different lengths of time; the date on the pack is the one to trust.</p>
           </div>
           <div class="spec">
             <span class="spec__icon"><Icon name="box" /></span>
@@ -385,7 +385,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
             <p>Cut and sealed on the day it leaves the drying room. Nothing sits around waiting for a box.</p>
           </div>
         </div>
-        <p class="small muted specs__note">Allergens: contains egg. May contain traces of nuts, and the Pine Nut loaf contains them outright. The full allergen line is on each product page.</p>
+        <p class="small muted specs__note">Allergens: contains egg. May contain traces of nuts. The full allergen line is on each product page.</p>
       </div>
     </div>
   </section>
@@ -394,20 +394,19 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   <section class="section container cta-sec" aria-labelledby="cta-title">
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Taste the twelve hours</p>
-      <h2 id="cta-title">Start with a loaf. The bars will follow.</h2>
-      <p>Belyov pastila is the recipe in its original shape: baked Antonovka apple, egg white, time. Parcels leave Riga in 1–2 business days, and orders over {freeFrom} ship free.</p>
+      <h2 id="cta-title">Start with a bar. The rest will follow.</h2>
+      <p>Baked apple, egg white, time. Parcels leave Riga in 1–2 business days, and orders over {freeFrom} ship free.</p>
       <div class="cluster mt-2">
-        <a class="btn" href="/shop/pastila/">Shop Belyov pastila <Icon name="arrow" size={18} class="arrow" /></a>
+        <a class="btn" href="/shop/apple-bars/">Shop Apple Bars <Icon name="arrow" size={18} class="arrow" /></a>
         <a class="btn btn--ghost" href="/shop/">All products</a>
         <a class="link cta-band__link" href="/why-pastila/">Why pastila?</a>
       </div>
     </div>
-    <!-- Keep reading: three links in one line, not three more boxes. -->
+    <!-- Keep reading: two links in one line, not two more boxes. -->
     <nav class="more" aria-labelledby="more-title" data-reveal>
       <p class="eyebrow" id="more-title">Keep reading</p>
       <ul class="more__list">
         <li><a class="more__link" href="/why-pastila/">Why a baked apple beats the usual bar <Icon name="arrow" size={16} class="arrow" /></a></li>
-        <li><a class="more__link" href="/story/">From Belyov, 1888, to Riga <Icon name="arrow" size={16} class="arrow" /></a></li>
         <li><a class="more__link" href="/journal/antonovka-apples/">Why Antonovka apples? <Icon name="arrow" size={16} class="arrow" /></a></li>
       </ul>
     </nav>

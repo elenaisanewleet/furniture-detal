@@ -10,8 +10,21 @@ export const site = {
     legalName: 'SIA Semers Group',
     /** Short line under the logo and in <title> suffixes. */
     tagline: 'Baked apple snacks. 99% apples. No added sugar.',
-    /** Product sub-brands used on packaging. */
-    lines: ["App'Lite", 'Flourless', 'PastiLite', 'Belyov Pastila', 'Belevini'],
+    /** Product brands used on packaging. */
+    lines: ["App'Lite", "Blum Baker's"],
+  },
+
+  /**
+   * The food business operator a product page names beside the food
+   * (Reg. 1169/2011 art. 8 and 9(1)(h)). The address stays empty until the
+   * owner confirms the one to publish, and the page prints the operator line
+   * only once both halves are set: half an operator is not a declaration.
+   * No registration or VAT number belongs here until the owner confirms them.
+   */
+  operator: {
+    name: 'SIA Semers Group',
+    // Widened from the literal '' so a page can test it without the type deciding the answer.
+    address: '' as string,
   },
 
   locality: 'Riga',
@@ -106,8 +119,6 @@ export const footerNav = {
     { key: 'appleBars', href: '/shop/apple-bars/' },
     { key: 'flourlessBars', href: '/shop/flourless-bars/' },
     { key: 'meringues', href: '/shop/meringues/' },
-    { key: 'pastila', href: '/shop/pastila/' },
-    { key: 'zephyr', href: '/shop/zephyr/' },
     { key: 'giftSets', href: '/shop/gift-sets/' },
     { key: 'buildYourBox', href: '/shop/build-your-box/' },
   ],

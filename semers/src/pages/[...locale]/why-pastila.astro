@@ -52,15 +52,14 @@ const who = [
   { icon: 'clock', title: 'Desk snackers', text: 'The four o’clock moment, answered with 97 kcal instead of whatever the vending machine had left.' },
   { icon: 'globe', title: 'Hikers and runners', text: 'Weighs 35 g, lies flat in a jersey pocket, does not melt, and keeps for months without a fridge.' },
   { icon: 'shield', title: 'People cutting added sugar', text: 'Read the label once and stop reading labels. Two ingredients, both of which you could buy at a market.' },
-  { icon: 'star', title: 'Gift-givers', text: 'A loaf of pastila is unusual enough to be a story and good enough to be finished. Boxes ship from Riga with a card if you ask.' },
+  { icon: 'star', title: 'Gift-givers', text: 'A box of baked-apple snacks is unusual enough to be a story and good enough to be finished. Boxes ship from Riga with a card if you ask.' },
 ] as const;
 
 const ideas = [
-  { title: 'With tea', text: 'The original way. A thick slice of Belyov pastila beside strong black tea, no sugar in either.' },
+  { title: 'With tea', text: 'A bar or a dessert square beside strong black tea, no sugar in either.' },
   { title: 'On porridge', text: 'Crumble a bar over morning oats or yoghurt instead of honey. It softens into the warm bowl.' },
   { title: 'In a lunchbox', text: 'One bar in the corner of the box. It does not leak, melt or crumble, and it is still good at three.' },
   { title: 'After a run', text: 'Something sweet and light before the proper meal. Chase it with water.' },
-  { title: 'With cheese', text: 'Slice the 180 g loaf thin and lay it on a board with an aged hard cheese. Tart apple, salty cheese, done.' },
 ];
 
 const num = (i: number) => String(i + 1).padStart(2, '0');
@@ -112,11 +111,11 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
         <p class="eyebrow">What pastila is</p>
         <h2 id="what-title" data-words>A baked apple, whipped with air and dried into a loaf.</h2>
         <div class="prose mt-4" data-reveal>
-          <p>Pastila is a traditional confection from the town of Belyov, first made commercially in 1888 by the merchant Amvrosy Prokhorov. The method has barely changed since. Sour Antonovka apples are baked whole until their sugars caramelise. The purée is whipped with egg white until it holds air, spread in thin sheets and dried for hours at low heat. The sheets are stacked, pressed and dried again.</p>
+          <p>Pastila is a traditional baked-apple confection. Sour apples are baked whole until their sugars caramelise. The purée is whipped with egg white until it holds air, spread in thin sheets and dried for hours at low heat. The sheets are stacked, pressed and dried again.</p>
           <p>What comes out is neither a fruit leather nor a cake. It is soft, fibrous and slightly springy, and it tastes of baked apple and very little else. The loaf becomes a bar when we cut it, a meringue when we bake it, a dessert square when we press it thicker. The ingredient list does not change on the way.</p>
         </div>
         <div class="cluster mt-4" data-reveal>
-          <a class="btn" href="/shop/pastila/">Shop Belyov pastila</a>
+          <a class="btn" href="/shop/applite/">Shop App’Lite desserts</a>
           <a class="link" href="/story/">Read the story</a>
         </div>
       </div>
@@ -264,7 +263,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   </section>
 
   <!-- ============================== HOW TO EAT IT ============================== -->
-  <!-- Five ways, numbered in outlined type, beside a photograph that stays put while they scroll past. -->
+  <!-- Four ways, numbered in outlined type, beside a photograph that stays put while they scroll past. -->
   <section class="section container" aria-labelledby="eat-title">
     <div class="section-head">
       <div>
@@ -276,7 +275,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
     <div class="ways">
       <div class="ways__pic">
         <div class="frame frame--4x5 ways__frame" data-reveal>
-          <img src={im('pastila-slices').src} srcset={im('pastila-slices').srcset} sizes={im('pastila-slices').srcset && SIZES.third} alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="lazy" decoding="async" class="img-cover" />
+          <img src={im('lifestyle-desk').src} srcset={im('lifestyle-desk').srcset} sizes={im('lifestyle-desk').srcset && SIZES.third} alt={im('lifestyle-desk').alt} width={im('lifestyle-desk').width} height={im('lifestyle-desk').height} loading="lazy" decoding="async" class="img-cover" />
         </div>
       </div>
       <div>
@@ -291,7 +290,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
             </li>
           ))}
         </ol>
-        <p class="small muted mt-4">For the plate rather than the pocket: the <a href="/products/applite-baked-apple-dessert-50g/">App’Lite Dessert</a> and the <a href="/products/belyov-apple-pastila-180g/">180 g Belyov loaf</a>.</p>
+        <p class="small muted mt-4">For the plate rather than the pocket: the <a href="/products/applite-baked-apple-dessert-50g/">50 g App’Lite Dessert</a> and the <a href="/products/applite-baked-apple-dessert-500g/">500 g Classic Dessert</a>.</p>
       </div>
     </div>
   </section>
@@ -316,7 +315,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   <section class="section container cta-sec" aria-labelledby="cta-title">
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Try it</p>
-      <h2 id="cta-title">Start with a bar. The loaf can wait.</h2>
+      <h2 id="cta-title">Start with a bar. The desserts can wait.</h2>
       <p>App’Lite Apple Bars leave Riga in 1–2 business days and ship free on orders over {freeFrom}. Prefer a shelf? We are also at Maxima and on Barbora — see <a class="cta-band__a" href="/where-to-buy/">where to buy</a>.</p>
       <div class="cluster mt-2">
         <a class="btn" href="/shop/apple-bars/">Shop apple bars <Icon name="arrow" size={18} class="arrow" /></a>

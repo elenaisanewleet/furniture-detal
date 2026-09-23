@@ -16,8 +16,14 @@ import type { Faq } from './faq';
 import { PRODUCT_COPY, COLLECTION_COPY } from './copy.data';
 import { FAQ_COPY } from './copy.faq.data';
 
-/** The only product fields a translation is allowed to replace. */
-export type ProductCopy = Pick<Product, 'name' | 'title' | 'hook' | 'summary' | 'description' | 'ingredients' | 'allergens'>;
+/**
+ * The only product fields a translation is allowed to replace. The name of
+ * the food and its storage conditions are words on the label, so they are
+ * translated too; they are optional here because not every product has them,
+ * and a translation must not invent one the English does not carry.
+ */
+export type ProductCopy = Pick<Product, 'name' | 'title' | 'hook' | 'summary' | 'description' | 'ingredients' | 'allergens'> &
+  Partial<Pick<Product, 'legalName' | 'legalNameByFlavour' | 'storage'>>;
 export type CollectionCopy = Pick<Collection, 'name' | 'title' | 'description'>;
 export type FaqCopy = Pick<Faq, 'q' | 'a'>;
 

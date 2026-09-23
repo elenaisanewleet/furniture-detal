@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
-import { PRODUCTS, FLAVORS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, type FlavorKey, formatThreshold } from '~/data/products';
+import { PRODUCTS, FLAVORS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, type FlavorKey, type Nutrition, type Variant, formatThreshold } from '~/data/products';
 import { img, imgSrc, im, imgSmall, imgSrcset, SIZES } from '~/data/images';
 import { productSchema, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
@@ -50,60 +50,104 @@ const baseRecipe = p.ingredients.split(/[.;]/)[0].replace(/\([^)]*\)/g, '');
 const ingredientCount = /egg white/i.test(baseRecipe) ? baseRecipe.split(',').length : 0;
 const ingredientLine =
   ingredientCount === 2 ? `2 ingredients${multi && p.variants.some((v) => v.key === 'classic') ? ' in the Classic' : ''}` : 'Short ingredient list';
-/** "Belyov Pastila · Belyov pastila" reads like a stutter when the brand is the collection. */
+/** "App'Lite · App'Lite dessert" is fine; a brand repeated as the collection's own name would read like a stutter. */
 const showBrand = p.brand.toLowerCase() !== col.name.toLowerCase();
 const isBundle = p.collection === 'gift-sets';
-/** Zephyr is the one product made with sugar; every claim below is switched on it. */
+/** Every product is sold on the no-added-sugar claim today; the claims below still follow the tag rather than assume it. */
 const noAddedSugar = p.diet.includes('no-added-sugar');
-/** kcalPerUnit is per single piece (bar, loaf, box); multi-packs list the piece weight. A 0 means "mixed box, see each item". */
-const hasKcal = p.kcalPerUnit > 0;
+/** A mixed box is a single "assorted" line: it has no declaration of its own, only its contents' declarations. */
+const isMixedBox = p.variants.length === 1 && p.variants[0].key === 'assorted';
+/** kcalPerUnit is per single piece (bar, pack, cake); multi-packs list the piece weight. null means no card backs a figure. */
+const kcalPerUnit = p.kcalPerUnit ?? 0;
+const hasKcal = kcalPerUnit > 0;
 const unitGrams = p.pack > 1 ? Math.round(p.weightGrams / p.pack) : p.weightGrams;
-const kcalLine = p.pack > 1 ? `${p.kcalPerUnit} kcal per ${unitGrams} g piece` : `${p.kcalPerUnit} kcal per ${unitGrams} g`;
+const kcalLine = p.pack > 1 ? `${kcalPerUnit} kcal per ${unitGrams} g piece` : `${kcalPerUnit} kcal per ${unitGrams} g`;
+
+/*
+ * The nutrition declaration. A flavour may carry its own figures (the two
+ * meringues differ); when any does, the table gets one column per flavour, so
+ * no flavour is shown another one's numbers. Otherwise one column serves all.
+ */
+const nutritionOf = (v: Variant): Nutrition => v.nutrition ?? p.nutrition;
+const sameNutrition = (a: Nutrition, b: Nutrition) => (Object.keys(a) as (keyof Nutrition)[]).every((k) => a[k] === b[k]);
+const flavoursDiffer = p.variants.some((v) => !sameNutrition(nutritionOf(v), p.nutrition));
+const nutriCols = flavoursDiffer ? p.variants.map((v) => ({ head: ui.flavours[v.key], n: nutritionOf(v) })) : [{ head: ui.per100g, n: p.nutrition }];
+/** One energy figure for the whole product, or null when the flavours differ or nothing is declared. */
+const sharedKcal = flavoursDiffer ? null : p.nutrition.energyKcal;
 
 /*
  * The three big numbers. They are counted from the English catalogue entry so
- * that every language shows the same figures: a loaf or a box quotes kcal per
- * 100 g rather than a whole-pack total nobody eats in one go, and a mixed box
- * that cannot count its ingredients quotes its shelf life instead.
+ * that every language shows the same figures: a pack whose kcal no card backs
+ * quotes kcal per 100 g where that is declared, and a number that is not
+ * declared at all is left out rather than shown as 0.
  */
-const isBar = p.collection === 'apple-bars' || p.collection === 'flourless-bars';
+const isBar = p.collection === 'apple-bars';
 const per100 = !hasKcal || (p.pack === 1 && p.weightGrams >= 150);
-const bigKcal = per100 ? p.nutrition.energyKcal : p.kcalPerUnit;
+const bigKcal = per100 ? sharedKcal : kcalPerUnit;
 const bigKcalLabel = per100 ? 'kcal per 100 g' : p.pack > 1 ? 'kcal a piece' : isBar ? 'kcal a bar' : 'kcal a pack';
 const rawRecipe = rawProduct.ingredients.split(/[.;]/)[0].replace(/\([^)]*\)/g, '');
 const rawCount = /egg white/i.test(rawRecipe) ? rawRecipe.split(',').length : 0;
-const bigMid = rawCount > 0 ? rawCount : p.shelfLifeMonths;
-const bigMidLabel = rawCount > 0 ? 'ingredients' : 'months on the shelf';
+const bigMid = rawCount > 0 ? { n: rawCount, label: 'ingredients' } : { n: p.shelfLifeMonths, label: 'months on the shelf' };
+/** With no energy figure the shelf life takes the first cell, unless the middle one already shows it. */
+const bigFirst = bigKcal != null ? { n: bigKcal, label: bigKcalLabel } : rawCount > 0 ? { n: p.shelfLifeMonths, label: 'months on the shelf' } : null;
 /** The swatch may be a gradient (Assorted); the glow needs one colour. */
 const swatch = (k: FlavorKey) => FLAVORS[k].color;
 const glow = (k: FlavorKey) => (k === 'assorted' ? 'var(--honey-500)' : FLAVORS[k].color);
 const longName = p.name.length > 14;
 
+/*
+ * The mandatory particulars (Reg. 1169/2011 art. 9), shown beside the food.
+ * The name of the food can differ by flavour; every flavour's name is listed
+ * rather than only the selected one's, so the page is complete without script.
+ */
+const legalNames = p.legalName ? p.variants.map((v) => ({ key: v.key, name: p.legalNameByFlavour?.[v.key] ?? p.legalName! })) : [];
+const oneLegalName = new Set(legalNames.map((l) => l.name)).size === 1;
+/** Named beside the food only once the owner has confirmed the address; half an operator is not a declaration. */
+const operatorLine = site.operator.name && site.operator.address ? `${site.operator.name}, ${site.operator.address}` : '';
+/*
+ * Art. 21: the allergen is emphasised inside the ingredient list itself. The
+ * list arrives already translated, so the words are matched in all three
+ * languages (egg white, яичный белок, olu baltums, and the bare forms).
+ */
+const ALLERGEN = /(egg whites?|eggs?(?![a-z])|яичн[а-яё]*\s+бел[а-яё]*|яйц[а-яё]*|olu baltum[a-zāēīūšžčņļķģ]*|olas(?![a-zāēīūšžčņļķģ]))/iu;
+const ingredientParts = p.ingredients.split(ALLERGEN);
+
+/* A shelf life inside the storage text ("9 months when stored at…") answers the question on its own. */
+const storageEn = rawProduct.storage;
+const keepAnswer = storageEn
+  ? /month/i.test(storageEn)
+    ? storageEn
+    : `Its shelf life is ${p.shelfLifeMonths} months. ${storageEn}`
+  : `Its shelf life is ${p.shelfLifeMonths} months.`;
+const per100Line = sharedKcal != null ? ` Per 100 g: ${sharedKcal} kcal.` : '';
+
 const faqs = [
   ...(hasKcal
     ? [
         p.pack > 1
-          ? { q: 'How many calories are in each piece?', a: `About ${p.kcalPerUnit} kcal per ${unitGrams} g piece, so around ${p.kcalPerUnit * p.pack} kcal in the whole pack of ${p.pack}. Per 100 g: ${p.nutrition.energyKcal} kcal.` }
-          : { q: isBar ? 'How many calories are in one bar?' : 'How many calories are in one pack?', a: `About ${p.kcalPerUnit} kcal per ${p.weightGrams} g. Per 100 g: ${p.nutrition.energyKcal} kcal.` },
+          ? { q: 'How many calories are in each piece?', a: `About ${kcalPerUnit} kcal per ${unitGrams} g piece, so around ${kcalPerUnit * p.pack} kcal in the whole pack of ${p.pack}.${per100Line}` }
+          : { q: isBar ? 'How many calories are in one bar?' : 'How many calories are in one pack?', a: `About ${kcalPerUnit} kcal per ${p.weightGrams} g.${per100Line}` },
       ]
     : []),
-  noAddedSugar
-    ? { q: 'Does it contain added sugar?', a: 'No. The sweetness comes from the baked Antonovka apples themselves. Nothing else is added.' }
-    : { q: 'Does it contain added sugar?', a: 'Yes. Belevini zephyr is a traditional recipe made with apple purée, egg white, agar and sugar, and the pack says so. Our bars, meringues, dessert squares and Belyov pastila are the no-added-sugar range.' },
-  { q: 'How long does it keep?', a: `${p.shelfLifeMonths} months in a cool, dry place. Once opened, enjoy within a few days.` },
+  ...(noAddedSugar ? [{ q: 'Does it contain added sugar?', a: 'No. No sugar is added; the sugars it contains occur naturally in the fruit.' }] : []),
+  { q: 'How long does it keep?', a: keepAnswer },
   { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatThreshold(site.shipping.freeFrom, locale)} ship free.` },
 ];
 
-const rows: [string, string][] = [
-  ['Energy', `${p.nutrition.energyKcal} kcal`],
-  ['Fat', `${p.nutrition.fat} g`],
-  ['of which saturates', `${p.nutrition.saturates} g`],
-  ['Carbohydrate', `${p.nutrition.carbs} g`],
-  ['of which sugars', `${p.nutrition.sugars} g`],
-  ['Fibre', `${p.nutrition.fibre} g`],
-  ['Protein', `${p.nutrition.protein} g`],
-  ['Salt', `${p.nutrition.salt} g`],
+/** A value the card does not give stays null, and the table says so instead of printing a number. */
+const grams = (v: number | null) => (v == null ? null : `${v} g`);
+const energy = (n: Nutrition) =>
+  n.energyKj == null && n.energyKcal == null ? null : [n.energyKj != null ? `${n.energyKj} kJ` : '', n.energyKcal != null ? `${n.energyKcal} kcal` : ''].filter(Boolean).join(' / ');
+const rows: { label: string; sub?: boolean; cells: (string | null)[] }[] = [
+  { label: 'Energy', cells: nutriCols.map((c) => energy(c.n)) },
+  { label: 'Fat', cells: nutriCols.map((c) => grams(c.n.fat)) },
+  { label: 'of which saturates', sub: true, cells: nutriCols.map((c) => grams(c.n.saturates)) },
+  { label: 'Carbohydrate', cells: nutriCols.map((c) => grams(c.n.carbs)) },
+  { label: 'of which sugars', sub: true, cells: nutriCols.map((c) => grams(c.n.sugars)) },
+  { label: 'Protein', cells: nutriCols.map((c) => grams(c.n.protein)) },
+  { label: 'Salt', cells: nutriCols.map((c) => grams(c.n.salt)) },
 ];
+const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
 ---
 <Base
   title={p.title}
@@ -225,7 +269,7 @@ const rows: [string, string][] = [
 
           <ul class="pdp__trust">
             <li><Icon name="truck" size={18} /> Free shipping over {formatThreshold(site.shipping.freeFrom, locale)} · ships from Riga in 1–2 business days</li>
-            <li><Icon name="leaf" size={18} /> {noAddedSugar ? `${ingredientLine}, nothing artificial` : 'Made with sugar and agar, and the label says so'}</li>
+            <li><Icon name="leaf" size={18} /> {`${ingredientLine}, nothing artificial`}</li>
             <li><Icon name="clock" size={18} /> Keeps {p.shelfLifeMonths} months — no fridge needed</li>
             <li data-batch hidden><Icon name="apple" size={18} /> <span data-batch-text></span></li>
           </ul>
@@ -253,36 +297,24 @@ const rows: [string, string][] = [
             )}
           </div>
 
-          <div class="why" data-reveal>
-            {noAddedSugar ? (
+          {/* Only what the ingredient lists prove: no sugar, flour or fat in them. Gluten is named only where the pack claims it. */}
+          {noAddedSugar && (
+            <div class="why" data-reveal>
               <div>
                 <p class="eyebrow">Why it works</p>
                 <h2 class="why__title">Sweet because apples are sweet.</h2>
-                <p class="lead">We bake Antonovka apples until their sugars caramelise, whip the purée with egg white, and dry it in thin layers. That is the whole trick: concentrate the fruit, add air, add nothing else.</p>
+                <p class="lead">No sugar is added. The sweetness comes from the apples, and the sugars in it are the ones the fruit brings with it.</p>
                 <ul class="ticks">
                   <li><Icon name="check" /> No added sugar, sweeteners or syrups</li>
-                  <li><Icon name="check" /> No flour, no gluten, no fat added</li>
-                  <li><Icon name="check" /> Source of fibre from the whole fruit</li>
+                  <li><Icon name="check" /> {p.diet.includes('gluten-free') ? 'No flour, no gluten, no fat added' : 'No flour, no fat added'}</li>
                 </ul>
                 <a class="link" href="/how-its-made/">See how it’s made</a>
               </div>
-            ) : (
-              <div>
-                <p class="eyebrow">Good to know</p>
-                <h2 class="why__title">Apple first, even here.</h2>
-                <p class="lead">Zephyr is set with agar rather than gelatine and, unlike the rest of our range, it is made with sugar. We start it from the same Antonovka purée as our pastila, and the pack says exactly what is in it.</p>
-                <ul class="ticks">
-                  <li><Icon name="check" /> Antonovka apple purée, egg white, agar, sugar</li>
-                  <li><Icon name="check" /> Set with agar, not gelatine</li>
-                  <li><Icon name="check" /> The one Semers product with sugar in it, labelled as such</li>
-                </ul>
-                <a class="link" href="/shop/apple-bars/">The no-added-sugar range</a>
+              <div class="why__frame">
+                <img src={imgSrc('pastila-texture')} srcset={imgSrcset('pastila-texture')} sizes={imgSrcset('pastila-texture') && SIZES.half} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" data-parallax="0.2" />
               </div>
-            )}
-            <div class="why__frame">
-              <img src={imgSrc('pastila-texture')} srcset={imgSrcset('pastila-texture')} sizes={imgSrcset('pastila-texture') && SIZES.half} alt={img('pastila-texture').alt} width={img('pastila-texture').width} height={img('pastila-texture').height} loading="lazy" decoding="async" data-parallax="0.2" />
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
@@ -295,14 +327,16 @@ const rows: [string, string][] = [
           <p class="eyebrow">By the numbers</p>
           <h2 id="big3-title" class="big3__title" data-words>The whole label, in three numbers.</h2>
         </div>
-        <div class="big3__row" data-stagger>
-          <div class="big3__cell">
-            <b class="big3__n" data-count={bigKcal}>{bigKcal}</b>
-            <span class="big3__l">{bigKcalLabel}</span>
-          </div>
+        <div class="big3__row" data-stagger style={`--cells:${bigFirst ? 3 : 2}`}>
+          {bigFirst && (
+            <div class="big3__cell">
+              <b class="big3__n" data-count={bigFirst.n}>{bigFirst.n}</b>
+              <span class="big3__l">{bigFirst.label}</span>
+            </div>
+          )}
           <div class="big3__cell big3__cell--em">
-            <em class="big3__n" data-count={bigMid}>{bigMid}</em>
-            <span class="big3__l">{bigMidLabel}</span>
+            <em class="big3__n" data-count={bigMid.n}>{bigMid.n}</em>
+            <span class="big3__l">{bigMid.label}</span>
           </div>
           <div class="big3__cell">
             <b class="big3__n" data-count={p.weightGrams}>{p.weightGrams}</b>
@@ -318,8 +352,39 @@ const rows: [string, string][] = [
         <div class="pdp-inside__text">
           <p class="eyebrow">What’s inside</p>
           <h2 id="inside-title" data-words>Read the label. <em>All of it.</em></h2>
-          <p class="pdp-inside__ing"><strong>{ui.ingredients}</strong> {p.ingredients}</p>
+          <p class="pdp-inside__ing"><strong>{ui.ingredients}</strong> {ingredientParts.map((part, i) => (i % 2 ? <strong class="pdp-inside__em">{part}</strong> : part))}</p>
           <p class="pdp-inside__all"><strong>{ui.allergens}</strong> {p.allergens}</p>
+          {/* The particulars a distance sale must show before the purchase (Reg. 1169/2011 art. 14); the data- markers are what scripts/check-food.mjs looks for. */}
+          <div class="pdp-inside__info">
+            <h3 class="pdp-inside__info-title">{ui.foodInformation}</h3>
+            <dl class="pdp-inside__facts">
+              {legalNames.length > 0 && (
+                <div>
+                  <dt>{ui.legalName}</dt>
+                  {oneLegalName ? (
+                    <dd data-legal-name>{legalNames[0].name}</dd>
+                  ) : (
+                    <dd data-legal-name>
+                      <ul>{legalNames.map((l) => <li><span class="muted">{ui.flavours[l.key]}:</span> {l.name}</li>)}</ul>
+                    </dd>
+                  )}
+                </div>
+              )}
+              {p.storage && (
+                <div>
+                  <dt>{ui.storage}</dt>
+                  <dd data-storage>{p.storage}</dd>
+                </div>
+              )}
+              {operatorLine && (
+                <div>
+                  <dt>{ui.operator}</dt>
+                  <dd data-operator>{operatorLine}</dd>
+                </div>
+              )}
+            </dl>
+            {noAddedSugar && <p class="small pdp-inside__sugars">{ui.naturalSugars}</p>}
+          </div>
           {multi && <p class="small muted pdp-inside__ean">EAN for the selected flavour: <span data-gtin translate="no">{first.gtin || '—'}</span></p>}
           <ul class="pdp-inside__diet" aria-label={ui.keyFacts}>
             {p.diet.map((d) => <li class="chip chip--leaf">{ui.diet[d]}</li>)}
@@ -328,12 +393,21 @@ const rows: [string, string][] = [
         <div class="lit" data-reveal>
           <h3 class="lit__title">{ui.nutritionPer100}</h3>
           <table class="nutri">
-            <thead><tr><th>{ui.typicalValues}</th><th>{ui.per100g}</th></tr></thead>
+            <thead><tr><th>{ui.typicalValues}</th>{nutriCols.map((c) => <th>{c.head}</th>)}</tr></thead>
             <tbody>
-              {rows.map(([k, v]) => <tr class={k.startsWith('of which') ? 'sub' : ''}><td>{k}</td><td>{v}</td></tr>)}
+              {rows.map((r) => (
+                <tr class={r.sub ? 'sub' : ''}>
+                  <td>{r.label}</td>
+                  {r.cells.map((v) => <td>{v ?? <span class="nutri__nd">{ui.notDeclared}</span>}</td>)}
+                </tr>
+              ))}
             </tbody>
           </table>
-          <p class="tiny muted lit__note">{hasKcal ? `Approximate per ${unitGrams} g: ${p.kcalPerUnit} kcal. ` : 'Typical values for the baked-apple pastila base; each product in the box carries its own nutrition label. '}Values are typical for the recipe; see the pack for the batch label.</p>
+          <p class="tiny muted lit__note">
+            {hasKcal ? `Approximate per ${unitGrams} g: ${kcalPerUnit} kcal. ` : ''}
+            {isMixedBox ? 'Each product in the box carries its own nutrition declaration.' : 'Values per 100 g, from the producer’s product information.'}
+            {hasUndeclared && !isMixedBox ? ' A value not yet declared is missing from the information we have; it is not zero.' : ''}
+          </p>
         </div>
       </div>
     </section>
@@ -549,7 +623,8 @@ const rows: [string, string][] = [
   .big3__cell--em .big3__n { font-style: normal; color: var(--honey-500); text-shadow: 0 0 60px rgb(240 176 74 / 0.5); }
   .big3__l { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-2); }
   @media (min-width: 40rem) {
-    .big3__row { grid-template-columns: repeat(3, 1fr); border-top: 0; }
+    /* --cells is 2 when a product has no energy figure to show: the row closes up rather than leaving a hole. */
+    .big3__row { grid-template-columns: repeat(var(--cells, 3), 1fr); border-top: 0; }
     .big3__cell { grid-template-columns: 1fr; align-content: start; gap: 1rem; padding: 0.5rem 1.5rem 0.5rem 0; border-bottom: 0; border-left: 1px solid var(--line); padding-left: 1.5rem; }
     .big3__cell:first-child { border-left: 0; padding-left: 0; }
   }
@@ -561,7 +636,16 @@ const rows: [string, string][] = [
   .pdp-inside__text h2 em { font-style: normal; color: var(--honey-500); }
   .pdp-inside__ing { margin: clamp(1.5rem, 3vw, 2.25rem) 0 0; font-family: var(--font-display); font-weight: 400; font-size: var(--fs-xl); line-height: 1.3; letter-spacing: -0.01em; color: var(--cream-1); max-width: 30ch; text-wrap: pretty; font-variation-settings: 'opsz' 48, 'SOFT' 60; }
   .pdp-inside__ing strong, .pdp-inside__all strong { display: block; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); margin-bottom: 0.5rem; }
+  /* The allergen inside the list: the label style above would make it a block caption, so it is reset to run in the line, set apart by weight and colour. */
+  .pdp-inside__ing .pdp-inside__em { display: inline; margin: 0; font: inherit; font-weight: 700; letter-spacing: inherit; text-transform: none; color: var(--honey-500); }
   .pdp-inside__all { margin: 1.75rem 0 0; color: var(--fg-2); max-width: 44ch; }
+  .pdp-inside__info { margin: 1.75rem 0 0; padding-top: 1.25rem; border-top: 1px solid var(--line); max-width: 44ch; }
+  .pdp-inside__info-title { font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); margin: 0 0 0.75rem; }
+  .pdp-inside__facts { display: grid; gap: 0.75rem; margin: 0; }
+  .pdp-inside__facts dt { font-size: var(--fs-sm); font-weight: 600; color: var(--fg-2); }
+  .pdp-inside__facts dd { margin: 0.15rem 0 0; color: var(--cream-1); }
+  .pdp-inside__facts ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.2rem; }
+  .pdp-inside__sugars { margin: 0.75rem 0 0; color: var(--fg-2); }
   .pdp-inside__ean { margin: 1.25rem 0 0; }
   .pdp-inside__diet { list-style: none; margin: 1.75rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .pdp-inside__diet li { min-height: 2.25rem; }
@@ -573,9 +657,12 @@ const rows: [string, string][] = [
   .lit .nutri { font-size: var(--fs-md); }
   .lit .nutri :global(th) { font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--fg-3); }
   .lit .nutri :global(td) { padding: 0.75rem 0; color: var(--cream-1); }
-  .lit .nutri :global(td:last-child) { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 500; letter-spacing: -0.01em; color: var(--cream-0); }
+  /* Every value column, not only the last: a product whose flavours differ has one column each. */
+  .lit .nutri :global(td:not(:first-child)) { font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 500; letter-spacing: -0.01em; color: var(--cream-0); }
   .lit .nutri :global(tr.sub td) { color: var(--fg-3); }
-  .lit .nutri :global(tr.sub td:last-child) { font-family: var(--font-sans); font-size: var(--fs-md); font-weight: 400; color: var(--fg-2); }
+  .lit .nutri :global(tr.sub td:not(:first-child)) { font-family: var(--font-sans); font-size: var(--fs-md); font-weight: 400; color: var(--fg-2); }
+  /* "Not yet declared" must be visible, but must not read as a figure. */
+  .lit .nutri :global(.nutri__nd) { font-family: var(--font-sans); font-size: var(--fs-sm); font-weight: 400; letter-spacing: 0; color: var(--fg-3); }
   .lit .nutri :global(tbody tr:first-child td) { color: var(--honey-500); }
   .lit__note { margin-top: 1.1rem; }
 

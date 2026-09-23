@@ -67,9 +67,9 @@ const wholesaleFaq = FAQS.find((f) => f.group === 'wholesale');
 const faqs = [
   ...(wholesaleFaq ? [wholesaleFaq] : []),
   { q: 'Is there a minimum order?', a: 'It depends on the format and on whether the order travels by parcel or by pallet. Tell us what you have in mind in the form and we will say straight away.' },
-  { q: 'Does it need a fridge?', a: 'No. Apple Bars, Flourless Bars, the App’Lite dessert and Belyov pastila keep for twelve months at room temperature, unopened. Meringues and zephyr have shorter shelf lives; see the formats table.' },
+  { q: 'Does it need a fridge?', a: 'No. Apple Bars keep for twelve months at room temperature, unopened. The other formats have their own shelf lives and storage temperatures; see the formats table and the pack.' },
   { q: 'Do you provide spec sheets and EAN codes?', a: 'Yes. Our SKUs are EAN-coded, and the line sheet comes with a spec sheet for each product: ingredients, allergens and nutrition per 100 g.' },
-  { q: 'Can we taste it before we order?', a: 'The quickest way is a Tasting Box from the web shop: four Apple Bars, two Flourless Bars, two bags of meringues and a 100 g pastila loaf, shipped free. Or mention samples in the form and we will tell you what we can send.' },
+  { q: 'Can we taste it before we order?', a: 'The quickest way is a Tasting Box from the web shop, shipped free. Or mention samples in the form and we will tell you what we can send.' },
   { q: 'Where do you already sell?', a: `In Latvia at Maxima and on Barbora, and through selected retailers in ${exportList}. See the Where to buy page for the list.` },
 ];
 
@@ -77,8 +77,8 @@ const mailHref = `mailto:${site.wholesaleEmail}?subject=${encodeURIComponent('Wh
 const pad = (n: number) => String(n).padStart(2, '0');
 ---
 <Base
-  title="Wholesale apple bars & pastila for shops and cafés"
-  description="Wholesale apple bars, meringues and Belyov pastila with no added sugar for retailers, cafés, offices and distributors. Made in Riga, shipped EU-wide."
+  title="Wholesale apple bars & desserts for shops and cafés"
+  description="Wholesale apple bars, meringues and baked apple desserts with no added sugar for retailers, cafés, offices and distributors. Made in Riga, shipped EU-wide."
   canonical="/wholesale/"
   ogImage="retail-boxes"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Wholesale', href: '/wholesale/' }]}
@@ -90,7 +90,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <h1 id="page-title" class="ws-hero__title" data-words>Put a 99% apple snack <em>on your shelf.</em></h1>
     <div class="ws-hero__row">
       <div class="ws-hero__copy" data-reveal>
-        <p class="lead">Semers supplies wholesale apple bars, apple meringues and Belyov pastila to retail chains, independent stores, cafés, offices and distributors across the EU. Two ingredients, no added sugar, twelve months on an ambient shelf. Already at Maxima and on Barbora in Latvia, and in stores in {exportList}.</p>
+        <p class="lead">Semers supplies wholesale apple bars, apple meringues and baked apple desserts to retail chains, independent stores, cafés, offices and distributors across the EU. Two ingredients, no added sugar, and Apple Bars keep twelve months on an ambient shelf. Already at Maxima and on Barbora in Latvia, and in stores in {exportList}.</p>
         <div class="ws-hero__cta">
           <a class="btn btn--lg" href="#enquiry">Request the line sheet <Icon name="arrow" size={20} class="arrow" /></a>
           <a class="btn btn--lg btn--ghost" href="#formats">See the formats</a>
@@ -115,7 +115,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <div class="trust" data-stagger>
       <div><Icon name="box" size={22} /><div><strong>Already on shelves</strong><span>Maxima, Barbora and stores in {exportCount} export markets</span></div></div>
       <div><Icon name="globe" size={22} /><div><strong>Made in Riga, Latvia</strong><span>An EU producer: {site.brand.legalName}</span></div></div>
-      <div><Icon name="clock" size={22} /><div><strong>12 months ambient</strong><span>Bars and pastila need no cold chain</span></div></div>
+      <div><Icon name="clock" size={22} /><div><strong>12 months ambient</strong><span>Apple Bars need no cold chain</span></div></div>
       <div><Icon name="mail" size={22} /><div><strong>Reply within one business day</strong><span>Line sheet, prices and spec sheets</span></div></div>
     </div>
   </div>
@@ -158,7 +158,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
         <p class="eyebrow">Who we supply</p>
         <h2 id="who-title" data-words>From one café to a national chain.</h2>
       </div>
-      <p class="muted" style="max-width:38ch">Same bars, same pastila, packed for the way you sell. Pick the line that sounds like you.</p>
+      <p class="muted" style="max-width:38ch">Same bars, same desserts, packed for the way you sell. Pick the line that sounds like you.</p>
     </div>
     <div class="strip" data-stagger tabindex="0">
       {segments.map((s, i) => (
@@ -193,7 +193,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
           <li><Icon name="check" size={18} /> Small footprint: a 35 g bar takes the space of a chocolate bar</li>
           <li><Icon name="check" size={18} /> EAN-coded SKUs, ready for your system</li>
           <li><Icon name="check" size={18} /> Made in Riga, Latvia, by {site.brand.legalName}: an EU producer</li>
-          <li><Icon name="check" size={18} /> A recipe with a date on it: Belyov pastila, made commercially since 1888</li>
         </ul>
         <div class="cluster mt-4">
           <a class="link" href="/why-pastila/">Why pastila</a>
@@ -208,7 +207,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <div class="section-head">
       <div>
         <p class="eyebrow">Formats</p>
-        <h2 id="formats-title" data-words>Seven formats. One apple behind all of them.</h2>
+        <h2 id="formats-title" data-words>One apple behind every format.</h2>
       </div>
       <p class="muted">{formats.length} formats · {skuCount} SKUs · <a href="/shop/">see them in the shop</a></p>
     </div>
@@ -289,18 +288,17 @@ const pad = (n: number) => String(n).padStart(2, '0');
         <li>
           <span class="numerals__n" aria-hidden="true">03</span>
           <h3>Paperwork</h3>
-          <p>A spec sheet for every SKU with ingredients, allergens, nutrition per 100 g and EAN codes. Twelve-month shelf life on bars and pastila; no cold chain to arrange.</p>
+          <p>A spec sheet for every SKU with ingredients, allergens, nutrition per 100 g and EAN codes. Twelve-month shelf life on Apple Bars; no cold chain to arrange.</p>
         </li>
       </ol>
       <p class="ws-log__foot small muted">Already stocked at Maxima and Barbora in Latvia, and by selected retailers in {exportList}. <a href="/where-to-buy/">Where to buy</a></p>
     </div>
   </section>
 
-  <!-- ============================== PRIVATE LABEL: the year on the back of the pack ============================== -->
+  <!-- ============================== PRIVATE LABEL ============================== -->
   <section class="section container" aria-labelledby="pl-title">
     <div class="split split--rev">
       <div class="pl__media" data-reveal>
-        <span class="pl__year" aria-hidden="true">1888</span>
         <div class="pf pf--4x5">
           <img src={im('gift-box').src} srcset={im('gift-box').srcset} sizes={im('gift-box').srcset && SIZES.third} alt={im('gift-box').alt} width={im('gift-box').width} height={im('gift-box').height} loading="lazy" decoding="async" data-parallax="0.15" />
         </div>
@@ -308,12 +306,11 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <div data-reveal>
         <p class="eyebrow">Private label</p>
         <h2 id="pl-title" data-words>Your name on the pack. Our apples inside.</h2>
-        <p class="lead mt-4">For larger volumes we make the same baked-apple bars, meringues and pastila under your brand. You bring the name and the artwork; we bring the recipe, the ovens in Riga and packaging ready for your EAN codes.</p>
-        <p class="muted">Start from any format in the table above, from a 35 g bar to a 180 g loaf. Tell us the format and the monthly volume in the form and we will tell you what is possible, and how soon.</p>
+        <p class="lead mt-4">For larger volumes we make the same baked-apple bars, meringues and desserts under your brand. You bring the name and the artwork; we bring the recipe, the ovens in Riga and packaging ready for your EAN codes.</p>
+        <p class="muted">Start from any format in the table above, from a 35 g bar to a 500 g box. Tell us the format and the monthly volume in the form and we will tell you what is possible, and how soon.</p>
         <ol class="pl__ticks">
           <li><span class="pl__tn" aria-hidden="true">01</span><span>Same two-ingredient recipe, no added sugar</span></li>
           <li><span class="pl__tn" aria-hidden="true">02</span><span>Made in the EU, in Riga, with a twelve-month ambient shelf life</span></li>
-          <li><span class="pl__tn" aria-hidden="true">03</span><span>A story to print on the back: Belyov pastila, since 1888</span></li>
         </ol>
         <div class="cluster mt-4">
           <a class="btn btn--ghost" href="#enquiry">Ask about private label</a>
@@ -436,7 +433,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Taste it first</p>
       <h2 id="taste-title">Order a Tasting Box today. Talk wholesale tomorrow.</h2>
-      <p>Four Apple Bars, two Flourless Bars, two bags of meringues and a 100 g pastila loaf, shipped free from Riga. Bring it to your next range meeting.</p>
+      <p>Our starter box, shipped free from Riga. Bring it to your next range meeting.</p>
       <div class="cluster mt-2">
         <a class="btn btn--paper" href="/products/tasting-box/">Order a Tasting Box</a>
         <a class="btn btn--ghost" href="/shop/">Shop all products</a>
@@ -559,7 +556,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
   /* ---------------------------------------------------------- private label */
   .pl__media { position: relative; padding-top: clamp(2rem, 6vw, 4rem); }
-  .pl__year { position: absolute; left: -0.04em; top: 0; z-index: 2; font-family: var(--font-display); font-size: clamp(5rem, 16vw, 12rem); font-weight: 400; line-height: 0.8; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); pointer-events: none; font-variation-settings: 'opsz' 144, 'SOFT' 30; }
   .pl__media .pf { margin-top: clamp(0.5rem, 3vw, 2.5rem); }
   .pl__ticks { list-style: none; margin: var(--sp-5) 0 0; padding: 0; display: grid; gap: 0.7rem; border-top: 1px solid var(--line); }
   .pl__ticks li { display: grid; grid-template-columns: 2.6rem 1fr; gap: var(--sp-4); align-items: baseline; padding-top: 0.7rem; color: var(--fg-2); }

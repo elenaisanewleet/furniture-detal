@@ -24,29 +24,16 @@ const countryCount = countries.length;
 const exportLine = exportCountries.join(', ');
 
 /**
- * Qualitative milestones. Only 1888 is a documented date; nothing else carries a year.
+ * Qualitative milestones, told in order; none of them carries a year.
  * Each stop is set as one enormous outlined word on the wall, with a photograph
  * drifting under it; `long` keys are set a size smaller so they stay on one line.
  */
 const milestones = [
   {
-    key: '1888',
-    isYear: true,
-    image: 'pastila-180',
-    title: 'Belyov pastila is first sold',
-    text: 'Merchant Amvrosy Prokhorov puts baked-apple pastila into commercial production in the town of Belyov. Antonovka apples, egg white, thin layers, patience.',
-  },
-  {
-    key: 'The Baltics',
-    image: 'pastila-texture',
-    title: 'A recipe travels north',
-    text: 'The same sour apple grows in orchards across the Baltics, and the same method follows it: a sweet that needs no sugar to make and no cold to keep.',
-  },
-  {
     key: 'Riga',
-    image: 'process-oven',
-    title: 'Semers starts baking pastila for the modern snack shelf',
-    text: 'A bakery in Riga takes the loaf and cuts it down to a bar, bakes it into a meringue and presses it into a dessert square. The ingredient list stays two lines long.',
+    image: 'hero-bars',
+    title: 'A bakery in Riga',
+    text: 'Where Semers Group makes its App’Lite and Blum Baker’s snacks from baked apples and egg white.',
   },
   {
     key: 'Maxima & Barbora',
@@ -62,54 +49,57 @@ const milestones = [
   },
   {
     key: 'Today',
-    image: 'tasting-box',
+    image: 'bar-12-pack',
     title: 'This shop',
-    text: 'Ordered here, packed in Riga, on its way in one to two business days. The recipe is still two ingredients long.',
+    text: 'Ordered here, packed in Riga, on its way in one to two business days.',
   },
 ].map((m) => ({ ...m, long: m.key.length > 6 }));
 
-/** The four shapes the loaf became, in the order they are told above. */
+/** Everything the shop sells, one entry per product, in the order the range is told above. */
 const shapes = [
   { slug: 'apple-bar-35g', label: 'The bar' },
   { slug: 'apple-meringue-35g', label: 'The meringue' },
-  { slug: 'applite-baked-apple-dessert-50g', label: 'The dessert square' },
-  { slug: 'flourless-apple-bar-50g', label: 'The flourless bar' },
+  { slug: 'applite-baked-apple-dessert-50g', label: 'The dessert' },
+  { slug: 'applite-baked-apple-dessert-500g', label: 'The carton' },
+  { slug: 'flourless-apple-bar-50g', label: 'The flourless cake' },
 ].flatMap((s) => {
   const p = PRODUCTS.find((x) => x.slug === s.slug);
   return p ? [{ ...s, product: p }] : [];
 });
 
-/** One line per sub-brand; product names, weights and links come from the catalogue. */
+/**
+ * The two brands printed on the packs. They are listed here rather than read from the
+ * site's brand list so that this page can only ever explain a brand it has a note for;
+ * a brand with no products in the catalogue drops out instead of showing an empty row.
+ */
 const LINE_NOTES: Record<string, string> = {
-  "App'Lite": 'The everyday line. Pastila cut to pocket size as a 35 g bar, and its thicker cut for a plate.',
-  Flourless: 'The heartier bar: 50 g of baked apple pressed with whole berries, for the days when 35 g is not enough.',
-  PastiLite: 'The same whipped apple, baked until it crackles. A meringue with no sugar to add.',
-  'Belyov Pastila': 'The original loaf, in the shape it has had since 1888. The 100 g is the one to try first; the 180 g is for the table.',
-  Belevini: 'Apple zephyr, the soft marshmallow of the east, set with agar. The one line in our range that does contain sugar, and the pack says so.',
+  "App'Lite": 'Baked apples and egg white as a bar, a meringue and a dessert. The bar and the meringue come in Classic and Berry Mix, the 50 g dessert in Classic, Cinnamon and Berry Mix, and the 500 g carton in Classic.',
+  "Blum Baker's": 'A flourless apple cake, 50 g, in Classic, Cinnamon, Blueberry and Cranberry.',
 };
-const lines = site.brand.lines.map((brand) => {
+const lines = Object.keys(LINE_NOTES).flatMap((brand) => {
   const products = PRODUCTS.filter((p) => p.brand === brand && p.collection !== 'gift-sets').sort((a, b) => a.order - b.order);
   const first = products[0];
-  const col = first ? collectionByKey(first.collection) : undefined;
-  return { brand, products, href: col ? `/shop/${col.key}/` : '/shop/', colName: col ? col.name : 'Shop', note: LINE_NOTES[brand] ?? '' };
+  if (!first) return [];
+  const col = collectionByKey(first.collection);
+  return [{ brand, products, href: col ? `/shop/${col.key}/` : '/shop/', colName: col ? col.name : 'Shop', note: LINE_NOTES[brand] }];
 });
 
 const pad = (n: number) => String(n).padStart(2, '0');
 ---
 <Base
-  title="Our story: an 1888 pastila recipe, baked in Riga"
-  description="The Semers story: a Belyov apple pastila recipe first sold in 1888, the sour Antonovka apple behind it, and a Riga bakery turning the loaf into bars."
+  title="Our story: baked-apple snacks made in Riga"
+  description="Semers Group makes App’Lite and Blum Baker’s snacks in Riga from baked apples and egg white: no added sugar, no flour, gluten free."
   canonical="/story/"
-  ogImage="pastila-block"
+  ogImage="hero-bars"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Our story', href: '/story/' }]}
 >
   <!-- ============================== HERO: one enormous line, then air ============================== -->
   <section class="page-hero container story-hero" aria-labelledby="page-title">
     <p class="eyebrow">Our story · {site.locality}, {site.country}</p>
-    <h1 id="page-title" class="story-hero__title" data-words>A sour apple, an old recipe and a bakery in <em>Riga</em>.</h1>
+    <h1 id="page-title" class="story-hero__title" data-words>Baked apples, egg white and a bakery in <em>Riga</em>.</h1>
     <div class="story-hero__row">
       <div class="story-hero__copy" data-reveal>
-        <p class="lead">Semers makes baked-apple snacks in Riga from a Belyov pastila recipe that was first sold in 1888: Antonovka apples, egg white, and a great deal of patience. This is where the recipe came from, why we have not touched it, and how a loaf turned into a bar.</p>
+        <p class="lead">Semers makes baked-apple snacks in Riga under two names, App’Lite and Blum Baker’s. Baked apples and egg white, with berries or cinnamon in some flavours; no added sugar and no flour. This page is what we make and how.</p>
         <div class="cluster story-hero__cta">
           <a class="btn btn--lg" href="/shop/">Shop the range <Icon name="arrow" size={20} class="arrow" /></a>
           <a class="btn btn--lg btn--ghost" href="/how-its-made/">How it’s made</a>
@@ -117,32 +107,30 @@ const pad = (n: number) => String(n).padStart(2, '0');
       </div>
       <div class="story-hero__media" data-reveal>
         <div class="pf story-hero__frame">
-          <img src={im('pastila-slices').src} srcset={im('pastila-slices').srcset} sizes={im('pastila-slices').srcset && SIZES.half} alt={im('pastila-slices').alt} width={im('pastila-slices').width} height={im('pastila-slices').height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.12" />
+          <img src={im('hero-bars').src} srcset={im('hero-bars').srcset} sizes={im('hero-bars').srcset && SIZES.half} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.12" />
         </div>
-        <div class="story-hero__note"><strong>1888</strong><span>The year Belyov pastila was first sold. Two ingredients then, two ingredients now.</span></div>
+        <div class="story-hero__note"><strong>2</strong><span>ingredients in every Classic: baked apples and egg white.</span></div>
       </div>
     </div>
     <div class="stats story-stats" data-stagger>
-      <div class="stat"><strong>1888</strong><span>Belyov pastila first sold</span></div>
       <div class="stat"><strong data-count="2">2</strong><span>ingredients: baked apples, egg white</span></div>
-      <div class="stat"><strong data-count="99">99%</strong><span>Antonovka apple in every bar</span></div>
+      <div class="stat"><strong data-count="99">99%</strong><span>baked apples, printed on the front of the Apple Bar</span></div>
+      <div class="stat"><strong data-count={lines.length}>{lines.length}</strong><span>brands: App’Lite and Blum Baker’s</span></div>
       <div class="stat"><strong data-count={countryCount}>{countryCount}</strong><span>countries with Semers on a shelf</span></div>
     </div>
   </section>
 
-  <!-- ============================== THE BELYOV TRADITION ============================== -->
-  <section class="section container" aria-labelledby="belyov-title">
+  <!-- ============================== THE RECIPE ============================== -->
+  <section class="section container" aria-labelledby="recipe-title">
     <div class="split">
       <div class="pf pf--1x1 pf--honey" data-reveal>
-        <img src={im('pastila-block').src} srcset={im('pastila-block').srcset} sizes={im('pastila-block').srcset && SIZES.third} alt={im('pastila-block').alt} width={im('pastila-block').width} height={im('pastila-block').height} loading="lazy" decoding="async" data-parallax="0.15" />
+        <img src={im('process-oven').src} srcset={im('process-oven').srcset} sizes={im('process-oven').srcset && SIZES.third} alt={im('process-oven').alt} width={im('process-oven').width} height={im('process-oven').height} loading="lazy" decoding="async" data-parallax="0.15" />
       </div>
       <div data-reveal>
-        <p class="eyebrow">The Belyov tradition</p>
-        <h2 id="belyov-title" data-words>It began in a small town with more apples than it could eat.</h2>
+        <p class="eyebrow">The recipe</p>
+        <h2 id="recipe-title" data-words>Baked apples and egg white. That is the list.</h2>
         <div class="prose mt-4">
-          <p>Belyov is a small town in orchard country south of Moscow. Its apples are Antonovka: sour, aromatic, and impossible to keep fresh through a winter. Baking, whipping and drying them was the local answer, and in 1888 the merchant Amvrosy Prokhorov turned that answer into a business. Belyov pastila was sold for the first time.</p>
-          <p>His method is the one we still use. Apples are baked whole until their sugars caramelise. The purée is whipped with egg white until it holds air, spread in thin sheets and dried for hours. The sheets are stacked, brushed with more of the foam, pressed and dried again. What comes out is light, layered, faintly tart, and keeps for months without a cellar.</p>
-          <p>That last part is why the recipe travelled. A sweet that needs no sugar to make and no cold to keep suits the north, and pastila became a northern-European sweet: wherever sour apples grow and winters run long, someone was drying them into loaves.</p>
+          <p>The apples are baked, then whipped with egg white until the purée holds air. It is spread thin and dried slowly, in layers. Berries or cinnamon go in for some flavours. Sugar and flour do not.</p>
         </div>
         <ul class="cluster recipe" aria-label="The recipe">
           <li class="chip"><Icon name="apple" size={14} /> Baked apples</li>
@@ -150,51 +138,24 @@ const pad = (n: number) => String(n).padStart(2, '0');
           <li class="chip"><Icon name="clock" size={14} /> Thin layers, slow drying</li>
         </ul>
         <div class="cluster mt-4">
-          <a class="btn" href="/shop/pastila/">Shop Belyov pastila</a>
+          <a class="btn" href="/how-its-made/">How it’s made</a>
           <a class="link" href="/journal/what-is-pastila/">What pastila is, in full</a>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- ============================== WHY ANTONOVKA ============================== -->
-  <section class="section band" aria-labelledby="antonovka-title">
-    <div class="container split split--rev">
-      <div class="pf pf--4x5 pf--mint" data-reveal>
-        <img src={im('apples-orchard').src} srcset={im('apples-orchard').srcset} sizes={im('apples-orchard').srcset && SIZES.third} alt={im('apples-orchard').alt} width={im('apples-orchard').width} height={im('apples-orchard').height} loading="lazy" decoding="async" data-parallax="0.15" />
-      </div>
-      <div data-reveal>
-        <p class="eyebrow">Why Antonovka</p>
-        <h2 id="antonovka-title" data-words>One apple makes the recipe possible. We have not found a second.</h2>
-        <div class="prose mt-4">
-          <p>Antonovka is a hardy, tart, green apple from the north. It carries more pectin and more acid than a supermarket dessert apple, and that is exactly what pastila needs. The pectin sets the whipped purée without gelatine. The acid keeps the finished sweetness honest, so a bar tastes of fruit rather than of sugar. And the aroma survives twelve hours of baking and drying, which very few apples manage.</p>
-          <p>It grows well across the Baltics and the wider north, where a cold autumn sharpens it. Sweet apples make a flat, sticky pastila. Antonovka makes it sing.</p>
-        </div>
-        <ul class="ticks story-ticks">
-          <li><Icon name="check" /> <span><strong>Pectin</strong> sets the foam, so there is no gelatine</span></li>
-          <li><Icon name="check" /> <span><strong>Acid</strong> keeps the sweetness honest</span></li>
-          <li><Icon name="check" /> <span><strong>Aroma</strong> survives the oven and the drying room</span></li>
-        </ul>
-        <div class="cluster">
-          <a class="link" href="/journal/antonovka-apples/">Why Antonovka apples, in the journal</a>
-          <a class="link" href="/how-its-made/">The full process</a>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ============================== FROM LOAF TO BAR ============================== -->
+  <!-- ============================== THE RANGE ============================== -->
   <section class="section container" aria-labelledby="loaf-title">
     <div class="loaf">
       <div data-reveal>
-        <p class="eyebrow">From loaf to bar</p>
-        <h2 id="loaf-title" data-words>A loaf is for a table. We wanted something for a pocket.</h2>
+        <p class="eyebrow">What we make</p>
+        <h2 id="loaf-title" data-words>Two ingredients, five shapes.</h2>
         <div class="prose mt-4">
-          <p>Belyov pastila is sold as a loaf. You slice it, share it and eat it with tea; it is a dessert with a ritual. In Riga we kept the loaf and asked a simpler question: what would this be if you could eat it on the way to the bus?</p>
-          <p>The answer was App’Lite: the same whipped apple, cut to 35 g and sealed so it survives a bag and a lunchbox. Then PastiLite, the same foam baked until it crackles into a meringue. Then a thicker square for a plate, and a flourless bar pressed with whole berries for a long walk. Every one of them is the 1888 recipe in a different shape. None of them needed a new ingredient to get there.</p>
+          <p>App’Lite is the 35 g Apple Bar, the 35 g Apple Meringue and the Baked Apple Dessert, in a 50 g pack and a 500 g carton. Blum Baker’s is a 50 g flourless apple cake. Every one of them starts from baked apples and egg white.</p>
           <p>This shop came last. Until now you found us at Maxima, on Barbora and in stores across Europe; now the same cases can leave Riga for your door.</p>
         </div>
-        <ul class="shapes" aria-label="The shapes the loaf became">
+        <ul class="shapes" aria-label="What we make">
           {shapes.map((s, i) => (
             <li>
               <a href={`/products/${s.product.slug}/`}>
@@ -211,7 +172,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
           <div class="pf pf--4x5">
             <img src={im('orchard-picking').src} srcset={im('orchard-picking').srcset} sizes={im('orchard-picking').srcset && SIZES.third} alt={im('orchard-picking').alt} width={im('orchard-picking').width} height={im('orchard-picking').height} loading="lazy" decoding="async" data-parallax="0.12" />
           </div>
-          <figcaption>It starts in an orchard in autumn, when the apples are at their sharpest.</figcaption>
+          <figcaption>It starts with apples.</figcaption>
         </figure>
         <figure>
           <div class="pf pf--4x5">
@@ -223,9 +184,9 @@ const pad = (n: number) => String(n).padStart(2, '0');
     </div>
   </section>
 
-  <!-- ============================== THE WALL: six stops as enormous outlined words ============================== -->
+  <!-- ============================== THE WALL: four stops as enormous outlined words ============================== -->
   <!--
-    The timeline is a wall. Each stop is set as one huge outlined word or year,
+    The timeline is a wall. Each stop is set as one huge outlined word,
     with its photograph drifting up over the lower half and a short paragraph
     beside it; sides alternate. The stop nearest the middle of the screen is
     lit in the accent (a class the script toggles; without it the wall is
@@ -235,15 +196,13 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <div class="container">
       <div class="wall__head">
         <p class="eyebrow">The journey</p>
-        <h2 id="journey-title" data-words>Six stops between Belyov and your kitchen drawer.</h2>
-        <p class="muted wall__note">We put a year only on the stop we can document. The rest are told in the order they happened.</p>
+        <h2 id="journey-title" data-words>Four stops between Riga and your kitchen drawer.</h2>
+        <p class="muted wall__note">Told in the order they happened.</p>
       </div>
       <ol class="wall__list">
         {milestones.map((m, i) => (
           <li class={`wall__stop ${i % 2 ? 'wall__stop--rev' : ''} ${m.long ? 'wall__stop--long' : ''}`} data-lit>
-            {m.isYear
-              ? <time class={`wall__year ${m.long ? 'wall__year--long' : ''}`} datetime={m.key}>{m.key}</time>
-              : <span class={`wall__year ${m.long ? 'wall__year--long' : ''}`}>{m.key}</span>}
+            <span class={`wall__year ${m.long ? 'wall__year--long' : ''}`}>{m.key}</span>
             <div class="wall__media" data-reveal>
               <div class="wall__frame">
                 <img src={im(m.image).src} srcset={im(m.image).srcset} sizes={im(m.image).srcset && SIZES.half} alt={im(m.image).alt} width={im(m.image).width} height={im(m.image).height} loading="lazy" decoding="async" data-parallax="0.2" />
@@ -267,8 +226,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
     </div>
     <div class="container fam__say" data-reveal>
       <p class="eyebrow" id="quote-title">In one sentence</p>
-      <p class="fam__quote">“We did not invent a recipe. We found one that needed nothing, and built a bakery around leaving it alone.”</p>
-      <p class="fam__by">The team at Semers, Riga. Semers is made by {site.brand.legalName}, {site.locality}, {site.country}.</p>
+      <p class="fam__quote">Baked apples and egg white, with no added sugar and no flour, made in Riga.</p>
+      <p class="fam__by">Semers is made by {site.brand.legalName}, {site.locality}, {site.country}.</p>
     </div>
   </section>
 
@@ -286,27 +245,27 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <li>
         <span class="creed__n" aria-hidden="true">01</span>
         <h3>Two ingredients</h3>
-        <p>Baked apples and egg white. Berries, cinnamon and pine nuts may join them, because they are food. Sugar, syrups, flour, gelatine and flavourings may not, because the recipe never needed them.</p>
+        <p>Baked apples and egg white. Berries or cinnamon join them in some flavours, because they are food. Sugar and flour do not.</p>
       </li>
       <li>
         <span class="creed__n" aria-hidden="true">02</span>
         <h3>Honest labels</h3>
-        <p>The front of the pack says what the back of the pack says. No “natural flavouring”, no E-numbers, no claims we cannot stand behind. Where a product does contain sugar, as our Belevini zephyr does, the label says so plainly.</p>
+        <p>The front of the pack says what the back of the pack says. No “natural flavouring”, no E-numbers, no claims we cannot stand behind. “No added sugar” means exactly that: none is added, and the apples’ own sugars are still there, as the label says.</p>
       </li>
       <li>
         <span class="creed__n" aria-hidden="true">03</span>
         <h3>Apples first</h3>
-        <p>We start from whole Antonovka apples, baked whole, skins on. When the apple is right, the recipe has nothing to fix, and most of our work is keeping it that way.</p>
+        <p>Everything we make starts from baked apples. When the apple is right, the recipe has nothing to fix, and most of our work is keeping it that way.</p>
       </li>
     </ol>
   </section>
 
-  <!-- ============================== THE SUB-BRANDS ============================== -->
+  <!-- ============================== THE BRANDS ============================== -->
   <section class="section band" aria-labelledby="lines-title">
     <div class="container">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Five names on the packs</p>
+          <p class="eyebrow">Two names on the packs</p>
           <h2 id="lines-title" data-words>The names on our packs, explained.</h2>
         </div>
         <a class="link" href="/shop/">Shop all products</a>
@@ -335,7 +294,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <section class="section container cta-sec" aria-labelledby="cta-title">
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Taste the story</p>
-      <h2 id="cta-title">Start with a bar. Or start with the loaf, as everyone did in 1888.</h2>
+      <h2 id="cta-title">Start with a bar, then work through the range.</h2>
       <p>Parcels leave Riga in 1–2 business days and ship across the EU; orders over {freeFrom} ship free. Retailer, café or office? We pack cases as happily as parcels.</p>
       <div class="cluster mt-2">
         <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
@@ -351,7 +310,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
   /*
    * The wall: the stop nearest the middle of the screen is lit. With reduced
-   * motion, or with no JavaScript, the wall is complete as it is, every year
+   * motion, or with no JavaScript, the wall is complete as it is, every stop
    * outlined in cream. One IntersectionObserver; it used to be ScrollTrigger.
    */
   lit('[data-lit]', 38);
@@ -365,7 +324,6 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .pf--1x1 { aspect-ratio: 1; }
   .pf--4x5 { aspect-ratio: 4 / 5; }
   .pf--honey { box-shadow: var(--shadow-2), var(--glow-honey); }
-  .pf--mint { box-shadow: var(--shadow-2), var(--glow-mint); }
 
   /* ---------------------------------------------------------- hero */
   .story-hero { padding-bottom: clamp(2rem, 5vw, 4rem); }
@@ -382,15 +340,11 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .story-hero__note strong { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 500; letter-spacing: -0.03em; line-height: 1; color: var(--honey-500); }
   .story-stats { margin-top: clamp(2.5rem, 6vw, 4.5rem); padding-top: var(--sp-5); border-top: 1px solid var(--line); }
 
-  /* ---------------------------------------------------------- tradition */
+  /* ---------------------------------------------------------- the recipe */
   .recipe { list-style: none; margin: var(--sp-5) 0 0; padding: 0; gap: 0.5rem; }
   .recipe .chip :global(svg) { color: var(--leaf-500); }
 
-  /* ---------------------------------------------------------- antonovka */
-  .story-ticks { margin: var(--sp-5) 0; }
-  .story-ticks strong { font-weight: 600; color: var(--cream-0); }
-
-  /* ---------------------------------------------------------- loaf to bar */
+  /* ---------------------------------------------------------- the range */
   .loaf { display: grid; gap: var(--sp-6); }
   @media (min-width: 56rem) { .loaf { grid-template-columns: 1fr 1fr; gap: clamp(2rem, 5vw, 4rem); align-items: center; } }
   .shapes { list-style: none; margin: var(--sp-5) 0 0; padding: 0; display: grid; gap: 0.6rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -464,7 +418,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   }
   @media (prefers-reduced-motion: reduce) { .creed__n { transition: none; } }
 
-  /* ---------------------------------------------------------- sub-brands */
+  /* ---------------------------------------------------------- the brands */
   .lines { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
   .line { display: grid; gap: 0.6rem var(--sp-6); padding: var(--sp-5) 0; border-bottom: 1px solid var(--line); transition: background var(--dur); }
   @media (min-width: 56rem) { .line { grid-template-columns: 16rem 1fr; align-items: start; } }

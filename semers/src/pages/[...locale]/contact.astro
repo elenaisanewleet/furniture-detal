@@ -22,7 +22,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
 const title = 'Contact Semers in Riga: orders, wholesale, press';
 const description =
-  'Contact Semers, maker of baked-apple bars and pastila in Riga, about an order, wholesale or press. Write to us and a person replies within a business day.';
+  'Contact Semers, maker of baked-apple bars and desserts in Riga, about an order, wholesale or press. Write to us and a person replies within a business day.';
 
 /** Channels. Empty strings in site.ts mean "not rendered". */
 const hasWhatsapp = site.whatsapp.length > 0;
@@ -69,7 +69,7 @@ const contactPage = {
     <p class="eyebrow">Contact · {site.locality}, {site.country}</p>
     <h1 id="page-title" class="cx-title" data-words>Say <em>hello.</em></h1>
     <div class="cx-hero__row">
-      <p class="lead">Contact Semers about an order, a wholesale shelf, a press piece, or the right way to slice a loaf of pastila. A person in Riga reads every message and replies within one business day.</p>
+      <p class="lead">Contact Semers about an order, a wholesale shelf or a press piece. A person in Riga reads every message and replies within one business day.</p>
       <a class="cx-hero__jump" href="#write" data-reveal><span class="cx-hero__jump-t">Write to us</span><Icon name="arrow" size={18} class="arrow" /></a>
     </div>
     <div class="trust cx-trust" data-stagger>
@@ -167,7 +167,7 @@ const contactPage = {
             <dt>Where we are</dt>
             <dd>
               <span class="cx-big">{site.locality}, {site.country}</span>
-              <span class="cx-dl__sub">{site.brand.legalName}. Bars and pastila are baked here and shipped from here.</span>
+              <span class="cx-dl__sub">{site.brand.legalName}. Orders are packed and shipped from here.</span>
             </dd>
           </div>
         </dl>
@@ -204,7 +204,6 @@ const contactPage = {
         <div class="cx-faq__links">
           <a class="link" href="/shop/">Shop all products</a>
           <a class="link" href="/shop/apple-bars/">Apple bars</a>
-          <a class="link" href="/shop/pastila/">Belyov pastila</a>
           <a class="link" href="/how-its-made/">How it’s made</a>
         </div>
       </div>
@@ -227,8 +226,7 @@ const contactPage = {
         <h2 id="press-title" class="cx-press__title">Writing about apples? We can help.</h2>
         <p class="lead">Journalists, food writers, gift-guide editors and brands with a good idea: pick “Press &amp; partnerships” in the form or write to <a href={mailHref}>{site.email}</a>. We send product photos, the facts behind the recipe and, if you ask nicely, a box to taste.</p>
         <ul class="ticks">
-          <li><Icon name="check" size={18} /> 99% baked Antonovka apples and egg white, no added sugar, no flour, no gluten</li>
-          <li><Icon name="check" size={18} /> A recipe with a date on it: Belyov pastila, made commercially since 1888</li>
+          <li><Icon name="check" size={18} /> 99% baked apples and egg white, no added sugar, no flour, no gluten</li>
           <li><Icon name="check" size={18} /> Baked in Riga, sold at Maxima and on Barbora, exported across the EU</li>
         </ul>
         <div class="cluster mt-4">
@@ -245,7 +243,7 @@ const contactPage = {
       <div class="cx-band__copy">
         <p class="eyebrow">Or skip the e-mail</p>
         <h2 id="cta-title">The fastest answer to “what does it taste like?”</h2>
-        <p>A Tasting Box holds four Apple Bars, two Flourless Bars, two bags of apple meringues and a 100 g loaf of Belyov pastila. It ships free from Riga in 1–2 business days.</p>
+        <p>A Tasting Box holds four Apple Bars, two Flourless Bars and two bags of apple meringues. It ships free from Riga in 1–2 business days.</p>
         <div class="cluster mt-2">
           <a class="btn btn--paper" href="/shop/">Shop all products</a>
           <a class="btn btn--ghost" href="/products/tasting-box/">Order a Tasting Box</a>

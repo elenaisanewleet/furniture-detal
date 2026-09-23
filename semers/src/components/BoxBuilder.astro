@@ -38,9 +38,13 @@ const items = sources.flatMap((p) =>
   p.variants.map((v) => ({
     id: `${p.slug}:${v.key}`,
     name: `${p.name} ${ui.flavours[v.key]}`,
-    sub: `${p.weightGrams} g · ${p.kcalPerUnit} kcal · ${formatPrice(v.price ?? p.price, locale)}`,
+    // The kcal is left out where no card backs a per-piece figure, rather than printed as "null kcal".
+    sub: [`${p.weightGrams} g`, p.kcalPerUnit ? `${p.kcalPerUnit} kcal` : '', formatPrice(v.price ?? p.price, locale)].filter(Boolean).join(' · '),
     price: v.price ?? p.price,
-    image: imgSmall(p.images[0]),
+    // Each flavour shows its own pack where there is a photograph of it.
+    image: imgSmall(v.image ?? p.images[0]),
+    /* A pack photographed on white is shown whole, the way the product cards show it, not cropped to the square. */
+    contain: img(v.image ?? p.images[0]).fit === 'contain',
     weight: p.weightGrams,
     color: FLAVORS[v.key].color,
     group: p.name,
@@ -87,7 +91,7 @@ const cols = Math.ceil(size / 2);
         <div class="builder__items">
           {items.filter((i) => i.group === g).map((i) => (
             <div class="bi" style={`--sw:${i.color}`}>
-              <span class="bi__pic"><img class="bi__img" src={i.image} alt="" width="96" height="96" loading="lazy" decoding="async" /></span>
+              <span class={`bi__pic ${i.contain ? 'is-contain' : ''}`}><img class="bi__img" src={i.image} alt="" width="96" height="96" loading="lazy" decoding="async" /></span>
               <span class="bi__txt">
                 <span class="bi__name"><span class="bi__dot"></span>{i.name}</span>
                 <span class="bi__sub">{i.sub}</span>
@@ -149,6 +153,7 @@ const cols = Math.ceil(size / 2);
   .bi:hover { transform: translateY(-2px); box-shadow: 0 0 0 1px rgb(243 233 214 / 0.18), 0 0 40px -18px var(--sw); }
   .bi__pic { position: relative; display: block; aspect-ratio: 1; border-radius: var(--r-sm); overflow: clip; background: color-mix(in oklab, var(--sw) 16%, var(--night-700)); box-shadow: inset 0 0 0 1px rgb(243 233 214 / 0.06), 0 0 24px -10px var(--sw); }
   .bi__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .bi__pic.is-contain .bi__img { object-fit: contain; padding: 8%; }
   .bi__txt { display: grid; gap: 0.15rem; min-width: 0; }
   .bi__name { font-weight: 600; font-size: var(--fs-sm); line-height: 1.25; color: var(--cream-0); }
   .bi__dot { display: inline-block; width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--sw); margin-right: 0.45em; box-shadow: 0 0 10px var(--sw); vertical-align: 0.05em; }

@@ -5,9 +5,13 @@
  * the path under /public once `npm run localize-images` has downloaded and
  * optimised it (recommended before launch so the site does not depend on a
  * third-party CDN). `img()` prefers local when present.
+ *
+ * The owner's pack photographs never lived on the CDN: they were encoded
+ * straight into public/img, so they have a `local` and no `remote`, and
+ * localize-images leaves them alone. Every entry has at least one of the two.
  */
 export interface SiteImage {
-  remote: string;
+  remote?: string;
   local?: string;
   alt: string;
   width: number;
@@ -64,7 +68,7 @@ export const IMAGES: Record<string, SiteImage> = {
   'apples-orchard': {
     // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_29375710-036e-4242-8e6d-57684ccdc717.png
     remote: UPLOADS + '71be79db-db13-4b27-b5eb-169203ca946e.webp',
-    alt: 'Wooden crate of freshly picked green Antonovka apples in an orchard',
+    alt: 'Wooden crate of freshly picked green apples in an orchard',
     width: 2000,
     height: 1342,
   },
@@ -92,15 +96,8 @@ export const IMAGES: Record<string, SiteImage> = {
   'pastila-180': {
     // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_42e9288b-7e44-40a9-aa83-e3f8a1b7485a.png
     remote: UPLOADS + '5301836e-154e-4419-8486-403fe67e9978.webp',
-    alt: 'Sliced loaf of Belyov apple pastila on a walnut board with cinnamon and apple',
+    alt: 'Sliced loaf of apple pastila on a walnut board with cinnamon and apple',
     width: 1611,
-    height: 2000,
-  },
-  zephyr: {
-    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_332f2f27-c930-41e4-8f3f-da2a1da7bc96.png
-    remote: UPLOADS + '90731663-8693-406e-a048-c382645479e1.webp',
-    alt: 'Soft pink and ivory apple zephyr on a ceramic plate',
-    width: 2000,
     height: 2000,
   },
   'lifestyle-desk': {
@@ -136,7 +133,7 @@ export const IMAGES: Record<string, SiteImage> = {
   },
   'apple-render': {
     remote: UPLOADS + 'fbf1d4f9-5d20-4b55-9754-f4ef5f278a7e.jpg',
-    alt: 'A green apple cut open to reveal layers of golden baked-apple pastila inside, next to a whole Antonovka apple',
+    alt: 'A green apple cut open to reveal layers of golden baked-apple pastila inside, next to a whole green apple',
     width: 1600,
     height: 1200,
     bg: RENDER_BG,
@@ -150,13 +147,13 @@ export const IMAGES: Record<string, SiteImage> = {
   },
   'pastila-slices': {
     remote: UPLOADS + '46554a64-8687-4368-a400-1ade319296fc.jpg',
-    alt: 'Three thick slices of layered Belyov apple pastila on parchment paper',
+    alt: 'Three thick slices of layered apple pastila on parchment paper',
     width: 1280,
     height: 1280,
   },
   'pastila-block': {
     remote: UPLOADS + '29c9f3a4-0e36-4429-aed8-698b76bdd089.jpg',
-    alt: 'A tall block of layered apple pastila on a wooden board with a green Antonovka apple',
+    alt: 'A tall block of layered apple pastila on a wooden board with a green apple',
     width: 1280,
     height: 1280,
   },
@@ -207,13 +204,6 @@ export const IMAGES: Record<string, SiteImage> = {
     width: 1611,
     height: 2000,
   },
-  'pastila-set': {
-    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_81010186-f11b-4c7b-aea6-60515172aee6.png
-    remote: UPLOADS + 'a75e9abd-7471-4985-b440-a13306f4b0f1.webp',
-    alt: 'Three kraft-wrapped 100 g packs of Belyov apple pastila with a cut slice, a green apple and lingonberries',
-    width: 1611,
-    height: 2000,
-  },
   'tasting-box': {
     // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_07a2e1ad-5032-416b-9897-00faa6c51229.png
     remote: UPLOADS + 'af92cfb6-711c-4319-8c19-46130fe4a53b.webp',
@@ -235,12 +225,94 @@ export const IMAGES: Record<string, SiteImage> = {
     width: 1611,
     height: 2000,
   },
-  'zephyr-box': {
-    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_14176616-67e1-416b-a694-906a8d93a595.png
-    remote: UPLOADS + '9526a42b-2ae9-4bac-9192-217cc5225287.webp',
-    alt: 'Open box of pink and ivory apple zephyr swirls next to a cup of tea and a green apple',
-    width: 1611,
+  /* ---------- The owner's pack photographs (local only) ---------- */
+  'pack-bar-classic': {
+    local: '/img/pack-bar-classic.webp',
+    alt: "App'Lite Apple Bar Classic pack in turquoise: 99% baked apples, no flour, gluten free, hand made, no sugar added",
+    width: 1280,
+    height: 960,
+    fit: 'contain',
+    widths: [480, 960, 1280],
+  },
+  'pack-bar-berry': {
+    local: '/img/pack-bar-berry.webp',
+    alt: "App'Lite Apple Bar Berry Mix pack in pink: 99% baked apples, no flour, gluten free, hand made, no sugar added",
+    width: 1448,
+    height: 1086,
+    fit: 'contain',
+    widths: [480, 960, 1448],
+  },
+  'pack-meringue-classic': {
+    local: '/img/pack-meringue-classic.webp',
+    alt: "Green tub of App'Lite Classic baked apple dessert meringues, marked 3 kcal per piece",
+    width: 960,
+    height: 535,
+    fit: 'contain',
+    widths: [480, 960],
+  },
+  'pack-meringue-berry': {
+    local: '/img/pack-meringue-berry.webp',
+    alt: "Red tub of App'Lite Berry Mix baked apple dessert meringues, marked 3 kcal in one piece",
+    width: 960,
+    height: 536,
+    fit: 'contain',
+    widths: [480, 960],
+  },
+  'pack-dessert-classic': {
+    local: '/img/pack-dessert-classic.webp',
+    alt: "Green box of App'Lite Baked Apple Dessert Classic: 99% baked apples, no sugar added, no flour, gluten free",
+    width: 960,
+    height: 1440,
+    fit: 'contain',
+    widths: [480, 960],
+  },
+  'pack-dessert-berry': {
+    local: '/img/pack-dessert-berry.webp',
+    alt: "Pink box of App'Lite Baked Apple Dessert Berry Mix: 99% baked apples and berries, no sugar added, no flour, gluten free",
+    width: 960,
+    height: 1440,
+    fit: 'contain',
+    widths: [480, 960],
+  },
+  'pack-dessert-cinnamon': {
+    local: '/img/pack-dessert-cinnamon.webp',
+    alt: "Beige box of App'Lite Baked Apple Dessert Cinnamon: 99% baked apples, no sugar added, no flour, gluten free",
+    width: 960,
+    height: 1440,
+    fit: 'contain',
+    widths: [480, 960],
+  },
+  'pack-flourless-classic': {
+    local: '/img/pack-flourless-classic.webp',
+    alt: "Blum Baker's Flourless Original Apple Cake wrapper, 50 g, no sugar added",
+    width: 1600,
+    height: 1200,
+    fit: 'contain',
+    widths: [480, 960, 1600],
+  },
+  'pack-flourless-cinnamon': {
+    local: '/img/pack-flourless-cinnamon.webp',
+    alt: "Blum Baker's Flourless Apple Cake with Cinnamon wrapper, 50 g, no sugar added",
+    width: 1500,
     height: 2000,
+    fit: 'contain',
+    widths: [480, 960, 1500],
+  },
+  'pack-flourless-cranberry': {
+    local: '/img/pack-flourless-cranberry.webp',
+    alt: "Blum Baker's Flourless Apple Cake with Cranberries wrapper, 50 g, no sugar added",
+    width: 1600,
+    height: 1200,
+    fit: 'contain',
+    widths: [480, 960, 1600],
+  },
+  'box-dessert-500': {
+    local: '/img/box-dessert-500.webp',
+    alt: 'White carton of individually wrapped pieces of layered baked apple dessert, with one piece unwrapped beside green apples and berries',
+    width: 896,
+    height: 1196,
+    fit: 'contain',
+    widths: [480, 896],
   },
 };
 
@@ -252,7 +324,10 @@ export function img(key: string): SiteImage {
 
 export function imgSrc(key: string): string {
   const i = img(key);
-  return i.local || i.remote;
+  const src = i.local || i.remote;
+  // An entry with neither would render <img src=""> and fail silently; failing the build names it instead.
+  if (!src) throw new Error(`Image ${key} has neither a local file nor a remote URL`);
+  return src;
 }
 
 /**

@@ -2,46 +2,34 @@
  * Product catalog — the single source of truth for shop pages, product
  * pages, cart, JSON-LD and the sitemap.
  *
- * Names, weights and EAN/GTIN codes come from the Semers order form
- * (EAN sheets, LV market). Prices are launch placeholders in EUR incl. VAT:
- * >>> TODO Semers: set final retail prices before launch (edit `price`). <<<
- * Nutrition values are typical per 100 g for baked-apple pastila and must be
- * verified against the pack before publishing (see `nutrition`).
+ * Every fact about a food in here — its name, ingredients, nutrition, storage,
+ * shelf life and price — comes from the product cards Semers Group sent in
+ * September 2026, and from nowhere else. EAN/GTIN codes come from the Semers
+ * order form (EAN sheets, LV market). Prices are the card prices in EUR incl. VAT.
+ *
+ * Where a card is silent the value is null, and the page prints "not yet
+ * declared" instead of a number. A figure on a food page is a statement about
+ * that food; a gap is honest, a borrowed or estimated figure is not.
  */
 import { DEFAULT_LOCALE, LOCALE_META, type Locale } from '~/i18n/config';
 
-export type FlavorKey =
-  | 'classic'
-  | 'berry'
-  | 'cinnamon'
-  | 'cherry'
-  | 'blueberry'
-  | 'lingonberry'
-  | 'blackcurrant'
-  | 'pine'
-  | 'cranberry'
-  | 'apple'
-  | 'vanilla'
-  | 'chocolate'
-  | 'assorted';
+export type FlavorKey = 'classic' | 'berry' | 'cinnamon' | 'blueberry' | 'cranberry' | 'assorted';
 
 export const FLAVORS: Record<FlavorKey, { label: string; color: string; note: string }> = {
-  classic: { label: 'Classic', color: 'var(--fl-classic)', note: 'Pure baked Antonovka apple' },
-  berry: { label: 'Berry Mix', color: 'var(--fl-berry)', note: 'Apple with blueberry & cranberry' },
+  classic: { label: 'Classic', color: 'var(--fl-classic)', note: 'The original apple' },
+  berry: { label: 'Berry Mix', color: 'var(--fl-berry)', note: 'Apple with blackcurrant, cranberry, lingonberry & blueberry' },
   cinnamon: { label: 'Cinnamon', color: 'var(--fl-cinnamon)', note: 'Apple with cinnamon' },
-  cherry: { label: 'Cherry', color: 'var(--fl-cherry)', note: 'Apple with sour cherry' },
-  blueberry: { label: 'Blueberry', color: 'var(--fl-blueberry)', note: 'Apple with wild blueberry' },
-  lingonberry: { label: 'Lingonberry', color: 'var(--fl-lingonberry)', note: 'Apple with forest lingonberry' },
-  blackcurrant: { label: 'Black Currant', color: 'var(--fl-blackcurrant)', note: 'Apple with black currant' },
-  pine: { label: 'Pine Nut', color: 'var(--fl-pine)', note: 'Apple with pine nuts' },
+  blueberry: { label: 'Blueberry', color: 'var(--fl-blueberry)', note: 'Apple with blueberry' },
   cranberry: { label: 'Cranberry', color: 'var(--fl-cranberry)', note: 'Apple with cranberry' },
-  apple: { label: 'Antonovka Apple', color: 'var(--fl-apple)', note: 'Classic apple zephyr' },
-  vanilla: { label: 'Vanilla', color: 'var(--fl-vanilla)', note: 'Soft vanilla zephyr' },
-  chocolate: { label: 'Chocolate-covered', color: 'var(--fl-chocolate)', note: 'Apple zephyr in dark chocolate' },
   assorted: { label: 'Assorted', color: 'var(--fl-assorted)', note: 'A mix of our favourites' },
 };
 
-export type DietTag = 'no-added-sugar' | 'gluten-free' | 'flourless' | 'vegetarian' | 'no-preservatives' | 'high-fibre';
+/*
+ * "Source of fibre" used to be here. It is a regulated nutrition claim
+ * (Reg. 1924/2006: at least 3 g of fibre per 100 g), and no card declares
+ * fibre at all, so the claim cannot be made until one does.
+ */
+export type DietTag = 'no-added-sugar' | 'gluten-free' | 'flourless' | 'vegetarian' | 'no-preservatives';
 
 export const DIET_TAGS: Record<DietTag, string> = {
   'no-added-sugar': 'No added sugar',
@@ -49,8 +37,23 @@ export const DIET_TAGS: Record<DietTag, string> = {
   flourless: 'Flourless',
   vegetarian: 'Vegetarian',
   'no-preservatives': 'No preservatives',
-  'high-fibre': 'Source of fibre',
 };
+
+/**
+ * A nutrition declaration per 100 g. null means the value has not been
+ * declared to us: it renders as "not yet declared", never as 0, because
+ * "0 g fat" is a statement about the food and a missing number is not.
+ */
+export interface Nutrition {
+  energyKj: number | null;
+  energyKcal: number | null;
+  fat: number | null;
+  saturates: number | null;
+  carbs: number | null;
+  sugars: number | null;
+  protein: number | null;
+  salt: number | null;
+}
 
 export interface Variant {
   /** Stable id used in the cart: `${product.slug}:${variant.key}` */
@@ -60,18 +63,10 @@ export interface Variant {
   /** Override the product price for this variant (EUR). */
   price?: number;
   inStock?: boolean;
-}
-
-export interface Nutrition {
-  /** per 100 g */
-  energyKcal: number;
-  fat: number;
-  saturates: number;
-  carbs: number;
-  sugars: number;
-  fibre: number;
-  protein: number;
-  salt: number;
+  /** This flavour's own pack photo (an images.ts key), where it has one. */
+  image?: string;
+  /** This flavour's own declaration, where its card gives different figures from the product's. */
+  nutrition?: Nutrition;
 }
 
 export interface Product {
@@ -82,6 +77,18 @@ export interface Product {
   title: string;
   /** Packaging brand. */
   brand: string;
+  /**
+   * The name of the food (Reg. 1169/2011 art. 17): what it is, as opposed to
+   * what the brand calls it, in the words of the card. Absent where no card
+   * names the food, which the page then leaves out rather than guesses.
+   */
+  legalName?: string;
+  /**
+   * Flavours whose card names the food differently. It sits on the product
+   * rather than on each variant so that a translation can replace it, which
+   * is the only kind of field a translation is allowed to touch.
+   */
+  legalNameByFlavour?: Partial<Record<FlavorKey, string>>;
   collection: CollectionKey;
   weightGrams: number;
   /** Units per retail pack (1 for single bars). */
@@ -100,8 +107,10 @@ export interface Product {
   /** Allergen statement. */
   allergens: string;
   nutrition: Nutrition;
-  /** Approximate kcal per single unit (bar/pack), for the comparison UI. */
-  kcalPerUnit: number;
+  /** Storage conditions as the card states them; null where the card gives none. */
+  storage: string | null;
+  /** kcal in one unit (bar, pack), for the cards and the comparison UI; null unless a card backs it. */
+  kcalPerUnit: number | null;
   diet: DietTag[];
   variants: Variant[];
   /** Image keys resolved through src/data/images.ts. */
@@ -116,14 +125,7 @@ export interface Product {
   order: number;
 }
 
-export type CollectionKey =
-  | 'apple-bars'
-  | 'flourless-bars'
-  | 'meringues'
-  | 'applite'
-  | 'pastila'
-  | 'zephyr'
-  | 'gift-sets';
+export type CollectionKey = 'apple-bars' | 'flourless-bars' | 'meringues' | 'applite' | 'gift-sets';
 
 export interface Collection {
   key: CollectionKey;
@@ -142,29 +144,29 @@ export const COLLECTIONS: Collection[] = [
     name: 'Apple bars',
     title: 'Apple Bars — 99% baked apples, no added sugar',
     description:
-      "App'Lite Apple Bars: a 35 g snack made from 99% baked Antonovka apples and egg white. No added sugar, no flour, no gluten. Around 97 kcal per bar.",
+      "App'Lite Apple Bars: a 35 g snack that is 99% baked apples. No added sugar, no flour, gluten free. Classic and Berry Mix.",
     intro:
-      'A chocolate-bar-sized snack with the ingredient list of a baked apple. Whipped, layered and slowly dried the traditional Belyov way, then cut into bars you can keep in a bag, a lunchbox or a desk drawer.',
+      'A chocolate-bar-sized snack with the ingredient list of a baked apple. Keep one in a bag, a lunchbox or a desk drawer.',
     image: 'hero-bars',
     accent: 'var(--mint-100)',
   },
   {
+    // The key keeps the /shop/flourless-bars/ address; the pack calls the food a cake, so the words do too.
     key: 'flourless-bars',
-    name: 'Flourless bars',
-    title: 'Flourless Apple Bars 50 g — dense, fruity, no flour',
+    name: 'Flourless apple cakes',
+    title: "Blum Baker's Flourless Apple Cakes 50 g — no flour, no added sugar",
     description:
-      'Flourless 50 g bars made from baked apples, egg white and real fruit. No flour, no gluten, no added sugar. Original, cranberry, cinnamon and blueberry.',
-    intro:
-      'The heartier bar. Fifty grams of baked apple pressed with whole berries for a chewier bite and longer energy. Everything a flapjack wants to be, without the flour.',
+      "Blum Baker's flourless apple cakes, 50 g: apples and egg white, with no flour and no added sugar. Classic, Cinnamon, Blueberry and Cranberry.",
+    intro: 'A 50 g apple cake with no flour in it: plain, or with cinnamon, blueberries or cranberries.',
     image: 'flourless-bar',
     accent: 'var(--honey-100)',
   },
   {
     key: 'meringues',
     name: 'Apple meringues',
-    title: 'PastiLite Apple Meringues — crispy, no added sugar',
+    title: "App'Lite Apple Meringues — crispy, no added sugar",
     description:
-      'PastiLite crispy meringues made from baked apples, egg white and berries. Three ingredients, no added sugar. A light 35 g bag that melts in your mouth.',
+      "App'Lite crispy meringues: 99% baked apples and egg white, with no added sugar. Classic and Berry Mix, in a 35 g tub.",
     intro:
       'Take the same whipped apple base, bake it until it crackles, and you get a meringue with no sugar to add. Light as air, surprisingly filling, dangerously easy to finish.',
     image: 'meringue',
@@ -175,40 +177,18 @@ export const COLLECTIONS: Collection[] = [
     name: "App'Lite dessert",
     title: "App'Lite Baked Apple Dessert — no added sugar",
     description:
-      "App'Lite baked apple dessert: a 50 g pastila square made from 99% baked apples with no added sugar. Classic, Berry Mix and Cinnamon.",
+      "App'Lite baked apple dessert with no added sugar: 50 g packs in Classic, Berry Mix and Cinnamon, and a 500 g carton of the Classic.",
     intro:
-      'The dessert format of our apple pastila. A thick, soft 50 g square that eats like a slice of apple pie filling. Perfect with tea, coffee or a spoon of yoghurt.',
+      'Layered baked apple for a plate rather than a pocket: a 50 g pack, or a 500 g carton of individually wrapped Classic pieces. Good with tea, coffee or a spoon of yoghurt.',
     image: 'pastila-texture',
     accent: 'var(--cream-2)',
-  },
-  {
-    key: 'pastila',
-    name: 'Belyov pastila',
-    title: 'Belyov Apple Pastila 100 g & 180 g — no added sugar',
-    description:
-      'Traditional Belyov apple pastila with no added sugar: baked Antonovka apples and egg white, whipped and dried in layers. 100 g and 180 g loaves.',
-    intro:
-      'The original. A recipe from 1888: baked Antonovka apples whipped with egg white, spread in thin layers and dried for hours until it becomes a soft, airy loaf. Slice it, share it, or eat it straight from the pack.',
-    image: 'pastila-180',
-    accent: 'var(--bar-300)',
-  },
-  {
-    key: 'zephyr',
-    name: 'Zephyr',
-    title: 'Belevini Zephyr — soft apple marshmallow',
-    description:
-      'Belevini zephyr: the soft apple marshmallow of Eastern Europe, made with Antonovka apple purée, egg white, sugar and agar. Four kinds, 250 g boxes.',
-    intro:
-      'Zephyr is what a marshmallow becomes when it is made from apple purée and set with agar instead of gelatine. Cloud-soft, gently sweet, with a real apple tang underneath.',
-    image: 'zephyr',
-    accent: 'var(--coral-100)',
   },
   {
     key: 'gift-sets',
     name: 'Gift sets & boxes',
     title: 'Apple Snack Gift Sets & Tasting Boxes',
     description:
-      'Curated boxes of apple bars, meringues and pastila. Tasting boxes, 12-packs and discovery sets with no added sugar, packed and shipped from Riga.',
+      'Boxes of apple bars, meringues and flourless apple cakes: a tasting box and a 12-pack of Apple Bars, with no added sugar, packed and shipped from Riga.',
     intro:
       'Boxes we would want to receive: a bit of everything, packed to survive the post, with a card if you ask for one.',
     image: 'gift-box',
@@ -216,38 +196,53 @@ export const COLLECTIONS: Collection[] = [
   },
 ];
 
-const PASTILA_NUTRITION: Nutrition = {
-  energyKcal: 278,
-  fat: 0.4,
-  saturates: 0.1,
-  carbs: 61,
-  sugars: 56,
-  fibre: 5.2,
-  protein: 3.6,
-  salt: 0.05,
+/*
+ * One declaration per food, each from its own card. Where two products point
+ * at the same table it is because neither has one: NOT_DECLARED is an
+ * admission, not a placeholder that stands in for real figures.
+ */
+
+/** The bar cards carry no nutrition table, and a mixed box has none of its own. */
+const NOT_DECLARED: Nutrition = {
+  energyKj: null,
+  energyKcal: null,
+  fat: null,
+  saturates: null,
+  carbs: null,
+  sugars: null,
+  protein: null,
+  salt: null,
 };
 
-const MERINGUE_NUTRITION: Nutrition = {
-  energyKcal: 312,
-  fat: 0.5,
-  saturates: 0.1,
-  carbs: 68,
-  sugars: 62,
-  fibre: 4.5,
-  protein: 5.2,
-  salt: 0.08,
-};
+/** The meringue cards give energy, carbohydrate and protein only, and the two flavours differ. */
+const MERINGUE_CLASSIC_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1560, energyKcal: 370, carbs: 84, protein: 7.5 };
+const MERINGUE_BERRY_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1530, energyKcal: 360, carbs: 82, protein: 7.5 };
 
-const ZEPHYR_NUTRITION: Nutrition = {
+/** Identical for all three flavours on the cards; fat, saturates, sugars and salt were not supplied. */
+const DESSERT_50G_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1173, energyKcal: 276, carbs: 65, protein: 4 };
+
+/** The one complete declaration, and the same for all four flavours. */
+const FLOURLESS_NUTRITION: Nutrition = {
+  energyKj: 1337,
   energyKcal: 320,
-  fat: 0.2,
-  saturates: 0.1,
-  carbs: 78,
-  sugars: 70,
-  fibre: 1.5,
-  protein: 1.2,
-  salt: 0.06,
+  fat: 0,
+  saturates: 0,
+  carbs: 72,
+  sugars: 52,
+  protein: 8,
+  salt: 0,
 };
+
+/*
+ * The 500 g card gives 13 g carbohydrate and 1 g protein, which make about
+ * 56 kcal, beside 276 kcal / 1156 kJ. The two cannot both be right, so only
+ * the energy line is kept, as printed, until the owner says which figures hold.
+ */
+const DESSERT_500G_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1156, energyKcal: 276 };
+
+/** Both bar flavours, as their cards list them. The pack front says "99% baked apples", so the list carries the figure (Reg. 1169/2011 art. 22). */
+const BAR_INGREDIENTS =
+  'Classic: baked apples (99%), egg white. Berry Mix: baked apples (99%), blackcurrants, cranberries, lingonberries, blueberries, egg white.';
 
 export const PRODUCTS: Product[] = [
   {
@@ -255,29 +250,33 @@ export const PRODUCTS: Product[] = [
     name: 'Apple Bar',
     title: "App'Lite Apple Bar 35 g",
     brand: "App'Lite",
+    legalName: 'Apple bar with no added sugar',
+    legalNameByFlavour: {
+      classic: '“Classic” apple bar with no added sugar',
+      berry: '“Berry Mix” apple bar with no added sugar',
+    },
     collection: 'apple-bars',
     weightGrams: 35,
     pack: 1,
-    price: 1.45,
+    price: 1.4,
     hook: '99% baked apples. That’s the whole idea.',
     summary:
-      'A 35 g bar of whipped, layered baked Antonovka apple. No added sugar, no flour, no gluten — about 97 kcal. Made in Riga, keeps 12 months.',
+      'A 35 g bar that is 99% baked apples. No added sugar, no flour, gluten free. Classic or Berry Mix; keeps 12 months.',
     description: [
-      'Take a chocolate bar out of the drawer. Put this in instead. Same size, same “I need something now” moment, but the ingredient list reads: baked apples, egg white. That is it.',
-      'We bake Antonovka apples until they are soft and caramel-sweet, whip the purée with egg white, spread it thin and dry it slowly in layers. The result is a bar that is soft, slightly chewy, and tastes like the inside of a baked apple.',
-      'Around 97 kcal per bar, naturally sweet from the fruit, with fibre from the apple skins. Keeps for months without preservatives because the slow drying does the work.',
+      'Take a chocolate bar out of the drawer. Put this in instead. Same “I need something now” moment, but the Classic’s ingredient list reads: baked apples, egg white. That is it.',
+      'Berry Mix adds blackcurrants, cranberries, lingonberries and blueberries. Both are hand made, with no flour and no sugar added.',
     ],
-    ingredients: 'Baked apples (99%), egg white. Berry Mix: baked apples, egg white, blueberry, cranberry. Cinnamon: baked apples, egg white, cinnamon.',
+    ingredients: BAR_INGREDIENTS,
     allergens: 'Contains egg. May contain traces of nuts.',
-    nutrition: PASTILA_NUTRITION,
-    kcalPerUnit: 97,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives', 'high-fibre'],
+    nutrition: NOT_DECLARED,
+    storage: null,
+    kcalPerUnit: null,
+    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
     variants: [
-      { key: 'classic', gtin: '4751043820181' },
-      { key: 'berry', gtin: '4751043820174' },
-      { key: 'cinnamon' },
+      { key: 'classic', gtin: '4751043820181', image: 'pack-bar-classic' },
+      { key: 'berry', gtin: '4751043820174', image: 'pack-bar-berry' },
     ],
-    images: ['packshot-classic', 'packshot-berry', 'hero-bars', 'lifestyle-desk'],
+    images: ['pack-bar-classic', 'pack-bar-berry', 'hero-bars', 'lifestyle-desk'],
     accent: 'var(--mint-100)',
     badge: 'Bestseller',
     bestseller: true,
@@ -286,32 +285,41 @@ export const PRODUCTS: Product[] = [
   },
   {
     slug: 'flourless-apple-bar-50g',
-    name: 'Flourless Apple Bar',
-    title: 'Flourless Apple Bar 50 g',
-    brand: 'Flourless',
+    name: 'Flourless Apple Cake',
+    title: "Blum Baker's Flourless Apple Cake 50 g",
+    brand: "Blum Baker's",
+    legalName: 'Apple cake with no added sugar',
+    legalNameByFlavour: {
+      cranberry: 'Apple & cranberry cake with no added sugar',
+      cinnamon: 'Apple & cinnamon cake with no added sugar',
+      blueberry: 'Apple & blueberry cake with no added sugar',
+    },
     collection: 'flourless-bars',
     weightGrams: 50,
     pack: 1,
-    price: 1.95,
-    hook: 'The heartier bar. Whole berries, zero flour.',
+    price: 1.99,
+    hook: 'Apple cake with no flour and no sugar added.',
     summary:
-      'A dense 50 g bar of baked apple pressed with whole berries. No flour, no gluten, no added sugar. Original, Cranberry, Cinnamon, Blueberry.',
+      'A 50 g flourless apple cake made from apples and egg white, with no added sugar. Classic, Cranberry, Cinnamon or Blueberry.',
     description: [
-      'Fifty grams of baked apple pastila, pressed with real dried berries for a chewier, fruitier bite. It is the bar we take on long walks and long meetings.',
-      'Like everything we make, it is sweetened only by the apples themselves. No flour, no syrups, no “natural flavours” — just fruit, egg white and time.',
+      'Apples and egg white, made into a 50 g cake without flour and without added sugar. Cranberry, Cinnamon and Blueberry each add one ingredient to that.',
     ],
-    ingredients: 'Baked apples, egg white, dried berries (cranberry, blueberry) or cinnamon depending on flavour.',
+    ingredients:
+      'Classic: apples, egg white. Cranberry: apples, cranberries, egg white. Cinnamon: apples, egg white, cinnamon. Blueberry: apples, blueberries, egg white.',
     allergens: 'Contains egg. May contain traces of nuts.',
-    nutrition: { ...PASTILA_NUTRITION, energyKcal: 285, fibre: 5.8 },
-    kcalPerUnit: 142,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives', 'high-fibre'],
+    nutrition: FLOURLESS_NUTRITION,
+    storage: 'Store in a cool, dry place at a temperature between +8 and +21 °C.',
+    // 320 kcal per 100 g on the card, and one cake weighs 50 g.
+    kcalPerUnit: 160,
+    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
+    // There is no photograph of the Blueberry pack yet, so that flavour shows the Classic one.
     variants: [
-      { key: 'classic', gtin: '850039474002' },
-      { key: 'cranberry', gtin: '850039474026' },
-      { key: 'cinnamon', gtin: '850039474033' },
-      { key: 'blueberry', gtin: '850039474019' },
+      { key: 'classic', gtin: '850039474002', image: 'pack-flourless-classic' },
+      { key: 'cranberry', gtin: '850039474026', image: 'pack-flourless-cranberry' },
+      { key: 'cinnamon', gtin: '850039474033', image: 'pack-flourless-cinnamon' },
+      { key: 'blueberry', gtin: '850039474019', image: 'pack-flourless-classic' },
     ],
-    images: ['flourless-bar', 'pastila-texture', 'flatlay-lunchbox'],
+    images: ['pack-flourless-classic', 'pack-flourless-cranberry', 'pack-flourless-cinnamon'],
     accent: 'var(--honey-100)',
     shelfLifeMonths: 12,
     order: 20,
@@ -319,33 +327,42 @@ export const PRODUCTS: Product[] = [
   {
     slug: 'apple-meringue-35g',
     name: 'Apple Meringue',
-    title: 'PastiLite Apple Meringues 35 g',
-    brand: 'PastiLite',
+    title: "App'Lite Apple Meringue 35 g",
+    brand: "App'Lite",
+    legalName: 'Apple meringue with no added sugar',
+    legalNameByFlavour: {
+      classic: 'Classic apple meringue with no added sugar',
+      berry: 'Apple meringue with mixed berries, no added sugar',
+    },
     collection: 'meringues',
     weightGrams: 35,
     pack: 1,
-    price: 2.2,
-    hook: 'Crispy, airy, and sweet without a grain of sugar.',
+    price: 2.8,
+    hook: 'Crispy, airy, and no sugar added.',
     summary:
-      'Crispy meringue kisses made from baked apples, egg white and berries. Three ingredients, no added sugar, 35 g of air and crunch.',
+      'Crispy meringues of 99% baked apples and egg white, with no added sugar. 3 kcal a piece. Classic or Berry Mix, in a 35 g tub.',
     description: [
-      'A meringue is usually egg white and a mountain of sugar. Ours is egg white and baked apple. It bakes into the same crackly, melt-away crunch — with the sweetness coming from Antonovka apples instead of the sugar bowl.',
-      'Light enough to eat a whole bag, satisfying enough that you probably won’t need to. Great with coffee, crushed over yoghurt, or as the “dessert” in a lunchbox.',
+      'A meringue is usually egg white and a mountain of sugar. Ours is egg white and baked apple. It bakes into the same crackly, melt-away crunch — with the sweetness coming from the apples instead of the sugar bowl. Berry Mix adds blackcurrants, cranberries, lingonberries and blueberries.',
+      'Light enough to eat a whole tub, satisfying enough that you probably won’t need to. Great with coffee, crushed over yoghurt, or as the “dessert” in a lunchbox.',
     ],
-    ingredients: 'Baked apples, egg white. Berry Mix: baked apples, egg white, berries (blueberry, cranberry).',
+    // The Berry Mix lid reads "99% baked apples and berries inside", so there the figure covers the apples and berries together.
+    ingredients:
+      'Classic: baked apples (99%), egg white. Berry Mix: baked apples and berries (99%: apples, blackcurrants, cranberries, lingonberries, blueberries), egg white.',
     allergens: 'Contains egg.',
-    nutrition: MERINGUE_NUTRITION,
-    kcalPerUnit: 109,
+    nutrition: MERINGUE_CLASSIC_NUTRITION,
+    storage:
+      'Store at a temperature not exceeding 25 °C and a relative humidity not exceeding 75%. Do not store together with products that have a strong or distinctive odour.',
+    kcalPerUnit: null,
     diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
     variants: [
-      { key: 'classic', gtin: '4751043820204' },
-      { key: 'berry', gtin: '4751043820211' },
-      { key: 'cinnamon' },
+      { key: 'classic', gtin: '4751043820204', image: 'pack-meringue-classic' },
+      { key: 'berry', gtin: '4751043820211', image: 'pack-meringue-berry', nutrition: MERINGUE_BERRY_NUTRITION },
     ],
-    images: ['meringue-pouch', 'meringue', 'pastila-texture'],
+    images: ['pack-meringue-classic', 'pack-meringue-berry', 'meringue'],
     accent: 'var(--coral-100)',
     badge: 'New',
     new: true,
+    // No card gives a shelf life for the meringues; this is the figure the site already carried.
     shelfLifeMonths: 9,
     order: 30,
   },
@@ -354,138 +371,76 @@ export const PRODUCTS: Product[] = [
     name: "App'Lite Dessert",
     title: "App'Lite Baked Apple Dessert 50 g",
     brand: "App'Lite",
+    legalName: 'Apple dessert with no added sugar',
+    legalNameByFlavour: {
+      berry: 'Apple dessert with mixed berries, no added sugar',
+      cinnamon: 'Apple dessert with cinnamon, no added sugar',
+    },
     collection: 'applite',
     weightGrams: 50,
     pack: 1,
-    price: 2.45,
+    price: 2.5,
     hook: 'Apple pie filling, without the pie.',
     summary:
-      'A thick 50 g square of baked-apple pastila with no added sugar. Classic, Berry Mix or Cinnamon. Eat with tea, coffee or yoghurt.',
+      'A 50 g baked apple dessert: 99% baked apples, no added sugar, no flour, gluten free. Classic, Berry Mix or Cinnamon.',
     description: [
-      'The dessert cut of our pastila: thicker, softer, meant for a plate rather than a pocket. Fifty grams of layered baked apple that tastes like a warm apple pie filling.',
-      'Serve it with a spoon of yoghurt, crumble it over porridge, or slice it thin on a cheese board. It is sweet, but never sugary.',
+      'Fifty grams of layered baked apple, meant for a plate rather than a pocket.',
+      'Serve it with a spoon of yoghurt, crumble it over porridge, or slice it thin on a cheese board.',
     ],
-    ingredients: 'Baked apples (99%), egg white. Berry Mix adds blueberry and cranberry; Cinnamon adds cinnamon.',
+    // Classic and Cinnamon packs say "99% baked apples"; the Berry Mix pack says "99% baked apples & berries".
+    ingredients:
+      'Classic: baked apples (99%), egg white. Berry Mix: baked apples and berries (99%: apples, cranberries, blueberries, blackcurrants, lingonberries), egg white. Cinnamon: baked apples (99%), egg white, cinnamon.',
     allergens: 'Contains egg. May contain traces of nuts.',
-    nutrition: PASTILA_NUTRITION,
-    kcalPerUnit: 139,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives', 'high-fibre'],
+    nutrition: DESSERT_50G_NUTRITION,
+    storage:
+      '9 months when stored at a temperature between +8 and +10 °C; 4 months when stored at a temperature between +10 and +25 °C. The relative humidity must not exceed 75–80%.',
+    // 276 kcal per 100 g makes 138 kcal a pack, but the pack itself prints 148, so neither is quoted until one is confirmed.
+    kcalPerUnit: null,
+    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
     variants: [
-      { key: 'classic', gtin: '4751043820013' },
-      { key: 'berry', gtin: '4751043820037' },
-      { key: 'cinnamon', gtin: '4751043820020' },
+      { key: 'classic', gtin: '4751043820013', image: 'pack-dessert-classic' },
+      { key: 'berry', gtin: '4751043820037', image: 'pack-dessert-berry' },
+      { key: 'cinnamon', gtin: '4751043820020', image: 'pack-dessert-cinnamon' },
     ],
-    images: ['pastila-slices', 'pastila-texture', 'pastila-macro'],
+    images: ['pack-dessert-classic', 'pack-dessert-berry', 'pack-dessert-cinnamon'],
     accent: 'var(--cream-2)',
-    shelfLifeMonths: 12,
+    // The room-temperature figure: nine months needs +8 to +10 °C, which a shelf does not promise.
+    shelfLifeMonths: 4,
     order: 40,
   },
   {
-    slug: 'belyov-apple-pastila-100g',
-    name: 'Belyov Apple Pastila',
-    title: 'Belyov Apple Pastila 100 g',
-    brand: 'Belyov Pastila',
-    collection: 'pastila',
-    weightGrams: 100,
+    slug: 'applite-baked-apple-dessert-500g',
+    name: 'Classic Apple Dessert',
+    title: "App'Lite Classic Baked Apple Dessert 500 g",
+    brand: "App'Lite",
+    legalName: 'Classic apple dessert with no added sugar',
+    collection: 'applite',
+    weightGrams: 500,
     pack: 1,
-    price: 4.9,
-    hook: 'The original 1888 recipe, in a pocket size.',
+    price: 12.99,
+    hook: 'Half a kilo, wrapped piece by piece.',
     summary:
-      'A 100 g loaf of traditional Belyov apple pastila with no added sugar: baked Antonovka apples and egg white, whipped and dried in layers.',
-    description: [
-      'Belyov pastila is the great-grandmother of every apple snack we make. Baked Antonovka apples are whipped with egg white, spread in thin layers, dried for hours, then stacked and dried again.',
-      'What you get is an airy, layered loaf with a texture between sponge cake and dried fruit — and the honest, slightly tart taste of a baked apple. The 100 g loaf is the one to try first.',
-    ],
-    ingredients: 'Baked apples, egg white. Flavoured versions add berries (lingonberry, cherry, blueberry, black currant) or cinnamon.',
-    allergens: 'Contains egg. May contain traces of nuts.',
-    nutrition: PASTILA_NUTRITION,
-    kcalPerUnit: 278,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives', 'high-fibre'],
-    variants: [
-      { key: 'classic', gtin: '4751043820198' },
-      { key: 'berry', gtin: '4751043820228' },
-      { key: 'lingonberry', gtin: '4751043820235' },
-      { key: 'cherry', gtin: '4751043820419' },
-      { key: 'blackcurrant' },
-    ],
-    images: ['pastila-100-pack', 'pastila-slices', 'pastila-macro'],
-    accent: 'var(--bar-300)',
-    bestseller: true,
-    shelfLifeMonths: 12,
-    order: 50,
-  },
-  {
-    slug: 'belyov-apple-pastila-180g',
-    name: 'Belyov Apple Pastila',
-    title: 'Belyov Apple Pastila 180 g',
-    brand: 'Belyov Pastila',
-    collection: 'pastila',
-    weightGrams: 180,
-    pack: 1,
-    price: 7.9,
-    hook: 'The family loaf. Seven flavours, zero added sugar.',
-    summary:
-      'The full 180 g loaf of Belyov apple pastila with no added sugar, in seven flavours from Classic to Pine Nut. Slice it for the table.',
-    description: [
-      'The loaf that started it all, in the size made for sharing. One hundred and eighty grams of layered baked apple, dried slowly until it is soft, airy and keeps for months without preservatives.',
-      'Classic is pure Antonovka. Cinnamon is what autumn tastes like. Cherry and Black Currant are bright and tart, Blueberry and Lingonberry are forest-sweet, and Pine Nut adds a buttery crunch between the layers.',
-    ],
-    ingredients: 'Baked apples, egg white. Flavoured versions add berries, cinnamon or pine nuts.',
-    allergens: 'Contains egg. Pine Nut variant contains nuts. May contain traces of nuts.',
-    nutrition: PASTILA_NUTRITION,
-    kcalPerUnit: 500,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives', 'high-fibre'],
-    variants: [
-      { key: 'classic', gtin: '4751043820341' },
-      { key: 'cinnamon', gtin: '4751043820389' },
-      { key: 'cherry', gtin: '4751043820396' },
-      { key: 'blueberry', gtin: '4751043820358' },
-      { key: 'lingonberry', gtin: '4751043820334' },
-      { key: 'blackcurrant', gtin: '4751043820365' },
-      { key: 'pine', gtin: '4751043820426' },
-    ],
-    images: ['pastila-block', 'pastila-180', 'pastila-slices'],
-    accent: 'var(--bar-300)',
-    shelfLifeMonths: 12,
-    order: 60,
-  },
-  {
-    slug: 'belevini-zephyr-250g',
-    name: 'Belevini Zephyr',
-    title: 'Belevini Apple Zephyr 250 g',
-    brand: 'Belevini',
-    collection: 'zephyr',
-    weightGrams: 250,
-    pack: 1,
-    price: 5.9,
-    hook: 'Cloud-soft apple zephyr, set with agar.',
-    summary:
-      'Soft apple zephyr made with Antonovka purée, egg white, sugar and agar. Classic apple, cranberry, assorted, and dark-chocolate-covered. 250 g box.',
-    description: [
-      'Zephyr is the Eastern European cousin of the marshmallow, made with fruit purée and set with agar instead of gelatine. Ours starts with the same Antonovka apples as our pastila and, unlike everything else we make, is made with sugar; the pack says so.',
-      'Cloud-soft, delicately sweet, with a fresh apple tang underneath. The chocolate-covered version is the one that disappears first at the table.',
-    ],
-    ingredients: 'Apple purée, sugar, egg white, agar. Chocolate-covered: plus dark chocolate (cocoa mass, sugar, cocoa butter, emulsifier: soy lecithin).',
-    allergens: 'Contains egg. Chocolate-covered contains soy; may contain milk and traces of nuts.',
-    nutrition: ZEPHYR_NUTRITION,
-    kcalPerUnit: 800,
-    diet: ['gluten-free', 'flourless', 'vegetarian'],
-    variants: [
-      { key: 'apple', gtin: '4751043820259' },
-      { key: 'cranberry', gtin: '4751043820143' },
-      { key: 'assorted', gtin: '4751043820266' },
-      { key: 'chocolate', gtin: '4751043820129' },
-    ],
-    images: ['zephyr-box', 'zephyr'],
-    accent: 'var(--coral-100)',
-    shelfLifeMonths: 3,
-    order: 70,
+      'A 500 g carton of the Classic baked apple dessert in individually wrapped pieces. Apples and egg white, no added sugar.',
+    description: ['The Classic dessert in a 500 g carton, every piece wrapped on its own. Two ingredients: apples and egg white.'],
+    ingredients: 'Apples, egg white.',
+    allergens: 'Contains egg.',
+    nutrition: DESSERT_500G_NUTRITION,
+    storage: '18 months when stored at +8 to +25 °C.',
+    kcalPerUnit: null,
+    // The card makes no gluten-free claim for this pack, so neither does the page.
+    diet: ['no-added-sugar', 'flourless', 'vegetarian', 'no-preservatives'],
+    variants: [{ key: 'classic' }],
+    images: ['box-dessert-500'],
+    accent: 'var(--cream-2)',
+    new: true,
+    shelfLifeMonths: 18,
+    order: 45,
   },
   // ---- Bundles & gift sets --------------------------------------------
   {
     slug: 'tasting-box',
     name: 'Tasting Box',
-    title: 'Semers Tasting Box — bars, meringues & pastila',
+    title: 'Semers Tasting Box — bars, meringues & cakes',
     brand: 'Semers',
     collection: 'gift-sets',
     weightGrams: 420,
@@ -493,16 +448,16 @@ export const PRODUCTS: Product[] = [
     price: 17.9,
     compareAt: 19.0,
     hook: 'Try everything once. Then argue about a favourite.',
-    summary:
-      'Our starter box: 4 Apple Bars, 2 Flourless Bars, 2 bags of Apple Meringues and a 100 g Belyov pastila loaf. Free shipping.',
+    summary: 'Our starter box of App’Lite Apple Bars, App’Lite apple meringues and Blum Baker’s flourless apple cakes. Free shipping.',
     description: [
-      'Everything we make, in one box: four App’Lite Apple Bars (two Classic, two Berry Mix), two Flourless Bars, two bags of PastiLite meringues, and a 100 g loaf of Belyov pastila.',
+      'One box to try the range: App’Lite Apple Bars, App’Lite apple meringues and Blum Baker’s flourless apple cakes.',
       'It ships free, it makes a good present, and it settles the question of which one to reorder.',
     ],
     ingredients: 'See individual products. All items: baked apples, egg white, fruit or spices.',
     allergens: 'Contains egg. May contain traces of nuts.',
-    nutrition: PASTILA_NUTRITION,
-    kcalPerUnit: 0,
+    nutrition: NOT_DECLARED,
+    storage: null,
+    kcalPerUnit: null,
     diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
     variants: [{ key: 'assorted' }],
     images: ['tasting-box', 'gift-box', 'hero-bars'],
@@ -517,55 +472,31 @@ export const PRODUCTS: Product[] = [
     name: 'Apple Bar 12-pack',
     title: "App'Lite Apple Bar 35 g — box of 12",
     brand: "App'Lite",
+    legalName: 'Apple bars with no added sugar',
     collection: 'gift-sets',
     weightGrams: 420,
     pack: 12,
     price: 14.9,
-    compareAt: 17.4,
+    // Twelve single bars at the card price of €1.40.
+    compareAt: 16.8,
     hook: 'A drawer full of good decisions.',
-    summary: 'Twelve App’Lite Apple Bars in one box — Classic, Berry Mix or a half-and-half mix. Saves 14% versus single bars. 99% baked apples, no added sugar.',
+    summary: 'Twelve App’Lite Apple Bars in one box — Classic, Berry Mix or a half-and-half mix. Saves 11% versus single bars. 99% baked apples, no added sugar.',
     description: [
       'The box we send to offices, gyms and anyone who keeps finding wrappers in coat pockets. Twelve 35 g Apple Bars, sealed individually, in a shelf-friendly box.',
       'Pick a single flavour or let us pack six Classic and six Berry Mix.',
     ],
-    ingredients: 'Baked apples (99%), egg white; Berry Mix adds blueberry and cranberry.',
+    ingredients: BAR_INGREDIENTS,
     allergens: 'Contains egg. May contain traces of nuts.',
-    nutrition: PASTILA_NUTRITION,
-    kcalPerUnit: 97,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives', 'high-fibre'],
+    nutrition: NOT_DECLARED,
+    storage: null,
+    kcalPerUnit: null,
+    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
     variants: [{ key: 'classic' }, { key: 'berry' }, { key: 'assorted' }],
     images: ['bar-12-pack', 'packshot-classic', 'packshot-berry'],
     accent: 'var(--mint-100)',
-    badge: 'Save 14%',
+    badge: 'Save 11%',
     shelfLifeMonths: 12,
     order: 15,
-  },
-  {
-    slug: 'pastila-discovery-set',
-    name: 'Pastila Discovery Set',
-    title: 'Belyov Pastila Discovery Set — 3 × 100 g',
-    brand: 'Belyov Pastila',
-    collection: 'gift-sets',
-    weightGrams: 300,
-    pack: 3,
-    price: 13.9,
-    compareAt: 14.7,
-    hook: 'Classic, Cherry, Lingonberry. The holy trinity.',
-    summary: 'Three 100 g loaves of Belyov apple pastila — Classic, Cherry and Lingonberry — in a gift sleeve. Baked Antonovka apples and egg white, no added sugar.',
-    description: [
-      'The three loaves we would put in front of someone who has never tried pastila: the pure Classic, the bright Cherry, and the forest-sweet Lingonberry.',
-      'Packed in a kraft gift sleeve. Add a note at checkout and we will write it on the card.',
-    ],
-    ingredients: 'Baked apples, egg white, cherry or lingonberry depending on loaf.',
-    allergens: 'Contains egg. May contain traces of nuts.',
-    nutrition: PASTILA_NUTRITION,
-    kcalPerUnit: 278,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives', 'high-fibre'],
-    variants: [{ key: 'assorted' }],
-    images: ['pastila-set', 'pastila-slices', 'pastila-macro'],
-    accent: 'var(--bar-300)',
-    shelfLifeMonths: 12,
-    order: 25,
   },
 ];
 

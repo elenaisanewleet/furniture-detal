@@ -694,7 +694,7 @@ if (shop) {
   // Filters and sort live in the URL too, so a filtered view can be shared and survives back navigation.
   const collections = new Set($$<HTMLElement>('[data-filter-collection]', shop).map((b) => b.dataset.filterCollection));
   const diets = new Set($$<HTMLElement>('[data-filter-diet]', shop).map((b) => b.dataset.filterDiet));
-  // Collection pages carry the collection in their path (/shop/pastila/); only the all-products page keeps it as ?collection=.
+  // Collection pages carry the collection in their path (/shop/meringues/); only the all-products page keeps it as ?collection=.
   const pathCollection = (shop.dataset.collection || 'all') !== 'all';
   const c0 = url.searchParams.get('collection');
   if (c0 && collections.has(c0) && !pathCollection) state.collection = c0;
@@ -714,7 +714,8 @@ if (shop) {
   const apply = () => {
     let visible = 0;
     const arr = cards.slice();
-    // kcal 0 means "mixed box, see each item": it must sink to the end of "Lowest calories", not top it.
+    // A card with no kcal figure (none declared, or a mixed box) must sink to the end of "Lowest calories", not top it.
+    // The shop pages do not offer that sort while most products have no declared figure; the case stays for when they do.
     const key = (c: HTMLElement) => ({ price: Number(c.dataset.price), order: Number(c.dataset.order), name: c.dataset.name || '', best: c.dataset.best === '1' ? 0 : 1, kcal: Number(c.dataset.kcal) || Infinity });
     arr.sort((a, b) => {
       const A = key(a), B = key(b);

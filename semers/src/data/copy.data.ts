@@ -3,8 +3,14 @@
  * where possible; the shapes are enforced by src/data/copy.ts.
  *
  * Every number, weight, percentage and allergen in here was checked against the
- * English before it was committed. Brand names (Semers, App'Lite, PastiLite,
- * Belevini, Maxima, Barbora) stay in Latin script on purpose.
+ * English before it was committed. Brand names (Semers, App'Lite, Blum Baker's,
+ * Maxima, Barbora) stay in Latin script on purpose.
+ *
+ * The names of the foods, the ingredient lists and the storage conditions use
+ * the Russian and Latvian wording of the owner's product cards, with one
+ * correction applied throughout: the sugar claim is always the regulated
+ * "без добавленного сахара" / "bez pievienota cukura" that the packs print,
+ * never the shorter form some cards used, which claims no sugar at all.
  *
  * Only words live here. Price, weight, EAN and nutrition stay in products.ts,
  * and the override type admits no other field, so a translation cannot change a
@@ -21,112 +27,106 @@ export const PRODUCT_COPY: Partial<
     "apple-bar-35g": {
       name: "Яблочный батончик",
       title: "Яблочный батончик App'Lite, 35 г",
+      legalName: "Яблочный батончик без добавленного сахара",
+      legalNameByFlavour: {
+        classic: "Яблочный батончик «Классический» без добавленного сахара",
+        berry: "Яблочный батончик «Ягодный микс» без добавленного сахара",
+      },
       hook: "99% печёных яблок. В этом вся идея.",
       summary:
-        "Батончик 35 г из взбитой печёной антоновки, высушенной слоями. Без добавленного сахара, без муки, без глютена — около 97 ккал. Сделано в Риге, хранится 12 месяцев.",
+        "Батончик 35 г, в котором 99% печёных яблок. Без добавленного сахара, без муки, без глютена. «Классический» или «Ягодный микс»; хранится 12 месяцев.",
       description: [
-        "Достаньте из ящика стола шоколадный батончик. Положите туда вместо него этот. Тот же размер, тот же момент «нужно что-то съесть прямо сейчас», но состав читается так: печёные яблоки, яичный белок. И всё.",
-        "Мы печём антоновку, пока она не станет мягкой и карамельно-сладкой, взбиваем пюре с яичным белком, размазываем тонким слоем и медленно сушим слой за слоем. Получается батончик — мягкий, чуть тягучий, со вкусом сердцевины печёного яблока.",
-        "Около 97 ккал на батончик, сладость только от фруктов, клетчатка — из яблочной кожуры. Хранится месяцами без консервантов: всю работу делает медленная сушка.",
+        "Достаньте из ящика стола шоколадный батончик. Положите туда вместо него этот. Тот же момент «нужно что-то съесть прямо сейчас», но состав «Классического» читается так: печёные яблоки, яичный белок. И всё.",
+        "В «Ягодный микс» добавлены чёрная смородина, клюква, брусника и черника. Оба сделаны вручную, без муки и без добавленного сахара.",
       ],
       ingredients:
-        "Печёные яблоки (99%), яичный белок. Ягодный микс: печёные яблоки, яичный белок, черника, клюква. Корица: печёные яблоки, яичный белок, корица.",
+        "«Классический»: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки (99%), чёрная смородина, клюква, брусника, черника, яичный белок.",
       allergens: "Содержит яйцо. Может содержать следы орехов.",
     },
     "flourless-apple-bar-50g": {
-      name: "Яблочный батончик без муки",
-      title: "Яблочный батончик без муки, 50 г",
-      hook: "Батончик поплотнее. Целые ягоды, ноль муки.",
+      name: "Яблочное пирожное без муки",
+      title: "Яблочное пирожное без муки Blum Baker's, 50 г",
+      legalName: "Яблочное пирожное без добавленного сахара",
+      legalNameByFlavour: {
+        cranberry: "Яблочно-клюквенное пирожное без добавленного сахара",
+        cinnamon: "Яблочное пирожное с корицей без добавленного сахара",
+        blueberry: "Яблочно-черничное пирожное без добавленного сахара",
+      },
+      hook: "Яблочное пирожное без муки и без добавленного сахара.",
       summary:
-        "Плотный батончик 50 г из печёного яблока, спрессованного с целыми ягодами. Без муки, без глютена, без добавленного сахара. Оригинальный, Клюква, Корица, Черника.",
+        "Пирожное без муки, 50 г, из яблок и яичного белка, без добавленного сахара. Классическое, с клюквой, с корицей или с черникой.",
       description: [
-        "Пятьдесят граммов пастилы из печёных яблок, спрессованной с настоящими сушёными ягодами — так получается плотнее и фруктовее. Это тот батончик, который мы берём с собой на долгие прогулки и долгие совещания.",
-        "Как и всё, что мы делаем, он сладкий только за счёт самих яблок. Без муки, без сиропов, без «натуральных ароматизаторов» — только фрукты, яичный белок и время.",
+        "Яблоки и яичный белок — пирожное 50 г без муки и без добавленного сахара. В пирожных с клюквой, корицей и черникой к этому добавлен ровно один ингредиент.",
       ],
       ingredients:
-        "Печёные яблоки, яичный белок, сушёные ягоды (клюква, черника) или корица — в зависимости от вкуса.",
+        "Классическое: яблоки, яичный белок. С клюквой: яблоки, клюква, яичный белок. С корицей: яблоки, яичный белок, корица. С черникой: яблоки, черника, яичный белок.",
       allergens: "Содержит яйцо. Может содержать следы орехов.",
+      storage: "Хранить в сухом прохладном месте при температуре от +8 до +21 °C.",
     },
     "apple-meringue-35g": {
       name: "Яблочное безе",
-      title: "Яблочное безе PastiLite, 35 г",
-      hook: "Хрустящее, воздушное и сладкое без единой крупинки сахара.",
+      title: "Яблочное безе App'Lite, 35 г",
+      legalName: "Яблочное безе без добавленного сахара",
+      legalNameByFlavour: {
+        classic: "Классическое яблочное безе без добавленного сахара",
+        berry: "Яблочное безе с ягодами без добавленного сахара",
+      },
+      hook: "Хрустящее, воздушное и без добавленного сахара.",
       summary:
-        "Хрустящие безе из печёных яблок, яичного белка и ягод. Три ингредиента, без добавленного сахара, 35 г воздуха и хруста.",
+        "Хрустящее безе: 99% печёных яблок и яичный белок, без добавленного сахара. 3 ккал в штучке. Классическое или «Ягодный микс», баночка 35 г.",
       description: [
-        "Обычное безе — это яичный белок и горка сахара. Наше — яичный белок и печёное яблоко. Оно запекается в такой же ломкий, растворяющийся на языке хруст, только сладость идёт от антоновки, а не из сахарницы.",
-        "Достаточно лёгкое, чтобы съесть целый пакет, и достаточно сытное, чтобы вам этого, скорее всего, не понадобилось. Хорошо с кофе; можно покрошить в йогурт или положить в ланчбокс вместо десерта.",
+        "Обычное безе — это яичный белок и горка сахара. Наше — яичный белок и печёное яблоко. Оно запекается в такой же ломкий, растворяющийся на языке хруст, только сладость идёт от яблок, а не из сахарницы. В «Ягодный микс» добавлены чёрная смородина, клюква, брусника и черника.",
+        "Достаточно лёгкое, чтобы съесть целую баночку, и достаточно сытное, чтобы вам этого, скорее всего, не понадобилось. Хорошо с кофе; можно покрошить в йогурт или положить в ланчбокс вместо десерта.",
       ],
       ingredients:
-        "Печёные яблоки, яичный белок. Ягодный микс: печёные яблоки, яичный белок, ягоды (черника, клюква).",
+        "Классическое: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки и ягоды (99%: яблоки, чёрная смородина, клюква, брусника, черника), яичный белок.",
       allergens: "Содержит яйцо.",
+      storage:
+        "Хранить при температуре не выше 25 °C и относительной влажности не более 75%. Не хранить рядом с продуктами с сильным запахом.",
     },
     "applite-baked-apple-dessert-50g": {
       name: "Десерт App'Lite",
       title: "Десерт из печёных яблок App'Lite, 50 г",
+      legalName: "Яблочный десерт без добавленного сахара",
+      legalNameByFlavour: {
+        berry: "Яблочный десерт с ягодами без добавленного сахара",
+        cinnamon: "Яблочный десерт с корицей без добавленного сахара",
+      },
       hook: "Начинка яблочного пирога — без самого пирога.",
       summary:
-        "Толстый квадратик пастилы из печёных яблок, 50 г, без добавленного сахара. Классический, Ягодный микс или Корица. К чаю, кофе или йогурту.",
+        "Десерт из печёных яблок, 50 г: 99% печёных яблок, без добавленного сахара, без муки, без глютена. Классический, «Ягодный микс» или с корицей.",
       description: [
-        "Десертная нарезка нашей пастилы: толще, мягче, для тарелки, а не для кармана. Пятьдесят граммов слоёного печёного яблока со вкусом тёплой начинки яблочного пирога.",
-        "Подавайте с ложкой йогурта, крошите в кашу или нарежьте тонко на сырную доску. Сладко, но никогда не приторно.",
+        "Пятьдесят граммов слоёного печёного яблока — для тарелки, а не для кармана.",
+        "Подавайте с ложкой йогурта, крошите в кашу или нарежьте тонко на сырную доску.",
       ],
       ingredients:
-        "Печёные яблоки (99%), яичный белок. В «Ягодный микс» добавлены черника и клюква; в «Корицу» добавлена корица.",
+        "Классический: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки и ягоды (99%: яблоки, клюква, черника, чёрная смородина, брусника), яичный белок. С корицей: печёные яблоки (99%), яичный белок, корица.",
       allergens: "Содержит яйцо. Может содержать следы орехов.",
+      storage:
+        "9 месяцев при температуре от +8 до +10 °C; 4 месяца при температуре от +10 до +25 °C. Относительная влажность воздуха не должна превышать 75–80%.",
     },
-    "belyov-apple-pastila-100g": {
-      name: "Белёвская яблочная пастила",
-      title: "Белёвская яблочная пастила, 100 г",
-      hook: "Тот самый рецепт 1888 года, в карманном формате.",
+    "applite-baked-apple-dessert-500g": {
+      name: "Классический яблочный десерт",
+      title: "Классический десерт из печёных яблок App'Lite, 500 г",
+      legalName: "Классический яблочный десерт без добавленного сахара",
+      hook: "Полкило, каждый кусочек в своей упаковке.",
       summary:
-        "Брусок 100 г традиционной белёвской яблочной пастилы без добавленного сахара: печёная антоновка и яичный белок, взбитые и высушенные слоями.",
+        "Коробка 500 г классического десерта из печёных яблок, каждый кусочек упакован отдельно. Яблоки и яичный белок, без добавленного сахара.",
       description: [
-        "Белёвская пастила — прабабушка всех яблочных снеков, которые мы делаем. Печёную антоновку взбивают с яичным белком, размазывают тонкими слоями, часами сушат, а потом складывают друг на друга и сушат снова.",
-        "Получается воздушный слоёный брусок с текстурой где-то между бисквитом и сушёными фруктами — и честный, чуть кисловатый вкус печёного яблока. Брусок 100 г — тот, с которого стоит начать.",
+        "Классический десерт в коробке 500 г, каждый кусочек в собственной упаковке. Два ингредиента: яблоки и яичный белок.",
       ],
-      ingredients:
-        "Печёные яблоки, яичный белок. Во вкусовые версии добавлены ягоды (брусника, вишня, черника, чёрная смородина) или корица.",
-      allergens: "Содержит яйцо. Может содержать следы орехов.",
-    },
-    "belyov-apple-pastila-180g": {
-      name: "Белёвская яблочная пастила",
-      title: "Белёвская яблочная пастила, 180 г",
-      hook: "Брусок для всей семьи. Семь вкусов, ноль добавленного сахара.",
-      summary:
-        "Полный брусок белёвской яблочной пастилы 180 г без добавленного сахара, семь вкусов — от классического до кедрового ореха. Нарежьте и подайте на стол.",
-      description: [
-        "Тот самый брусок, с которого всё началось, в размере для компании. Сто восемьдесят граммов слоёного печёного яблока, высушенного медленно — до мягкости и воздушности, и хранится он месяцами без консервантов.",
-        "«Классический» — чистая антоновка. «Корица» — вкус осени. «Вишня» и «Чёрная смородина» яркие и кислые, «Черника» и «Брусника» — лесные и сладкие, а «Кедровый орех» добавляет между слоями маслянистый хруст.",
-      ],
-      ingredients:
-        "Печёные яблоки, яичный белок. Во вкусовые версии добавлены ягоды, корица или кедровые орехи.",
-      allergens:
-        "Содержит яйцо. Вариант «Кедровый орех» содержит орехи. Может содержать следы орехов.",
-    },
-    "belevini-zephyr-250g": {
-      name: "Зефир Belevini",
-      title: "Яблочный зефир Belevini, 250 г",
-      hook: "Яблочный зефир, мягкий как облако, на агаре.",
-      summary:
-        "Мягкий яблочный зефир из пюре антоновки, яичного белка, сахара и агара. Классический яблочный, клюквенный, ассорти и в тёмном шоколаде. Коробка 250 г.",
-      description: [
-        "Зефир — восточноевропейский родственник маршмеллоу: делается на фруктовом пюре и застывает на агаре, а не на желатине. Наш начинается с той же антоновки, что и наша пастила, и, в отличие от всего остального, что мы делаем, готовится с сахаром; на упаковке так и написано.",
-        "Мягкий как облако, деликатно сладкий, с яблочной кислинкой в основе. Версия в шоколаде — та, что исчезает со стола первой.",
-      ],
-      ingredients:
-        "Яблочное пюре, сахар, яичный белок, агар. В шоколаде: плюс тёмный шоколад (какао-масса, сахар, какао-масло, эмульгатор: соевый лецитин).",
-      allergens:
-        "Содержит яйцо. Вариант в шоколаде содержит сою; может содержать молоко и следы орехов.",
+      ingredients: "Яблоки, яичный белок.",
+      allergens: "Содержит яйцо.",
+      storage: "18 месяцев при хранении от +8 до +25 °C.",
     },
     "tasting-box": {
       name: "Дегустационный набор",
-      title: "Дегустационный набор Semers — батончики, безе и пастила",
+      title: "Дегустационный набор Semers — батончики, безе и пирожные",
       hook: "Попробуйте всё по одному разу. Потом спорьте, что лучше.",
       summary:
-        "Наш стартовый набор: 4 яблочных батончика, 2 батончика без муки, 2 пакета яблочного безе и брусок белёвской пастилы 100 г. Доставка бесплатно.",
+        "Наш стартовый набор: яблочные батончики App'Lite, яблочное безе App'Lite и пирожные без муки Blum Baker's. Доставка бесплатно.",
       description: [
-        "Всё, что мы делаем, в одной коробке: четыре яблочных батончика App'Lite (два классических, два с ягодным миксом), два батончика без муки, два пакета безе PastiLite и брусок белёвской пастилы 100 г.",
+        "Коробка, чтобы попробовать ассортимент: яблочные батончики App'Lite, яблочное безе App'Lite и пирожные без муки Blum Baker's.",
         "Доставка бесплатная, подарок из него получается хороший, и он закрывает вопрос, что заказать в следующий раз.",
       ],
       ingredients:
@@ -136,29 +136,16 @@ export const PRODUCT_COPY: Partial<
     "apple-bar-12-pack": {
       name: "Яблочный батончик, набор 12 шт.",
       title: "Яблочный батончик App'Lite, 35 г — коробка из 12 шт.",
+      legalName: "Яблочные батончики без добавленного сахара",
       hook: "Ящик стола, полный правильных решений.",
       summary:
-        "Двенадцать яблочных батончиков App'Lite в одной коробке: классические, ягодный микс или пополам. Экономия 14%. 99% печёных яблок, без добавленного сахара.",
+        "Двенадцать яблочных батончиков App'Lite в одной коробке: «Классический», «Ягодный микс» или пополам. Экономия 11%. 99% печёных яблок, без добавленного сахара.",
       description: [
         "Эту коробку мы отправляем в офисы, спортзалы и всем, кто постоянно находит обёртки в карманах пальто. Двенадцать яблочных батончиков по 35 г, каждый в отдельной упаковке, в коробке, которая нормально встаёт на полку.",
-        "Выберите один вкус или доверьте нам сложить шесть классических и шесть с ягодным миксом.",
+        "Выберите один вкус или доверьте нам сложить шесть «Классических» и шесть «Ягодный микс».",
       ],
       ingredients:
-        "Печёные яблоки (99%), яичный белок; в «Ягодный микс» добавлены черника и клюква.",
-      allergens: "Содержит яйцо. Может содержать следы орехов.",
-    },
-    "pastila-discovery-set": {
-      name: "Набор для знакомства с пастилой",
-      title: "Набор для знакомства с белёвской пастилой — 3 × 100 г",
-      hook: "Классическая, вишня, брусника. Святая троица.",
-      summary:
-        "Три бруска белёвской яблочной пастилы по 100 г — классическая, вишня и брусника — в подарочной обёртке. Печёная антоновка и яичный белок, без добавленного сахара.",
-      description: [
-        "Три бруска, которые мы поставили бы перед человеком, никогда не пробовавшим пастилу: чистая классическая, яркая вишнёвая и лесная сладкая брусничная.",
-        "Упаковано в подарочную обёртку из крафта. Добавьте пожелание при оформлении заказа — и мы перенесём его на открытку.",
-      ],
-      ingredients:
-        "Печёные яблоки, яичный белок, вишня или брусника — в зависимости от бруска.",
+        "«Классический»: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки (99%), чёрная смородина, клюква, брусника, черника, яичный белок.",
       allergens: "Содержит яйцо. Может содержать следы орехов.",
     },
   },
@@ -166,112 +153,106 @@ export const PRODUCT_COPY: Partial<
     "apple-bar-35g": {
       name: "Ābolu batoniņš",
       title: "App'Lite ābolu batoniņš, 35 g",
+      legalName: "Ābolu batoniņš bez pievienota cukura",
+      legalNameByFlavour: {
+        classic: "«Ābolu» batoniņš bez pievienota cukura",
+        berry: "«Ogu maisījums» ābolu batoniņš bez pievienota cukura",
+      },
       hook: "99 % ceptu ābolu. Tāda ir visa doma.",
       summary:
-        "35 g batoniņš no saputota, kārtās klāta cepta Antonovka ābola. Bez pievienota cukura, bez miltiem, bez glutēna — apmēram 97 kcal. Ražots Rīgā, glabājas 12 mēnešus.",
+        "35 g batoniņš, kurā ir 99 % ceptu ābolu. Bez pievienota cukura, bez miltiem, bez glutēna. Klasiskais vai «Ogu maisījums»; glabājas 12 mēnešus.",
       description: [
-        'Izņemiet no atvilktnes šokolādes batoniņu. Ielieciet tā vietā šo. Tāds pats izmērs, tas pats „man kaut ko vajag tagad" mirklis, tikai sastāvdaļu sarakstā rakstīts: cepti āboli, olu baltums. Un viss.',
-        "Antonovka ābolus cepam, līdz tie ir mīksti un karameļsaldi, biezeni saputojam ar olu baltumu, izklājam plānā kārtā un lēni žāvējam kārtu pēc kārtas. Rezultāts ir batoniņš, kas ir mīksts, nedaudz košļājams un garšo pēc cepta ābola iekšpuses.",
-        "Apmēram 97 kcal vienā batoniņā, dabīgi salds no pašiem augļiem, ar šķiedrvielām no ābolu mizām. Glabājas mēnešiem ilgi bez konservantiem, jo darbu izdara lēnā žāvēšana.",
+        'Izņemiet no atvilktnes šokolādes batoniņu. Ielieciet tā vietā šo. Tas pats „man kaut ko vajag tagad" mirklis, tikai Klasiskā batoniņa sastāvdaļu sarakstā rakstīts: cepti āboli, olu baltums. Un viss.',
+        "«Ogu maisījumam» pievienotas upenes, dzērvenes, brūklenes un mellenes. Abi ir gatavoti ar rokām, bez miltiem un bez pievienota cukura.",
       ],
       ingredients:
-        "Cepti āboli (99 %), olu baltums. Ogu mikss: cepti āboli, olu baltums, mellenes, dzērvenes. Kanēlis: cepti āboli, olu baltums, kanēlis.",
+        "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli (99 %), upenes, dzērvenes, brūklenes, mellenes, olu baltums.",
       allergens: "Satur olas. Var saturēt riekstu pēdas.",
     },
     "flourless-apple-bar-50g": {
-      name: "Ābolu batoniņš bez miltiem",
-      title: "Ābolu batoniņš bez miltiem, 50 g",
-      hook: "Sātīgākais batoniņš. Veselas ogas, nulle miltu.",
+      name: "Ābolu kūciņa bez miltiem",
+      title: "Blum Baker's ābolu kūciņa bez miltiem, 50 g",
+      legalName: "Ābolu kūciņa bez pievienota cukura",
+      legalNameByFlavour: {
+        cranberry: "Ābolu un dzērveņu kūciņa bez pievienota cukura",
+        cinnamon: "Ābolu kūciņa ar kanēli bez pievienota cukura",
+        blueberry: "Ābolu un melleņu kūciņa bez pievienota cukura",
+      },
+      hook: "Ābolu kūciņa bez miltiem un bez pievienota cukura.",
       summary:
-        "Blīvs 50 g batoniņš no cepta ābola, kas saspiests kopā ar veselām ogām. Bez miltiem, bez glutēna, bez pievienota cukura. Oriģinālais, Dzērvene, Kanēlis, Mellene.",
+        "50 g ābolu kūciņa bez miltiem no āboliem un olu baltuma, bez pievienota cukura. Klasiskā, ar dzērvenēm, ar kanēli vai ar mellenēm.",
       description: [
-        "Piecdesmit grami ceptu ābolu pastilas, saspiestas ar īstām žāvētām ogām, lai kodums būtu košļājamāks un ogaināks. Šo batoniņu mēs ņemam līdzi garās pastaigās un garās sapulcēs.",
-        'Tāpat kā viss, ko mēs gatavojam, tas ir salds tikai no pašiem āboliem. Bez miltiem, bez sīrupiem, bez „dabīgiem aromatizētājiem" — tikai augļi, olu baltums un laiks.',
+        "Āboli un olu baltums — 50 g kūciņa bez miltiem un bez pievienota cukura. Kūciņām ar dzērvenēm, kanēli un mellenēm tam pievienota tieši viena sastāvdaļa.",
       ],
       ingredients:
-        "Cepti āboli, olu baltums, žāvētas ogas (dzērvenes, mellenes) vai kanēlis atkarībā no garšas.",
+        "Klasiskā: āboli, olu baltums. Ar dzērvenēm: āboli, dzērvenes, olu baltums. Ar kanēli: āboli, olu baltums, kanēlis. Ar mellenēm: āboli, mellenes, olu baltums.",
       allergens: "Satur olas. Var saturēt riekstu pēdas.",
+      storage: "Uzglabāt sausā, vēsā vietā no +8 līdz +21 °C.",
     },
     "apple-meringue-35g": {
       name: "Ābolu bezē",
-      title: "PastiLite ābolu bezē, 35 g",
-      hook: "Kraukšķīgs, gaisīgs un salds bez neviena cukura graudiņa.",
+      title: "App'Lite ābolu bezē, 35 g",
+      legalName: "Ābolu bezē bez pievienota cukura",
+      legalNameByFlavour: {
+        classic: "Klasisks ābolu bezē bez pievienota cukura",
+        berry: "Ābolu bezē ar ogām bez pievienota cukura",
+      },
+      hook: "Kraukšķīgs, gaisīgs un bez pievienota cukura.",
       summary:
-        "Kraukšķīgas bezē kūciņas no ceptiem āboliem, olu baltuma un ogām. Trīs sastāvdaļas, bez pievienota cukura, 35 g gaisa un kraukšķa.",
+        "Kraukšķīgs bezē: 99 % ceptu ābolu un olu baltums, bez pievienota cukura. 3 kcal vienā gabaliņā. Klasiskais vai «Ogu maisījums», 35 g trauciņā.",
       description: [
-        "Bezē parasti ir olu baltums un kalns cukura. Mūsu bezē ir olu baltums un cepts ābols. Tā izcepas tikpat plaisājoši kraukšķīga un mutē kūstoša — tikai saldums nāk no Antonovka āboliem, nevis no cukurtrauka.",
-        'Tik viegls, ka var apēst visu maisiņu, un tik sātīgs, ka droši vien nevajadzēs. Lieliski der kafijai, sadrupināts pār jogurtu vai kā „deserts" pusdienu kārbiņā.',
+        "Bezē parasti ir olu baltums un kalns cukura. Mūsu bezē ir olu baltums un cepts ābols. Tā izcepas tikpat plaisājoši kraukšķīga un mutē kūstoša — tikai saldums nāk no āboliem, nevis no cukurtrauka. «Ogu maisījumam» pievienotas upenes, dzērvenes, brūklenes un mellenes.",
+        'Tik viegls, ka var apēst visu trauciņu, un tik sātīgs, ka droši vien nevajadzēs. Lieliski der kafijai, sadrupināts pār jogurtu vai kā „deserts" pusdienu kārbiņā.',
       ],
       ingredients:
-        "Cepti āboli, olu baltums. Ogu mikss: cepti āboli, olu baltums, ogas (mellenes, dzērvenes).",
+        "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli un ogas (99 %: āboli, upenes, dzērvenes, brūklenes, mellenes), olu baltums.",
       allergens: "Satur olas.",
+      storage:
+        "Uzglabāt temperatūrā līdz 25 °C un relatīvajā gaisa mitrumā līdz 75%. Neglabāt blakus produktiem ar spēcīgu smaržu.",
     },
     "applite-baked-apple-dessert-50g": {
       name: "App'Lite deserts",
       title: "App'Lite cepta ābola deserts, 50 g",
+      legalName: "Ābolu deserts bez pievienota cukura",
+      legalNameByFlavour: {
+        berry: "Ābolu deserts ar ogām bez pievienota cukura",
+        cinnamon: "Ābolu deserts ar kanēli bez pievienota cukura",
+      },
       hook: "Ābolu pīrāga pildījums bez pīrāga.",
       summary:
-        "Biezs 50 g ceptu ābolu pastilas kvadrāts bez pievienota cukura. Klasiskais, Ogu mikss vai Kanēlis. Ēdiet ar tēju, kafiju vai jogurtu.",
+        "50 g cepta ābola deserts: 99 % ceptu ābolu, bez pievienota cukura, bez miltiem, bez glutēna. Klasiskais, «Ogu maisījums» vai ar kanēli.",
       description: [
-        "Mūsu pastilas deserta griezums: biezāks, mīkstāks, domāts šķīvim, nevis kabatai. Piecdesmit grami kārtās klāta cepta ābola, kas garšo pēc silta ābolu pīrāga pildījuma.",
-        "Pasniedziet to ar karoti jogurta, sadrupiniet pār putru vai sagrieziet plānās šķēlēs siera platei. Tas ir salds, bet nekad ne cukurots.",
+        "Piecdesmit grami kārtaina cepta ābola, domāti šķīvim, nevis kabatai.",
+        "Pasniedziet to ar karoti jogurta, sadrupiniet pār putru vai sagrieziet plānās šķēlēs siera platei.",
       ],
       ingredients:
-        "Cepti āboli (99 %), olu baltums. Ogu miksam pievienotas mellenes un dzērvenes; Kanēlim pievienots kanēlis.",
+        "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli un ogas (99 %: āboli, dzērvenes, mellenes, upenes, brūklenes), olu baltums. Ar kanēli: cepti āboli (99 %), olu baltums, kanēlis.",
       allergens: "Satur olas. Var saturēt riekstu pēdas.",
+      storage:
+        "9 mēneši, uzglabājot no +8 līdz +10 °C; 4 mēneši, uzglabājot no +10 līdz +25 °C. Relatīvais gaisa mitrums nedrīkst pārsniegt 75–80%.",
     },
-    "belyov-apple-pastila-100g": {
-      name: "Beļovas ābolu pastila",
-      title: "Beļovas ābolu pastila, 100 g",
-      hook: "Oriģinālā 1888. gada recepte kabatas izmērā.",
+    "applite-baked-apple-dessert-500g": {
+      name: "Klasiskais ābolu deserts",
+      title: "App'Lite klasiskais cepta ābola deserts, 500 g",
+      legalName: "Klasisks ābolu deserts bez pievienota cukura",
+      hook: "Puskilograms, katrs gabaliņš iepakots atsevišķi.",
       summary:
-        "100 g klaips tradicionālās Beļovas ābolu pastilas bez pievienota cukura: cepti Antonovka āboli un olu baltums, saputoti un žāvēti kārtās.",
+        "500 g kaste klasiskā cepta ābola deserta, katrs gabaliņš iepakots atsevišķi. Āboli un olu baltums, bez pievienota cukura.",
       description: [
-        "Beļovas pastila ir vecvecmāmiņa visiem mūsu ābolu kārumiem. Ceptus Antonovka ābolus saputo ar olu baltumu, izklāj plānās kārtās, žāvē stundām ilgi, pēc tam saliek kopā un žāvē vēlreiz.",
-        "Rezultātā top gaisīgs, kārtains klaips ar tekstūru starp biskvītu un žāvētiem augļiem — un ar godīgu, nedaudz skābenu cepta ābola garšu. 100 g klaips ir tas, ar kuru sākt.",
+        "Klasiskais deserts 500 g kastē, katrs gabaliņš savā iepakojumā. Divas sastāvdaļas: āboli un olu baltums.",
       ],
-      ingredients:
-        "Cepti āboli, olu baltums. Garšu versijām pievienotas ogas (brūklenes, ķirši, mellenes, upenes) vai kanēlis.",
-      allergens: "Satur olas. Var saturēt riekstu pēdas.",
-    },
-    "belyov-apple-pastila-180g": {
-      name: "Beļovas ābolu pastila",
-      title: "Beļovas ābolu pastila, 180 g",
-      hook: "Klaips visai ģimenei. Septiņas garšas, nulle pievienota cukura.",
-      summary:
-        "Pilnais 180 g Beļovas ābolu pastilas klaips bez pievienota cukura, septiņās garšās — no Klasiskās līdz Ciedru riekstiem. Sagrieziet to un lieciet galdā.",
-      description: [
-        "Klaips, ar kuru viss sākās, izmērā, kas domāts dalīšanai. Simt astoņdesmit grami kārtaina cepta ābola, lēni žāvēta, līdz tas ir mīksts, gaisīgs un glabājas mēnešiem ilgi bez konservantiem.",
-        "Klasiskā ir tīra Antonovka. Kanēlis garšo tā, kā garšo rudens. Ķirsis un Upene ir spilgti un skābeni, Mellene un Brūklene ir meža saldas, bet Ciedru rieksti starp kārtām pievieno sviestainu kraukšķi.",
-      ],
-      ingredients:
-        "Cepti āboli, olu baltums. Garšu versijām pievienotas ogas, kanēlis vai ciedru rieksti.",
-      allergens:
-        "Satur olas. Variants ar ciedru riekstiem satur riekstus. Var saturēt riekstu pēdas.",
-    },
-    "belevini-zephyr-250g": {
-      name: "Belevini zefīrs",
-      title: "Belevini ābolu zefīrs, 250 g",
-      hook: "Mākoņmīksts ābolu zefīrs, sabiezēts ar agaru.",
-      summary:
-        "Mīksts ābolu zefīrs no Antonovka ābolu biezeņa, olu baltuma, cukura un agara. Klasiskais ābolu, dzērveņu, jauktais un tumšajā šokolādē mērktais. 250 g kastīte.",
-      description: [
-        "Zefīrs ir marshmallow austrumeiropas brālēns: gatavots no augļu biezeņa un sabiezēts ar agaru, nevis želatīnu. Mūsu zefīrs sākas ar tiem pašiem Antonovka āboliem kā mūsu pastila un, atšķirībā no visa pārējā, ko mēs gatavojam, ir gatavots ar cukuru; tā arī rakstīts uz iepakojuma.",
-        "Mākoņmīksts, smalki salds, ar svaigu ābola skābenumu pamatā. Šokolādē mērktā versija ir tā, kas no galda pazūd pirmā.",
-      ],
-      ingredients:
-        "Ābolu biezenis, cukurs, olu baltums, agars. Šokolādē mērktajam papildus tumšā šokolāde (kakao masa, cukurs, kakao sviests, emulgators: sojas lecitīns).",
-      allergens:
-        "Satur olas. Šokolādē mērktais satur soju; var saturēt pienu un riekstu pēdas.",
+      ingredients: "Āboli, olu baltums.",
+      allergens: "Satur olas.",
+      storage: "18 mēneši, uzglabājot no +8 līdz +25 °C.",
     },
     "tasting-box": {
       name: "Degustācijas kaste",
-      title: "Semers degustācijas kaste — batoniņi, bezē un pastila",
+      title: "Semers degustācijas kaste — batoniņi, bezē un kūciņas",
       hook: "Nogaršojiet visu vienu reizi. Pēc tam strīdieties par mīļāko.",
       summary:
-        "Mūsu iesācēja kaste: 4 ābolu batoniņi, 2 batoniņi bez miltiem, 2 maisiņi ābolu bezē un 100 g Beļovas pastilas klaips. Bezmaksas piegāde.",
+        "Mūsu iesācēja kaste: App'Lite ābolu batoniņi, App'Lite ābolu bezē un Blum Baker's kūciņas bez miltiem. Bezmaksas piegāde.",
       description: [
-        "Viss, ko mēs gatavojam, vienā kastē: četri App’Lite ābolu batoniņi (divi Klasiskie, divi ar Ogu miksu), divi batoniņi bez miltiem, divi maisiņi PastiLite bezē un 100 g Beļovas pastilas klaips.",
+        "Kaste, lai nogaršotu mūsu klāstu: App'Lite ābolu batoniņi, App'Lite ābolu bezē un Blum Baker's kūciņas bez miltiem.",
         "Piegāde ir bez maksas, dāvanai der lieliski, un tā atrisina jautājumu, ko pasūtīt vēlreiz.",
       ],
       ingredients:
@@ -281,29 +262,16 @@ export const PRODUCT_COPY: Partial<
     "apple-bar-12-pack": {
       name: "Ābolu batoniņi, 12 gab. iepakojums",
       title: "App'Lite ābolu batoniņi 35 g — kaste ar 12 gabaliem",
+      legalName: "Ābolu batoniņi bez pievienota cukura",
       hook: "Atvilktne, pilna ar labiem lēmumiem.",
       summary:
-        "Divpadsmit App’Lite ābolu batoniņi vienā kastē: Klasiskie, Ogu mikss vai puse uz pusi. Ietaupa 14 %. 99 % ceptu ābolu, bez pievienota cukura.",
+        "Divpadsmit App’Lite ābolu batoniņi vienā kastē: Klasiskie, «Ogu maisījums» vai puse uz pusi. Ietaupa 11 %. 99 % ceptu ābolu, bez pievienota cukura.",
       description: [
         "Šo kasti mēs sūtām uz birojiem, sporta zālēm un ikvienam, kas mēteļa kabatās nemitīgi atrod papīriņus. Divpadsmit 35 g ābolu batoniņi, katrs atsevišķi iepakots, plauktam ērtā kastē.",
-        "Izvēlieties vienu garšu vai ļaujiet mums salikt sešus Klasiskos un sešus ar Ogu miksu.",
+        "Izvēlieties vienu garšu vai ļaujiet mums salikt sešus Klasiskos un sešus ar ogu maisījumu.",
       ],
       ingredients:
-        "Cepti āboli (99 %), olu baltums; Ogu miksam pievienotas mellenes un dzērvenes.",
-      allergens: "Satur olas. Var saturēt riekstu pēdas.",
-    },
-    "pastila-discovery-set": {
-      name: "Pastilas atklāšanas komplekts",
-      title: "Beļovas pastilas atklāšanas komplekts — 3 × 100 g",
-      hook: "Klasiskā, Ķirsis, Brūklene. Svētā trīsvienība.",
-      summary:
-        "Trīs 100 g Beļovas ābolu pastilas klaipi — Klasiskā, Ķirsis un Brūklene — dāvanu apvalkā. Cepti Antonovka āboli un olu baltums, bez pievienota cukura.",
-      description: [
-        "Trīs klaipi, ko mēs noliktu priekšā cilvēkam, kas pastilu nekad nav garšojis: tīro Klasisko, spilgto Ķirsi un meža saldo Brūkleni.",
-        "Iepakots kraftpapīra dāvanu apvalkā. Pievienojiet piezīmi, noformējot pasūtījumu, un mēs to uzrakstīsim uz kartītes.",
-      ],
-      ingredients:
-        "Cepti āboli, olu baltums, ķirši vai brūklenes atkarībā no klaipa.",
+        "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli (99 %), upenes, dzērvenes, brūklenes, mellenes, olu baltums.",
       allergens: "Satur olas. Var saturēt riekstu pēdas.",
     },
   },
@@ -318,44 +286,32 @@ export const COLLECTION_COPY: Partial<
       name: "Яблочные батончики",
       title: "Яблочные батончики — 99% печёных яблок, без добавленного сахара",
       description:
-        "Яблочные батончики App'Lite: снек 35 г из 99% печёных яблок антоновка и яичного белка. Без добавленного сахара, без муки, без глютена. Около 97 ккал в одном батончике.",
+        "Яблочные батончики App'Lite: снек 35 г, в котором 99% печёных яблок. Без добавленного сахара, без муки, без глютена. «Классический» и «Ягодный микс».",
     },
     "flourless-bars": {
-      name: "Батончики без муки",
-      title: "Яблочные батончики без муки 50 г — плотные, фруктовые, без муки",
+      name: "Яблочные пирожные без муки",
+      title:
+        "Яблочные пирожные Blum Baker's, 50 г — без муки, без добавленного сахара",
       description:
-        "Батончики без муки 50 г из печёных яблок, яичного белка и настоящих фруктов. Без муки, без глютена, без добавленного сахара. Оригинальный, клюква, корица и черника.",
+        "Яблочные пирожные без муки Blum Baker's, 50 г: яблоки и яичный белок, без муки и без добавленного сахара. Классическое, с корицей, с черникой и с клюквой.",
     },
     meringues: {
-      name: "Яблочные меренги",
-      title: "Яблочные меренги PastiLite — хрустящие, без добавленного сахара",
+      name: "Яблочное безе",
+      title: "Яблочное безе App'Lite — хрустящее, без добавленного сахара",
       description:
-        "Хрустящие меренги PastiLite из печёных яблок, яичного белка и ягод. Три ингредиента, без добавленного сахара. Лёгкий пакетик 35 г, который тает во рту.",
+        "Хрустящее безе App'Lite: 99% печёных яблок и яичный белок, без добавленного сахара. Классическое и «Ягодный микс», баночка 35 г.",
     },
     applite: {
       name: "Десерт App'Lite",
       title: "Десерт из печёных яблок App'Lite — без добавленного сахара",
       description:
-        "Десерт из печёных яблок App'Lite: квадратик пастилы 50 г из 99% печёных яблок, без добавленного сахара. Классический, ягодный микс и корица.",
-    },
-    pastila: {
-      name: "Белёвская пастила",
-      title:
-        "Белёвская яблочная пастила 100 г и 180 г — без добавленного сахара",
-      description:
-        "Традиционная белёвская яблочная пастила без добавленного сахара: печёные яблоки антоновка и яичный белок, взбитые и высушенные слоями. Батоны 100 г и 180 г.",
-    },
-    zephyr: {
-      name: "Зефир",
-      title: "Зефир Belevini — мягкий яблочный маршмеллоу",
-      description:
-        "Зефир Belevini: мягкий яблочный маршмеллоу Восточной Европы, из пюре яблок антоновка, яичного белка, сахара и агара. Четыре вида, коробки 250 г.",
+        "Десерт из печёных яблок App'Lite без добавленного сахара: упаковки по 50 г — классический, «Ягодный микс» и с корицей — и коробка 500 г классического.",
     },
     "gift-sets": {
       name: "Подарочные наборы и боксы",
       title: "Подарочные наборы и дегустационные боксы с яблочными снеками",
       description:
-        "Готовые наборы яблочных батончиков, меренг и пастилы: дегустационные боксы, коробки по 12 штук и наборы для знакомства. Без добавленного сахара, из Риги.",
+        "Наборы яблочных батончиков, безе и пирожных без муки: дегустационный набор и коробка из 12 яблочных батончиков. Без добавленного сахара, из Риги.",
     },
   },
   lv: {
@@ -363,43 +319,32 @@ export const COLLECTION_COPY: Partial<
       name: "Ābolu batoniņi",
       title: "Ābolu batoniņi — 99% ceptu ābolu, bez pievienota cukura",
       description:
-        "App'Lite ābolu batoniņi: 35 g uzkoda no 99% ceptu Antonovka ābolu un olu baltuma. Bez pievienota cukura, bez miltiem, bez glutēna. Apmēram 97 kcal vienā batoniņā.",
+        "App'Lite ābolu batoniņi: 35 g uzkoda, kurā ir 99% ceptu ābolu. Bez pievienota cukura, bez miltiem, bez glutēna. Klasiskais un «Ogu maisījums».",
     },
     "flourless-bars": {
-      name: "Batoniņi bez miltiem",
-      title: "Ābolu batoniņi bez miltiem, 50 g — blīvi, augļaini, bez miltiem",
+      name: "Ābolu kūciņas bez miltiem",
+      title:
+        "Blum Baker's ābolu kūciņas, 50 g — bez miltiem, bez pievienota cukura",
       description:
-        "50 g batoniņi no ceptiem āboliem, olu baltuma un īstiem augļiem. Bez miltiem, bez glutēna, bez pievienota cukura. Oriģinālie, dzērveņu, kanēļa un melleņu.",
+        "Blum Baker's ābolu kūciņas bez miltiem, 50 g: āboli un olu baltums, bez miltiem un bez pievienota cukura. Klasiskā, ar kanēli, ar mellenēm un ar dzērvenēm.",
     },
     meringues: {
       name: "Ābolu bezē",
-      title: "PastiLite ābolu bezē — kraukšķīgs, bez pievienota cukura",
+      title: "App'Lite ābolu bezē — kraukšķīgs, bez pievienota cukura",
       description:
-        "PastiLite kraukšķīgs bezē no ceptiem āboliem, olu baltuma un ogām. Trīs sastāvdaļas, bez pievienota cukura. Viegls 35 g maisiņš, kas kūst mutē.",
+        "App'Lite kraukšķīgs bezē: 99% ceptu ābolu un olu baltums, bez pievienota cukura. Klasiskais un «Ogu maisījums», 35 g trauciņā.",
     },
     applite: {
       name: "App'Lite deserts",
       title: "App'Lite ceptu ābolu deserts — bez pievienota cukura",
       description:
-        "App'Lite ceptu ābolu deserts: 50 g pastilas kvadrātiņš no 99% ceptu ābolu, bez pievienota cukura. Klasiskais, Ogu maisījums un Kanēlis.",
-    },
-    pastila: {
-      name: "Beļovas pastila",
-      title: "Beļovas ābolu pastila 100 g un 180 g — bez pievienota cukura",
-      description:
-        "Tradicionālā Beļovas ābolu pastila bez pievienota cukura: cepti Antonovka āboli un olu baltums, saputoti un žāvēti kārtās. 100 g un 180 g klaipi.",
-    },
-    zephyr: {
-      name: "Zefīrs",
-      title: "Belevini zefīrs — mīkstais ābolu zefīrs",
-      description:
-        "Belevini zefīrs: Austrumeiropas mīkstais ābolu zefīrs, gatavots no Antonovka ābolu biezeņa, olu baltuma, cukura un agara. Četri veidi, 250 g kārbās.",
+        "App'Lite ceptu ābolu deserts bez pievienota cukura: 50 g iepakojumi — Klasiskais, «Ogu maisījums» un ar kanēli — un 500 g kaste Klasiskā.",
     },
     "gift-sets": {
       name: "Dāvanu komplekti un kārbas",
       title: "Ābolu uzkodu dāvanu komplekti un degustācijas kārbas",
       description:
-        "Saliktas kārbas ar ābolu batoniņiem, bezē un pastilu: degustācijas kārbas, 12 gabalu iepakojumi un iepazīšanās komplekti. Bez pievienota cukura, no Rīgas.",
+        "Kastes ar ābolu batoniņiem, bezē un kūciņām bez miltiem: degustācijas kaste un 12 ābolu batoniņu kaste. Bez pievienota cukura, no Rīgas.",
     },
   },
 };

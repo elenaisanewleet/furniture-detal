@@ -21,7 +21,7 @@ const ui = t(locale);
 
 const origin = originOf(Astro.site);
 const products = [...PRODUCTS].sort((a, b) => Number(b.bestseller || 0) - Number(a.bestseller || 0) || a.order - b.order);
-const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as const;
+const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless'] as const;
 const collections = localizedCollections(COLLECTIONS, locale);
 const countIn = (key: CollectionKey) => PRODUCTS.filter((p) => p.collection === key).length;
 /** The word after the number ("products", "товаров"…) so the giant numeral and its label can be set separately. */
@@ -32,14 +32,12 @@ const glow: Record<CollectionKey, string> = {
   'flourless-bars': 'rgb(240 176 74 / 0.55)',
   meringues: 'rgb(255 122 136 / 0.5)',
   applite: 'rgb(227 213 187 / 0.45)',
-  pastila: 'rgb(208 138 69 / 0.55)',
-  zephyr: 'rgb(255 122 136 / 0.5)',
   'gift-sets': 'rgb(240 176 74 / 0.5)',
 };
 ---
 <Base
-  title="Shop apple bars, meringues & pastila"
-  description="Every Semers product: App'Lite Apple Bars, Flourless Bars, PastiLite meringues, Belyov pastila, zephyr and gift boxes. 99% apples, no added sugar."
+  title="Shop apple bars, meringues & desserts"
+  description="Every Semers product: App'Lite Apple Bars, meringues and baked apple dessert, Blum Baker's flourless apple cakes, and gift boxes. No added sugar."
   canonical="/shop/"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }]}
   schema={[itemList(origin, products)]}
@@ -51,7 +49,7 @@ const glow: Record<CollectionKey, string> = {
     <div class="container shop-hero__in">
       <p class="eyebrow shop-hero__eyebrow">Shop</p>
       <h1 class="shop-hero__title" id="shop-title" data-words>Everything we bake.</h1>
-      <p class="lead shop-hero__lead" data-reveal>Bars for bags, meringues for tea, loaves for sharing. 99% apple and no added sugar across the range — plus the one traditional zephyr we make with sugar and agar, clearly labelled.</p>
+      <p class="lead shop-hero__lead" data-reveal>Bars for bags, meringues for tea, dessert for the table. No added sugar across the range.</p>
       <div class="shop-hero__count" aria-hidden="true">
         <b data-count={products.length}>{products.length}</b>
         <span>{countWord}</span>
@@ -60,12 +58,12 @@ const glow: Record<CollectionKey, string> = {
   </section>
 
   <!-- ============================== THE SHELF ============================== -->
-  <!-- Seven lit windows on one shelf. The strip scrolls sideways (snap on touch, drag with a mouse); each window pools its own light on the ledge. -->
+  <!-- One lit window per collection, on one shelf. The strip scrolls sideways (snap on touch, drag with a mouse); each window pools its own light on the ledge. -->
   <section class="shelf" aria-labelledby="shelf-title">
     <div class="container section-head shelf__head">
       <div>
         <p class="eyebrow">Shop by shape</p>
-        <h2 id="shelf-title" data-words>One apple, seven shapes.</h2>
+        <h2 id="shelf-title" data-words>One apple, five shapes.</h2>
       </div>
       <a class="link" href="#products">See everything</a>
     </div>
@@ -117,7 +115,6 @@ const glow: Record<CollectionKey, string> = {
               <option value="featured">Featured</option>
               <option value="price-asc">Price: low to high</option>
               <option value="price-desc">Price: high to low</option>
-              <option value="kcal">Lowest calories</option>
               <option value="name">Name A–Z</option>
             </select>
           </label>
@@ -143,7 +140,7 @@ const glow: Record<CollectionKey, string> = {
     <div class="cta-band shop-cta" data-reveal>
       <p class="eyebrow">Build your box</p>
       <h2 id="box-title">Pick six bars, save 10%.</h2>
-      <p>Mix Apple Bars, Flourless Bars and bags of apple meringues any way you like. We pack them in one box.</p>
+      <p>Mix Apple Bars, flourless apple cakes and tubs of apple meringues any way you like. We pack them in one box.</p>
       <div><a class="btn btn--paper" href="/shop/build-your-box/">Start building</a></div>
       <span class="shop-cta__six" aria-hidden="true">6</span>
     </div>

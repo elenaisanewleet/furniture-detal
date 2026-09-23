@@ -21,8 +21,7 @@ const products = productsInCollection(rawCollection.key);
 const others = localizedCollections(COLLECTIONS.filter((x) => x.key !== rawCollection.key), locale);
 const origin = originOf(Astro.site);
 const hero = im(c.image);
-const isZephyr = c.key === 'zephyr';
-const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless', 'high-fibre'] as const;
+const dietKeys = ['no-added-sugar', 'gluten-free', 'flourless'] as const;
 const countIn = (key: CollectionKey) => PRODUCTS.filter((p) => p.collection === key).length;
 /** The word after the number ("products", "товаров"…) so the outlined numeral and its label can be set separately. */
 const countWord = ui.productCount(products.length).replace(/^[\d\s ]+/, '');
@@ -34,7 +33,7 @@ const countWord = ui.productCount(products.length).replace(/^[\d\s ]+/, '');
 const few = products.length <= 2;
 const flavourCount = products.reduce((n, x) => n + x.variants.length, 0);
 const big = !few ? { n: products.length, word: countWord } : flavourCount > 1 ? { n: flavourCount, word: 'Flavours' } : { n: products[0]?.weightGrams ?? 0, word: 'grams' };
-/** Shelf life differs by format (zephyr 3 months, meringues 9), so the tick reads from the catalogue. */
+/** Shelf life differs by format (the 50 g dessert 4 months, the 500 g carton 18), so the tick reads from the catalogue. */
 const months = products.map((p) => p.shelfLifeMonths);
 const shelfLine =
   months.length === 0
@@ -48,8 +47,6 @@ const glow: Record<CollectionKey, string> = {
   'flourless-bars': 'rgb(240 176 74 / 0.55)',
   meringues: 'rgb(255 122 136 / 0.5)',
   applite: 'rgb(227 213 187 / 0.45)',
-  pastila: 'rgb(208 138 69 / 0.55)',
-  zephyr: 'rgb(255 122 136 / 0.5)',
   'gift-sets': 'rgb(240 176 74 / 0.5)',
 };
 ---
@@ -108,7 +105,6 @@ const glow: Record<CollectionKey, string> = {
               <option value="featured">Featured</option>
               <option value="price-asc">Price: low to high</option>
               <option value="price-desc">Price: high to low</option>
-              <option value="kcal">Lowest calories</option>
               <option value="name">Name A–Z</option>
             </select>
           </label>
@@ -133,8 +129,8 @@ const glow: Record<CollectionKey, string> = {
       {few && (
         <div class="know know--side" aria-labelledby="know-title">
           <p class="eyebrow">Good to know</p>
-          <h2 id="know-title" class="know__title" data-words>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
-          <p class="lead" data-reveal>{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
+          <h2 id="know-title" class="know__title" data-words>Apples and egg white first.</h2>
+          <p class="lead" data-reveal>Every product here starts from apples and egg white; some flavours add berries or cinnamon. No added sugar, no flour, no preservatives.</p>
           <ul class="ticks mt-4" data-reveal>
             <li><Icon name="check" /> {shelfLine}</li>
             <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
@@ -151,8 +147,8 @@ const glow: Record<CollectionKey, string> = {
       <div class="split know">
         <div>
           <p class="eyebrow">Good to know</p>
-          <h2 id="know-title" class="know__title" data-words>{isZephyr ? 'The one recipe with sugar in it.' : 'Same recipe as every Semers bar and loaf.'}</h2>
-          <p class="lead" data-reveal>{isZephyr ? 'Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.' : `99% baked Antonovka apples and egg white. No added sugar, no flour, no preservatives. About ${products[0]?.nutrition.energyKcal ?? 278} kcal per 100 g.`}</p>
+          <h2 id="know-title" class="know__title" data-words>Apples and egg white first.</h2>
+          <p class="lead" data-reveal>Every product here starts from apples and egg white; some flavours add berries or cinnamon. No added sugar, no flour, no preservatives.</p>
           <ul class="ticks mt-4" data-reveal>
             <li><Icon name="check" /> {shelfLine}</li>
             <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
