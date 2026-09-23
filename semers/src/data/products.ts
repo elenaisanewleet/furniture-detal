@@ -16,7 +16,7 @@ import { DEFAULT_LOCALE, LOCALE_META, type Locale } from '~/i18n/config';
 export type FlavorKey = 'classic' | 'berry' | 'cinnamon' | 'blueberry' | 'cranberry' | 'assorted';
 
 export const FLAVORS: Record<FlavorKey, { label: string; color: string; note: string }> = {
-  classic: { label: 'Classic', color: 'var(--fl-classic)', note: 'The original apple' },
+  classic: { label: 'Classic', color: 'var(--fl-classic)', note: 'Apple and egg white only' },
   berry: { label: 'Berry Mix', color: 'var(--fl-berry)', note: 'Apple with blackcurrant, cranberry, lingonberry & blueberry' },
   cinnamon: { label: 'Cinnamon', color: 'var(--fl-cinnamon)', note: 'Apple with cinnamon' },
   blueberry: { label: 'Blueberry', color: 'var(--fl-blueberry)', note: 'Apple with blueberry' },
@@ -27,16 +27,16 @@ export const FLAVORS: Record<FlavorKey, { label: string; color: string; note: st
 /*
  * "Source of fibre" used to be here. It is a regulated nutrition claim
  * (Reg. 1924/2006: at least 3 g of fibre per 100 g), and no card declares
- * fibre at all, so the claim cannot be made until one does.
+ * fibre at all, so the claim cannot be made until one does. "Vegetarian" and
+ * "No preservatives" went for the same reason: no pack or card makes them.
+ * A tag is here only when the product's own pack prints it.
  */
-export type DietTag = 'no-added-sugar' | 'gluten-free' | 'flourless' | 'vegetarian' | 'no-preservatives';
+export type DietTag = 'no-added-sugar' | 'gluten-free' | 'flourless';
 
 export const DIET_TAGS: Record<DietTag, string> = {
   'no-added-sugar': 'No added sugar',
   'gluten-free': 'Gluten free',
   flourless: 'Flourless',
-  vegetarian: 'Vegetarian',
-  'no-preservatives': 'No preservatives',
 };
 
 /**
@@ -75,8 +75,8 @@ export interface Product {
   name: string;
   /** Full name for titles, e.g. "App'Lite Apple Bar 35 g". */
   title: string;
-  /** Packaging brand. */
-  brand: string;
+  /** Packaging brand. Absent where the card names none, which the page then leaves out rather than guesses. */
+  brand?: string;
   /**
    * The name of the food (Reg. 1169/2011 art. 17): what it is, as opposed to
    * what the brand calls it, in the words of the card. Absent where no card
@@ -91,11 +91,21 @@ export interface Product {
   legalNameByFlavour?: Partial<Record<FlavorKey, string>>;
   collection: CollectionKey;
   weightGrams: number;
+  /**
+   * False where the contents are not settled yet, so there is no net quantity
+   * to state: the card and the page print neither a weight nor a price per
+   * 100 g, and weightGrams is only the parcel estimate the cart ships by.
+   */
+  netWeightKnown?: boolean;
   /** Units per retail pack (1 for single bars). */
   pack: number;
   /** Retail price EUR incl. VAT, per unit. */
   price: number;
-  /** Optional strike-through price. */
+  /**
+   * What the same contents cost bought as single units at their own price. It
+   * is printed as that sum ("12 × €1.40 = €16.80"), never as a bare struck-out
+   * price: a strike-through claims a price reduction, and needs a real earlier price.
+   */
   compareAt?: number;
   /** Short punchy line for cards. */
   hook: string;
@@ -104,8 +114,13 @@ export interface Product {
   /** Long-form description paragraphs. */
   description: string[];
   ingredients: string;
-  /** Allergen statement. */
-  allergens: string;
+  /**
+   * The allergen sentence in the card's own words. Absent where the card gives
+   * none; the allergen is still emphasised inside the ingredient list.
+   */
+  allergens?: string;
+  /** Flavours whose card words the allergen sentence differently; on the product so a translation can replace it. */
+  allergensByFlavour?: Partial<Record<FlavorKey, string>>;
   nutrition: Nutrition;
   /** Storage conditions as the card states them; null where the card gives none. */
   storage: string | null;
@@ -120,7 +135,8 @@ export interface Product {
   badge?: string;
   bestseller?: boolean;
   new?: boolean;
-  shelfLifeMonths: number;
+  /** Shelf life in months as the card states it; null where the card gives storage conditions only, or none. */
+  shelfLifeMonths: number | null;
   /** Ordering weight for listings (lower first). */
   order: number;
 }
@@ -168,18 +184,19 @@ export const COLLECTIONS: Collection[] = [
     description:
       "App'Lite crispy meringues: 99% baked apples and egg white, with no added sugar. Classic and Berry Mix, in a 35 g tub.",
     intro:
-      'Take the same whipped apple base, bake it until it crackles, and you get a meringue with no sugar to add. Light as air, surprisingly filling, dangerously easy to finish.',
+      'Take the same whipped apple base, bake it until it crackles, and you get a meringue with no sugar added. Light as air, surprisingly filling, dangerously easy to finish.',
     image: 'meringue',
     accent: 'var(--coral-100)',
   },
   {
+    // The key keeps the /shop/applite/ address; the 500 g carton names no brand, so the collection does not either.
     key: 'applite',
-    name: "App'Lite dessert",
-    title: "App'Lite Baked Apple Dessert — no added sugar",
+    name: 'Baked apple desserts',
+    title: 'Baked Apple Desserts — no added sugar',
     description:
-      "App'Lite baked apple dessert with no added sugar: 50 g packs in Classic, Berry Mix and Cinnamon, and a 500 g carton of the Classic.",
+      "Baked apple desserts with no added sugar: App'Lite 50 g packs in Classic, Berry Mix and Cinnamon, and a 500 g carton of classic apple dessert.",
     intro:
-      'Layered baked apple for a plate rather than a pocket: a 50 g pack, or a 500 g carton of individually wrapped Classic pieces. Good with tea, coffee or a spoon of yoghurt.',
+      'Layered baked apple for a plate rather than a pocket: a 50 g pack, or a 500 g carton of individually wrapped pieces. Good with tea, coffee or a spoon of yoghurt.',
     image: 'pastila-texture',
     accent: 'var(--cream-2)',
   },
@@ -267,11 +284,12 @@ export const PRODUCTS: Product[] = [
       'Berry Mix adds blackcurrants, cranberries, lingonberries and blueberries. Both are hand made, with no flour and no sugar added.',
     ],
     ingredients: BAR_INGREDIENTS,
-    allergens: 'Contains egg. May contain traces of nuts.',
+    // The bar cards carry no allergen sentence; the egg white is emphasised in the ingredient list.
     nutrition: NOT_DECLARED,
     storage: null,
     kcalPerUnit: null,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
+    // The pack front: no flour, gluten free, no sugar added.
+    diet: ['no-added-sugar', 'gluten-free', 'flourless'],
     variants: [
       { key: 'classic', gtin: '4751043820181', image: 'pack-bar-classic' },
       { key: 'berry', gtin: '4751043820174', image: 'pack-bar-berry' },
@@ -306,12 +324,13 @@ export const PRODUCTS: Product[] = [
     ],
     ingredients:
       'Classic: apples, egg white. Cranberry: apples, cranberries, egg white. Cinnamon: apples, egg white, cinnamon. Blueberry: apples, blueberries, egg white.',
-    allergens: 'Contains egg. May contain traces of nuts.',
+    allergens: 'Contains eggs and egg products.',
     nutrition: FLOURLESS_NUTRITION,
     storage: 'Store in a cool, dry place at a temperature between +8 and +21 °C.',
     // 320 kcal per 100 g on the card, and one cake weighs 50 g.
     kcalPerUnit: 160,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
+    // The pack prints no added sugar and gluten-free, and names the cake flourless.
+    diet: ['no-added-sugar', 'gluten-free', 'flourless'],
     // There is no photograph of the Blueberry pack yet, so that flavour shows the Classic one.
     variants: [
       { key: 'classic', gtin: '850039474002', image: 'pack-flourless-classic' },
@@ -321,7 +340,8 @@ export const PRODUCTS: Product[] = [
     ],
     images: ['pack-flourless-classic', 'pack-flourless-cranberry', 'pack-flourless-cinnamon'],
     accent: 'var(--honey-100)',
-    shelfLifeMonths: 12,
+    // The card gives storage conditions and no shelf life.
+    shelfLifeMonths: null,
     order: 20,
   },
   {
@@ -345,15 +365,16 @@ export const PRODUCTS: Product[] = [
       'A meringue is usually egg white and a mountain of sugar. Ours is egg white and baked apple. It bakes into the same crackly, melt-away crunch — with the sweetness coming from the apples instead of the sugar bowl. Berry Mix adds blackcurrants, cranberries, lingonberries and blueberries.',
       'Light enough to eat a whole tub, satisfying enough that you probably won’t need to. Great with coffee, crushed over yoghurt, or as the “dessert” in a lunchbox.',
     ],
-    // The Berry Mix lid reads "99% baked apples and berries inside", so there the figure covers the apples and berries together.
+    // The tub prints "99% baked apples" for both flavours, so both lists carry the figure on the apples.
     ingredients:
-      'Classic: baked apples (99%), egg white. Berry Mix: baked apples and berries (99%: apples, blackcurrants, cranberries, lingonberries, blueberries), egg white.',
-    allergens: 'Contains egg.',
+      'Classic: baked apples (99%), egg white. Berry Mix: baked apples (99%), blackcurrants, cranberries, lingonberries, blueberries, egg white.',
+    allergens: 'Contains egg white.',
     nutrition: MERINGUE_CLASSIC_NUTRITION,
     storage:
       'Store at a temperature not exceeding 25 °C and a relative humidity not exceeding 75%. Do not store together with products that have a strong or distinctive odour.',
     kcalPerUnit: null,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
+    // The tub: no flour, gluten free; the card: no added sugar.
+    diet: ['no-added-sugar', 'gluten-free', 'flourless'],
     variants: [
       { key: 'classic', gtin: '4751043820204', image: 'pack-meringue-classic' },
       { key: 'berry', gtin: '4751043820211', image: 'pack-meringue-berry', nutrition: MERINGUE_BERRY_NUTRITION },
@@ -362,8 +383,8 @@ export const PRODUCTS: Product[] = [
     accent: 'var(--coral-100)',
     badge: 'New',
     new: true,
-    // No card gives a shelf life for the meringues; this is the figure the site already carried.
-    shelfLifeMonths: 9,
+    // The card gives storage conditions and no shelf life.
+    shelfLifeMonths: null,
     order: 30,
   },
   {
@@ -390,13 +411,14 @@ export const PRODUCTS: Product[] = [
     // Classic and Cinnamon packs say "99% baked apples"; the Berry Mix pack says "99% baked apples & berries".
     ingredients:
       'Classic: baked apples (99%), egg white. Berry Mix: baked apples and berries (99%: apples, cranberries, blueberries, blackcurrants, lingonberries), egg white. Cinnamon: baked apples (99%), egg white, cinnamon.',
-    allergens: 'Contains egg. May contain traces of nuts.',
+    allergens: 'Contains eggs.',
     nutrition: DESSERT_50G_NUTRITION,
     storage:
       '9 months when stored at a temperature between +8 and +10 °C; 4 months when stored at a temperature between +10 and +25 °C. The relative humidity must not exceed 75–80%.',
     // 276 kcal per 100 g makes 138 kcal a pack, but the pack itself prints 148, so neither is quoted until one is confirmed.
     kcalPerUnit: null,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
+    // The box: no sugar added, no flour, gluten free.
+    diet: ['no-added-sugar', 'gluten-free', 'flourless'],
     variants: [
       { key: 'classic', gtin: '4751043820013', image: 'pack-dessert-classic' },
       { key: 'berry', gtin: '4751043820037', image: 'pack-dessert-berry' },
@@ -409,10 +431,10 @@ export const PRODUCTS: Product[] = [
     order: 40,
   },
   {
+    // The card names no brand for the carton, so it has none here: the name is the card's.
     slug: 'applite-baked-apple-dessert-500g',
     name: 'Classic Apple Dessert',
-    title: "App'Lite Classic Baked Apple Dessert 500 g",
-    brand: "App'Lite",
+    title: 'Classic Apple Dessert 500 g',
     legalName: 'Classic apple dessert with no added sugar',
     collection: 'applite',
     weightGrams: 500,
@@ -420,15 +442,15 @@ export const PRODUCTS: Product[] = [
     price: 12.99,
     hook: 'Half a kilo, wrapped piece by piece.',
     summary:
-      'A 500 g carton of the Classic baked apple dessert in individually wrapped pieces. Apples and egg white, no added sugar.',
-    description: ['The Classic dessert in a 500 g carton, every piece wrapped on its own. Two ingredients: apples and egg white.'],
+      'A 500 g carton of classic apple dessert in individually wrapped pieces. Apples and egg white, no added sugar.',
+    description: ['Classic apple dessert in a 500 g carton, every piece wrapped on its own. Two ingredients: apples and egg white.'],
     ingredients: 'Apples, egg white.',
-    allergens: 'Contains egg.',
+    // The card gives no allergen sentence; the egg white is emphasised in the ingredient list.
     nutrition: DESSERT_500G_NUTRITION,
     storage: '18 months when stored at +8 to +25 °C.',
     kcalPerUnit: null,
-    // The card makes no gluten-free claim for this pack, so neither does the page.
-    diet: ['no-added-sugar', 'flourless', 'vegetarian', 'no-preservatives'],
+    // The card claims only "no added sugar", in the name of the food; neither gluten free nor flourless.
+    diet: ['no-added-sugar'],
     variants: [{ key: 'classic' }],
     images: ['box-dessert-500'],
     accent: 'var(--cream-2)',
@@ -443,10 +465,11 @@ export const PRODUCTS: Product[] = [
     title: 'Semers Tasting Box — bars, meringues & cakes',
     brand: 'Semers',
     collection: 'gift-sets',
+    // A parcel estimate only: the contents are not settled until the owner decides them, so no weight is printed.
     weightGrams: 420,
+    netWeightKnown: false,
     pack: 1,
     price: 17.9,
-    compareAt: 19.0,
     hook: 'Try everything once. Then argue about a favourite.',
     summary: 'Our starter box of App’Lite Apple Bars, App’Lite apple meringues and Blum Baker’s flourless apple cakes. Free shipping.',
     description: [
@@ -454,17 +477,19 @@ export const PRODUCTS: Product[] = [
       'It ships free, it makes a good present, and it settles the question of which one to reorder.',
     ],
     ingredients: 'See individual products. All items: baked apples, egg white, fruit or spices.',
-    allergens: 'Contains egg. May contain traces of nuts.',
+    allergens: 'Contains eggs.',
     nutrition: NOT_DECLARED,
     storage: null,
     kcalPerUnit: null,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
+    // What the bars, meringues and cakes named above all print.
+    diet: ['no-added-sugar', 'gluten-free', 'flourless'],
     variants: [{ key: 'assorted' }],
     images: ['tasting-box', 'gift-box', 'hero-bars'],
     accent: 'var(--honey-100)',
     badge: 'Free shipping',
     bestseller: true,
-    shelfLifeMonths: 9,
+    // The contents, and so the shelf life, are not defined yet.
+    shelfLifeMonths: null,
     order: 5,
   },
   {
@@ -486,11 +511,11 @@ export const PRODUCTS: Product[] = [
       'Pick a single flavour or let us pack six Classic and six Berry Mix.',
     ],
     ingredients: BAR_INGREDIENTS,
-    allergens: 'Contains egg. May contain traces of nuts.',
+    // As for the single bar: no allergen sentence on the card, the egg white emphasised in the list.
     nutrition: NOT_DECLARED,
     storage: null,
     kcalPerUnit: null,
-    diet: ['no-added-sugar', 'gluten-free', 'flourless', 'vegetarian', 'no-preservatives'],
+    diet: ['no-added-sugar', 'gluten-free', 'flourless'],
     variants: [{ key: 'classic' }, { key: 'berry' }, { key: 'assorted' }],
     images: ['bar-12-pack', 'packshot-classic', 'packshot-berry'],
     accent: 'var(--mint-100)',
@@ -545,6 +570,11 @@ export function formatPrice(eur: number, locale: Locale = DEFAULT_LOCALE): strin
 export function formatThreshold(eur: number, locale: Locale = DEFAULT_LOCALE): string {
   if (!Number.isInteger(eur)) return formatPrice(eur, locale);
   return new Intl.NumberFormat(LOCALE_META[locale].intl, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(eur);
+}
+
+/** Whether the product has a net quantity to print; a box whose contents are not settled has none, and so no price per 100 g either. */
+export function hasNetWeight(p: Product): boolean {
+  return p.netWeightKnown !== false;
 }
 
 /** The price of 100 g, e.g. "€4.14". The "per 100 g" label comes from the dictionary. */

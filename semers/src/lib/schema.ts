@@ -5,7 +5,7 @@
  */
 import { site } from '~/data/site';
 import { LOCALES } from '~/i18n/config';
-import { FLAVORS, type Product } from '~/data/products';
+import { FLAVORS, hasNetWeight, type Product } from '~/data/products';
 import { imgSrc } from '~/data/images';
 
 export function organization(origin: string) {
@@ -94,14 +94,15 @@ export function productSchema(origin: string, p: Product, flavourLabels?: Record
   const url = `${origin}/products/${p.slug}/`;
   const images = p.images.map((k) => absImg(origin, k));
   const shipRate = FREE_SHIP_SLUGS.has(p.slug) ? 0 : site.shipping.flatRate;
+  // Brand and weight are statements about the food: left out where the card names no brand, or the contents are not settled.
   const base = {
     name: p.title,
     description: p.summary,
-    brand: { '@type': 'Brand', name: p.brand },
+    ...(p.brand ? { brand: { '@type': 'Brand', name: p.brand } } : {}),
     image: images,
     url,
     category: 'Food & Beverages > Snacks',
-    weight: { '@type': 'QuantitativeValue', value: p.weightGrams, unitCode: 'GRM' },
+    ...(hasNetWeight(p) ? { weight: { '@type': 'QuantitativeValue', value: p.weightGrams, unitCode: 'GRM' } } : {}),
   };
   const offer = (price: number, gtin?: string, sku?: string) => ({
     '@type': 'Offer',

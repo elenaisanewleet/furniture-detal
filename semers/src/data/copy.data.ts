@@ -6,11 +6,14 @@
  * English before it was committed. Brand names (Semers, App'Lite, Blum Baker's,
  * Maxima, Barbora) stay in Latin script on purpose.
  *
- * The names of the foods, the ingredient lists and the storage conditions use
- * the Russian and Latvian wording of the owner's product cards, with one
- * correction applied throughout: the sugar claim is always the regulated
- * "без добавленного сахара" / "bez pievienota cukura" that the packs print,
- * never the shorter form some cards used, which claims no sugar at all.
+ * The names of the foods, the ingredient lists, the allergen sentences and the
+ * storage conditions use the Russian and Latvian wording of the owner's product
+ * cards, with one correction applied throughout: the sugar claim is always the
+ * regulated "без добавленного сахара" / "bez pievienota cukura" that the packs
+ * print, never the shorter form some cards used, which claims no sugar at all.
+ * An allergen sentence follows its own card even where that differs from the
+ * English one (the Berry Mix meringue card says "eggs" in Russian and Latvian,
+ * "egg white" in English), and a product whose card gives none has none.
  *
  * Only words live here. Price, weight, EAN and nutrition stay in products.ts,
  * and the override type admits no other field, so a translation cannot change a
@@ -41,7 +44,6 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "«Классический»: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки (99%), чёрная смородина, клюква, брусника, черника, яичный белок.",
-      allergens: "Содержит яйцо. Может содержать следы орехов.",
     },
     "flourless-apple-bar-50g": {
       name: "Яблочное пирожное без муки",
@@ -60,7 +62,7 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Классическое: яблоки, яичный белок. С клюквой: яблоки, клюква, яичный белок. С корицей: яблоки, яичный белок, корица. С черникой: яблоки, черника, яичный белок.",
-      allergens: "Содержит яйцо. Может содержать следы орехов.",
+      allergens: "Содержит яйца.",
       storage: "Хранить в сухом прохладном месте при температуре от +8 до +21 °C.",
     },
     "apple-meringue-35g": {
@@ -79,8 +81,9 @@ export const PRODUCT_COPY: Partial<
         "Достаточно лёгкое, чтобы съесть целую баночку, и достаточно сытное, чтобы вам этого, скорее всего, не понадобилось. Хорошо с кофе; можно покрошить в йогурт или положить в ланчбокс вместо десерта.",
       ],
       ingredients:
-        "Классическое: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки и ягоды (99%: яблоки, чёрная смородина, клюква, брусника, черника), яичный белок.",
-      allergens: "Содержит яйцо.",
+        "Классическое: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки (99%), чёрная смородина, клюква, брусника, черника, яичный белок.",
+      allergens: "Содержит яичный белок.",
+      allergensByFlavour: { berry: "Содержит яйца." },
       storage:
         "Хранить при температуре не выше 25 °C и относительной влажности не более 75%. Не хранить рядом с продуктами с сильным запахом.",
     },
@@ -101,22 +104,21 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Классический: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки и ягоды (99%: яблоки, клюква, черника, чёрная смородина, брусника), яичный белок. С корицей: печёные яблоки (99%), яичный белок, корица.",
-      allergens: "Содержит яйцо. Может содержать следы орехов.",
+      allergens: "Содержит яйца.",
       storage:
         "9 месяцев при температуре от +8 до +10 °C; 4 месяца при температуре от +10 до +25 °C. Относительная влажность воздуха не должна превышать 75–80%.",
     },
     "applite-baked-apple-dessert-500g": {
       name: "Классический яблочный десерт",
-      title: "Классический десерт из печёных яблок App'Lite, 500 г",
+      title: "Классический яблочный десерт 500 г",
       legalName: "Классический яблочный десерт без добавленного сахара",
       hook: "Полкило, каждый кусочек в своей упаковке.",
       summary:
-        "Коробка 500 г классического десерта из печёных яблок, каждый кусочек упакован отдельно. Яблоки и яичный белок, без добавленного сахара.",
+        "Коробка 500 г классического яблочного десерта, каждый кусочек упакован отдельно. Яблоки и яичный белок, без добавленного сахара.",
       description: [
-        "Классический десерт в коробке 500 г, каждый кусочек в собственной упаковке. Два ингредиента: яблоки и яичный белок.",
+        "Классический яблочный десерт в коробке 500 г, каждый кусочек в собственной упаковке. Два ингредиента: яблоки и яичный белок.",
       ],
       ingredients: "Яблоки, яичный белок.",
-      allergens: "Содержит яйцо.",
       storage: "18 месяцев при хранении от +8 до +25 °C.",
     },
     "tasting-box": {
@@ -131,7 +133,7 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "См. отдельные товары. Все позиции: печёные яблоки, яичный белок, фрукты или специи.",
-      allergens: "Содержит яйцо. Может содержать следы орехов.",
+      allergens: "Содержит яйца.",
     },
     "apple-bar-12-pack": {
       name: "Яблочный батончик, набор 12 шт.",
@@ -142,11 +144,10 @@ export const PRODUCT_COPY: Partial<
         "Двенадцать яблочных батончиков App'Lite в одной коробке: «Классический», «Ягодный микс» или пополам. Экономия 11%. 99% печёных яблок, без добавленного сахара.",
       description: [
         "Эту коробку мы отправляем в офисы, спортзалы и всем, кто постоянно находит обёртки в карманах пальто. Двенадцать яблочных батончиков по 35 г, каждый в отдельной упаковке, в коробке, которая нормально встаёт на полку.",
-        "Выберите один вкус или доверьте нам сложить шесть «Классических» и шесть «Ягодный микс».",
+        "Выберите один вкус или доверьте нам сложить шесть «Классических» и шесть батончиков «Ягодный микс».",
       ],
       ingredients:
         "«Классический»: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки (99%), чёрная смородина, клюква, брусника, черника, яичный белок.",
-      allergens: "Содержит яйцо. Может содержать следы орехов.",
     },
   },
   lv: {
@@ -167,7 +168,6 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli (99 %), upenes, dzērvenes, brūklenes, mellenes, olu baltums.",
-      allergens: "Satur olas. Var saturēt riekstu pēdas.",
     },
     "flourless-apple-bar-50g": {
       name: "Ābolu kūciņa bez miltiem",
@@ -186,7 +186,7 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Klasiskā: āboli, olu baltums. Ar dzērvenēm: āboli, dzērvenes, olu baltums. Ar kanēli: āboli, olu baltums, kanēlis. Ar mellenēm: āboli, mellenes, olu baltums.",
-      allergens: "Satur olas. Var saturēt riekstu pēdas.",
+      allergens: "Satur olas.",
       storage: "Uzglabāt sausā, vēsā vietā no +8 līdz +21 °C.",
     },
     "apple-meringue-35g": {
@@ -205,8 +205,9 @@ export const PRODUCT_COPY: Partial<
         'Tik viegls, ka var apēst visu trauciņu, un tik sātīgs, ka droši vien nevajadzēs. Lieliski der kafijai, sadrupināts pār jogurtu vai kā „deserts" pusdienu kārbiņā.',
       ],
       ingredients:
-        "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli un ogas (99 %: āboli, upenes, dzērvenes, brūklenes, mellenes), olu baltums.",
-      allergens: "Satur olas.",
+        "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli (99 %), upenes, dzērvenes, brūklenes, mellenes, olu baltums.",
+      allergens: "Satur olu baltumu.",
+      allergensByFlavour: { berry: "Satur olas." },
       storage:
         "Uzglabāt temperatūrā līdz 25 °C un relatīvajā gaisa mitrumā līdz 75%. Neglabāt blakus produktiem ar spēcīgu smaržu.",
     },
@@ -227,22 +228,21 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli un ogas (99 %: āboli, dzērvenes, mellenes, upenes, brūklenes), olu baltums. Ar kanēli: cepti āboli (99 %), olu baltums, kanēlis.",
-      allergens: "Satur olas. Var saturēt riekstu pēdas.",
+      allergens: "Satur olas.",
       storage:
         "9 mēneši, uzglabājot no +8 līdz +10 °C; 4 mēneši, uzglabājot no +10 līdz +25 °C. Relatīvais gaisa mitrums nedrīkst pārsniegt 75–80%.",
     },
     "applite-baked-apple-dessert-500g": {
-      name: "Klasiskais ābolu deserts",
-      title: "App'Lite klasiskais cepta ābola deserts, 500 g",
+      name: "Klasisks ābolu deserts",
+      title: "Klasisks ābolu deserts 500 g",
       legalName: "Klasisks ābolu deserts bez pievienota cukura",
       hook: "Puskilograms, katrs gabaliņš iepakots atsevišķi.",
       summary:
-        "500 g kaste klasiskā cepta ābola deserta, katrs gabaliņš iepakots atsevišķi. Āboli un olu baltums, bez pievienota cukura.",
+        "500 g kaste ar klasisku ābolu desertu, katrs gabaliņš iepakots atsevišķi. Āboli un olu baltums, bez pievienota cukura.",
       description: [
-        "Klasiskais deserts 500 g kastē, katrs gabaliņš savā iepakojumā. Divas sastāvdaļas: āboli un olu baltums.",
+        "Klasisks ābolu deserts 500 g kastē, katrs gabaliņš savā iepakojumā. Divas sastāvdaļas: āboli un olu baltums.",
       ],
       ingredients: "Āboli, olu baltums.",
-      allergens: "Satur olas.",
       storage: "18 mēneši, uzglabājot no +8 līdz +25 °C.",
     },
     "tasting-box": {
@@ -257,7 +257,7 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Skatiet atsevišķos produktus. Visos produktos: cepti āboli, olu baltums, augļi vai garšvielas.",
-      allergens: "Satur olas. Var saturēt riekstu pēdas.",
+      allergens: "Satur olas.",
     },
     "apple-bar-12-pack": {
       name: "Ābolu batoniņi, 12 gab. iepakojums",
@@ -272,7 +272,6 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli (99 %), upenes, dzērvenes, brūklenes, mellenes, olu baltums.",
-      allergens: "Satur olas. Var saturēt riekstu pēdas.",
     },
   },
 };
@@ -302,10 +301,10 @@ export const COLLECTION_COPY: Partial<
         "Хрустящее безе App'Lite: 99% печёных яблок и яичный белок, без добавленного сахара. Классическое и «Ягодный микс», баночка 35 г.",
     },
     applite: {
-      name: "Десерт App'Lite",
-      title: "Десерт из печёных яблок App'Lite — без добавленного сахара",
+      name: "Десерты из печёных яблок",
+      title: "Десерты из печёных яблок — без добавленного сахара",
       description:
-        "Десерт из печёных яблок App'Lite без добавленного сахара: упаковки по 50 г — классический, «Ягодный микс» и с корицей — и коробка 500 г классического.",
+        "Десерты из печёных яблок без добавленного сахара: упаковки App'Lite по 50 г — классический, «Ягодный микс» и с корицей — и коробка 500 г классического яблочного десерта.",
     },
     "gift-sets": {
       name: "Подарочные наборы и боксы",
@@ -335,10 +334,10 @@ export const COLLECTION_COPY: Partial<
         "App'Lite kraukšķīgs bezē: 99% ceptu ābolu un olu baltums, bez pievienota cukura. Klasiskais un «Ogu maisījums», 35 g trauciņā.",
     },
     applite: {
-      name: "App'Lite deserts",
-      title: "App'Lite ceptu ābolu deserts — bez pievienota cukura",
+      name: "Cepto ābolu deserti",
+      title: "Cepto ābolu deserti — bez pievienota cukura",
       description:
-        "App'Lite ceptu ābolu deserts bez pievienota cukura: 50 g iepakojumi — Klasiskais, «Ogu maisījums» un ar kanēli — un 500 g kaste Klasiskā.",
+        "Cepto ābolu deserti bez pievienota cukura: App'Lite 50 g iepakojumi — Klasiskais, «Ogu maisījums» un ar kanēli — un 500 g kaste ar klasisku ābolu desertu.",
     },
     "gift-sets": {
       name: "Dāvanu komplekti un kārbas",

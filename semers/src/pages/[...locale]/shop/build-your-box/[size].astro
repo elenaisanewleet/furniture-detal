@@ -23,7 +23,7 @@ const bigger = BOX_SIZES.filter((b) => b.size > box.size).sort((a, b) => a.size 
 ---
 <Base
   title={`Build a box of ${box.size} — save ${pct}%`}
-  description={`Mix and match Apple Bars, Flourless Bars and apple meringues in a box of ${box.size}. Any combination, ${pct}% off, one delivery from Riga.`}
+  description={`Mix and match Apple Bars, flourless apple cakes and apple meringues in a box of ${box.size}. Any combination, ${pct}% off, one delivery from Riga.`}
   canonical={boxHref(box.size)}
   ogImage="gift-box"
   breadcrumb={[
@@ -39,7 +39,7 @@ const bigger = BOX_SIZES.filter((b) => b.size > box.size).sort((a, b) => a.size 
       <p class="eyebrow">Build your box</p>
       <h1 id="page-title" class="bb-hero__title" data-words>{box.size} bars. Your rules. {pct}% off.</h1>
       <p class="lead bb-hero__lead">
-        Tap to add any bar or meringue pack to a slot. Fill all {box.size} and the box goes to your cart as one item — from {formatPrice(total, locale)},
+        Tap to add any bar, cake or meringue pack to a slot. Fill all {box.size} and the box goes to your cart as one item — from {formatPrice(total, locale)},
         about {formatPrice(total / box.size, locale)} a piece.
         {bigger && <Fragment> The {bigger.size}-piece box takes {Math.round(bigger.discount * 100)}% off instead.</Fragment>}
       </p>

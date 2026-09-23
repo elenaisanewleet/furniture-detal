@@ -93,13 +93,6 @@ export const IMAGES: Record<string, SiteImage> = {
     width: 1611,
     height: 2000,
   },
-  'pastila-180': {
-    // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_42e9288b-7e44-40a9-aa83-e3f8a1b7485a.png
-    remote: UPLOADS + '5301836e-154e-4419-8486-403fe67e9978.webp',
-    alt: 'Sliced loaf of apple pastila on a walnut board with cinnamon and apple',
-    width: 1611,
-    height: 2000,
-  },
   'lifestyle-desk': {
     // WebP (≤2000 px) re-encoded from the original hf_20260901_225022_40687b45-0b6c-41cd-a9b1-c8852a593827.png
     remote: UPLOADS + '9f0eb4ff-63e1-4c9f-9d68-aa674de54aed.webp',
@@ -209,20 +202,6 @@ export const IMAGES: Record<string, SiteImage> = {
     remote: UPLOADS + 'af92cfb6-711c-4319-8c19-46130fe4a53b.webp',
     alt: 'Open tasting box with two Apple Bars, a pouch of apple meringues and slices of golden pastila',
     width: 2000,
-    height: 2000,
-  },
-  'pastila-100-pack': {
-    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_9dc5e7a5-3d4c-4066-b468-a972d5c8b872.png
-    remote: UPLOADS + '0431747f-8201-4680-9942-1704260a14a5.webp',
-    alt: 'A kraft-paper 100 g pack of apple pastila beside two layered slices and half a green apple',
-    width: 1611,
-    height: 2000,
-  },
-  'meringue-pouch': {
-    // WebP (≤2000 px) re-encoded from the original hf_20260901_234638_3a1f69aa-c141-4eae-9c65-1e73da9365f4.png
-    remote: UPLOADS + '14a85c0e-692b-45f4-8e53-c30aa9fe202c.webp',
-    alt: 'Mint-green pouch of crispy apple meringues spilling onto a ceramic plate with dried apple slices',
-    width: 1611,
     height: 2000,
   },
   /* ---------- The owner's pack photographs (local only) ---------- */

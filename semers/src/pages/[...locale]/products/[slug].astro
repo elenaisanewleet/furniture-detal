@@ -2,7 +2,7 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import ProductCard from '~/components/ProductCard.astro';
-import { PRODUCTS, FLAVORS, collectionByKey, formatPrice, unitPrice, productsInCollection, type Product, type FlavorKey, type Nutrition, type Variant, formatThreshold } from '~/data/products';
+import { PRODUCTS, FLAVORS, collectionByKey, formatPrice, unitPrice, hasNetWeight, productsInCollection, type Product, type FlavorKey, type Nutrition, type Variant, formatThreshold } from '~/data/products';
 import { img, imgSrc, im, imgSmall, imgSrcset, SIZES } from '~/data/images';
 import { productSchema, faqPage } from '~/lib/schema';
 import { originOf } from '~/lib/origin';
@@ -50,8 +50,10 @@ const baseRecipe = p.ingredients.split(/[.;]/)[0].replace(/\([^)]*\)/g, '');
 const ingredientCount = /egg white/i.test(baseRecipe) ? baseRecipe.split(',').length : 0;
 const ingredientLine =
   ingredientCount === 2 ? `2 ingredients${multi && p.variants.some((v) => v.key === 'classic') ? ' in the Classic' : ''}` : 'Short ingredient list';
-/** "App'Lite · App'Lite dessert" is fine; a brand repeated as the collection's own name would read like a stutter. */
-const showBrand = p.brand.toLowerCase() !== col.name.toLowerCase();
+/** A product whose card names no brand shows none; a brand repeated as the collection's own name would read like a stutter. */
+const showBrand = !!p.brand && p.brand.toLowerCase() !== col.name.toLowerCase();
+/** A box whose contents are not settled has no net quantity: no weight and no price per 100 g is printed for it. */
+const showWeight = hasNetWeight(p);
 const isBundle = p.collection === 'gift-sets';
 /** Every product is sold on the no-added-sugar claim today; the claims below still follow the tag rather than assume it. */
 const noAddedSugar = p.diet.includes('no-added-sugar');
@@ -76,10 +78,12 @@ const nutriCols = flavoursDiffer ? p.variants.map((v) => ({ head: ui.flavours[v.
 const sharedKcal = flavoursDiffer ? null : p.nutrition.energyKcal;
 
 /*
- * The three big numbers. They are counted from the English catalogue entry so
- * that every language shows the same figures: a pack whose kcal no card backs
- * quotes kcal per 100 g where that is declared, and a number that is not
- * declared at all is left out rather than shown as 0.
+ * The big numbers, up to three. They are counted from the English catalogue
+ * entry so that every language shows the same figures: a pack whose kcal no
+ * card backs quotes kcal per 100 g where that is declared, and a number that is
+ * not declared at all (an energy value, a shelf life, the weight of a box whose
+ * contents are not settled) is left out rather than shown as 0. With nothing
+ * left to show, the section is not rendered.
  */
 const isBar = p.collection === 'apple-bars';
 const per100 = !hasKcal || (p.pack === 1 && p.weightGrams >= 150);
@@ -87,9 +91,16 @@ const bigKcal = per100 ? sharedKcal : kcalPerUnit;
 const bigKcalLabel = per100 ? 'kcal per 100 g' : p.pack > 1 ? 'kcal a piece' : isBar ? 'kcal a bar' : 'kcal a pack';
 const rawRecipe = rawProduct.ingredients.split(/[.;]/)[0].replace(/\([^)]*\)/g, '');
 const rawCount = /egg white/i.test(rawRecipe) ? rawRecipe.split(',').length : 0;
-const bigMid = rawCount > 0 ? { n: rawCount, label: 'ingredients' } : { n: p.shelfLifeMonths, label: 'months on the shelf' };
-/** With no energy figure the shelf life takes the first cell, unless the middle one already shows it. */
-const bigFirst = bigKcal != null ? { n: bigKcal, label: bigKcalLabel } : rawCount > 0 ? { n: p.shelfLifeMonths, label: 'months on the shelf' } : null;
+type BigCell = { n: number; label: string; em?: boolean };
+const shelfCell: BigCell | null = p.shelfLifeMonths != null ? { n: p.shelfLifeMonths, label: 'months on the shelf' } : null;
+const recipeCell: BigCell | null = rawCount > 0 ? { n: rawCount, label: 'ingredients' } : null;
+/** The emphasised cell is the ingredient count, or the shelf life where there is no count. */
+const bigMid = recipeCell ?? shelfCell;
+/** With no energy figure the shelf life takes the first cell, unless the emphasised one already shows it. */
+const bigFirst = bigKcal != null ? { n: bigKcal, label: bigKcalLabel } : recipeCell ? shelfCell : null;
+const bigCells = [bigFirst, bigMid && { ...bigMid, em: true }, showWeight ? { n: p.weightGrams, label: 'grams' } : null].filter(
+  (c): c is BigCell => c != null,
+);
 /** The swatch may be a gradient (Assorted); the glow needs one colour. */
 const swatch = (k: FlavorKey) => FLAVORS[k].color;
 const glow = (k: FlavorKey) => (k === 'assorted' ? 'var(--honey-500)' : FLAVORS[k].color);
@@ -111,14 +122,27 @@ const operatorLine = site.operator.name && site.operator.address ? `${site.opera
  */
 const ALLERGEN = /(egg whites?|eggs?(?![a-z])|яичн[а-яё]*\s+бел[а-яё]*|яйц[а-яё]*|olu baltum[a-zāēīūšžčņļķģ]*|olas(?![a-zāēīūšžčņļķģ]))/iu;
 const ingredientParts = p.ingredients.split(ALLERGEN);
+/*
+ * The allergen sentence, in the card's words. A card may word it differently
+ * per flavour (the Russian and Latvian meringue cards do), and then every
+ * flavour's sentence is listed, as with the name of the food. A product whose
+ * card gives no sentence gets none: the list above already emphasises the egg.
+ */
+const allergenLines = p.allergens ? p.variants.map((v) => ({ key: v.key, text: p.allergensByFlavour?.[v.key] ?? p.allergens! })) : [];
+const oneAllergenLine = new Set(allergenLines.map((l) => l.text)).size === 1;
 
-/* A shelf life inside the storage text ("9 months when stored at…") answers the question on its own. */
-const storageEn = rawProduct.storage;
-const keepAnswer = storageEn
-  ? /month/i.test(storageEn)
-    ? storageEn
-    : `Its shelf life is ${p.shelfLifeMonths} months. ${storageEn}`
-  : `Its shelf life is ${p.shelfLifeMonths} months.`;
+/*
+ * How long it keeps: the card's shelf life, else its storage conditions, else
+ * nothing at all. Built from the localised copy, so the answer, and the FAQ
+ * JSON-LD made from it, is in the language of the page. A storage text that
+ * already names its months ("9 months when stored at…") answers on its own;
+ * whether it does is read off the English, which is the same card in every language.
+ */
+const storageNamesMonths = !!rawProduct.storage && /month/i.test(rawProduct.storage);
+const shelfSentence = p.shelfLifeMonths != null && !storageNamesMonths ? ui.shelfLifeIs(p.shelfLifeMonths) : '';
+const keepAnswer = [shelfSentence, p.storage ?? ''].filter(Boolean).join(' ');
+/** The trust line beside the button: the months where the card gives them, else the storage conditions. */
+const keepLine = p.shelfLifeMonths != null ? ui.keepsMonths(p.shelfLifeMonths) : p.storage;
 const per100Line = sharedKcal != null ? ` Per 100 g: ${sharedKcal} kcal.` : '';
 
 const faqs = [
@@ -130,7 +154,7 @@ const faqs = [
       ]
     : []),
   ...(noAddedSugar ? [{ q: 'Does it contain added sugar?', a: 'No. No sugar is added; the sugars it contains occur naturally in the fruit.' }] : []),
-  { q: 'How long does it keep?', a: keepAnswer },
+  ...(keepAnswer ? [{ q: ui.keepQuestion, a: keepAnswer }] : []),
   { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatThreshold(site.shipping.freeFrom, locale)} ship free.` },
 ];
 
@@ -163,7 +187,7 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
     <meta property="product:price:amount" content={(first.price ?? p.price).toFixed(2)} />
     <meta property="product:price:currency" content={site.currency} />
     <meta property="product:availability" content="in stock" />
-    <meta property="product:brand" content={p.brand} />
+    {p.brand && <meta property="product:brand" content={p.brand} />}
   </Fragment>
   <article class="pdp" data-pdp data-slug={p.slug}>
     <!-- ============================== THE STAGE ==============================
@@ -193,13 +217,14 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
       <div class="stage__buy">
         <div class="buy">
           <p class="eyebrow">{showBrand && <Fragment><span translate="no">{p.brand}</span> · </Fragment>}<a href={`/shop/${col.key}/`}>{col.name}</a></p>
-          <h1 class={`pdp__title ${longName ? 'pdp__title--long' : ''}`}>{p.name} <span class="pdp__w">{p.weightGrams} g{p.pack > 1 ? ` · ${p.pack} pcs` : ''}</span></h1>
+          <h1 class={`pdp__title ${longName ? 'pdp__title--long' : ''}`}>{p.name} {showWeight && <span class="pdp__w">{p.weightGrams} g{p.pack > 1 ? ` · ${p.pack} pcs` : ''}</span>}</h1>
           <p class="pdp__hook">{p.hook}</p>
 
           <div class="pdp__price">
             <span class="pdp__amount num" data-price>{formatPrice(first.price ?? p.price, locale)}</span>
-            {p.compareAt && <s class="pdp__was num">{formatPrice(p.compareAt, locale)}</s>}
-            <span class="pdp__unit">{p.pack > 1 ? `${ui.perPiece(formatPrice((first.price ?? p.price) / p.pack, locale))} · ` : ''}{unitPrice(p, locale)} {ui.per100g} · {ui.inclVat}</span>
+            {/* The same contents bought one by one, written out as the sum it is rather than struck out as an earlier price. */}
+            {p.compareAt && <span class="pdp__was num">{ui.boughtSingly(p.pack, formatPrice(p.compareAt / p.pack, locale), formatPrice(p.compareAt, locale))}</span>}
+            <span class="pdp__unit">{p.pack > 1 ? `${ui.perPiece(formatPrice((first.price ?? p.price) / p.pack, locale))} · ` : ''}{showWeight ? `${unitPrice(p, locale)} ${ui.per100g} · ` : ''}{ui.inclVat}</span>
           </div>
 
           <ul class="pdp__facts" aria-label={ui.keyFacts}>
@@ -269,8 +294,8 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
 
           <ul class="pdp__trust">
             <li><Icon name="truck" size={18} /> Free shipping over {formatThreshold(site.shipping.freeFrom, locale)} · ships from Riga in 1–2 business days</li>
-            <li><Icon name="leaf" size={18} /> {`${ingredientLine}, nothing artificial`}</li>
-            <li><Icon name="clock" size={18} /> Keeps {p.shelfLifeMonths} months — no fridge needed</li>
+            <li><Icon name="leaf" size={18} /> {ingredientLine}</li>
+            {keepLine && <li><Icon name="clock" size={18} /> {keepLine}</li>}
             <li data-batch hidden><Icon name="apple" size={18} /> <span data-batch-text></span></li>
           </ul>
         </div>
@@ -297,7 +322,7 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
             )}
           </div>
 
-          {/* Only what the ingredient lists prove: no sugar, flour or fat in them. Gluten is named only where the pack claims it. */}
+          {/* The ticks are the claims this product's own pack prints (its diet tags), and nothing inferred beyond them. */}
           {noAddedSugar && (
             <div class="why" data-reveal>
               <div>
@@ -305,8 +330,7 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
                 <h2 class="why__title">Sweet because apples are sweet.</h2>
                 <p class="lead">No sugar is added. The sweetness comes from the apples, and the sugars in it are the ones the fruit brings with it.</p>
                 <ul class="ticks">
-                  <li><Icon name="check" /> No added sugar, sweeteners or syrups</li>
-                  <li><Icon name="check" /> {p.diet.includes('gluten-free') ? 'No flour, no gluten, no fat added' : 'No flour, no fat added'}</li>
+                  {p.diet.map((d) => <li><Icon name="check" /> {ui.diet[d]}</li>)}
                 </ul>
                 <a class="link" href="/how-its-made/">See how it’s made</a>
               </div>
@@ -321,30 +345,31 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
 
     <!-- ============================== THREE NUMBERS ==============================
          The label, set as display type. The numbers count up as they come into view. -->
-    <section class="big3" aria-labelledby="big3-title">
-      <div class="container">
-        <div class="big3__head">
-          <p class="eyebrow">By the numbers</p>
-          <h2 id="big3-title" class="big3__title" data-words>The whole label, in three numbers.</h2>
-        </div>
-        <div class="big3__row" data-stagger style={`--cells:${bigFirst ? 3 : 2}`}>
-          {bigFirst && (
-            <div class="big3__cell">
-              <b class="big3__n" data-count={bigFirst.n}>{bigFirst.n}</b>
-              <span class="big3__l">{bigFirst.label}</span>
-            </div>
-          )}
-          <div class="big3__cell big3__cell--em">
-            <em class="big3__n" data-count={bigMid.n}>{bigMid.n}</em>
-            <span class="big3__l">{bigMid.label}</span>
+    {bigCells.length > 0 && (
+      <section class="big3" aria-labelledby="big3-title">
+        <div class="container">
+          <div class="big3__head">
+            <p class="eyebrow">By the numbers</p>
+            <h2 id="big3-title" class="big3__title" data-words>The whole label, in three numbers.</h2>
           </div>
-          <div class="big3__cell">
-            <b class="big3__n" data-count={p.weightGrams}>{p.weightGrams}</b>
-            <span class="big3__l">grams</span>
+          <div class="big3__row" data-stagger style={`--cells:${bigCells.length}`}>
+            {bigCells.map((c) =>
+              c.em ? (
+                <div class="big3__cell big3__cell--em">
+                  <em class="big3__n" data-count={c.n}>{c.n}</em>
+                  <span class="big3__l">{c.label}</span>
+                </div>
+              ) : (
+                <div class="big3__cell">
+                  <b class="big3__n" data-count={c.n}>{c.n}</b>
+                  <span class="big3__l">{c.label}</span>
+                </div>
+              ),
+            )}
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    )}
 
     <!-- ============================== WHAT'S INSIDE ============================== -->
     <section class="pdp-inside section" aria-labelledby="inside-title">
@@ -353,7 +378,12 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
           <p class="eyebrow">What’s inside</p>
           <h2 id="inside-title" data-words>Read the label. <em>All of it.</em></h2>
           <p class="pdp-inside__ing"><strong>{ui.ingredients}</strong> {ingredientParts.map((part, i) => (i % 2 ? <strong class="pdp-inside__em">{part}</strong> : part))}</p>
-          <p class="pdp-inside__all"><strong>{ui.allergens}</strong> {p.allergens}</p>
+          {allergenLines.length > 0 && (
+            <p class="pdp-inside__all">
+              <strong>{ui.allergens}</strong>
+              {oneAllergenLine ? allergenLines[0].text : allergenLines.map((l) => <span class="pdp-inside__flv"><span class="muted">{ui.flavours[l.key]}:</span> {l.text}</span>)}
+            </p>
+          )}
           {/* The particulars a distance sale must show before the purchase (Reg. 1169/2011 art. 14); the data- markers are what scripts/check-food.mjs looks for. */}
           <div class="pdp-inside__info">
             <h3 class="pdp-inside__info-title">{ui.foodInformation}</h3>
@@ -550,7 +580,8 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
 
   .pdp__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 0.9rem; margin: 1.35rem 0 1.1rem; padding-top: 1.2rem; border-top: 1px solid var(--line); }
   .pdp__amount { font-family: var(--font-display); font-size: var(--fs-3xl); font-weight: 500; letter-spacing: -0.04em; line-height: 1; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 50; }
-  .pdp__was { font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 400; color: var(--fg-3); text-decoration-color: var(--accent); }
+  /* A sum in words beside the price, set small: it is a comparison, not a second price. */
+  .pdp__was { font-size: var(--fs-sm); color: var(--fg-3); }
   .pdp__unit { flex-basis: 100%; font-size: var(--fs-sm); color: var(--fg-3); }
 
   .pdp__facts { list-style: none; margin: 0 0 1.2rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; font-size: var(--fs-sm); font-weight: 600; color: var(--fg-2); }
@@ -623,7 +654,7 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
   .big3__cell--em .big3__n { font-style: normal; color: var(--honey-500); text-shadow: 0 0 60px rgb(240 176 74 / 0.5); }
   .big3__l { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-2); }
   @media (min-width: 40rem) {
-    /* --cells is 2 when a product has no energy figure to show: the row closes up rather than leaving a hole. */
+    /* --cells is fewer than 3 when a product has a figure it cannot back: the row closes up rather than leaving a hole. */
     .big3__row { grid-template-columns: repeat(var(--cells, 3), 1fr); border-top: 0; }
     .big3__cell { grid-template-columns: 1fr; align-content: start; gap: 1rem; padding: 0.5rem 1.5rem 0.5rem 0; border-bottom: 0; border-left: 1px solid var(--line); padding-left: 1.5rem; }
     .big3__cell:first-child { border-left: 0; padding-left: 0; }
@@ -639,6 +670,8 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));
   /* The allergen inside the list: the label style above would make it a block caption, so it is reset to run in the line, set apart by weight and colour. */
   .pdp-inside__ing .pdp-inside__em { display: inline; margin: 0; font: inherit; font-weight: 700; letter-spacing: inherit; text-transform: none; color: var(--honey-500); }
   .pdp-inside__all { margin: 1.75rem 0 0; color: var(--fg-2); max-width: 44ch; }
+  /* One line per flavour where the card words the allergen differently for each. */
+  .pdp-inside__flv { display: block; }
   .pdp-inside__info { margin: 1.75rem 0 0; padding-top: 1.25rem; border-top: 1px solid var(--line); max-width: 44ch; }
   .pdp-inside__info-title { font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); margin: 0 0 0.75rem; }
   .pdp-inside__facts { display: grid; gap: 0.75rem; margin: 0; }

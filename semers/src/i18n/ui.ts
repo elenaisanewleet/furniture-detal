@@ -147,8 +147,12 @@ const en = {
   whatsInTheBox: 'What’s in the box',
   fullPolicy: 'Full policy',
   freeShippingOverShort: (from: string) => `Free shipping over ${from} · ships from Riga in 1–2 business days`,
-  keepsMonths: (m: number) => `Keeps ${m} months — no fridge needed`,
-  nothingArtificial: (line: string) => `${line}, nothing artificial`,
+  /* Shelf life, only where a card states one in months; nothing is said about a fridge, because no card says it. */
+  keepsMonths: (m: number) => `Keeps ${m} months`,
+  keepQuestion: 'How long does it keep?',
+  shelfLifeIs: (m: number) => `Its shelf life is ${m} months.`,
+  /* A multi-pack against the same contents bought one by one: a sum, not a struck-out "old" price. */
+  boughtSingly: (n: number, each: string, total: string) => `Bought singly: ${n} × ${each} = ${total}`,
   /* The mandatory particulars beside the food (Reg. 1169/2011 art. 9). */
   foodInformation: 'Food information',
   legalName: 'Name of the food:',
@@ -217,7 +221,7 @@ const en = {
   },
   /** One-line note under each flavour on the product page. */
   flavourNotes: {
-    classic: 'The original apple',
+    classic: 'Apple and egg white only',
     berry: 'Apple with blackcurrant, cranberry, lingonberry & blueberry',
     cinnamon: 'Apple with cinnamon',
     blueberry: 'Apple with blueberry',
@@ -229,8 +233,6 @@ const en = {
     'no-added-sugar': 'No added sugar',
     'gluten-free': 'Gluten free',
     flourless: 'Flourless',
-    vegetarian: 'Vegetarian',
-    'no-preservatives': 'No preservatives',
   },
   /**
    * Strings the client script renders. These are templates with {placeholders}
@@ -308,6 +310,7 @@ type Partialised = { [K in keyof Dict]?: Dict[K] extends object ? Partial<Dict[K
 /** Nominative singular, then the form after 2–4, then the genitive plural after 5. */
 const RU_ITEM = { one: 'товар', few: 'товара', many: 'товаров' };
 const RU_REVIEW = { one: 'отзыв', few: 'отзыва', many: 'отзывов' };
+const RU_MONTH = { one: 'месяц', few: 'месяца', many: 'месяцев' };
 
 const ru: Partialised = {
   skipToContent: 'К содержанию',
@@ -427,8 +430,10 @@ const ru: Partialised = {
   whatsInTheBox: 'Что внутри',
   fullPolicy: 'Полные условия',
   freeShippingOverShort: (from: string) => `Бесплатная доставка от ${from} · отправка из Риги за 1–2 рабочих дня`,
-  keepsMonths: (m: number) => `Хранится ${m} мес. — холодильник не нужен`,
-  nothingArtificial: (line: string) => `${line}, ничего искусственного`,
+  keepsMonths: (m: number) => `Хранится ${m} ${pick('ru-RU', m, RU_MONTH)}`,
+  keepQuestion: 'Сколько хранится?',
+  shelfLifeIs: (m: number) => `Срок годности — ${m} ${pick('ru-RU', m, RU_MONTH)}.`,
+  boughtSingly: (n: number, each: string, total: string) => `По отдельности: ${n} × ${each} = ${total}`,
   foodInformation: 'Информация о продукте',
   legalName: 'Наименование продукта:',
   storage: 'Условия хранения:',
@@ -488,7 +493,7 @@ const ru: Partialised = {
     assorted: 'Ассорти',
   },
   flavourNotes: {
-    classic: 'Оригинальный яблочный',
+    classic: 'Только яблоко и яичный белок',
     berry: 'Яблоко с чёрной смородиной, клюквой, брусникой и черникой',
     cinnamon: 'Яблоко с корицей',
     blueberry: 'Яблоко с черникой',
@@ -499,8 +504,6 @@ const ru: Partialised = {
     'no-added-sugar': 'Без добавленного сахара',
     'gluten-free': 'Без глютена',
     flourless: 'Без муки',
-    vegetarian: 'Вегетарианский продукт',
-    'no-preservatives': 'Без консервантов',
   },
   runtime: {
     openCart_one: 'Открыть корзину, {n} товар',
@@ -570,6 +573,9 @@ const ru: Partialised = {
 /** Latvian takes the singular on every number ending in one except eleven, and the genitive plural on nothing at all. */
 const LV_ITEM = { zero: 'preču', one: 'prece', other: 'preces' };
 const LV_REVIEW = { zero: 'atsauksmju', one: 'atsauksme', other: 'atsauksmes' };
+/** Months as the subject ("12 mēneši", as the cards print it) and as the object of "glabājas" ("12 mēnešus"). */
+const LV_MONTH = { zero: 'mēneši', one: 'mēnesis', other: 'mēneši' };
+const LV_MONTH_ACC = { zero: 'mēnešus', one: 'mēnesi', other: 'mēnešus' };
 
 const lv: Partialised = {
   skipToContent: 'Pāriet pie satura',
@@ -689,12 +695,14 @@ const lv: Partialised = {
   whatsInTheBox: 'Kas ir kastē',
   fullPolicy: 'Pilni noteikumi',
   freeShippingOverShort: (from: string) => `Bezmaksas piegāde no ${from} · nosūtām no Rīgas 1–2 darba dienās`,
-  keepsMonths: (m: number) => `Uzglabājas ${m} mēn. — ledusskapis nav vajadzīgs`,
-  nothingArtificial: (line: string) => `${line}, nekā mākslīga`,
+  keepsMonths: (m: number) => `Glabājas ${m} ${pick('lv-LV', m, LV_MONTH_ACC)}`,
+  keepQuestion: 'Cik ilgi tas glabājas?',
+  shelfLifeIs: (m: number) => `Derīguma termiņš — ${m} ${pick('lv-LV', m, LV_MONTH)}.`,
+  boughtSingly: (n: number, each: string, total: string) => `Pērkot atsevišķi: ${n} × ${each} = ${total}`,
   foodInformation: 'Informācija par produktu',
   legalName: 'Pārtikas produkta nosaukums:',
   storage: 'Uzglabāšana:',
-  operator: 'Pārtikas uzņēmums:',
+  operator: 'Pārtikas uzņēmuma operators:',
   notDeclared: 'Vēl nav norādīts',
   naturalSugars: 'Satur dabīgi sastopamus cukurus.',
 
@@ -750,7 +758,7 @@ const lv: Partialised = {
     assorted: 'Asorti',
   },
   flavourNotes: {
-    classic: 'Oriģinālais ābolu',
+    classic: 'Tikai ābols un olu baltums',
     berry: 'Ābols ar upenēm, dzērvenēm, brūklenēm un mellenēm',
     cinnamon: 'Ābols ar kanēli',
     blueberry: 'Ābols ar mellenēm',
@@ -761,8 +769,6 @@ const lv: Partialised = {
     'no-added-sugar': 'Bez pievienota cukura',
     'gluten-free': 'Bez glutēna',
     flourless: 'Bez miltiem',
-    vegetarian: 'Piemērots veģetāriešiem',
-    'no-preservatives': 'Bez konservantiem',
   },
   runtime: {
     openCart_zero: 'Atvērt grozu, {n} preču',

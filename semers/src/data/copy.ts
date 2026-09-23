@@ -18,12 +18,14 @@ import { FAQ_COPY } from './copy.faq.data';
 
 /**
  * The only product fields a translation is allowed to replace. The name of
- * the food and its storage conditions are words on the label, so they are
- * translated too; they are optional here because not every product has them,
- * and a translation must not invent one the English does not carry.
+ * the food, its allergen sentence and its storage conditions are words on the
+ * label, so they are translated too; they are optional here because not every
+ * product has them, and a translation must not invent one the English does not
+ * carry. A card may word the allergen differently per flavour in one language
+ * and not in another, which is why that map can appear in a translation alone.
  */
 export type ProductCopy = Pick<Product, 'name' | 'title' | 'hook' | 'summary' | 'description' | 'ingredients' | 'allergens'> &
-  Partial<Pick<Product, 'legalName' | 'legalNameByFlavour' | 'storage'>>;
+  Partial<Pick<Product, 'legalName' | 'legalNameByFlavour' | 'allergensByFlavour' | 'storage'>>;
 export type CollectionCopy = Pick<Collection, 'name' | 'title' | 'description'>;
 export type FaqCopy = Pick<Faq, 'q' | 'a'>;
 

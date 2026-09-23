@@ -21,12 +21,12 @@ const origin = originOf(Astro.site);
 const best = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 4);
 const homeFaqs = localizedFaqs(FAQS.filter((f) => ['product', 'nutrition', 'orders'].includes(f.group)).slice(0, 5), locale);
 const tiles = localizedCollections(COLLECTIONS, locale);
-const tape = ['99% apples', 'No added sugar', 'No flour, no gluten', '97 kcal a bar', 'Made in Riga', 'Ships across the EU', 'Egg white, nothing else'];
+const tape = ['99% baked apples', 'No added sugar', 'No flour, no gluten', 'Made by hand', 'Made in Riga', 'Ships across the EU', 'Egg white, nothing else'];
 const poster = im('hero-bars');
 ---
 <Base
   title="Semers — Baked apple bars & desserts. 99% apples, no added sugar"
-  description="Baked apple snacks from Riga: Apple Bars, Flourless Bars, meringues and baked apple desserts. 99% apples, egg white, no added sugar, about 97 kcal a bar."
+  description="App’Lite Apple Bars, meringues and desserts: 99% baked apples and egg white, no added sugar, made in Riga. Plus Blum Baker’s flourless apple cakes."
   canonical="/"
   ogImage="hero-bars"
   schema={[itemList(origin, best), faqPage(homeFaqs)]}
@@ -49,7 +49,7 @@ const poster = im('hero-bars');
       <div class="sky__copy">
         <p class="eyebrow sky__eyebrow">Baked apple snacks · Riga, Latvia</p>
         <h1 class="sky__title" id="hero-title">One apple. One bar. <em>Nothing else.</em></h1>
-        <p class="sky__lead">Antonovka apples, baked whole and whipped with egg white, then dried slowly into a bar. No added sugar, no flour, no nonsense. About 97 kcal a bar.</p>
+        <p class="sky__lead">Antonovka apples, baked whole and whipped with egg white, then dried slowly into a bar. No added sugar, no flour, no nonsense. Made by hand in Riga.</p>
         <div class="hero__cta">
           <a class="btn btn--lg btn--accent" href="/shop/">Shop the bars <Icon name="arrow" size={20} class="arrow" /></a>
           <a class="btn btn--lg btn--ghost" href="/why-pastila/">Why pastila?</a>
@@ -97,7 +97,7 @@ const poster = im('hero-bars');
       <h2 id="render-title" class="inside__title" data-words>It’s an apple. <em>Inside, it’s pastila.</em></h2>
       <div class="inside__text" data-reveal>
         <p>Take a sour northern apple, bake it until the sugars caramelise, whip the purée with egg white until it holds air, then spread it thin and dry it for hours. What you get is a soft, fibrous loaf that tastes like the concentrated heart of an apple — and nothing else was added to make it so.</p>
-        <p>We cut that loaf into bars, bake it into meringues and press it into desserts. Same two ingredients every time.</p>
+        <p>We cut that loaf into bars, bake it into meringues and press it into desserts. The same two ingredients at the heart of every one.</p>
         <div class="cluster mt-4">
           <a class="btn" href="/how-its-made/">How it’s made</a>
           <a class="link" href="/shop/">Shop all products</a>
@@ -176,40 +176,44 @@ const poster = im('hero-bars');
   </section>
 
   <!-- ============================== COMPARISON ============================== -->
+  <!--
+    Two labels side by side. The Apple Bar side says only what its pack prints:
+    no nutrition figures were supplied for the bars, so the one number here is
+    the length of the ingredient list. The meters compare that length, the
+    chocolate bar drawn at the low end of its typical range.
+  -->
   <section class="section maths" aria-labelledby="vs-title">
     <div class="container">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Honest maths</p>
-          <h2 id="vs-title" data-words>Same craving. Less than half the calories.</h2>
+          <p class="eyebrow">Honest labels</p>
+          <h2 id="vs-title" data-words>Same craving. A much shorter label.</h2>
         </div>
       </div>
       <div class="vs" data-reveal>
         <div class="vs__col vs__col--win">
-          <p class="eyebrow">App’Lite Apple Bar · 35 g</p>
-          <div class="vs__kcal"><b data-count="97">97</b> <span class="muted small">kcal</span></div>
-          <div class="vs__meter" aria-hidden="true"><i style="--w:0.404"></i></div>
+          <p class="eyebrow">App’Lite Apple Bar, Classic · 35 g</p>
+          <div class="vs__kcal"><b data-count="2">2</b> <span class="muted small">ingredients</span></div>
+          <div class="vs__meter" aria-hidden="true"><i style="--w:0.25"></i></div>
           <ul class="vs__list">
-            <li class="yes"><Icon name="check" size={18} /> 0 g added sugar — sweetness from the apple</li>
-            <li class="yes"><Icon name="check" size={18} /> 2 ingredients</li>
-            <li class="yes"><Icon name="check" size={18} /> 0 g fat, no flour, no gluten</li>
-            <li class="yes"><Icon name="check" size={18} /> Source of fibre</li>
+            <li class="yes"><Icon name="check" size={18} /> No added sugar — the sweetness is the apple’s own</li>
+            <li class="yes"><Icon name="check" size={18} /> 99% baked apples, then egg white</li>
+            <li class="yes"><Icon name="check" size={18} /> No flour, gluten free</li>
+            <li class="yes"><Icon name="check" size={18} /> Made by hand</li>
           </ul>
         </div>
         <div class="vs__vs">vs</div>
         <div class="vs__col">
           <p class="eyebrow">Typical milk chocolate bar · 45 g</p>
-          <div class="vs__kcal"><b data-count="240" data-count-prefix="~">~240</b> <span class="muted small">kcal</span></div>
+          <div class="vs__kcal"><b>8–12</b> <span class="muted small">ingredients</span></div>
           <div class="vs__meter vs__meter--rival" aria-hidden="true"><i style="--w:1"></i></div>
           <ul class="vs__list">
-            <li class="no"><Icon name="close" size={18} /> ~24 g sugar, mostly added</li>
-            <li class="no"><Icon name="close" size={18} /> 8–12 ingredients incl. emulsifiers</li>
-            <li class="no"><Icon name="close" size={18} /> ~13 g fat</li>
-            <li class="no"><Icon name="close" size={18} /> No meaningful fibre</li>
+            <li class="no"><Icon name="close" size={18} /> Sugar added, usually the first ingredient</li>
+            <li class="no"><Icon name="close" size={18} /> Emulsifiers and flavourings on the list</li>
           </ul>
         </div>
       </div>
-      <p class="tiny muted mt-4">Chocolate figures are typical values for a mainstream 45 g milk chocolate bar; Apple Bar values are per pack. Full nutrition on every product page.</p>
+      <p class="tiny muted mt-4">The chocolate column describes a typical mainstream 45 g milk chocolate bar. The Apple Bar column is what its pack prints; the full ingredient list is on every product page.</p>
     </div>
   </section>
 

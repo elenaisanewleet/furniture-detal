@@ -66,19 +66,19 @@ export default `
 <p>Fresh fruit passes without a label. It is also the reference point for everything above: if a packaged snack has more ingredients than an apple and less fibre, ask what the packaging was for.</p>
 
 <h2>Where Semers fits, honestly</h2>
-<p>Our <a href="/products/apple-bar-35g/">Apple Bar</a> is baked apples (99%) and egg white. That is the full list; the Berry Mix version adds blackcurrants, cranberries, lingonberries and blueberries and nothing else. Its sugars are the fruit’s own, which is why the pack says no added sugar and makes no claim about how much sugar is inside. It is not a protein snack and does not pretend to be. The sweetness comes from the oven, not from a syrup: baking drives off the water and caramelises what the apple already had. How that compares with chocolate and granola bars on the same scale is on <a href="/why-pastila/">why pastila</a>; the process itself is on <a href="/how-its-made/">how it’s made</a>.</p>
+<p>Our <a href="/products/apple-bar-35g/">Apple Bar</a> is baked apples (99%) and egg white. That is the full list; the Berry Mix version adds blackcurrants, cranberries, lingonberries and blueberries and nothing else. Its sugars are the fruit’s own, which is why the pack says no added sugar and makes no claim about how much sugar is inside. It is not a protein snack and does not pretend to be. The sweetness comes from the oven, not from a syrup: baking drives off the water and caramelises what the apple already had. How its label compares with chocolate and granola bars is on <a href="/why-pastila/">why pastila</a>; the process itself is on <a href="/how-its-made/">how it’s made</a>.</p>
 
 <h2>Lunchbox and desk ideas</h2>
 <p>No-added-sugar snacks work best in pairs: one for sweetness, one for staying power.</p>
 <ul>
-  <li><strong>The desk drawer.</strong> A box of <a href="/shop/apple-bars/">apple bars</a> and a bag of plain almonds. A twelve-month shelf life means the drawer, not the fridge.</li>
+  <li><strong>The desk drawer.</strong> A box of <a href="/shop/apple-bars/">apple bars</a> and a bag of plain almonds. The bars have a twelve-month shelf life, so the box can wait for the slump.</li>
   <li><strong>The lunchbox.</strong> A bar, a hard-boiled egg, cucumber sticks. Nothing leaks, nothing melts, nothing needs a spoon.</li>
   <li><strong>Breakfast at the desk.</strong> An <a href="/products/applite-baked-apple-dessert-50g/">App’Lite dessert square</a> crumbled over plain yoghurt or porridge instead of a spoon of jam.</li>
-  <li><strong>The shared shelf.</strong> The <a href="/products/applite-baked-apple-dessert-500g/">500 g carton</a> of App’Lite dessert, each piece wrapped on its own.</li>
+  <li><strong>The shared shelf.</strong> The <a href="/products/applite-baked-apple-dessert-500g/">500 g carton</a> of classic apple dessert, each piece wrapped on its own.</li>
   <li><strong>Something crisp.</strong> <a href="/shop/meringues/">Apple meringues</a> for the moment that usually calls for biscuits.</li>
 </ul>
 <p>For an office, the <a href="/shop/gift-sets/">Tasting Box and the box of twelve</a> put a bit of everything on the shared shelf.</p>
 
 <h2>A note before you go</h2>
-<p>This article is general information about food labelling, written by people who make snacks, not by clinicians. It is not medical or dietary advice. If you manage a health condition through what you eat, take the label to someone qualified. And whatever you buy, turn the pack over first. The <a href="/faq/">FAQ</a> has our own numbers in full, and the <a href="/shop/">shop</a> has the bar.</p>
+<p>This article is general information about food labelling, written by people who make snacks, not by clinicians. It is not medical or dietary advice. If you manage a health condition through what you eat, take the label to someone qualified. And whatever you buy, turn the pack over first. The <a href="/faq/">FAQ</a> answers the rest, and the <a href="/shop/">shop</a> has the bar.</p>
 `;

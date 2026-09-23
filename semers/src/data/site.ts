@@ -9,7 +9,8 @@ export const site = {
     name: 'Semers',
     legalName: 'SIA Semers Group',
     /** Short line under the logo and in <title> suffixes. */
-    tagline: 'Baked apple snacks. 99% apples. No added sugar.',
+    // "99% baked apples" is printed on the App'Lite packs only, so it is not a line for the whole range.
+    tagline: 'Baked apple snacks. No added sugar.',
     /** Product brands used on packaging. */
     lines: ["App'Lite", "Blum Baker's"],
   },

@@ -14,19 +14,19 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "What is in an Apple Bar?": {
       q: "Что входит в состав яблочного батончика?",
-      a: "Печёные яблоки (99%) и яичный белок. В «Ягодном миксе» добавлены чёрная смородина, клюква, брусника и черника. Это весь список: без добавленного сахара, без муки, без масел, без консервантов.",
+      a: "Печёные яблоки (99%) и яичный белок. В «Ягодном миксе» добавлены чёрная смородина, клюква, брусника и черника. Это весь список. Сахар не добавлен, муки нет, батончик без глютена.",
     },
     "Is there really no added sugar?": {
       q: "Правда без добавленного сахара?",
-      a: "Да — в яблочных батончиках, безе, десертах из печёных яблок и яблочных пирожных без муки. Вся сладость идёт от самих яблок: при запекании их природные сахара концентрируются. Поэтому на упаковке написано и «без добавленного сахара», и «содержит природные сахара».",
+      a: "Да — в яблочных батончиках, безе, десертах из печёных яблок и яблочных пирожных без муки. Вся сладость идёт от самих яблок: при запекании их природные сахара концентрируются. Поэтому сахар не добавлен, но в продукте есть сахара, которые естественным образом содержатся во фруктах.",
     },
     "Is it gluten free?": {
       q: "Это без глютена?",
-      a: "Да. В рецепте нет ни одного ингредиента с глютеном, мука не используется. Наша продукция производится на предприятии, где работают с яйцом; если у вас аллергия на яйцо, учтите, что яичный белок — один из основных ингредиентов.",
+      a: "Яблочные батончики, безе, десерты из печёных яблок по 50 г и яблочные пирожные без муки маркированы как продукты без глютена, и ни в одном из них нет муки. Яичный белок входит в состав каждого продукта, поэтому при аллергии на яйцо будьте осторожны.",
     },
     "Is it suitable for vegetarians, vegans, kids?": {
       q: "Подходит ли вегетарианцам, веганам, детям?",
-      a: "Вегетарианцам — да. Веганам — нет, из-за яичного белка. Детям — по сути это печёное яблоко, запакованное так, чтобы выдержать школьный рюкзак, а значит удобная сладость в ланчбокс.",
+      a: "Веганам — нет: в каждом продукте есть яичный белок. Для вегетарианской диеты полный состав есть на странице каждого товара: яблоки и яичный белок, а в некоторых вкусах ещё ягоды или корица. Детям — по сути это печёное яблоко в небольшой упаковке, а значит удобная сладость в ланчбокс.",
     },
     "How many calories?": {
       q: "Сколько калорий?",
@@ -34,7 +34,7 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "How long does it keep and how should I store it?": {
       q: "Какой срок хранения и как хранить?",
-      a: "Зависит от продукта, и верить нужно дате на упаковке. Яблочные батончики хранятся 12 месяцев. Десерт из печёных яблок 50 г хранится 9 месяцев при температуре от +8 до +10 °C или 4 месяца при температуре от +10 до +25 °C; упаковка 500 г — 18 месяцев при температуре от +8 до +25 °C. Безе храните при температуре не выше 25 °C, вдали от продуктов с сильным запахом, а яблочные пирожные без муки — в сухом прохладном месте при температуре от +8 до +21 °C. После открытия держите упаковку закрытой и съешьте в течение нескольких дней: продукт скорее медленно подсохнет, чем испортится.",
+      a: "Зависит от продукта, и верить нужно дате на упаковке. Яблочные батончики хранятся 12 месяцев. Десерт из печёных яблок 50 г хранится 9 месяцев при температуре от +8 до +10 °C или 4 месяца при температуре от +10 до +25 °C; упаковка 500 г — 18 месяцев при температуре от +8 до +25 °C. Безе храните при температуре не выше 25 °C и относительной влажности не более 75%, вдали от продуктов с сильным запахом, а яблочные пирожные без муки — в сухом прохладном месте при температуре от +8 до +21 °C.",
     },
     "Where do you ship?": {
       q: "Куда вы доставляете?",
@@ -64,19 +64,19 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "What is in an Apple Bar?": {
       q: "Kas ir Ābolu batoniņā?",
-      a: "Cepti āboli (99%) un olu baltums. Ogu maisījumam ir pievienotas upenes, dzērvenes, brūklenes un mellenes. Tas arī ir viss saraksts — bez pievienota cukura, bez miltiem, bez eļļām, bez konservantiem.",
+      a: "Cepti āboli (99%) un olu baltums. Ogu maisījumam ir pievienotas upenes, dzērvenes, brūklenes un mellenes. Tas arī ir viss saraksts. Cukurs nav pievienots, miltu nav, un batoniņš ir bez glutēna.",
     },
     "Is there really no added sugar?": {
       q: "Vai tiešām nav pievienota cukura?",
-      a: "Jā, tas attiecas uz ābolu batoniņiem, bezē, cepto ābolu desertiem un ābolu kūciņām bez miltiem. Viss saldums nāk no pašiem āboliem: cepšana koncentrē to dabīgos cukurus. Tāpēc uz iepakojuma ir rakstīts gan „bez pievienota cukura”, gan „satur dabīgi sastopamus cukurus”.",
+      a: "Jā, tas attiecas uz ābolu batoniņiem, bezē, cepto ābolu desertiem un ābolu kūciņām bez miltiem. Viss saldums nāk no pašiem āboliem: cepšana koncentrē to dabīgos cukurus. Tāpēc cukurs nav pievienots, taču produkts satur cukurus, kas augļos ir dabīgi.",
     },
     "Is it gluten free?": {
       q: "Vai tas ir bez glutēna?",
-      a: "Jā. Neviena receptes sastāvdaļa nesatur glutēnu, un milti netiek izmantoti. Mūsu produkti tiek ražoti ražotnē, kurā tiek izmantotas olas; ja jums ir alerģija pret olu, ņemiet vērā, ka olu baltums ir viena no galvenajām sastāvdaļām.",
+      a: "Ābolu batoniņi, bezē, 50 g cepto ābolu deserti un ābolu kūciņas bez miltiem ir marķēti kā produkti bez glutēna, un nevienā no tiem nav miltu. Olu baltums ir katra produkta sastāvā, tāpēc, ja jums ir alerģija pret olām, esiet uzmanīgi.",
     },
     "Is it suitable for vegetarians, vegans, kids?": {
-      q: "Vai tas ir piemērots vegetāriešiem, vegāniem, bērniem?",
-      a: "Vegetāriešiem: jā. Vegāniem: nē, olu baltuma dēļ. Bērniem: pēc būtības tas ir cepts ābols, iepakots tā, lai izturētu skolas somu, un tas padara to par vienkāršu saldumu pusdienu kastītē.",
+      q: "Vai tas ir piemērots veģetāriešiem, vegāniem, bērniem?",
+      a: "Vegāniem: nē, jo katrs produkts satur olu baltumu. Veģetāriešu uzturam pilns sastāvs ir katra produkta lapā: āboli un olu baltums, dažām garšām arī ogas vai kanēlis. Bērniem: pēc būtības tas ir cepts ābols uzkodas izmēra iepakojumā, un tas padara to par vienkāršu saldumu pusdienu kastītē.",
     },
     "How many calories?": {
       q: "Cik daudz kaloriju?",
@@ -84,7 +84,7 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "How long does it keep and how should I store it?": {
       q: "Cik ilgi tas glabājas un kā to uzglabāt?",
-      a: "Tas atkarīgs no produkta, un ticēt vajag datumam uz iepakojuma. Ābolu batoniņi glabājas 12 mēnešus. 50 g cepto ābolu deserts glabājas 9 mēnešus no +8 līdz +10 °C vai 4 mēnešus no +10 līdz +25 °C; 500 g iepakojums — 18 mēnešus no +8 līdz +25 °C. Bezē uzglabājiet temperatūrā līdz 25 °C, ne blakus produktiem ar spēcīgu smaržu, bet ābolu kūciņas bez miltiem — sausā, vēsā vietā no +8 līdz +21 °C. Pēc atvēršanas turiet to iesaiņotu un izbaudiet dažu dienu laikā; tas drīzāk lēni izžūs, nevis sabojāsies.",
+      a: "Tas atkarīgs no produkta, un ticēt vajag datumam uz iepakojuma. Ābolu batoniņi glabājas 12 mēnešus. 50 g cepto ābolu deserts glabājas 9 mēnešus no +8 līdz +10 °C vai 4 mēnešus no +10 līdz +25 °C; 500 g iepakojums — 18 mēnešus no +8 līdz +25 °C. Bezē uzglabājiet temperatūrā līdz 25 °C un relatīvajā gaisa mitrumā līdz 75%, ne blakus produktiem ar spēcīgu smaržu, bet ābolu kūciņas bez miltiem — sausā, vēsā vietā no +8 līdz +21 °C.",
     },
     "Where do you ship?": {
       q: "Kur jūs piegādājat?",

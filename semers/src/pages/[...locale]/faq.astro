@@ -52,9 +52,9 @@ const GROUPS: Group[] = [
     short: 'Nutrition',
     title: 'Nutrition & ingredients',
     intro: 'Sugar, gluten, calories, egg white, and who the bars suit. The whole label, explained.',
-    note: 'Egg white is a core ingredient in every product. If you have an egg allergy, please read the label before buying. Nutrition values are typical for the recipe; the pack carries the batch label.',
+    note: 'Egg white is a core ingredient in every product. If you have an egg allergy, please read the label before buying. Nutrition figures appear only where the pack declares them, and the pack in your hand is the final word.',
     related: [
-      { href: '/why-pastila/', label: 'The honest numbers' },
+      { href: '/why-pastila/', label: 'The honest labels' },
       { href: '/how-its-made/', label: 'How it is made' },
       { href: '/journal/healthy-snacks-no-added-sugar/', label: 'Reading a snack label' },
     ],
@@ -96,7 +96,7 @@ const groups = GROUPS.map((g, i) => ({
 const more: Record<string, { href: string; label: string }> = {
   'What is pastila?': { href: '/why-pastila/', label: 'Read the longer answer' },
   'What is in an Apple Bar?': { href: '/products/apple-bar-35g/', label: 'See the Apple Bar' },
-  'How long does it keep and how should I store it?': { href: '/how-its-made/', label: 'How the drying works' },
+  'How long does it keep and how should I store it?': { href: '/how-its-made/#keep', label: 'Shelf life, product by product' },
   'Is there really no added sugar?': { href: '/why-pastila/', label: 'How the sweetness happens' },
   'Where do you ship?': { href: '/legal/shipping-returns/', label: 'Full shipping policy' },
   'How do I pay?': { href: '/shop/', label: 'Start an order request' },
@@ -106,7 +106,7 @@ const more: Record<string, { href: string; label: string }> = {
 };
 
 const reading = [
-  { href: '/why-pastila/', title: 'Why pastila?', text: 'The honest numbers against chocolate, granola and dried apple.' },
+  { href: '/why-pastila/', title: 'Why pastila?', text: 'Its label, set against chocolate, granola and dried apple.' },
   { href: '/how-its-made/', title: 'How it’s made', text: 'Twelve hours, eight stages, and why nothing else goes in.' },
   { href: '/journal/', title: 'The journal', text: 'What pastila is and how to read a snack label.' },
 ];

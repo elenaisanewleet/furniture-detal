@@ -33,30 +33,30 @@ const faqs = pick.flatMap((q) => {
 });
 
 /**
- * Typical values for the mainstream product in each category. Apple Bar values
- * are per 35 g bar. The numbers are kept as the reader sees them (`kcal`, `sugar`)
- * and as the meters need them (`kcalN`, `sugarN`); both meters are drawn against
- * the chocolate bar, which is the tallest thing on the wall.
+ * What each label says, for the mainstream product in each category. The Apple
+ * Bar row is only what its pack prints: no nutrition declaration was supplied
+ * for the bars, so the wall compares labels, not calories. `n` is the ingredient
+ * count as the reader sees it and `nN` as the meter needs it; a rival's range is
+ * drawn at its low end, and every meter is drawn against the longest label.
  */
 const rows = [
-  { name: "App’Lite Apple Bar", size: '35 g · per bar', kcal: '97', kcalN: 97, sugar: '0 g', sugarN: 0, n: '2', note: 'Baked apples and egg white. About 1.8 g fibre from the whole fruit; the sweetness is the apple’s own.', ours: true, approx: false },
-  { name: 'Milk chocolate bar', size: '45 g · typical', kcal: '~240', kcalN: 240, sugar: '~24 g', sugarN: 24, n: '8–12', note: 'Nearly all of its sugar is added. It is usually the first word on the label.', ours: false, approx: true },
-  { name: 'Granola bar', size: '40 g · typical', kcal: '~180', kcalN: 180, sugar: '~10 g', sugarN: 10, n: '10 or more', note: 'Oats need syrup or honey to hold together, and oil to stay soft.', ours: false, approx: true },
-  { name: 'Dried apple', size: '30 g · typical', kcal: '~90', kcalN: 90, sugar: '0 g', sugarN: 0, n: '1–2', note: 'The closest rival. Often treated with sulphites to keep it pale; check the label.', ours: false, approx: true },
+  { name: "App’Lite Apple Bar", size: '35 g · Classic', added: 'None', n: '2', nN: 2, note: 'Baked apples (99%) and egg white. No flour, gluten free; the sweetness is the apple’s own.', ours: true },
+  { name: 'Milk chocolate bar', size: '45 g · typical', added: 'Yes', n: '8–12', nN: 8, note: 'Nearly all of its sugar is added. It is usually the first word on the label.', ours: false },
+  { name: 'Granola bar', size: '40 g · typical', added: 'Yes', n: '10 or more', nN: 10, note: 'Oats need syrup or honey to hold together, and oil to stay soft.', ours: false },
+  { name: 'Dried apple', size: '30 g · typical', added: 'Usually none', n: '1–2', nN: 1, note: 'The closest rival. Often treated with sulphites to keep it pale; check the label.', ours: false },
 ];
-const KCAL_MAX = 240;
-const SUGAR_MAX = 24;
+const N_MAX = Math.max(...rows.map((r) => r.nN));
 
 const who = [
   { icon: 'box', title: 'Lunchbox parents', text: 'A sweet that is, in fact, a baked apple. Sealed, survives a school bag, leaves no crumbs.' },
-  { icon: 'clock', title: 'Desk snackers', text: 'The four o’clock moment, answered with 97 kcal instead of whatever the vending machine had left.' },
-  { icon: 'globe', title: 'Hikers and runners', text: 'Weighs 35 g, lies flat in a jersey pocket, does not melt, and keeps for months without a fridge.' },
+  { icon: 'clock', title: 'Desk snackers', text: 'The four o’clock moment, answered with a baked apple instead of whatever the vending machine had left.' },
+  { icon: 'globe', title: 'Hikers and runners', text: 'Weighs 35 g, lies flat in a jersey pocket, does not melt, and has a twelve-month shelf life.' },
   { icon: 'shield', title: 'People cutting added sugar', text: 'Read the label once and stop reading labels. Two ingredients, both of which you could buy at a market.' },
   { icon: 'star', title: 'Gift-givers', text: 'A box of baked-apple snacks is unusual enough to be a story and good enough to be finished. Boxes ship from Riga with a card if you ask.' },
 ] as const;
 
 const ideas = [
-  { title: 'With tea', text: 'A bar or a dessert square beside strong black tea, no sugar in either.' },
+  { title: 'With tea', text: 'A bar or a dessert square beside strong black tea, with no sugar added to either.' },
   { title: 'On porridge', text: 'Crumble a bar over morning oats or yoghurt instead of honey. It softens into the warm bowl.' },
   { title: 'In a lunchbox', text: 'One bar in the corner of the box. It does not leak, melt or crumble, and it is still good at three.' },
   { title: 'After a run', text: 'Something sweet and light before the proper meal. Chase it with water.' },
@@ -66,7 +66,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
 ---
 <Base
   title="Why pastila? The apple snack with no added sugar"
-  description="Why baked-apple pastila beats the snack bar: 99% Antonovka apples, egg white, no added sugar, about 97 kcal. Honest numbers, who it suits, how to eat it."
+  description="Why baked-apple pastila beats the snack bar: 99% Antonovka apples, egg white, no added sugar, no flour. An honest label, who it suits, how to eat it."
   canonical="/why-pastila/"
   ogImage="apple-split"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Why pastila', href: '/why-pastila/' }]}
@@ -78,25 +78,25 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
     <div class="wp-hero__copy">
       <p class="eyebrow">Why pastila</p>
       <h1 id="page-title" data-words>Why pastila beats the snack bar <em>you’re holding.</em></h1>
-      <p class="lead">Pastila is a baked-apple snack with two ingredients: Antonovka apples and egg white. No added sugar, no flour, no gluten, about 97 kcal a bar. Here is what it is, why it needs nothing else, and how the numbers stack up against the usual suspects.</p>
+      <p class="lead">Pastila is a baked-apple snack with two ingredients: Antonovka apples and egg white. No added sugar, no flour, no gluten. Here is what it is, why it needs nothing else, and how its label stacks up against the usual suspects.</p>
       <div class="hero-cta">
         <a class="btn btn--lg btn--accent" href="/shop/apple-bars/">Shop apple bars <Icon name="arrow" size={20} class="arrow" /></a>
         <a class="btn btn--lg btn--ghost" href="/how-its-made/">How it’s made</a>
       </div>
     </div>
-    <!-- The first lit window, with the one number that matters standing on its corner. -->
+    <!-- The first lit window, with the one number the pack prints standing on its corner. -->
     <div class="wp-hero__media" data-reveal>
       <div class="frame frame--4x5 wp-hero__frame">
         <img src={im('apple-render-tall').src} srcset={im('apple-render-tall').srcset} sizes={im('apple-render-tall').srcset && SIZES.half} alt={im('apple-render-tall').alt} width={im('apple-render-tall').width} height={im('apple-render-tall').height} loading="eager" fetchpriority="high" decoding="async" class="img-cover" data-parallax="0.12" />
       </div>
-      <p class="wp-hero__fig" aria-hidden="true"><b data-count="97">97</b><small>kcal</small></p>
+      <p class="wp-hero__fig" aria-hidden="true"><b data-count="99">99%</b><small>baked apples</small></p>
     </div>
   </section>
   <div class="container">
     <div class="trust wp-trust" data-reveal>
       <div><Icon name="apple" size={22} /><div><strong>99% apples</strong><span>Antonovka, baked and whipped</span></div></div>
-      <div><Icon name="check" size={22} /><div><strong>0 g added sugar</strong><span>Sweet from the fruit alone</span></div></div>
-      <div><Icon name="clock" size={22} /><div><strong>12 months</strong><span>No fridge, no preservatives</span></div></div>
+      <div><Icon name="check" size={22} /><div><strong>No added sugar</strong><span>Sweet from the fruit alone</span></div></div>
+      <div><Icon name="clock" size={22} /><div><strong>12 months</strong><span>Shelf life of an Apple Bar</span></div></div>
       <div><Icon name="truck" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Parcels leave Riga in 1–2 business days</span></div></div>
     </div>
   </div>
@@ -122,13 +122,13 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
     </div>
   </section>
 
-  <!-- ============================== WHY NO SUGAR ============================== -->
+  <!-- ============================== WHY NO ADDED SUGAR ============================== -->
   <!-- Three things, three outlined numerals, one hairline each. The oven is the accent here, so the light is honey. -->
   <section class="section band why" aria-labelledby="sugar-title">
     <div class="container">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Why it needs no sugar</p>
+          <p class="eyebrow">Why it needs no added sugar</p>
           <h2 id="sugar-title" data-words>Three things happen in the oven. None of them involves a sugar bowl.</h2>
         </div>
         <p class="muted" style="max-width:38ch">Most “no added sugar” bars get there with syrups, sweeteners or fruit concentrate. Pastila gets there by physics.</p>
@@ -165,12 +165,12 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
     <div class="container label__copy">
       <p class="eyebrow">The whole label</p>
       <h2 id="label-title" data-words>Baked apples. Egg white. Read it again, it does not get longer.</h2>
-      <p class="label__text" data-reveal>There is nothing to decode on a Semers pack. No “natural flavouring”, no sweeteners with numbers for names, no oil to keep things soft. Slow drying does the preserving, which is why a bar keeps for twelve months in a drawer.</p>
+      <p class="label__text" data-reveal>There is nothing to decode on a Semers pack. No “natural flavouring”, no sweeteners with numbers for names, no oil to keep things soft. Just the fruit and the egg white, and an Apple Bar has a twelve-month shelf life.</p>
       <div class="stats label__stats" data-stagger>
         <div class="stat"><strong data-count="99">99%</strong><span>apples</span></div>
         <div class="stat"><strong data-count="2">2</strong><span>ingredients</span></div>
-        <div class="stat"><strong>0 g</strong><span>added sugar</span></div>
-        <div class="stat"><strong data-count="12">12</strong><span>months, no fridge</span></div>
+        <div class="stat"><strong>No</strong><span>added sugar</span></div>
+        <div class="stat"><strong data-count="12">12</strong><span>months’ shelf life</span></div>
       </div>
       <div class="cluster mt-6" data-reveal>
         <a class="btn" href="/shop/">Shop all products</a>
@@ -179,10 +179,10 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
     </div>
   </section>
 
-  <!-- ============================== HONEST NUMBERS: THE WALL ============================== -->
+  <!-- ============================== HONEST LABELS: THE WALL ============================== -->
   <!--
-    The comparison table, rebuilt as a wall of display numbers. Each snack is a
-    row; energy and added sugar carry a meter drawn against the chocolate bar,
+    The comparison table, rebuilt as a wall of display type. Each snack is a
+    row; the ingredient count carries a meter drawn against the longest label,
     so the gap is seen before it is read. Our row is the one lit in mint; the
     rivals are set as outlines, which is what they are next to it.
   -->
@@ -190,12 +190,12 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
     <div class="container">
       <div class="section-head">
         <div>
-          <p class="eyebrow">Honest numbers</p>
+          <p class="eyebrow">Honest labels</p>
           <h2 id="numbers-title" data-words>One bar next to the things it replaces.</h2>
         </div>
-        <p class="muted" style="max-width:38ch">Typical values for the mainstream product in each category. Ours are for one App’Lite Apple Bar; the full table is on every product page.</p>
+        <p class="muted" style="max-width:38ch">Typical labels for the mainstream product in each category. Ours is the Classic App’Lite Apple Bar, as its pack prints it.</p>
       </div>
-      <p class="sr-only" id="cmp-caption">Energy, added sugar and ingredient count of a 35 g Apple Bar compared with typical snacks</p>
+      <p class="sr-only" id="cmp-caption">Added sugar and ingredient count of a 35 g Apple Bar compared with typical snacks</p>
       <ol class="wall" aria-labelledby="cmp-caption" data-reveal>
         {rows.map((r) => (
           <li class={`wall__row ${r.ours ? 'is-ours' : ''}`}>
@@ -203,25 +203,20 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
               <h3>{r.name}{r.ours && <em class="cmp__tag">ours</em>}</h3>
               <span class="wall__size">{r.size}</span>
             </div>
-            <div class="wall__cell wall__cell--kcal">
-              <span class="wall__lbl">Energy</span>
-              <div class="wall__num"><b data-count={r.kcalN} data-count-prefix={r.approx ? '~' : undefined}>{r.kcal}</b> <small>kcal</small></div>
-              <div class="wall__meter" aria-hidden="true"><i style={`--w:${(r.kcalN / KCAL_MAX).toFixed(3)}`}></i></div>
-            </div>
             <div class="wall__cell wall__cell--sugar">
               <span class="wall__lbl">Added sugar</span>
-              <div class="wall__num">{r.sugarN ? <b data-count={r.sugarN} data-count-prefix="~">{r.sugar}</b> : <b>{r.sugar}</b>}</div>
-              <div class="wall__meter" aria-hidden="true"><i style={`--w:${(r.sugarN / SUGAR_MAX).toFixed(3)}`}></i></div>
+              <div class="wall__num wall__num--sm">{r.added}</div>
             </div>
             <div class="wall__cell wall__cell--n">
               <span class="wall__lbl">Ingredients</span>
-              <div class="wall__num wall__num--n">{r.n}</div>
+              <div class="wall__num wall__num--sm">{r.n}</div>
+              <div class="wall__meter" aria-hidden="true"><i style={`--w:${(r.nN / N_MAX).toFixed(3)}`}></i></div>
             </div>
             <p class="wall__note">{r.note}</p>
           </li>
         ))}
       </ol>
-      <p class="tiny muted mt-4 wall__foot">Chocolate, granola and dried-apple figures are typical values for mainstream products in each category, rounded. An Apple Bar still contains about 20 g of sugars, all of them the apple’s own; we would rather you knew. Apple Bar values are typical for the recipe; see the pack for the batch label. More on reading labels in the <a href="/journal/healthy-snacks-no-added-sugar/">journal</a>.</p>
+      <p class="tiny muted mt-4 wall__foot">Chocolate, granola and dried-apple entries are typical of mainstream products in each category. No added sugar is not the same as no sugar: an Apple Bar still contains the apple’s own, naturally occurring sugars, and we would rather you knew. The Berry Mix bar adds four berries to the list. More on reading labels in the <a href="/journal/healthy-snacks-no-added-sugar/">journal</a>.</p>
     </div>
   </section>
 
@@ -373,7 +368,7 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   .wp-hero__frame { border-radius: var(--r-xl); background: var(--night-800); box-shadow: var(--shadow-3), var(--glow-honey); }
   /* Taller than its window so the parallax never shows an edge. */
   .wp-hero__frame img { position: absolute; inset: -10% 0; width: 100%; height: 120%; object-fit: cover; object-position: 50% 45%; }
-  /* The calorie count, outlined, standing on the corner of the frame. */
+  /* The pack's own figure, outlined, standing on the corner of the frame. */
   .wp-hero__fig { position: absolute; left: clamp(-0.5rem, -2vw, -1.5rem); bottom: clamp(-0.6rem, -1.5vw, -1.2rem); z-index: 2; margin: 0; display: inline-flex; align-items: baseline; font-family: var(--font-display); font-weight: 400; font-size: clamp(5rem, 14vw, 10rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variant-numeric: tabular-nums; filter: drop-shadow(0 0 24px rgb(11 18 14 / 0.8)); pointer-events: none; }
   .wp-hero__fig b { font-weight: inherit; }
   .wp-hero__fig small { font-family: var(--font-sans); font-size: 0.18em; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--honey-500); -webkit-text-stroke: 0; margin-left: 0.3em; text-shadow: 0 0 20px rgb(253 185 19 / 0.5); }
@@ -415,12 +410,11 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   /* ------------------------------------------------------------- the wall */
   .wall-sec { background: radial-gradient(55% 45% at 78% 30%, rgb(62 207 168 / 0.07), transparent 65%), var(--bg); }
   .wall { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; counter-reset: none; }
-  .wall__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: 'who who' 'kcal sugar' 'n n' 'note note'; gap: 1.25rem 1rem; padding: 1.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .wall__row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-areas: 'who who' 'sugar n' 'note note'; gap: 1.25rem 1rem; padding: 1.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
   @media (min-width: 64rem) {
-    .wall__row { grid-template-columns: 1.1fr 1fr 1fr 0.75fr 1.25fr; grid-template-areas: 'who kcal sugar n note'; gap: 1rem 2rem; align-items: end; padding: 1.75rem 2rem; }
+    .wall__row { grid-template-columns: 1.1fr 1fr 1fr 1.25fr; grid-template-areas: 'who sugar n note'; gap: 1rem 2rem; align-items: end; padding: 1.75rem 2rem; }
   }
   .wall__who { grid-area: who; }
-  .wall__cell--kcal { grid-area: kcal; }
   .wall__cell--sugar { grid-area: sugar; }
   .wall__cell--n { grid-area: n; }
   .wall__note { grid-area: note; margin: 0; font-size: var(--fs-sm); color: var(--fg-2); max-width: 32ch; }
@@ -430,7 +424,8 @@ const num = (i: number) => String(i + 1).padStart(2, '0');
   .wall__num { font-family: var(--font-display); font-size: var(--fs-3xl); font-weight: 400; line-height: 0.95; letter-spacing: -0.045em; color: var(--cream-0); font-variant-numeric: tabular-nums; font-variation-settings: 'opsz' 144, 'SOFT' 50; white-space: nowrap; }
   .wall__num b { font-weight: inherit; }
   .wall__num small { font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); margin-left: 0.15em; -webkit-text-stroke: 0; }
-  .wall__num--n { font-size: var(--fs-2xl); white-space: normal; }
+  /* Words and ranges ("Usually none", "10 or more") rather than single figures, so they may wrap. */
+  .wall__num--sm { font-size: var(--fs-2xl); white-space: normal; }
   /* The rivals are outlines; the one row that is ours is solid, and lit. */
   .wall__row:not(.is-ours) .wall__num { color: transparent; -webkit-text-stroke: 1px var(--cream-3); }
   .wall__row.is-ours { background: linear-gradient(100deg, rgb(62 207 168 / 0.12), transparent 55%), var(--bg-raised); box-shadow: 0 0 0 1px rgb(62 207 168 / 0.55), var(--glow-mint); }

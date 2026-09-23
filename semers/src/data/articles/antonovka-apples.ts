@@ -27,7 +27,7 @@ export default `
 
 <h2>Harvest and storage</h2>
 <p>Antonovka is picked in autumn, late in the season, once the first cold nights have sharpened the fruit. Straight from the tree it is at its most severe. Left for a few weeks in a cool store, the flesh softens a little, the skin turns from green towards yellow and the aroma deepens into something rounder and faintly honeyed. Growers have always known this, which is why Antonovka was a winter apple long before anyone had a fridge: it keeps, and for a while it improves as it keeps.</p>
-<p>For pastila this matters twice over. Apples that keep can be baked well after the harvest, and there is a stretch after picking when they are at their best for it: still firm, still sour, but fragrant. That is the apple we want in the oven. Once baked, whipped and dried, the finished pastila carries the season forward for the rest of the year, and needs no fridge to do so.</p>
+<p>For pastila this matters twice over. Apples that keep can be baked well after the harvest, and there is a stretch after picking when they are at their best for it: still firm, still sour, but fragrant. That is the apple we want in the oven. Once baked, whipped and dried, the finished pastila carries the season forward for the rest of the year.</p>
 
 <h2>Antonovka against a sweet dessert apple</h2>
 <p>Most apples on a supermarket shelf were bred for eating raw: crisp, sweet, mild and good-looking. Those are fine qualities in a lunchbox and poor ones in an oven. Bake a dessert apple and the flesh often turns watery or mealy, the flavour thins out, and the sweetness has nothing to lean against. Purée it, whip it and dry it and you get a pale, sticky sheet that tastes mostly of sugar. Antonovka is the opposite on every count, and the one thing it does badly, being eaten raw, is not something we ask of it.</p>
@@ -40,12 +40,12 @@ export default `
 
 <h2>From orchard to bar</h2>
 <p>The apples come in whole and go into the oven that way, skins on. Baking softens the flesh and caramelises the fruit’s own sugars. The pulp is pushed through a sieve, whipped with fresh egg white until it holds a peak, spread thin, dried for hours at low heat, then layered and pressed into a loaf. Cut into 35 g portions it becomes an Apple Bar; baked until it crackles it becomes an <a href="/shop/meringues/">apple meringue</a>. The process, stage by stage, is on the <a href="/how-its-made/">how it’s made</a> page.</p>
-<p>Ninety-nine per cent of every bar is baked Antonovka; the rest is egg white. Nothing in the list exists to fix a shortcoming in the fruit, because the fruit has none that pastila cares about.</p>
+<p>Ninety-nine per cent of every bar is baked Antonovka; the rest is egg white, with the berries in the Berry Mix. Nothing in the list exists to fix a shortcoming in the fruit, because the fruit has none that pastila cares about.</p>
 
 <h2>Tasting notes</h2>
 <p>Raw, Antonovka is sharp, juicy and loud: green apple skin, a clean sour bite, a long fresh finish. It is the smell of an orchard in October more than the taste of a fruit bowl.</p>
 <p>Baked, it changes character entirely. The sourness rounds off and the flesh turns amber and soft, with a warm, caramelised depth, like the inside of a good apple pie without the pastry. This is the flavour that ends up in a Semers bar: baked apple first, warm and rounded; then Antonovka’s clean acidity, keeping the sweetness in check; then a faint note of meringue from the egg white, and nothing else. Every gram of its sugar is the apple’s own.</p>
 
 <h2>Where to go next</h2>
-<p>If you want to taste what the fuss is about, the <a href="/shop/apple-bars/">Apple Bars</a> are the shortest route: <a href="/products/apple-bar-35g/">Classic</a> is apple and egg white alone, and the place to start. If you would rather read first, <a href="/journal/what-is-pastila/">what is pastila?</a> covers the sweet itself, how it is made and why it needs no added sugar. Everything else we bake is in the <a href="/shop/">shop</a>.</p>
+<p>If you want to taste what the fuss is about, the <a href="/shop/apple-bars/">Apple Bars</a> are the shortest route: <a href="/products/apple-bar-35g/">Classic</a> is apple and egg white alone, and the place to start. If you would rather read first, <a href="/journal/what-is-pastila/">what is pastila?</a> covers the sweet itself, how it is made and why it needs no added sugar. Everything else is in the <a href="/shop/">shop</a>.</p>
 `;

@@ -33,14 +33,29 @@ const countWord = ui.productCount(products.length).replace(/^[\d\s ]+/, '');
 const few = products.length <= 2;
 const flavourCount = products.reduce((n, x) => n + x.variants.length, 0);
 const big = !few ? { n: products.length, word: countWord } : flavourCount > 1 ? { n: flavourCount, word: 'Flavours' } : { n: products[0]?.weightGrams ?? 0, word: 'grams' };
-/** Shelf life differs by format (the 50 g dessert 4 months, the 500 g carton 18), so the tick reads from the catalogue. */
+/*
+ * Shelf life differs by format (the 50 g dessert 4 months, the 500 g carton 18), so the tick reads
+ * from the catalogue. It is shown only when every product here has a figure on its card: a range
+ * over the ones that do would be read as covering the ones that do not.
+ */
 const months = products.map((p) => p.shelfLifeMonths);
+const known = months.filter((m): m is number => m != null);
 const shelfLine =
-  months.length === 0
-    ? 'Keeps for months without a fridge'
-    : Math.min(...months) === Math.max(...months)
-      ? `Keeps ${months[0]} months without a fridge`
-      : `Keeps ${Math.min(...months)}–${Math.max(...months)} months without a fridge`;
+  known.length === 0 || known.length < months.length
+    ? ''
+    : Math.min(...known) === Math.max(...known)
+      ? `Keeps ${known[0]} months`
+      : `Keeps ${Math.min(...known)}–${Math.max(...known)} months`;
+/*
+ * The "good to know" lead says only what every product here can back: the flavour additions that
+ * are really in the range, and the claims every pack in it prints.
+ */
+const extras = new Set(products.flatMap((p) => p.variants.map((v) => (v.key === 'cinnamon' ? 'cinnamon' : ['berry', 'blueberry', 'cranberry'].includes(v.key) ? 'berries' : ''))).filter(Boolean));
+const extrasLine = extras.size === 2 ? '; some flavours add berries or cinnamon' : extras.size === 1 ? `; some flavours add ${[...extras][0]}` : '';
+const CLAIM_WORDS = { 'no-added-sugar': 'no added sugar', flourless: 'no flour', 'gluten-free': 'gluten free' } as const;
+const claims = (Object.keys(CLAIM_WORDS) as (keyof typeof CLAIM_WORDS)[]).filter((k) => products.length > 0 && products.every((p) => p.diet.includes(k))).map((k) => CLAIM_WORDS[k]);
+const claimsLine = claims.length ? ` ${claims.join(', ').replace(/^./, (c) => c.toUpperCase())}.` : '';
+const knowLead = `Every product here starts from apples and egg white${extrasLine}.${claimsLine}`;
 /** The light each collection throws: its own colour, used as a glow, never a fill. */
 const glow: Record<CollectionKey, string> = {
   'apple-bars': 'rgb(62 207 168 / 0.55)',
@@ -130,9 +145,9 @@ const glow: Record<CollectionKey, string> = {
         <div class="know know--side" aria-labelledby="know-title">
           <p class="eyebrow">Good to know</p>
           <h2 id="know-title" class="know__title" data-words>Apples and egg white first.</h2>
-          <p class="lead" data-reveal>Every product here starts from apples and egg white; some flavours add berries or cinnamon. No added sugar, no flour, no preservatives.</p>
+          <p class="lead" data-reveal>{knowLead}</p>
           <ul class="ticks mt-4" data-reveal>
-            <li><Icon name="check" /> {shelfLine}</li>
+            {shelfLine && <li><Icon name="check" /> {shelfLine}</li>}
             <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
             <li><Icon name="check" /> Free shipping over €25</li>
           </ul>
@@ -148,9 +163,9 @@ const glow: Record<CollectionKey, string> = {
         <div>
           <p class="eyebrow">Good to know</p>
           <h2 id="know-title" class="know__title" data-words>Apples and egg white first.</h2>
-          <p class="lead" data-reveal>Every product here starts from apples and egg white; some flavours add berries or cinnamon. No added sugar, no flour, no preservatives.</p>
+          <p class="lead" data-reveal>{knowLead}</p>
           <ul class="ticks mt-4" data-reveal>
-            <li><Icon name="check" /> {shelfLine}</li>
+            {shelfLine && <li><Icon name="check" /> {shelfLine}</li>}
             <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
             <li><Icon name="check" /> Free shipping over €25</li>
           </ul>

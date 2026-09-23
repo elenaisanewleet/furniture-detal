@@ -44,7 +44,7 @@ const stages = [
   {
     short: 'Purée',
     name: 'Puréeing',
-    text: 'Once baked, the apples are passed through a fine sieve. Skins, cores and pips stay behind; the smooth, fibre-rich pulp goes on. Nothing is added at this stage, and nothing is taken away except the parts you would not eat anyway.',
+    text: 'Once baked, the apples are passed through a fine sieve. Skins, cores and pips stay behind; the smooth pulp goes on. Nothing is added at this stage, and nothing is taken away except the parts you would not eat anyway.',
     image: 'apple-split',
   },
   {
@@ -62,7 +62,7 @@ const stages = [
   {
     short: 'Dry',
     name: 'Slow drying',
-    text: 'The sheets dry for hours at low heat — gently, never baked a second time. Water leaves; flavour stays and concentrates. The slow pace is why a finished Apple Bar keeps for a year without a single preservative: once the water is gone, spoilage has nothing to work with.',
+    text: 'The sheets dry for hours at low heat — gently, never baked a second time. Water leaves; flavour stays and concentrates.',
     image: 'pastila-macro',
   },
   {
@@ -86,7 +86,6 @@ const never = [
   ['Gelatine', 'apple pectin sets the foam'],
   ['Flour', 'air does the lifting'],
   ['Oils or fats', 'nothing pressed, sprayed or spread on'],
-  ['Preservatives', 'slow drying does the keeping'],
   ['Colours', 'the gold is caramelised apple'],
   ['Flavourings', 'not even “natural flavouring”'],
 ];
@@ -97,7 +96,7 @@ const howTo = {
   '@id': `${pageUrl}#howto`,
   name: 'How Semers baked apple snacks are made',
   description:
-    'The eight stages behind a Semers Apple Bar: apples baked whole, puréed, whipped with egg white, spread thin, slowly dried, layered, pressed and cut. No added sugar, no flour, no preservatives.',
+    'The eight stages behind a Semers Apple Bar: apples baked whole, puréed, whipped with egg white, spread thin, slowly dried, layered, pressed and cut. No added sugar, no flour.',
   image: abs('process-oven'),
   totalTime: 'PT12H',
   supply: [
@@ -128,13 +127,13 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   <section class="page-hero container hiw-hero" aria-labelledby="hero-title">
     <div class="hiw-hero__copy">
       <p class="eyebrow">How it’s made · {site.locality}, {site.country}</p>
-      <h1 id="hero-title" data-words>Twelve hours. Four ingredients at most. <em>Nothing to hide.</em></h1>
+      <h1 id="hero-title" data-words>Twelve hours. Apples and egg white. <em>Nothing to hide.</em></h1>
       <p class="lead">This is how our baked apple snacks are made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into blocks.</p>
       <ul class="cluster hiw-facts" aria-label="Key facts">
         <li class="chip"><Icon name="apple" size={14} /> 99% baked apples</li>
         <li class="chip"><Icon name="egg" size={14} /> 1% egg white</li>
         <li class="chip"><Icon name="check" size={14} /> No added sugar</li>
-        <li class="chip"><Icon name="clock" size={14} /> 12 months, no fridge</li>
+        <li class="chip"><Icon name="clock" size={14} /> 12-month shelf life</li>
       </ul>
     </div>
     <!-- The number is the picture on this first screen: the twelve hours, outlined, with the oven's light behind it. -->
@@ -215,7 +214,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
             <li class="forge__step"><b class="forge__n" aria-hidden="true">02</b><h3>Baked whole, until it collapses.</h3><p>Hours in a low oven. The sugars caramelise on their own — that is where all the sweetness comes from.</p></li>
             <li class="forge__step"><b class="forge__n" aria-hidden="true">03</b><h3>Whipped with egg white.</h3><p>Beaten until it triples in volume and holds the air. That is the entire second ingredient.</p></li>
             <li class="forge__step"><b class="forge__n" aria-hidden="true">04</b><h3>Spread thin, dried slowly.</h3><p>Twelve hours at low heat turn the foam into a fibrous sheet you can lift in one piece. That sheet is pastila.</p></li>
-            <li class="forge__step"><b class="forge__n" aria-hidden="true">05</b><h3>Cut into a 35 g bar.</h3><p>About 97 kcal, two ingredients, sealed the same day it is cut.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">05</b><h3>Cut into a 35 g bar.</h3><p>Two ingredients, sealed the same day it is cut.</p></li>
           </ol>
           <div class="forge__rail" aria-hidden="true">
             <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
@@ -315,7 +314,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
         <div class="stats open__stats" data-stagger>
           <div class="stat"><strong data-count="99">99%</strong><span>baked Antonovka apples</span></div>
           <div class="stat"><strong data-count="1">1%</strong><span>egg white</span></div>
-          <div class="stat"><strong>0 g</strong><span>added sugar</span></div>
+          <div class="stat"><strong>No</strong><span>added sugar</span></div>
           <div class="stat"><strong>~12 h</strong><span>from oven to pack</span></div>
         </div>
       </div>
@@ -323,7 +322,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   </section>
 
   <!-- ============================== WHAT WE NEVER ADD ============================== -->
-  <!-- Two columns. The short one is lit; the long one is nine words, each struck through in red. -->
+  <!-- Two columns. The short one is lit; the long one is eight words, each struck through in red. -->
   <section class="section container" aria-labelledby="never-title">
     <div class="section-head">
       <div>
@@ -336,7 +335,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
       <div class="io__col io__col--in" data-reveal>
         <p class="eyebrow">Goes in</p>
         <ul class="ticks io__list">
-          <li><Icon name="check" /> <span><strong>Baked Antonovka apples</strong> <span class="muted">— 99% of every Apple Bar, meringue and dessert</span></span></li>
+          <li><Icon name="check" /> <span><strong>Baked Antonovka apples</strong> <span class="muted">— 99% of every App’Lite Apple Bar, meringue and 50 g dessert, as the packs print it; the Berry Mix dessert counts its berries in the 99%</span></span></li>
           <li><Icon name="check" /> <span><strong>Egg white</strong> <span class="muted">— the other 1%</span></span></li>
           <li><Icon name="check" /> <span><strong>Whole berries or cinnamon</strong> <span class="muted">— in the flavoured versions only</span></span></li>
         </ul>
@@ -350,19 +349,20 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
         </ul>
       </div>
     </div>
-    <p class="small muted mt-4 io__note">This is the recipe for our Apple Bars, Flourless Bars, meringues and baked apple desserts. Full ingredient lines are on every product page and every pack.</p>
+    <p class="small muted mt-4 io__note">This is the recipe for our App’Lite Apple Bars, meringues and 50 g baked apple desserts. Full ingredient lines are on every product page and every pack.</p>
   </section>
 
   <!-- ============================== QUALITY & SHELF LIFE ============================== -->
-  <section class="section band" aria-labelledby="keep-title">
+  <!-- Shelf lives and storage exactly as the packs give them; where a pack gives no shelf life, the page gives none. -->
+  <section class="section band" id="keep" aria-labelledby="keep-title">
     <div class="container split split--rev keep">
       <div class="frame frame--1x1 keep__frame" data-reveal>
         <img src={im('packshot-classic').src} srcset={im('packshot-classic').srcset} sizes={im('packshot-classic').srcset && SIZES.half} alt={im('packshot-classic').alt} width={im('packshot-classic').width} height={im('packshot-classic').height} loading="lazy" decoding="async" class="img-cover" />
       </div>
       <div>
         <p class="eyebrow">Quality and shelf life</p>
-        <h2 id="keep-title" data-words>Kept by drying, not by chemistry.</h2>
-        <p class="lead" data-reveal>Slow drying removes the water that spoilage needs. That is the whole preservation system, and it is why a pack of Apple Bars can sit in a drawer for a year and still taste of the oven.</p>
+        <h2 id="keep-title" data-words>Dated, labelled, and stored as the pack says.</h2>
+        <p class="lead" data-reveal>Each product keeps in its own way, so each pack says how. The best-before date printed on it is the one to trust; here is what the packs say about the rest.</p>
         <div class="specs" data-stagger>
           <div class="spec">
             <span class="spec__icon"><Icon name="shield" /></span>
@@ -371,13 +371,13 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
           </div>
           <div class="spec">
             <span class="spec__icon"><Icon name="clock" /></span>
-            <h3>Twelve months, unopened</h3>
-            <p>For Apple Bars, in a cool, dry cupboard. The other products keep for different lengths of time; the date on the pack is the one to trust.</p>
+            <h3>Shelf life, product by product</h3>
+            <p>App’Lite Apple Bars: twelve months. The 50 g desserts: nine months at +8 to +10 °C, or four at +10 to +25 °C, at no more than 75–80% relative humidity. The 500 g carton: eighteen months at +8 to +25 °C.</p>
           </div>
           <div class="spec">
             <span class="spec__icon"><Icon name="box" /></span>
-            <h3>No fridge, ever</h3>
-            <p>Room temperature is right. Once opened, keep it wrapped and finish it within a few days; it dries slowly rather than spoils.</p>
+            <h3>Storage, where the pack gives it</h3>
+            <p>Meringues: at no more than 25 °C and 75% relative humidity, away from anything with a strong smell. Blum Baker’s flourless cakes: cool and dry, between +8 and +21 °C.</p>
           </div>
           <div class="spec">
             <span class="spec__icon"><Icon name="check" /></span>
@@ -385,7 +385,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
             <p>Cut and sealed on the day it leaves the drying room. Nothing sits around waiting for a box.</p>
           </div>
         </div>
-        <p class="small muted specs__note">Allergens: contains egg. May contain traces of nuts. The full allergen line is on each product page.</p>
+        <p class="small muted specs__note">Allergens: contains egg. The full allergen line is on each product page.</p>
       </div>
     </div>
   </section>

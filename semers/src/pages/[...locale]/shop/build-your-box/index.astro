@@ -24,7 +24,7 @@ const from = formatPrice(cheapest * me.size * (1 - me.discount), locale);
 ---
 <Base
   title={`Build your box — pick ${me.size}, save ${pct}%`}
-  description={`Mix and match Apple Bars, Flourless Bars and apple meringues in a box of ${me.size}. Any combination, ${pct}% off, one delivery from Riga.`}
+  description={`Mix and match Apple Bars, flourless apple cakes and apple meringues in a box of ${me.size}. Any combination, ${pct}% off, one delivery from Riga.`}
   canonical="/shop/build-your-box/"
   ogImage="gift-box"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: 'Build your box', href: '/shop/build-your-box/' }]}
@@ -34,7 +34,7 @@ const from = formatPrice(cheapest * me.size * (1 - me.discount), locale);
     <div class="bb-hero__copy">
       <p class="eyebrow">Build your box</p>
       <h1 id="page-title" class="bb-hero__title" data-words>{me.size} bars. Your rules. {pct}% off.</h1>
-      <p class="lead bb-hero__lead">Tap to add any bar or meringue pack to a slot. Fill all {me.size} and the box goes to your cart as one item — from {from}. Want more? There is a {BOX_SIZES[2].size}-piece box at {Math.round(BOX_SIZES[2].discount * 100)}% off.</p>
+      <p class="lead bb-hero__lead">Tap to add any bar, cake or meringue pack to a slot. Fill all {me.size} and the box goes to your cart as one item — from {from}. Want more? There is a {BOX_SIZES[2].size}-piece box at {Math.round(BOX_SIZES[2].discount * 100)}% off.</p>
     </div>
     <p class="bb-hero__n" aria-hidden="true">{me.size}</p>
   </section>

@@ -4,7 +4,7 @@
  * the "+" adds the first flavour straight to the box.
  */
 import Icon from './Icon.astro';
-import { FLAVORS, formatPrice, unitPrice, type Product } from '~/data/products';
+import { FLAVORS, formatPrice, unitPrice, hasNetWeight, type Product } from '~/data/products';
 import { img, imgSrc, imgSrcset, SIZES } from '~/data/images';
 import { stripLocale } from '~/i18n/config';
 import { localizedProduct } from '~/data/copy';
@@ -37,6 +37,8 @@ const flavours = p.variants.map((v) => ui.flavours[v.key]).join(', ');
 const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
 /** Only a figure a card backs is printed; a product without one shows nothing rather than "null kcal". */
 const kcal = p.kcalPerUnit != null && p.kcalPerUnit > 0 ? p.kcalPerUnit : null;
+/** A box whose contents are not settled has no net quantity, so neither a weight nor a price per 100 g. */
+const showWeight = hasNetWeight(p);
 ---
 <article
   class={`pc ${compact ? 'pc--compact' : ''}`}
@@ -61,7 +63,7 @@ const kcal = p.kcalPerUnit != null && p.kcalPerUnit > 0 ? p.kcalPerUnit : null;
   </div>
   <div class="pc__body">
     <h3 class="pc__name">
-      <a href={`/products/${p.slug}/`}>{p.name} <span class="muted small nowrap">{p.weightGrams} g</span></a>
+      <a href={`/products/${p.slug}/`}>{p.name} {showWeight && <span class="muted small nowrap">{p.weightGrams} g</span>}</a>
     </h3>
     <p class="pc__hook">{p.hook}</p>
     <div class="pc__meta">
@@ -72,9 +74,12 @@ const kcal = p.kcalPerUnit != null && p.kcalPerUnit > 0 ? p.kcalPerUnit : null;
       <div>
         <div class="pc__price">
           <span data-card-price>{formatPrice(p.price, locale)}</span>
-          <s data-card-compare hidden={!p.compareAt}>{p.compareAt ? formatPrice(p.compareAt, locale) : ''}</s>
+          {/* Empty at build: only a compare price the owner sets in the admin is written in here, by the storefront sync. */}
+          <s data-card-compare hidden></s>
         </div>
-        <div class="pc__unit">{unitPrice(p, locale)} {ui.per100g}</div>
+        {showWeight && <div class="pc__unit">{unitPrice(p, locale)} {ui.per100g}</div>}
+        {/* A multi-pack's comparison is the sum of its singles, so it is written out as one rather than struck through. */}
+        {p.compareAt && <div class="pc__unit pc__singles">{ui.boughtSingly(p.pack, formatPrice(p.compareAt / p.pack, locale), formatPrice(p.compareAt, locale))}</div>}
       </div>
       {/* A row of colour dots standing in for the flavour list. Without a role the label is ignored and a screen reader announces nothing at all. */}
       {p.variants.length > 1 && (
@@ -89,3 +94,8 @@ const kcal = p.kcalPerUnit != null && p.kcalPerUnit > 0 ? p.kcalPerUnit : null;
     </div>
   </div>
 </article>
+
+<style>
+  /* The sum is longer than a unit price and may wrap on a narrow card rather than run out of it. */
+  .pc__singles { white-space: normal; }
+</style>

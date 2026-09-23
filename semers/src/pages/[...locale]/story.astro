@@ -33,7 +33,7 @@ const milestones = [
     key: 'Riga',
     image: 'hero-bars',
     title: 'A bakery in Riga',
-    text: 'Where Semers Group makes its App’Lite and Blum Baker’s snacks from baked apples and egg white.',
+    text: 'Where Semers Group makes its App’Lite snacks from baked apples and egg white.',
   },
   {
     key: 'Maxima & Barbora',
@@ -73,8 +73,8 @@ const shapes = [
  * a brand with no products in the catalogue drops out instead of showing an empty row.
  */
 const LINE_NOTES: Record<string, string> = {
-  "App'Lite": 'Baked apples and egg white as a bar, a meringue and a dessert. The bar and the meringue come in Classic and Berry Mix, the 50 g dessert in Classic, Cinnamon and Berry Mix, and the 500 g carton in Classic.',
-  "Blum Baker's": 'A flourless apple cake, 50 g, in Classic, Cinnamon, Blueberry and Cranberry.',
+  "App'Lite": 'Baked apples and egg white as a bar, a meringue and a dessert. The bar and the meringue come in Classic and Berry Mix, the 50 g dessert in Classic, Cinnamon and Berry Mix.',
+  "Blum Baker's": 'A flourless apple cake, 50 g, in Classic, Cinnamon, Blueberry and Cranberry: apples and egg white, with the fruit or spice in the name. We sell it alongside our own range.',
 };
 const lines = Object.keys(LINE_NOTES).flatMap((brand) => {
   const products = PRODUCTS.filter((p) => p.brand === brand && p.collection !== 'gift-sets').sort((a, b) => a.order - b.order);
@@ -88,7 +88,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 ---
 <Base
   title="Our story: baked-apple snacks made in Riga"
-  description="Semers Group makes App’Lite and Blum Baker’s snacks in Riga from baked apples and egg white: no added sugar, no flour, gluten free."
+  description="Semers Group makes App’Lite snacks in Riga from baked apples and egg white, and sells Blum Baker’s flourless apple cakes. No added sugar, no flour."
   canonical="/story/"
   ogImage="hero-bars"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Our story', href: '/story/' }]}
@@ -99,7 +99,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <h1 id="page-title" class="story-hero__title" data-words>Baked apples, egg white and a bakery in <em>Riga</em>.</h1>
     <div class="story-hero__row">
       <div class="story-hero__copy" data-reveal>
-        <p class="lead">Semers makes baked-apple snacks in Riga under two names, App’Lite and Blum Baker’s. Baked apples and egg white, with berries or cinnamon in some flavours; no added sugar and no flour. This page is what we make and how.</p>
+        <p class="lead">Semers makes baked-apple snacks in Riga under the App’Lite name: baked apples and egg white, with berries or cinnamon in some flavours, no added sugar and no flour. The shop also sells Blum Baker’s flourless apple cakes. This page is what we make, what we sell, and how.</p>
         <div class="cluster story-hero__cta">
           <a class="btn btn--lg" href="/shop/">Shop the range <Icon name="arrow" size={20} class="arrow" /></a>
           <a class="btn btn--lg btn--ghost" href="/how-its-made/">How it’s made</a>
@@ -109,13 +109,13 @@ const pad = (n: number) => String(n).padStart(2, '0');
         <div class="pf story-hero__frame">
           <img src={im('hero-bars').src} srcset={im('hero-bars').srcset} sizes={im('hero-bars').srcset && SIZES.half} alt={im('hero-bars').alt} width={im('hero-bars').width} height={im('hero-bars').height} loading="eager" fetchpriority="high" decoding="async" data-parallax="0.12" />
         </div>
-        <div class="story-hero__note"><strong>2</strong><span>ingredients in every Classic: baked apples and egg white.</span></div>
+        <div class="story-hero__note"><strong>2</strong><span>ingredients in every Classic: apples and egg white.</span></div>
       </div>
     </div>
     <div class="stats story-stats" data-stagger>
-      <div class="stat"><strong data-count="2">2</strong><span>ingredients: baked apples, egg white</span></div>
+      <div class="stat"><strong data-count="2">2</strong><span>ingredients in a Classic Apple Bar: baked apples, egg white</span></div>
       <div class="stat"><strong data-count="99">99%</strong><span>baked apples, printed on the front of the Apple Bar</span></div>
-      <div class="stat"><strong data-count={lines.length}>{lines.length}</strong><span>brands: App’Lite and Blum Baker’s</span></div>
+      <div class="stat"><strong data-count={lines.length}>{lines.length}</strong><span>brands in the shop: App’Lite and Blum Baker’s</span></div>
       <div class="stat"><strong data-count={countryCount}>{countryCount}</strong><span>countries with Semers on a shelf</span></div>
     </div>
   </section>
@@ -149,13 +149,13 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <section class="section container" aria-labelledby="loaf-title">
     <div class="loaf">
       <div data-reveal>
-        <p class="eyebrow">What we make</p>
-        <h2 id="loaf-title" data-words>Two ingredients, five shapes.</h2>
+        <p class="eyebrow">The range</p>
+        <h2 id="loaf-title" data-words>Apples and egg white, five ways.</h2>
         <div class="prose mt-4">
-          <p>App’Lite is the 35 g Apple Bar, the 35 g Apple Meringue and the Baked Apple Dessert, in a 50 g pack and a 500 g carton. Blum Baker’s is a 50 g flourless apple cake. Every one of them starts from baked apples and egg white.</p>
+          <p>App’Lite is the 35 g Apple Bar, the 35 g Apple Meringue and the 50 g Baked Apple Dessert. The shop also sells the Classic Apple Dessert in a 500 g carton, and Blum Baker’s 50 g flourless apple cake. Every one of them lists apples and egg white as its ingredients, with berries or cinnamon in some flavours.</p>
           <p>This shop came last. Until now you found us at Maxima, on Barbora and in stores across Europe; now the same cases can leave Riga for your door.</p>
         </div>
-        <ul class="shapes" aria-label="What we make">
+        <ul class="shapes" aria-label="What we sell">
           {shapes.map((s, i) => (
             <li>
               <a href={`/products/${s.product.slug}/`}>
@@ -266,7 +266,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
       <div class="section-head">
         <div>
           <p class="eyebrow">Two names on the packs</p>
-          <h2 id="lines-title" data-words>The names on our packs, explained.</h2>
+          <h2 id="lines-title" data-words>The names on the packs, explained.</h2>
         </div>
         <a class="link" href="/shop/">Shop all products</a>
       </div>

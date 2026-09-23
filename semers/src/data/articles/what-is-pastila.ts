@@ -11,13 +11,13 @@ export default `
 
 <h2>Where pastila comes from</h2>
 <p>The idea is older than any brand. Long before anyone sold it, households across the apple-growing north were preserving the harvest by baking the fruit, spreading the pulp thin and drying it in the fading heat of the stove. It was practical before it was pleasant: drying was the surest way to carry an orchard through the winter. These fruit pastes are the ancestors of pastila.</p>
-<p>Pastila moved the way most good food moves: with people, along trade routes. It needs neither a fridge nor careful handling, and it found a home across the north of Europe wherever sour apples grow and winters are long. Today it is made in the Baltics, including by us in Riga, and sold from Latvia to Germany, Poland, Lithuania, Austria and Bulgaria. More about the bakery is on <a href="/story/">our story</a> page.</p>
+<p>Pastila moved the way most good food moves: with people, along trade routes. It travelled well, and it found a home across the north of Europe wherever sour apples grow and winters are long. Today it is made in the Baltics, including by us in Riga, and sold from Latvia to Germany, Poland, Lithuania, Austria and Bulgaria. More about the bakery is on <a href="/story/">our story</a> page.</p>
 
 <h2>How pastila is made</h2>
 <p>Six steps, most of them slow. The full version is on the <a href="/how-its-made/">how it’s made</a> page; this is the short one.</p>
 <ul>
   <li><strong>Bake.</strong> Whole Antonovka apples go into the oven, skins on, until the flesh softens and the fruit’s own sugars caramelise. All the sweetness is made here.</li>
-  <li><strong>Purée.</strong> The baked fruit is pushed through a fine sieve. Skins, cores and pips stay behind; the smooth, fibre-rich pulp goes on.</li>
+  <li><strong>Purée.</strong> The baked fruit is pushed through a fine sieve. Skins, cores and pips stay behind; the smooth pulp goes on.</li>
   <li><strong>Whip.</strong> The warm purée is whipped with fresh egg white until it triples in volume and holds a soft peak. Egg white is about one per cent of the recipe.</li>
   <li><strong>Spread.</strong> The foam is spread in thin, even sheets on trays, so each layer dries evenly with no wet centre and no crust.</li>
   <li><strong>Dry.</strong> The sheets dry for hours at low heat. Water leaves; flavour concentrates. Nothing is baked a second time.</li>
@@ -34,12 +34,12 @@ export default `
 <p>The colour runs from amber to light brown, deeper at the edges where the sheets caramelised. The surface is matt and faintly grainy, never glossy. Press a slice and it gives like a firm sponge, then springs most of the way back. Bite it and the first texture is dry and airy, close to a fine meringue; a second later it turns soft and slightly chewy, and the layers separate on the tongue.</p>
 <p>The taste is baked apple first, warm and rounded, like the filling of a good apple pie without the pastry. Behind it is Antonovka’s clean sourness, which stops the sweetness from cloying. There is a faint note of meringue at the finish and nothing else, because there is nothing else in it.</p>
 
-<h2>Pastila today: bar, meringue, cake, dessert</h2>
-<p>The traditional form is a layered loaf, sliced at the table. The same base, cut into 35 g portions and wrapped, becomes an <a href="/shop/apple-bars/">Apple Bar</a>, which is how most people now meet pastila for the first time. Bake the foam until it crackles instead of drying it and you get a crisp <a href="/shop/meringues/">apple meringue</a>, with no added sugar. The <a href="/shop/flourless-bars/">flourless apple cake</a> starts from the same two ingredients, apples and egg white; portion the base as a square and it is a <a href="/products/applite-baked-apple-dessert-50g/">baked-apple dessert</a>, which also comes as a <a href="/products/applite-baked-apple-dessert-500g/">500 g carton</a>. One base, four shapes.</p>
+<h2>Pastila today: bar, meringue, dessert</h2>
+<p>The traditional form is a layered loaf, sliced at the table. The same base, cut into 35 g portions and wrapped, becomes an App’Lite <a href="/shop/apple-bars/">Apple Bar</a>, which is how most people now meet pastila for the first time. Bake the foam until it crackles instead of drying it and you get a crisp App’Lite <a href="/shop/meringues/">apple meringue</a>, with no added sugar. Portion the base as a square and it is the App’Lite <a href="/products/applite-baked-apple-dessert-50g/">baked-apple dessert</a>. One base, three shapes. The shop also sells Blum Baker’s <a href="/shop/flourless-bars/">flourless apple cake</a>, made from the same two ingredients, apples and egg white.</p>
 
 <h2>How to eat it, and how to keep it</h2>
 <p>The original way is with tea: a thick slice beside strong black tea. A bar goes in a bag, a desk drawer or a lunchbox and survives all three. Sliced thin, pastila does well on a cheese board, where its sourness works the way quince paste does; crumbled, it goes over porridge or yoghurt.</p>
-<p>Storage is easy, because drying has already done the work. Unopened, an Apple Bar keeps for twelve months; the shelf life of everything else we make is on its product page and its pack. Once opened, wrap it and eat it within a few days; if you forget, it will slowly dry further rather than spoil. More in the <a href="/faq/">FAQ</a>.</p>
+<p>An Apple Bar has a twelve-month shelf life. For everything else, the pack gives the best-before date and, where it states them, the storage conditions. More in the <a href="/faq/">FAQ</a>.</p>
 
 <h2>Three questions people ask</h2>
 
