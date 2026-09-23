@@ -13,7 +13,8 @@
 import { DEFAULT_LOCALE, type Locale } from '~/i18n/config';
 import type { Collection, Product } from './products';
 import type { Faq } from './faq';
-import { PRODUCT_COPY, COLLECTION_COPY, FAQ_COPY } from './copy.data';
+import { PRODUCT_COPY, COLLECTION_COPY } from './copy.data';
+import { FAQ_COPY } from './copy.faq.data';
 
 /** The only product fields a translation is allowed to replace. */
 export type ProductCopy = Pick<Product, 'name' | 'title' | 'hook' | 'summary' | 'description' | 'ingredients' | 'allergens'>;
