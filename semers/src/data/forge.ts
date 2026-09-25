@@ -8,9 +8,10 @@
  * pair of point arrays to interpolate — no matching, no path-command algebra,
  * and a shape can be redrawn in any editor without touching the code.
  *
- * Shared between the page and its script so the markup can render the last
- * frame as its static `d`: with no JavaScript, or with reduced motion asked
- * for, the reader still sees the bar rather than an empty box.
+ * The page no longer morphs between them (the light shop has no pinned scroll
+ * effect): it renders the last frame, the bar, as its static `d`. The other
+ * four and the colours are kept so the sequence can be brought back without
+ * redrawing it.
  */
 export const FORGE_SHAPES = [
   /* whole apple, with the dimple at the top */

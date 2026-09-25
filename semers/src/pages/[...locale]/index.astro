@@ -49,8 +49,8 @@ const { flatRate, freeFrom } = site.shipping;
         <h1 id="hero-title">{ui.heroTitle[0]} <em>{ui.heroTitle[1]}</em></h1>
         <p class="hero2__lead">App’Lite bars, meringues and desserts, and Blum Baker’s flourless apple cakes. No added sugar. The ingredients and the storage conditions are on every product’s page.</p>
         <div class="hero__cta">
-          <a class="btn btn--lg btn--accent" href="/shop/">Shop now <Icon name="arrow" size={18} class="arrow" /></a>
-          <a class="btn btn--lg btn--ghost" href={`/products/${bar.slug}/`}>{bar.name} — {formatPrice(bar.price, locale)}</a>
+          <a class="btn btn--accent" href="/shop/">Shop now <Icon name="arrow" size={18} class="arrow" /></a>
+          <a class="btn btn--ghost" href={`/products/${bar.slug}/`}>{bar.name} — {formatPrice(bar.price, locale)}</a>
         </div>
       </div>
     </div>
@@ -103,10 +103,27 @@ const { flatRate, freeFrom } = site.shipping;
   .hero2__in { position: relative; z-index: 1; display: flex; align-items: center; min-height: clamp(28.75rem, 42vw, 37.5rem); }
   .hero2__txt { max-width: 32.5rem; padding-block: 3.25rem; }
   .hero2 .eyebrow { color: var(--fg-2); }
-  .hero2 h1 { margin: 1.4rem 0 1.1rem; font-size: var(--fs-hero); line-height: 0.94; }
-  .hero2 h1 em { display: block; font-style: normal; color: var(--accent-display); }
+  /*
+   * Stacked, as on the approved design. The whole line fits the column in every
+   * language, so a measure narrower than the sentence and wider than either half
+   * (4.6em; the longest half is 3.9em) lets the balanced wrap break it in two,
+   * where the orange half begins, without a hard break in the copy.
+   */
+  .hero2 h1 { max-width: 4.6em; margin: 1.4rem 0 1.1rem; font-size: var(--fs-hero); line-height: 0.94; }
+  /*
+   * The approved design slants the orange half. The display face has no italic
+   * of its own and base.css turns synthesis off site-wide, so it is allowed back
+   * here, for this one headline.
+   */
+  .hero2 h1 em { font-style: italic; font-synthesis: style; color: var(--accent-display); }
   .hero2__lead { margin: 0 0 1.75rem; font-size: 1.0625rem; line-height: 1.62; color: var(--fg-2); }
   .hero2 .hero__cta { margin-top: 0; }
+  /*
+   * Both buttons one size, as on the approved design: 56 px tall, so they sit
+   * side by side in the Russian text column too, and match when they stack.
+   * The orange one keeps the 19 px bold its white type needs (base.css).
+   */
+  .hero2 .hero__cta .btn { min-height: 3.5rem; padding: 0 1.6rem; }
   /* Phones: the packs above the words, full width, in the flow. */
   @media (max-width: 55rem) {
     .hero2__img { position: relative; top: auto; right: auto; display: block; width: 100%; padding: 1.1rem 0.5rem 0; transform: none; }

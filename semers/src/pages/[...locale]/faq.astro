@@ -275,7 +275,8 @@ const topics = groups.length;
   @media (min-width: 60rem) { .fq { grid-template-columns: 16.5rem minmax(0, 1fr); gap: clamp(2.5rem, 6vw, 6rem); } }
 
   .fq-rail { position: sticky; z-index: 5; }
-  .fq-rail__glass { position: relative; background: rgb(251 249 244 / 0.92); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid var(--line); border-radius: var(--r-lg); }
+  .fq-rail__glass { position: relative; background: rgb(251 249 244 / 0.92); backdrop-filter: blur(18px) saturate(140%); border: 1px solid var(--line); border-radius: var(--r-lg); }
+  @supports (-webkit-backdrop-filter: none) { .fq-rail__glass { -webkit-backdrop-filter: blur(18px) saturate(140%); } }
   .fq-rail__label { margin: 0; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); }
   .fq-rail__list { list-style: none; margin: 0; padding: 0; display: grid; }
   .fq-rail__list a, .fq-rail__ask { display: flex; align-items: center; gap: 0.7rem; min-height: 2.75rem; min-width: 0; text-decoration: none; color: var(--fg-2); transition: color var(--dur-fast); }

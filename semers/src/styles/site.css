@@ -53,7 +53,14 @@
 .pc__meta { display: flex; flex-wrap: wrap; gap: 0.4rem; font-size: var(--fs-xs); color: var(--fg-3); }
 .pc__meta span { white-space: nowrap; }
 .pc__meta span:not(:last-child)::after { content: '·'; margin-left: 0.4rem; color: var(--fg-3); }
-.pc__foot { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem; margin-top: auto; padding-top: 0.7rem; }
+/*
+ * The price column on the left, the button pinned bottom-right, so every card
+ * in a row ends on the same line whatever the price column holds: a 12-pack's
+ * "bought singly" sum, or no price per 100 g at all (a box whose contents are
+ * not settled reserves the line instead, so its price sits level with the rest).
+ */
+.pc__foot { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 0.5rem; margin-top: auto; padding-top: 0.7rem; }
+.pc__unit--none::before { content: '\00a0'; }
 .pc__price { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; font-family: var(--font-sans); font-weight: 700; font-size: 1.25rem; letter-spacing: 0; font-variant-numeric: tabular-nums; color: var(--cream-0); }
 .pc__price s { color: var(--fg-3); font-weight: 400; font-size: var(--fs-sm); }
 .pc__unit { font-size: var(--fs-xs); color: var(--fg-3); font-weight: 400; white-space: nowrap; font-variant-numeric: tabular-nums; }
@@ -73,6 +80,9 @@
   .pc__hook { display: none; }
   .pc__price { font-size: var(--fs-md); }
   .pc__add { min-height: 2.5rem; padding: 0 0.8rem; font-size: 0.8125rem; }
+  /* Two cards abreast leave no room beside the price: the button goes under it, in every card alike. */
+  .pc__foot { grid-template-columns: minmax(0, 1fr); gap: 0.6rem; }
+  .pc__add { justify-self: start; }
   .badge { top: 0.6rem; left: 0.6rem; }
 }
 
@@ -135,7 +145,7 @@
 /* ---------- Cart drawer ---------- */
 .drawer[hidden] { display: none; }
 .drawer { position: fixed; inset: 0; z-index: 100; }
-.drawer__scrim { position: absolute; inset: 0; background: rgb(20 26 18 / 0.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); animation: fade var(--dur) both; }
+.drawer__scrim { position: absolute; inset: 0; background: rgb(20 26 18 / 0.45); backdrop-filter: blur(3px); animation: fade var(--dur) both; }
 .drawer__panel { position: absolute; top: 0; right: 0; bottom: 0; width: min(29rem, 100vw); background: var(--bg-raised); border-left: 1px solid var(--line); display: grid; grid-template-rows: auto auto 1fr auto; box-shadow: -30px 0 60px -30px rgb(20 26 18 / 0.35); animation: slide-in var(--dur-slow) var(--ease-expo) both; }
 .drawer__head { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem var(--sp-5); border-bottom: 1px solid var(--line); }
 .drawer__head h2 { font-size: var(--fs-xl); }
@@ -171,11 +181,13 @@
 .drawer__empty[hidden] { display: none; }
 .drawer__foot { padding: 1rem var(--sp-5) calc(1rem + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); display: grid; gap: 0.6rem; background: var(--bg-raised); }
 .drawer__row { display: flex; justify-content: space-between; align-items: baseline; font-size: var(--fs-lg); font-weight: 700; color: var(--cream-0); }
+/* Safari before 18 reads only the prefixed property; see Header.astro for why it sits apart. */
+@supports (-webkit-backdrop-filter: none) { .drawer__scrim { -webkit-backdrop-filter: blur(3px); } .sticky-buy { -webkit-backdrop-filter: blur(14px); } }
 @keyframes slide-in { from { transform: translateX(100%); } to { transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
 /* ---------- Sticky buy bar ---------- */
-.sticky-buy { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgb(251 249 244 / 0.94); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-top: 1px solid var(--line); transform: translateY(110%); visibility: hidden; transition: transform var(--dur) var(--ease-expo), visibility 0s linear var(--dur); padding-bottom: env(safe-area-inset-bottom); }
+.sticky-buy { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; background: rgb(251 249 244 / 0.94); backdrop-filter: blur(14px); border-top: 1px solid var(--line); transform: translateY(110%); visibility: hidden; transition: transform var(--dur) var(--ease-expo), visibility 0s linear var(--dur); padding-bottom: env(safe-area-inset-bottom); }
 .sticky-buy.is-visible { transform: none; visibility: visible; transition-delay: 0s; }
 .has-sticky-buy .ftr { padding-bottom: 4.5rem; }
 .sticky-buy__in { display: flex; align-items: center; gap: 1rem; padding: 0.7rem var(--gutter); }

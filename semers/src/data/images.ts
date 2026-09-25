@@ -235,6 +235,12 @@ export const IMAGES: Record<string, SiteImage> = {
     fit: 'contain',
     widths: [480, 960, 1448],
   },
+  /*
+   * The meringue and flourless photos below were retouched for the tinted panels: the studio
+   * backdrop was pushed to pure white (the panel multiplies it into its tint, so an off-white
+   * backdrop showed as a pale rectangle), and a stray black mark was taken off the right edge of
+   * the flourless Original. Nothing on the packs themselves was changed.
+   */
   'pack-meringue-classic': {
     local: '/img/pack-meringue-classic.webp',
     alt: "Green tub of App'Lite Classic baked apple dessert meringues, marked 3 kcal per piece",

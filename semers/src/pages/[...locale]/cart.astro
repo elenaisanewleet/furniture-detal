@@ -129,7 +129,8 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 </script>
 
 <style>
-  .cart-page { padding-top: 0.9rem; }
+  /* The same air above the heading as the shop and checkout, which open with a breadcrumb or an eyebrow. */
+  .cart-page { padding-top: clamp(1.75rem, 4vw, 2.5rem); }
   .cart-page__title { font-size: clamp(2rem, 1.4rem + 3vw, 2.75rem); }
 
   /* ------------------------------------------------------------ the two cards */

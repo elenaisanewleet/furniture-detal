@@ -39,7 +39,7 @@ const items = sources.flatMap((p) =>
     id: `${p.slug}:${v.key}`,
     name: `${p.name} ${ui.flavours[v.key]}`,
     // The kcal is left out where no card backs a per-piece figure, rather than printed as "null kcal".
-    sub: [`${p.weightGrams} g`, p.kcalPerUnit ? `${p.kcalPerUnit} kcal` : '', formatPrice(v.price ?? p.price, locale)].filter(Boolean).join(' · '),
+    sub: [ui.grams(p.weightGrams), p.kcalPerUnit ? ui.kcal(p.kcalPerUnit) : '', formatPrice(v.price ?? p.price, locale)].filter(Boolean).join(' · '),
     price: v.price ?? p.price,
     // Each flavour shows its own pack where there is a photograph of it.
     image: imgSmall(v.image ?? p.images[0]),
@@ -157,7 +157,8 @@ const cols = Math.ceil(size / 2);
   .bi__txt { display: grid; gap: 0.15rem; min-width: 0; }
   .bi__name { font-weight: 600; font-size: var(--fs-sm); line-height: 1.25; color: var(--cream-0); }
   .bi__dot { display: inline-block; width: 0.55em; height: 0.55em; border-radius: 50%; background: var(--sw); margin-right: 0.45em; box-shadow: none; vertical-align: 0.05em; }
-  .bi__sub { font-size: var(--fs-xs); color: var(--fg-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* The price is the last thing on this line, so on a narrow phone the line wraps rather than being cut off with an ellipsis. */
+  .bi__sub { font-size: var(--fs-xs); color: var(--fg-3); }
   .bi__add { display: inline-flex; align-items: center; justify-content: center; gap: 0.3em; min-height: 2.75rem; min-width: 2.75rem; padding: 0 0.95rem 0 0.7rem; border-radius: var(--r-pill); border: 1px solid rgb(20 26 18 / 0.3); color: var(--cream-0); font-size: var(--fs-sm); font-weight: 600; line-height: 1; white-space: nowrap; transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast), transform var(--dur-fast) var(--ease-out); }
   .bi__add:hover { background: var(--cream-1); color: var(--night-900); border-color: var(--cream-1); }
   .bi__add:active { transform: scale(0.96); }

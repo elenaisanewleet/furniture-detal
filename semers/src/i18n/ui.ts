@@ -46,6 +46,8 @@ const en = {
   allProducts: (n: number) => `All ${n} ${pick('en-IE', n, { one: 'product', other: 'products' })}`,
   /* Net quantity as the pack states it: "35 g", or "12 × 35 g" for a multi-pack. */
   grams: (g: number) => `${g} g`,
+  /* Energy of one piece, in the unit the label prints: "112 kcal". */
+  kcal: (n: number) => `${n} kcal`,
   packOf: (n: number, g: number) => `${n} × ${g} g`,
   flavoursAria: (n: number, list: string) => `${n} ${pick('en-IE', n, { one: 'flavour', other: 'flavours' })}: ${list}`,
   view: 'View',
@@ -361,6 +363,7 @@ const ru: Partialised = {
   shippingFlat: (rate: string, from: string) => `${rate}, от ${from} бесплатно`,
   allProducts: (n: number) => `Все ${n} ${pick('ru-RU', n, RU_ITEM)}`,
   grams: (g: number) => `${g} г`,
+  kcal: (n: number) => `${n} ккал`,
   packOf: (n: number, g: number) => `${n} × ${g} г`,
   flavoursAria: (n: number, list: string) => `${n} ${pick('ru-RU', n, { one: 'вкус', few: 'вкуса', many: 'вкусов' })}: ${list}`,
   view: 'Смотреть',
@@ -651,6 +654,7 @@ const lv: Partialised = {
   shippingFlat: (rate: string, from: string) => `${rate}; no ${from} — bez maksas`,
   allProducts: (n: number) => `Visas ${n} ${pick('lv-LV', n, LV_ITEM)}`,
   grams: (g: number) => `${g} g`,
+  kcal: (n: number) => `${n} kcal`,
   packOf: (n: number, g: number) => `${n} × ${g} g`,
   flavoursAria: (n: number, list: string) => `${n} ${pick('lv-LV', n, { zero: 'garšu', one: 'garša', other: 'garšas' })}: ${list}`,
   view: 'Skatīt',

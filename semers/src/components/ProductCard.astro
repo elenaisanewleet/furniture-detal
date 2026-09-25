@@ -82,7 +82,7 @@ const weight = showWeight ? (p.pack > 1 ? ui.packOf(p.pack, Math.round(p.weightG
           {/* Empty at build: only a compare price the owner sets in the admin is written in here, by the storefront sync. */}
           <s data-card-compare hidden></s>
         </div>
-        {showWeight && <div class="pc__unit">{unitPrice(p, locale)} {ui.per100g}</div>}
+        {showWeight ? <div class="pc__unit">{unitPrice(p, locale)} {ui.per100g}</div> : <div class="pc__unit pc__unit--none" aria-hidden="true"></div>}
         {/* A multi-pack's comparison is the sum of its singles, so it is written out as one rather than struck through. */}
         {p.compareAt && <div class="pc__unit pc__singles">{ui.boughtSingly(p.pack, formatPrice(p.compareAt / p.pack, locale), formatPrice(p.compareAt, locale))}</div>}
       </div>

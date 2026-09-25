@@ -145,28 +145,18 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 
   <!-- ============================== THE FORGE ============================== -->
   <!--
-    An apple that becomes a bar as the reader scrolls. The section pins one
-    screen and the scroll position is the timeline: the silhouette morphs,
-    the colour turns from apple red to baked crumb, and the five captions
-    beside it change in step. The drawing is the light source of this screen;
-    its halo takes the colour of whatever stage the apple is in.
-
-    The silhouette is one path with 96 points, morphed between five key shapes
-    that were authored as ordinary SVG outlines and resampled by arc length at
-    load. Colour, steam, air bubbles and the wrapper ride the same progress
-    value. The drawing is aria-hidden on purpose: the five steps beside it say
-    the same thing in words, and a reader who cannot see the apple should get
-    the sentences rather than a description of an animation.
-
-    The flat version is the default and the pinned one is opted into by the
-    script (`forge--live`): with no JavaScript, or with reduced motion asked
-    for, the five steps are a list and the drawing rests on the bar.
+    An apple on its way to a bar, told in five numbered steps beside a drawing
+    of the finished bar. It used to pin a screen and morph the apple as the
+    reader scrolled, with four of the five steps invisible until reached; the
+    approved light shop has no scroll effect that hides words at rest, so every
+    reader now gets what reduced motion and no JavaScript always got: the five
+    steps as a list, all readable. The drawing is aria-hidden on purpose: the
+    steps say the same thing in words.
   -->
   <section class="forge" aria-labelledby="forge-title" data-forge>
     <div class="forge__sticky">
       <div class="container forge__inner">
         <div class="forge__art">
-          <div class="forge__halo" aria-hidden="true"></div>
           <svg class="forge__svg" viewBox="0 0 200 200" aria-hidden="true" focusable="false">
             <defs>
               <!-- The stage colour is a wash of light over a dark body, not a fill: the silhouette stays a lit window in the night. -->
@@ -216,10 +206,6 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
             <li class="forge__step"><b class="forge__n" aria-hidden="true">04</b><h3>Spread thin, dried slowly.</h3><p>Twelve hours at low heat turn the foam into a fibrous sheet you can lift in one piece. That sheet is pastila.</p></li>
             <li class="forge__step"><b class="forge__n" aria-hidden="true">05</b><h3>Cut into a 35 g bar.</h3><p>Two ingredients, sealed the same day it is cut.</p></li>
           </ol>
-          <div class="forge__rail" aria-hidden="true">
-            <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
-            <span class="forge__tick"><i></i></span><span class="forge__tick"><i></i></span>
-          </div>
           <a class="btn forge__cta" href="/shop/apple-bars/">Shop the bars <Icon name="arrow" size={18} class="arrow" /></a>
         </div>
       </div>
@@ -301,10 +287,10 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   </section>
 
   <!-- ============================== CUT ONE OPEN ============================== -->
-  <!-- The one full-bleed photograph on the page: the pastila apple, lit from inside, with the copy standing in its light. -->
+  <!-- The one full-bleed photograph on the page: the layers of a cut bar up close, under a cream wash, with the copy standing on it. (The dark-set apple render that stood here read as a second dark room on a light site.) -->
   <section class="open" aria-labelledby="open-title">
     <div class="open__media">
-      <img class="open__img" src={im('apple-render-wide').src} srcset={im('apple-render-wide').srcset} sizes="100vw" alt={im('apple-render-wide').alt} width={im('apple-render-wide').width} height={im('apple-render-wide').height} loading="lazy" decoding="async" data-parallax="0.2" />
+      <img class="open__img" src={im('pastila-texture').src} srcset={im('pastila-texture').srcset} sizes="100vw" alt={im('pastila-texture').alt} width={im('pastila-texture').width} height={im('pastila-texture').height} loading="lazy" decoding="async" data-parallax="0.2" />
     </div>
     <div class="container open__in">
       <div class="open__copy">
@@ -414,147 +400,6 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
 </Base>
 
 <script>
-  /**
-   * The forge: an apple that becomes a bar as the reader scrolls.
-   *
-   * Work is done on a scroll, not on a clock: a rAF is scheduled only when the
-   * page has actually moved and only while the section is on screen, so a
-   * reader who stops scrolling costs nothing and one who never reaches the
-   * section costs a single IntersectionObserver.
-   */
-  import { FORGE_SHAPES, FORGE_COLOURS } from '~/data/forge';
-
-  const section = document.querySelector<HTMLElement>('[data-forge]');
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)');
-
-  if (section && !reduced.matches) {
-    section.classList.add('forge--live');
-    const svg = section.querySelector('svg')!;
-    const shape = section.querySelector<SVGPathElement>('[data-forge-shape]')!;
-    const clip = section.querySelector<SVGPathElement>('[data-forge-clip]')!;
-    const stops = [...section.querySelectorAll<SVGStopElement>('[data-forge-stop]')];
-    const steps = [...section.querySelectorAll<HTMLElement>('.forge__step')];
-    const ticks = [...section.querySelectorAll<HTMLElement>('.forge__tick i')];
-    const layer = (name: string) => section.querySelector<SVGElement>(`[data-forge-${name}]`);
-    const stem = layer('stem'), steam = layer('steam'), foam = layer('foam'), wrap = layer('wrap');
-
-    /* The header is sticky and sits on top of the pin; the pinned screen starts under it, whatever height the header has today. */
-    const header = document.querySelector<HTMLElement>('header');
-    const measure = () => section.style.setProperty('--hdr', `${header ? header.offsetHeight : 0}px`);
-    measure();
-
-    /** How many points each silhouette is cut into. Enough that the curve reads smooth at 26rem. */
-    const N = 96;
-    /*
-     * getPointAtLength needs a path in the document, and this one must never be
-     * seen: it is a measuring tape, not a drawing.
-     */
-    const probe = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    svg.appendChild(probe);
-    const frames = FORGE_SHAPES.map((d) => {
-      probe.setAttribute('d', d);
-      const len = probe.getTotalLength();
-      const pts: number[] = [];
-      for (let i = 0; i < N; i++) {
-        const pt = probe.getPointAtLength((i / N) * len);
-        pts.push(pt.x, pt.y);
-      }
-      return pts;
-    });
-    probe.remove();
-
-    const clamp = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
-    /** Which pair of stages `t` falls between, and how far across that pair it is. */
-    const span = (t: number) => {
-      const s = Math.min(frames.length - 1.0001, clamp(t) * (frames.length - 1));
-      const i = Math.floor(s);
-      return [i, s - i] as const;
-    };
-    /** 1 while `t` is inside [b, c], ramping up from a and back down to d. */
-    const window_ = (t: number, a: number, b: number, c: number, d: number) =>
-      Math.min(clamp((t - a) / (b - a)), clamp((d - t) / (d - c)));
-
-    /*
-     * A closed Catmull-Rom spline through the blended points. Straight segments
-     * between 96 samples are visibly faceted on the apple's shoulders; the same
-     * points read as one continuous curve once each is given tangents.
-     */
-    const toPath = (p: number[]) => {
-      const at = (i: number) => {
-        const j = ((i % N) + N) % N;
-        return [p[j * 2], p[j * 2 + 1]] as const;
-      };
-      let d = `M ${at(0)[0].toFixed(2)} ${at(0)[1].toFixed(2)}`;
-      for (let i = 0; i < N; i++) {
-        const [x0, y0] = at(i - 1), [x1, y1] = at(i), [x2, y2] = at(i + 1), [x3, y3] = at(i + 2);
-        d += ` C ${(x1 + (x2 - x0) / 6).toFixed(2)} ${(y1 + (y2 - y0) / 6).toFixed(2)}`
-          + ` ${(x2 - (x3 - x1) / 6).toFixed(2)} ${(y2 - (y3 - y1) / 6).toFixed(2)}`
-          + ` ${x2.toFixed(2)} ${y2.toFixed(2)}`;
-      }
-      return `${d} Z`;
-    };
-
-    const blend = new Array(N * 2);
-    let shown = -1;
-
-    const draw = () => {
-      const box = section.getBoundingClientRect();
-      const travel = section.offsetHeight - window.innerHeight;
-      const t = travel > 0 ? clamp(-box.top / travel) : 0;
-
-      const [i, f] = span(t);
-      const a = frames[i], b = frames[i + 1] || a;
-      for (let k = 0; k < N * 2; k++) blend[k] = a[k] + (b[k] - a[k]) * f;
-      const d = toPath(blend);
-      shape.setAttribute('d', d);
-      clip.setAttribute('d', d);
-
-      const ca = FORGE_COLOURS[i], cb = FORGE_COLOURS[i + 1] || ca;
-      stops.forEach((stop, s) => {
-        const [r, g, bl] = ca[s].map((v, c) => Math.round(v + (cb[s][c] - v) * f));
-        stop.setAttribute('stop-color', `rgb(${r} ${g} ${bl})`);
-        // The halo behind the drawing is lit by the drawing's own top colour.
-        if (s === 0) section.style.setProperty('--halo', `${r} ${g} ${bl}`);
-      });
-
-      // Each layer belongs to one part of the story and is only paid for there.
-      if (stem) stem.style.opacity = String(window_(t, -1, 0, 0.05, 0.15));
-      if (steam) steam.style.opacity = String(window_(t, 0.12, 0.22, 0.34, 0.46));
-      if (foam) foam.style.opacity = String(window_(t, 0.38, 0.5, 0.66, 0.78));
-      if (wrap) wrap.style.opacity = String(window_(t, 0.9, 0.99, 9, 10));
-
-      const step = Math.min(steps.length - 1, Math.floor(t * steps.length * 0.9999));
-      if (step !== shown) {
-        steps.forEach((el, k) => el.classList.toggle('is-on', k === step));
-        shown = step;
-      }
-      ticks.forEach((el, k) => el.style.setProperty('--f', String(clamp(t * ticks.length - k))));
-    };
-
-    let queued = false;
-    const schedule = () => {
-      if (queued) return;
-      queued = true;
-      requestAnimationFrame(() => {
-        queued = false;
-        draw();
-      });
-    };
-
-    let watching = false;
-    const onScroll = () => watching && schedule();
-    new IntersectionObserver(
-      ([entry]) => {
-        watching = entry.isIntersecting;
-        schedule();
-      },
-      { rootMargin: '10% 0px' },
-    ).observe(section);
-
-    addEventListener('scroll', onScroll, { passive: true });
-    addEventListener('resize', () => { measure(); schedule(); }, { passive: true });
-    draw();
-  }
   /*
    * The stages: whichever caption sits in the middle band of the screen is the
    * one whose photograph shows. One observer, a band rather than a threshold,
@@ -603,18 +448,10 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   @media (max-width: 63.99rem) { .hiw-hero__fig { margin-top: 0.5rem; } }
 
   /* ------------------------------------------------------------- the forge */
-  /*
-   * The flat version is the default and the pinned one is opted into, not the
-   * other way round. A reader with no JavaScript would otherwise get three
-   * screens of scroll holding one frozen apple and four paragraphs at opacity
-   * zero — the section is only worth its height once something is driving it,
-   * so `forge--live` is added by the script and by nothing else.
-   */
+  /* One flat band: the drawing of the bar beside the five steps, nothing pinned and nothing hidden. */
   .forge { position: relative; isolation: isolate; background: var(--night-950); border-block: 1px solid var(--line); padding-block: clamp(2.5rem, 5vw, 4.5rem); --halo: 208 138 69; }
   .forge__inner { display: grid; gap: clamp(1.4rem, 3vw, 2.5rem); align-items: center; }
   .forge__art { position: relative; justify-self: center; width: min(34rem, 46vw); }
-  /* The drawing is the light on this screen: a soft halo in the colour of the stage it is in. */
-  .forge__halo { position: absolute; inset: -30%; z-index: -1; pointer-events: none; background: none; }
   .forge__svg { display: block; width: 100%; height: auto; overflow: visible; filter: none; }
   /*
    * The drawing's colours live here rather than on the SVG elements: var() in a
@@ -638,43 +475,12 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .forge__n { display: block; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.16em; color: var(--accent-ink); }
   .forge__step h3 { font-size: var(--fs-xl); margin: 0.25rem 0 0.4rem; letter-spacing: -0.01em; line-height: var(--lh-snug); color: var(--cream-0); }
   .forge__step p { color: var(--cream-2); max-width: 44ch; margin: 0; font-size: var(--fs-md); }
-  .forge__rail { display: none; }
   .forge__cta { margin-top: clamp(1.2rem, 3vw, 1.8rem); }
-
-  /*
-   * Pinned. The height IS the timeline: five stages need room to be read, and a
-   * phone gets a shorter one because a thumb covers ground faster than a wheel.
-   * All five steps sit in the same box so the block cannot change height as the
-   * reader scrolls — a stage that resizes its own container drags the pinned
-   * artwork up and down with it.
-   */
-  .forge--live { height: 320vh; padding-block: 0; }
-  /* The pinned screen starts under the sticky header (`--hdr` is measured by the script), so nothing of the drawing hides behind it. */
-  .forge--live .forge__sticky { position: sticky; top: var(--hdr, 0px); height: calc(100vh - var(--hdr, 0px)); height: calc(100svh - var(--hdr, 0px)); display: grid; align-items: center; overflow: clip; }
-  /* Tall enough for a two-line heading and three lines of Russian; the rail sits below it, never on it. */
-  .forge--live .forge__steps { position: relative; display: block; min-height: 17rem; }
-  .forge--live .forge__step { position: absolute; inset: 0; opacity: 0; transform: translateY(12px); transition: opacity 220ms var(--ease-out), transform 220ms var(--ease-out); }
-  .forge--live .forge__step.is-on { opacity: 1; transform: none; }
-  .forge--live .forge__rail { display: flex; gap: 0.35rem; margin-top: 0.4rem; }
-  .forge__tick { flex: 1; height: 3px; border-radius: 2px; background: rgb(20 26 18 / 0.12); overflow: hidden; }
-  .forge__tick i { display: block; height: 100%; background: var(--accent); box-shadow: none; transform: scaleX(var(--f, 0)); transform-origin: left; }
 
   @media (min-width: 56rem) {
     .forge__inner { grid-template-columns: 1.05fr 0.95fr; gap: clamp(2rem, 5vw, 4.5rem); }
   }
-  @media (max-width: 55.99rem) {
-    .forge--live { height: 280vh; }
-    .forge__art { width: min(15rem, 48vw); }
-    .forge--live .forge__steps { min-height: 15.5rem; }
-    .forge--live .forge__title { font-size: var(--fs-2xl); }
-    .forge--live .forge__step h3 { font-size: var(--fs-xl); }
-    .forge--live .forge__step p { font-size: var(--fs-md); }
-  }
-  /* A short phone screen gets a smaller drawing so the five captions and the button still fit in one pinned screen. */
-  @media (max-width: 55.99rem) and (max-height: 44rem) {
-    .forge--live .forge__art { width: min(11rem, 34vw); }
-    .forge--live .forge__inner { gap: 1rem; }
-  }
+  @media (max-width: 55.99rem) { .forge__art { width: min(15rem, 48vw); } }
 
   /* ------------------------------------------------------------- the eight stages */
   .stages-sec { background: var(--bg); }
@@ -693,7 +499,8 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .stages__ph { grid-area: 1 / 1; opacity: 0; transition: opacity 0.7s var(--ease-out); }
   .stages__ph.is-on { opacity: 1; }
   .stages__frame { border-radius: var(--r-xl); box-shadow: var(--shadow-2); aspect-ratio: 16 / 10; }
-  .stages__badge { position: absolute; left: 1rem; top: 1rem; z-index: 3; padding: 0.4em 0.8em; border-radius: var(--r-pill); background: rgb(251 249 244 / 0.7); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); font-family: var(--font-display); font-size: var(--fs-sm); color: var(--cream-1); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+  .stages__badge { position: absolute; left: 1rem; top: 1rem; z-index: 3; padding: 0.4em 0.8em; border-radius: var(--r-pill); background: rgb(251 249 244 / 0.7); backdrop-filter: blur(10px); border: 1px solid var(--line); font-family: var(--font-display); font-size: var(--fs-sm); color: var(--cream-1); letter-spacing: 0.04em; font-variant-numeric: tabular-nums; }
+  @supports (-webkit-backdrop-filter: none) { .stages__badge { -webkit-backdrop-filter: blur(10px); } }
   .stages__badge b { font-weight: 500; color: var(--cream-0); }
   .stages__list { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(3rem, 8vw, 5rem); }
   .stage { position: relative; scroll-margin-top: calc(var(--park) + 1rem); }
