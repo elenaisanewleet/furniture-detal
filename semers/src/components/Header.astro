@@ -1,0 +1,102 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { nav } from '~/data/site';
+import { LOCALES, localePath, stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+const { locale, path } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+/** A page path goes into the locale; a bare #anchor (the footer's contacts) stays on the page it is clicked on. */
+const L = (href: string) => (href.startsWith('#') ? href : localePath(href, locale));
+const languages = LOCALES.map((l) => ({ locale: l, href: localePath(path, l), current: l === locale }));
+---
+<!--
+  A plain shop header: the mark, four links, the languages and the cart. It
+  stays under the reader's thumb as a strip of paper with a hairline under it.
+  On a phone the links and the languages fold into a sheet behind the burger.
+-->
+<header class="hdr" id="hdr">
+  <div class="hdr__main container--wide">
+    <button class="hdr__burger" id="nav-toggle" aria-expanded="false" aria-controls="nav" aria-label={ui.openMenu}>
+      <Icon name="menu" size={22} />
+    </button>
+    <a class="hdr__logo" href={localePath('/', locale)} aria-label={ui.home}><Logo size={30} /></a>
+    <nav class="hdr__nav" id="nav" aria-label={ui.primaryNav}>
+      <button class="hdr__nav-close" type="button" data-nav-close aria-label={ui.closeMenu}><Icon name="close" size={22} /></button>
+      <ul>
+        {nav.map((n) => (
+          <li><a href={L(n.href)} data-nav-close aria-current={n.href === '/shop/' && path.startsWith('/shop/') ? 'page' : undefined}>{ui.nav[n.key]}</a></li>
+        ))}
+      </ul>
+      <ul class="hdr__langs" aria-label={ui.language}>
+        {languages.map((l) => (
+          <li><a href={l.href} lang={l.locale} hreflang={l.locale} aria-current={l.current ? 'true' : undefined}>{l.locale.toUpperCase()}</a></li>
+        ))}
+      </ul>
+    </nav>
+    <div class="hdr__actions">
+      <div class="lang" role="group" aria-label={ui.language}>
+        {languages.map((l) => (
+          <a class="lang__a" href={l.href} lang={l.locale} hreflang={l.locale} aria-current={l.current ? 'true' : undefined}>{l.locale.toUpperCase()}</a>
+        ))}
+      </div>
+      <button class="hdr__cart" id="cart-open" aria-label={ui.openCart} aria-haspopup="dialog">
+        <Icon name="bag" size={18} />
+        <span class="hdr__cart-t">{ui.cart}</span>
+        <span class="hdr__count num" id="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+</header>
+<div class="hdr__scrim" id="nav-scrim" hidden></div>
+
+<style>
+  /*
+   * backdrop-filter, here and elsewhere: the standard property in the rule, and
+   * the -webkit- copy that Safari before 18 needs in an @supports block of its
+   * own. Written side by side in one rule, the CSS minifier folds the two into
+   * whichever comes last; the prefixed one alone left Chrome and Firefox with
+   * no blur at all.
+   */
+  .hdr { position: sticky; top: 0; z-index: 50; background: rgb(251 249 244 / 0.88); backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+  .hdr__main { display: flex; align-items: center; gap: clamp(0.9rem, 3vw, 2.875rem); min-height: var(--hdr-h); }
+  .hdr__logo { display: inline-flex; align-items: center; flex: none; text-decoration: none; }
+  .hdr__logo :global(img) { height: 48px; width: auto; display: block; }
+  .hdr__burger { display: none; width: 2.75rem; height: 2.75rem; margin-left: -0.6rem; border-radius: 50%; place-items: center; color: var(--cream-0); }
+  .hdr__nav ul { display: flex; gap: 1.875rem; list-style: none; margin: 0; padding: 0; }
+  .hdr__nav a { display: inline-flex; padding: 0.35rem 0 0.2rem; border-bottom: 2px solid transparent; text-decoration: none; white-space: nowrap; font-size: 0.9375rem; font-weight: 700; color: var(--cream-0); transition: border-color var(--dur-fast), color var(--dur-fast); }
+  .hdr__nav a:hover { border-color: var(--night-500); }
+  .hdr__nav a[aria-current="page"] { color: var(--accent-ink); border-color: var(--accent); }
+  .hdr__nav-close, .hdr__nav .hdr__langs { display: none; }
+  .hdr__actions { display: flex; align-items: center; gap: clamp(0.75rem, 3vw, 2.5rem); margin-left: auto; }
+  .lang { display: flex; gap: 2px; }
+  .lang__a { padding: 0.3rem 0.55rem; border-radius: 7px; text-decoration: none; font-size: 0.8125rem; font-weight: 700; color: var(--fg-3); transition: color var(--dur-fast), background var(--dur-fast); }
+  .lang__a:hover { color: var(--cream-0); }
+  .lang__a[aria-current="true"] { color: var(--cream-0); background: var(--bg-sunken); }
+  /* The cart as a pill: the bag, the word and the count in orange. */
+  .hdr__cart { display: inline-flex; align-items: center; gap: 0.55rem; min-height: 2.875rem; padding: 0.55rem 1.2rem 0.55rem 0.95rem; border: 1px solid var(--night-500); border-radius: var(--r-pill); background: var(--bg-raised); color: var(--cream-0); font-size: var(--fs-sm); font-weight: 700; transition: border-color var(--dur-fast); }
+  .hdr__cart:hover { border-color: var(--cream-0); }
+  .hdr__count { min-width: 1.375rem; height: 1.375rem; padding: 0 0.375rem; border-radius: var(--r-pill); background: var(--accent); color: var(--cream-0); font-size: 0.75rem; font-weight: 700; display: grid; place-items: center; line-height: 1; }
+  .hdr__scrim { position: fixed; inset: 0; z-index: 49; background: rgb(20 26 18 / 0.45); backdrop-filter: blur(3px); }
+  @supports (-webkit-backdrop-filter: none) { .hdr { -webkit-backdrop-filter: blur(14px); } .hdr__scrim { -webkit-backdrop-filter: blur(3px); } }
+
+  /* Russian and Latvian labels run long: between the sheet and full width the links sit closer. */
+  @media (min-width: 55.01rem) and (max-width: 70rem) { .hdr__nav ul { gap: 1.25rem; } .hdr__nav a { font-size: var(--fs-sm); } }
+  /* Phones: the burger, the mark and the cart; the rest is one tap away in a sheet that drops from the top. */
+  @media (max-width: 55rem) {
+    .hdr__burger { display: grid; }
+    .lang, .hdr__cart-t { display: none; }
+    .hdr__cart { padding: 0.55rem 0.95rem; }
+    .hdr__logo :global(img) { height: 42px; }
+    .hdr__nav { position: fixed; inset: 0 0 auto; z-index: 60; display: flex; flex-direction: column; gap: 1rem; padding: 4.4rem var(--gutter) 1.6rem; background: var(--bg); border-bottom: 1px solid var(--line); box-shadow: var(--lift); transform: translateY(-102%); visibility: hidden; transition: transform var(--dur) var(--ease-out), visibility 0s linear var(--dur); }
+    .hdr__nav.is-open { transform: none; visibility: visible; transition-delay: 0s; }
+    .hdr__nav ul { flex-direction: column; gap: 0; }
+    .hdr__nav a { display: flex; align-items: center; min-height: 3.25rem; padding: 0; border-bottom: 1px solid var(--line-2); font-size: 1.125rem; }
+    .hdr__nav a[aria-current="page"] { border-color: var(--line-2); }
+    .hdr__nav-close { display: grid; position: absolute; top: 0.9rem; right: var(--gutter); width: 2.75rem; height: 2.75rem; place-items: center; border-radius: 50%; color: var(--cream-0); }
+    .hdr__nav .hdr__langs { display: flex; flex-direction: row; gap: 0.5rem; margin-top: 0.4rem; }
+    .hdr__langs a { justify-content: center; min-height: 2.75rem; padding: 0 1.25rem; border: 1px solid var(--night-500); border-radius: var(--r-pill); font-size: 0.9375rem; }
+    .hdr__langs a[aria-current="true"] { background: var(--cream-0); color: #fff; border-color: var(--cream-0); }
+  }
+  @media (prefers-reduced-motion: reduce) { .hdr__nav { transition: none; } }
+</style>

@@ -1,0 +1,12 @@
+// Cloudflare Workers: the shop's own hosting (company account).
+// Static pages come from dist/ first; the Worker only sees /api/* and misses.
+{
+  "name": "semers-shop",
+  "main": "worker/server.js",
+  "compatibility_date": "2026-09-01",
+  "assets": { "directory": "./dist", "binding": "ASSETS" },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "semers-shop", "database_id": "d95b0da9-49ad-48e8-911e-34dc8547b341" }
+  ],
+  "observability": { "enabled": true }
+}

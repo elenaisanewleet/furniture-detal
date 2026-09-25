@@ -1,0 +1,91 @@
+---
+import Base from '~/layouts/Base.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, COLLECTIONS } from '~/data/products';
+import { itemList } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedCollections } from '~/data/copy';
+import { t } from '~/i18n/ui';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+const { locale } = Astro.props as { locale: Locale };
+const ui = t(locale);
+
+const origin = originOf(Astro.site);
+const products = [...PRODUCTS].sort((a, b) => Number(b.bestseller || 0) - Number(a.bestseller || 0) || a.order - b.order);
+const collections = localizedCollections(COLLECTIONS, locale);
+---
+<Base
+  title="Shop apple bars, meringues & desserts"
+  description="Every Semers product: App'Lite Apple Bars, meringues and baked apple desserts, Blum Baker's flourless apple cakes, and a box you build yourself. No added sugar."
+  canonical="/shop/"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }]}
+  schema={[itemList(origin, products)]}
+>
+  <!--
+    The whole catalogue on one page: the title and the count, one row of
+    chips, the grid. The chips filter in place (site.ts) and keep the choice in
+    the address, so a filtered view can be shared.
+  -->
+  <section class="container shop" id="products" data-shop data-collection="all" aria-labelledby="shop-title">
+    <div class="shop__head">
+      <h1 id="shop-title">All products</h1>
+      <p class="shop__count" data-shop-count aria-live="polite">{ui.productCount(products.length)}</p>
+    </div>
+    <div class="shop__bar">
+      <div class="pills" role="group" aria-label="Collection">
+        <button class="pill" type="button" data-filter-collection="all" aria-pressed="true">All</button>
+        {collections.map((c) => <button class="pill" type="button" data-filter-collection={c.key} aria-pressed="false">{c.name}</button>)}
+      </div>
+      <label class="shop__sort">
+        <span class="sr-only">Sort by</span>
+        <select class="select" data-sort>
+          <option value="featured">Featured</option>
+          <option value="price-asc">Price: low to high</option>
+          <option value="price-desc">Price: high to low</option>
+          <option value="name">Name A–Z</option>
+        </select>
+      </label>
+    </div>
+    <h2 class="sr-only">Products</h2>
+    <div class="grid grid--4 shop__grid" data-shop-grid>
+      {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+    </div>
+    <div class="shop__empty" data-shop-empty hidden>
+      <p><strong>Nothing matches those filters.</strong></p>
+      <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
+    </div>
+  </section>
+
+  <section class="section--tight container" aria-labelledby="box-title">
+    <div class="cta-band">
+      <p class="eyebrow">Build your box</p>
+      <h2 id="box-title">Pick six bars, save 10%.</h2>
+      <p>Mix Apple Bars, flourless apple cakes and tubs of apple meringues any way you like. We pack them in one box.</p>
+      <div><a class="btn" href="/shop/build-your-box/">Start building</a></div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .shop { padding-top: 0.9rem; }
+  .shop__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.5rem 1.25rem; }
+  .shop__head h1 { font-size: clamp(2rem, 1.4rem + 3vw, 3.25rem); }
+  .shop__count { margin: 0; font-size: var(--fs-sm); color: var(--fg-3); }
+  .shop__bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1.25rem; margin-block: 1.5rem; }
+  .shop__sort .select { min-height: 2.5rem; width: auto; padding: 0.4em 2.4rem 0.4em 1.1rem; border-radius: var(--r-pill); font-size: var(--fs-sm); }
+  .shop__grid > :global([hidden]) { display: none; }
+  .shop__empty { padding: 4rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
+  /* Phones: the chips run in one line that scrolls sideways, so the grid starts on the first screen. */
+  @media (max-width: 40rem) {
+    .shop__bar .pills { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
+    .shop__bar .pills::-webkit-scrollbar { display: none; }
+    .shop__bar .pill { flex: none; white-space: nowrap; }
+  }
+</style>

@@ -1,0 +1,218 @@
+/* =========================================================================
+   SEMERS design tokens — a light shop.
+   Food is sold in daylight: a warm paper ground, white cards with a hairline,
+   dark ink, and one orange for the thing to press. The colours are the
+   brand's own from semers.org; the deep green marks what the pack promises.
+   One block on the home page is dark, and only that one.
+
+   The token NAMES are stable: every page and component is written against
+   them, so the whole site takes the new ground from this file. The names were
+   given when the site was dark, and they now name roles, not shades:
+     night-*  the ground family — paper, cards and bands (light here)
+     cream-*  the ink family    — headings, text and inverted surfaces (dark here)
+   A surface written as "cream background, night text" (a pressed pill, a
+   toast, a solid button) is therefore dark ink with light type, as the design
+   wants. The one dark block re-declares both families under `.dark`.
+   ========================================================================= */
+:root {
+  color-scheme: light;
+
+  /* ---- The ground (was night) ---------------------------------------- */
+  --night-950: #f2eee4; /* a band a step below the page */
+  --night-900: #fbf9f4; /* the page */
+  --night-800: #ffffff; /* cards, panels, the drawer */
+  --night-700: #f2eee4; /* sunken */
+  --night-600: #f0ede2; /* behind a photograph */
+  --night-500: #d6d0c1; /* edges, scrollbars */
+  --night-400: #b9b2a2;
+
+  /* ---- The ink (was cream) -------------------------------------------- */
+  --cream-0: #141a12; /* headings, the strongest ink */
+  --cream-1: #262d22; /* text, and the fill of an inverted surface */
+  --cream-2: #585f52; /* secondary text: 6.3:1 on the page */
+  --cream-3: #646a5d; /* outlines and icons; an outline is read as type, so it keeps 4.5:1 on every light ground */
+
+  /* ---- Ink: literally dark-on-light, as it always was ------------------- */
+  --ink-900: #141a12;
+  --ink-800: #262d22;
+  --ink-700: #3a4136;
+  --ink-500: #585f52;
+  --ink-300: #9aa091;
+  --ink-100: #e7e2d6;
+
+  /* ---- Brand / product colours ------------------------------------------ */
+  --apple-500: #f15a22; /* the brand orange-red from semers.org: buttons and marks */
+  --apple-600: #d94d18;
+  --apple-700: #b83c0e;
+  --apple-100: #fde9df;
+
+  --leaf-500: #245b08; /* the brand deep green: ticks and "yes" */
+  --leaf-600: #1b4506;
+  --leaf-100: #eef3e6;
+
+  --mint-500: #3ecfa8; /* App'Lite Classic wrapper */
+  --mint-600: #2bb597;
+  --mint-100: #e4efea;
+
+  --coral-500: #ff7a88; /* App'Lite Berry Mix wrapper */
+  --coral-600: #f26b7a;
+  --coral-100: #f6e9e3;
+
+  --honey-500: #fdb913; /* the brand amber */
+  --honey-100: #f3ebde;
+
+  /* The wrapper colours are fills. As type on paper they need their dark step (all 5:1 or better). */
+  --mint-ink: #0f6b55;
+  --coral-ink: #a8324a;
+  --honey-ink: #8a5a00;
+
+  --bar-700: #a8602a; /* pastila crumb */
+  --bar-500: #d08a45;
+  --bar-300: #ecc48f;
+
+  /* ---- Flavour hues (cards, chips, variant swatches) ------------------ */
+  --fl-classic: var(--mint-500);
+  --fl-berry: var(--coral-500);
+  --fl-cinnamon: #d0834a;
+  --fl-cherry: #e0435c;
+  --fl-blueberry: #6e8fd8;
+  --fl-lingonberry: #ef6a60;
+  --fl-blackcurrant: #a86bc0;
+  --fl-pine: #a3b35a;
+  --fl-cranberry: #e2456f;
+  --fl-apple: #a4d95e;
+  --fl-vanilla: #e8c77a;
+  --fl-chocolate: #8a5a42;
+  --fl-assorted: linear-gradient(135deg, #ff7a88, #f0b04a 50%, #3ecfa8);
+
+  /* ---- Roles ---------------------------------------------------------- */
+  --bg: var(--night-900);
+  --bg-raised: var(--night-800);
+  --bg-sunken: var(--night-700);
+  --bg-invert: var(--cream-1);
+  /* The hero band: warm, a shade deeper than the page. */
+  --bg-band: #f1eadd;
+
+  --fg: var(--cream-1);
+  --fg-2: var(--cream-2);
+  --fg-3: #646a5d; /* small print: 4.7:1 even on the hero band */
+  --fg-invert: var(--night-900);
+
+  --line: #e7e2d6;
+  --line-2: #f0ece2; /* between rows inside a card */
+  --line-strong: var(--cream-1);
+
+  --accent: var(--apple-500);
+  /* The accent as *text*: the brand orange is 3.2:1 on paper, so small orange type takes a deeper step (4.8:1 or better). */
+  --accent-ink: #b83c0e;
+  /*
+   * The orange button carries white type. White on the brand orange is 3.4:1,
+   * which WCAG allows for large text only, so .btn--accent is always set bold
+   * at 19 px or more (base.css) and the pairing stays inside AA.
+   */
+  /* The accent as display type (a headline's second half): a hair deeper than the brand orange, so it clears 3:1 as large text on the hero band. */
+  --accent-display: #e4501c;
+  --accent-fill: var(--apple-500);
+  --accent-fill-hover: var(--apple-700);
+  --accent-on: #ffffff;
+  --accent-soft: var(--apple-100);
+
+  --focus: var(--accent-ink);
+
+  /* ---- Type ----------------------------------------------------------- */
+  /*
+   * The brand faces from semers.org: Lifehack Sans Medium for everything set
+   * large and PT Sans for text. Both carry Cyrillic and the Latvian diacritics
+   * themselves, so no companion face is needed.
+   */
+  --font-display: 'Lifehack Sans', 'Lifehack Sans Fallback', 'Arial Rounded MT Bold', 'Trebuchet MS', Arial, sans-serif;
+  --font-sans: 'PT Sans', 'PT Sans Fallback', 'Trebuchet MS', Arial, sans-serif;
+
+  /* A shop's scale: headings that lead, not headings that shout. */
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: clamp(1.0625rem, 1rem + 0.3vw, 1.25rem);
+  --fs-xl: clamp(1.25rem, 1.1rem + 0.6vw, 1.625rem);
+  --fs-2xl: clamp(1.625rem, 1.3rem + 1.3vw, 2.375rem);
+  --fs-3xl: clamp(1.75rem, 1.3rem + 2vw, 2.625rem);
+  --fs-4xl: clamp(2.125rem, 1.5rem + 3vw, 3.25rem);
+  --fs-hero: clamp(2.625rem, 1.4rem + 5.2vw, 4.625rem);
+
+  --lh-tight: 0.98;
+  --lh-snug: 1.1;
+  --lh-body: 1.55;
+
+  /* ---- Space & shape -------------------------------------------------- */
+  --sp-1: 0.25rem;
+  --sp-2: 0.5rem;
+  --sp-3: 0.75rem;
+  --sp-4: 1rem;
+  --sp-5: 1.5rem;
+  --sp-6: 2rem;
+  --sp-7: 3rem;
+  --sp-8: 4.5rem;
+  --sp-9: 7rem;
+
+  --r-sm: 8px;
+  --r-md: 16px;
+  --r-lg: 22px; /* a card */
+  --r-xl: 36px; /* a band */
+  --r-pill: 999px;
+
+  /* Depth on paper is a hairline at rest and a soft lift on hover. */
+  --shadow-1: 0 0 0 1px var(--line);
+  --shadow-2: 0 0 0 1px var(--line), 0 30px 60px -34px rgb(20 26 18 / 0.4), 0 2px 6px -2px rgb(20 26 18 / 0.06);
+  --shadow-3: 0 0 0 1px var(--line), 0 40px 80px -40px rgb(20 26 18 / 0.45), 0 2px 8px -2px rgb(20 26 18 / 0.08);
+  --lift: 0 30px 60px -34px rgb(20 26 18 / 0.4), 0 2px 6px -2px rgb(20 26 18 / 0.06);
+  /* The glows of the dark site are gone; the names stay so old rules still parse. Only the button keeps a warm shadow. */
+  --glow-accent: 0 14px 34px -14px rgb(241 90 34 / 0.85);
+  --glow-honey: 0 0 0 transparent;
+  --glow-mint: 0 0 0 transparent;
+
+  --container: 84rem;
+  --gutter: clamp(1rem, 4vw, 3rem);
+  /* The sticky header's height, which an anchor must clear when a menu link scrolls to it. */
+  --hdr-h: 4.9rem;
+
+  /* ---- Motion --------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 160ms;
+  --dur: 220ms;
+  --dur-slow: 400ms;
+}
+@media (max-width: 55rem) { :root { --hdr-h: 4.1rem; } }
+
+/*
+ * The one dark block. Both families are turned back to the night they were
+ * named for, so anything inside — headings, text, lines, buttons — reads
+ * light on dark without a rule of its own.
+ */
+.dark {
+  color-scheme: dark;
+  --night-950: #0b120d;
+  --night-900: #111a13;
+  --night-800: #18221a;
+  --night-700: #1f2a21;
+  --night-600: #2a372c;
+  --cream-0: #ffffff;
+  --cream-1: #f3e9d6;
+  --cream-2: #cfcbbc;
+  --cream-3: #a39a86;
+  --bg: var(--night-900);
+  --bg-raised: var(--night-800);
+  --bg-sunken: var(--night-700);
+  --fg: var(--cream-1);
+  --fg-2: var(--cream-2);
+  --fg-3: #b5ae9c;
+  --line: rgb(243 233 214 / 0.14);
+  --line-2: rgb(243 233 214 / 0.08);
+  --accent-ink: #ff7a45;
+  --focus: #ff7a45;
+  --leaf-500: #9fca77;
+  background: var(--bg);
+  color: var(--fg);
+}

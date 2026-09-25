@@ -1,0 +1,77 @@
+---
+import Logo from './Logo.astro';
+import { site, footerNav } from '~/data/site';
+import { ALL_COLLECTIONS, COLLECTIONS } from '~/data/products';
+import { localePath, stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+const year = new Date().getFullYear();
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+const L = (href: string) => localePath(href, locale);
+/** A collection with no product on sale has no page, so the footer does not link to it. */
+const noPage = new Set(ALL_COLLECTIONS.filter((c) => !COLLECTIONS.includes(c)).map((c) => `/shop/${c.key}/`));
+const { company } = site;
+const columns = [
+  { key: 'shop' as const, label: ui.footerHeadings.shop, links: footerNav.shop.filter((l) => !noPage.has(l.href)) },
+  { key: 'learn' as const, label: ui.footerHeadings.learn, links: footerNav.learn },
+  { key: 'company' as const, label: ui.footerHeadings.company, links: footerNav.company },
+];
+---
+{/*
+  A plain footer: the mark, the pages that left the header, the contacts, and
+  the legal lines with the company's registration details. `#contact` is what
+  the header's "Contacts" scrolls to. The newsletter strip that stood above it
+  was taken out on 25.09.2026 (the owner will decide on a newsletter later), so
+  nothing here collects an e-mail address. An Astro comment, not an HTML one, so
+  the note stays in the source and out of every page.
+*/}
+<footer class="ftr" id="contact">
+  <div class="ftr__main container">
+    <div class="ftr__brand">
+      <a class="ftr__logo" href={L('/')} aria-label={ui.home}><Logo size={28} /></a>
+      <p class="ftr__tag">{ui.footerTagline}</p>
+    </div>
+    {columns.map((c) => (
+      <nav aria-label={c.label}>
+        <h2 class="ftr__h">{c.label}</h2>
+        <ul>{c.links.map((l) => <li><a href={L(l.href)}>{ui.footerLinks[l.key]}</a></li>)}</ul>
+      </nav>
+    ))}
+    <div class="ftr__contacts">
+      <h2 class="ftr__h">{ui.footerHeadings.contacts}</h2>
+      <ul>
+        <li><a href={`mailto:${site.email}`}>{site.email}</a></li>
+        {site.phone && <li><a href={`tel:${site.phone.replace(/\s+/g, '')}`}>{site.phone}</a></li>}
+        {site.social.instagram && <li><a href={site.social.instagram} rel="noopener" target="_blank" aria-label={ui.instagramAria}>Instagram</a></li>}
+        <li class="ftr__place">{site.locality}, {site.country}</li>
+      </ul>
+    </div>
+  </div>
+  <div class="ftr__legal container">
+    {/* The company particulars the owner confirmed for publication; each label is its own run, so the prose memory translates it. */}
+    <p class="ftr__co">
+      <span>Reg. No.</span> {company.regNo} · <span>VAT No.</span> <span translate="no">{company.vatNo}</span> · <span>Legal address:</span> <span>{company.legalAddress}</span> · <span>Office and returns:</span> <span>{company.officeAddress}</span>
+    </p>
+    <p>© {year} {company.legalName} · {ui.vatLine}</p>
+    <p><a href={L('/legal/shipping-returns/')}>{ui.footerLinks.shippingReturns}</a> · <a href={L('/legal/terms/')}>{ui.footerLinks.terms}</a> · <a href={L('/legal/privacy/')}>{ui.footerLinks.privacy}</a></p>
+  </div>
+</footer>
+<style>
+  /* ------------------------------------------------------------ the footer */
+  .ftr { border-top: 1px solid var(--line); }
+  .ftr__main { display: grid; gap: 2rem clamp(1.5rem, 4vw, 4rem); padding-block: 2.75rem 1.75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ftr__brand { grid-column: 1 / -1; }
+  @media (min-width: 56rem) { .ftr__main { grid-template-columns: 16rem repeat(4, minmax(0, 1fr)); } .ftr__brand { grid-column: auto; } }
+  .ftr__logo { display: inline-flex; text-decoration: none; }
+  .ftr__logo :global(img) { height: 44px; width: auto; display: block; }
+  .ftr__tag { margin: 0.9rem 0 0; max-width: 32ch; font-size: 0.8125rem; line-height: 1.6; color: var(--fg-3); }
+  .ftr__h { margin: 0 0 0.9rem; font-family: var(--font-sans); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.13em; text-transform: uppercase; color: var(--fg-3); }
+  .ftr ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.6rem; font-size: var(--fs-sm); }
+  .ftr ul a { text-decoration: none; color: var(--cream-0); }
+  .ftr ul a:hover { color: var(--accent-ink); text-decoration: underline; }
+  .ftr__place { color: var(--fg-2); }
+  .ftr__legal { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 2rem; padding-block: 1.25rem 1.9rem; border-top: 1px solid var(--line); font-size: var(--fs-xs); color: var(--fg-3); }
+  .ftr__legal p { margin: 0; }
+  .ftr__co { flex-basis: 100%; }
+  .ftr__legal a { color: var(--fg-2); }
+</style>

@@ -1,0 +1,151 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { PRODUCTS, formatPrice, formatThreshold, productBySlug } from '~/data/products';
+import { im } from '~/data/images';
+import { site } from '~/data/site';
+import { itemList } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { localeParams, type Locale } from '~/i18n/config';
+import { localizedProduct } from '~/data/copy';
+import { t } from '~/i18n/ui';
+
+export function getStaticPaths() {
+  return localeParams();
+}
+const { locale } = Astro.props as { locale: Locale };
+const ui = t(locale);
+
+const origin = originOf(Astro.site);
+/** The catalogue on the home page: the single packs on sale, in the catalogue's own order. PRODUCTS leaves out hidden products, so the "All N products" count below is the visible one. */
+const featured = PRODUCTS.filter((p) => p.pack === 1 && p.collection !== 'gift-sets')
+  .sort((a, b) => a.order - b.order)
+  .slice(0, 4);
+const bar = localizedProduct(productBySlug('apple-bar-35g')!, locale);
+const hero = im('hero-packs');
+const { flatRate, freeFrom } = site.shipping;
+---
+<Base
+  title="Semers — Baked apple bars & desserts. 99% apples, no added sugar"
+  description="App’Lite Apple Bars, meringues and desserts: 99% baked apples and egg white, no added sugar, made in Riga. Plus Blum Baker’s flourless apple cakes."
+  canonical="/"
+  ogImage="hero-bars"
+  schema={[itemList(origin, featured)]}
+  bodyClass="home"
+>
+  <!-- ============================== THE HERO ============================== -->
+  <!--
+    A warm band, the words on the left and the real packs on the right; on a
+    phone the packs come first. It is plain HTML and one transparent picture,
+    so it looks the same with JavaScript off and with reduced motion asked for.
+  -->
+  <section class="hero2" aria-labelledby="hero-title">
+    <img class="hero2__img" src={hero.src} srcset={hero.srcset} sizes="(max-width: 55rem) 100vw, 60vw" alt={hero.alt} width={hero.width} height={hero.height} loading="eager" fetchpriority="high" decoding="async" />
+    <div class="container hero2__in">
+      <div class="hero2__txt">
+        <p class="eyebrow">Semers · Riga</p>
+        {/* One sentence split by its emphasis cannot be keyed run by run in the prose memory, so its two halves come from the dictionary. */}
+        <h1 id="hero-title">{ui.heroTitle[0]} <em>{ui.heroTitle[1]}</em></h1>
+        <p class="hero2__lead">App’Lite bars, meringues and desserts, and Blum Baker’s flourless apple cakes. No added sugar. The ingredients and the storage conditions are on every product’s page.</p>
+        <div class="hero__cta">
+          <a class="btn btn--accent" href="/shop/">Shop now <Icon name="arrow" size={18} class="arrow" /></a>
+          <a class="btn btn--ghost" href={`/products/${bar.slug}/`}>{bar.name} — {formatPrice(bar.price, locale)}</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="container">
+    <!-- ============================== FOUR PROMISES ============================== -->
+    <!-- The delivery figures come from src/data/site.ts, so the promise here is the one the cart keeps. The flat rate is the Omniva parcel-locker price in the Baltics. -->
+    <div class="trust" id="delivery">
+      <div><Icon name="check" size={21} /><div><strong>Delivery across Europe</strong><span>Free over {formatThreshold(freeFrom, locale)}; Omniva lockers in the Baltics {formatPrice(flatRate, locale)}</span></div></div>
+      <div><Icon name="check" size={21} /><div><strong>Ships from Riga</strong><span>In 1–2 business days</span></div></div>
+      <div><Icon name="check" size={21} /><div><strong>Secure payment</strong><span>On a protected payment page</span></div></div>
+      <div><Icon name="check" size={21} /><div><strong>Prices include VAT</strong><span>And every product shows its price per 100 g</span></div></div>
+    </div>
+
+    <!-- ============================== THE CATALOGUE ============================== -->
+    <section class="cat" aria-labelledby="cat-title">
+      <div class="section-head">
+        <h2 id="cat-title">Catalogue</h2>
+        <a class="link" href="/shop/">{ui.allProducts(PRODUCTS.length)} →</a>
+      </div>
+      <div class="grid grid--4">
+        {featured.map((p, i) => <ProductCard product={p} loading={i < 2 ? 'eager' : 'lazy'} />)}
+      </div>
+    </section>
+
+    <!-- ============================== WHAT'S INSIDE ============================== -->
+    <!-- The one dark block on the site: contrast, without a dark site. -->
+    <section class="room dark" id="about" aria-labelledby="about-title">
+      <div class="room__in">
+        <div>
+          <p class="eyebrow">What’s inside</p>
+          <h2 id="about-title">Apples and egg white</h2>
+          <p class="room__lead">That is how the classic flavours are made. The others add only what their name says: berries or cinnamon.</p>
+        </div>
+        <ul class="room__nums">
+          <li><span class="room__n" aria-hidden="true">99%</span><strong><span class="sr-only">99% </span>baked apples</strong><p>In App’Lite bars, meringues and desserts, as the pack says.</p></li>
+          <li><span class="room__n" aria-hidden="true">1</span><strong><span class="sr-only">1 </span>allergen</strong><p>Egg white. On every product page it is set in bold in the ingredients.</p></li>
+          <li><span class="room__n" aria-hidden="true">0</span><strong><span class="sr-only">0 </span>added sugar</strong><p>We add no sugar. The fruit’s own sugars are in there, as in any fruit.</p></li>
+        </ul>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style>
+  /* ------------------------------------------------------------ the hero band */
+  .hero2 { position: relative; isolation: isolate; overflow: hidden; background: var(--bg-band); }
+  .hero2__img { position: absolute; top: 50%; right: clamp(0rem, 3vw, 3rem); z-index: 0; width: min(60%, 51.25rem); height: auto; transform: translateY(-50%); }
+  .hero2__in { position: relative; z-index: 1; display: flex; align-items: center; min-height: clamp(28.75rem, 42vw, 37.5rem); }
+  .hero2__txt { max-width: 32.5rem; padding-block: 3.25rem; }
+  .hero2 .eyebrow { color: var(--fg-2); }
+  /*
+   * Stacked, as on the approved design. The whole line fits the column in every
+   * language, so a measure narrower than the sentence and wider than either half
+   * (4.6em; the longest half is 3.9em) lets the balanced wrap break it in two,
+   * where the orange half begins, without a hard break in the copy.
+   */
+  .hero2 h1 { max-width: 4.6em; margin: 1.4rem 0 1.1rem; font-size: var(--fs-hero); line-height: 0.94; }
+  /*
+   * The approved design slants the orange half. The display face has no italic
+   * of its own and base.css turns synthesis off site-wide, so it is allowed back
+   * here, for this one headline.
+   */
+  .hero2 h1 em { font-style: italic; font-synthesis: style; color: var(--accent-display); }
+  .hero2__lead { margin: 0 0 1.75rem; font-size: 1.0625rem; line-height: 1.62; color: var(--fg-2); }
+  .hero2 .hero__cta { margin-top: 0; }
+  /*
+   * Both buttons one size, as on the approved design: 56 px tall, so they sit
+   * side by side in the Russian text column too, and match when they stack.
+   * The orange one keeps the 19 px bold its white type needs (base.css).
+   */
+  .hero2 .hero__cta .btn { min-height: 3.5rem; padding: 0 1.6rem; }
+  /* Phones: the packs above the words, full width, in the flow. */
+  @media (max-width: 55rem) {
+    .hero2__img { position: relative; top: auto; right: auto; display: block; width: 100%; padding: 1.1rem 0.5rem 0; transform: none; }
+    .hero2__in { min-height: 0; }
+    .hero2__txt { padding-block: 0.25rem 2.5rem; }
+    .hero2 .hero__cta .btn { flex: 1 1 auto; }
+  }
+
+  /* ------------------------------------------------------------ the catalogue */
+  .cat { padding-top: clamp(2.125rem, 5vw, 3.75rem); }
+
+  /* ------------------------------------------------------------ the dark room */
+  .room { margin-top: clamp(2.5rem, 6vw, 4.5rem); border-radius: var(--r-xl); overflow: hidden; }
+  .room__in { display: grid; gap: clamp(1.75rem, 4vw, 3.5rem); align-items: center; padding: clamp(2.125rem, 5vw, 3.75rem) clamp(1.4rem, 4vw, 3.75rem); }
+  @media (min-width: 55.01rem) { .room__in { grid-template-columns: 20rem minmax(0, 1fr); } }
+  .room h2 { margin: 1.25rem 0 0.75rem; font-size: clamp(1.75rem, 1.3rem + 2vw, 2.5rem); line-height: 1.06; }
+  .room__lead { margin: 0; font-size: 0.9375rem; line-height: 1.62; color: var(--fg-2); }
+  .room__nums { list-style: none; margin: 0; padding: 0; display: grid; gap: 2rem; grid-template-columns: repeat(auto-fit, minmax(11.875rem, 1fr)); }
+  /* The numbers are outlined, as on the approved design; the stroke is the full cream, so it reads as type and not as a ghost. */
+  .room__n { display: block; margin-bottom: 0.75rem; font-family: var(--font-display); font-weight: 500; font-size: clamp(2.875rem, 6vw, 4.25rem); line-height: 0.9; letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 1.2px var(--cream-1); font-variant-numeric: tabular-nums; }
+  .room__nums strong { display: block; margin-bottom: 0.4rem; font-size: var(--fs-md); color: var(--cream-0); }
+  .room__nums p { margin: 0; font-size: var(--fs-sm); line-height: 1.55; color: var(--fg-2); }
+  /* Without text-stroke the outline would be invisible: fill the numbers instead. */
+  @supports not (-webkit-text-stroke: 1px black) { .room__n { color: var(--cream-1); } }
+</style>

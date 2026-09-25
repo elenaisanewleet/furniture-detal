@@ -1,0 +1,209 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { formatPrice, PRODUCTS, formatThreshold } from '~/data/products';
+import { site } from '~/data/site';
+import { t, bold } from '~/i18n/ui';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+const ui = t(locale);
+/* A strip, not a grid: the script hides anything already in the box, so it starts with more than three. */
+const suggestions = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 5);
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+const flat = formatPrice(site.shipping.flatRate, locale);
+const rate = site.shipping.courierRate;
+const courier = typeof rate === 'number' && Number.isFinite(rate) && rate >= 0 ? formatPrice(rate, locale) : null;
+---
+<Base title="Your box" description="Review the apple snacks in your box before checkout." canonical="/cart/" noindex>
+  <!--
+    The cart as the approved shop draws it: the lines in one white card with
+    the free-shipping nudge under them, the summary in a second card that
+    stays in view, and a strip of things people add before they go.
+  -->
+  <section class="container cart-page" aria-labelledby="box-title">
+    <h1 id="box-title" class="cart-page__title">{ui.yourBox}</h1>
+    <!-- Priced as the parcel locker until the checkout knows the method; site.ts reads the rate from here. -->
+    <div class="cart" data-cart-summary data-shipping={site.shipping.flatRate} data-free-from={site.shipping.freeFrom}>
+      <div class="cart__main">
+        <div class="cart__lines">
+          <div data-summary-empty class="cart__empty">
+            <p class="cart__empty-text"><strong>{ui.boxEmpty}</strong> Let’s fix that.</p>
+            <a class="btn" href="/shop/">Shop bestsellers <Icon name="arrow" size={18} class="arrow" /></a>
+          </div>
+          <div data-summary-full>
+            <ul class="drawer__items cart__items" data-summary-rows></ul>
+            <div class="cart__nudge">
+              <a class="cart__back" href="/shop/">← Keep shopping</a>
+              <p class="cart__ship-text" data-ship-text set:html={bold(ui.freeShippingOver(freeFrom))} />
+              <div class="cart__bar" aria-hidden="true"><span data-ship-fill></span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside class="cart__aside">
+        <div class="cart__panel">
+          <h2 class="cart__panel-title">Summary</h2>
+          <div class="cart__rows">
+            <div class="cart__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>{formatPrice(0, locale)}</strong></div>
+            <div class="cart__row"><span>{ui.shipping}</span><span class="num" data-summary-shipping>—</span></div>
+            <div class="cart__row cart__total"><span>{ui.total}</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
+          </div>
+          <p class="tiny muted">{ui.shippingRule(freeFrom, flat, courier)}</p>
+          <a class="btn btn--lg btn--block btn--accent" href="/checkout/" data-summary-checkout>Checkout <Icon name="arrow" size={18} class="arrow" /></a>
+          <ul class="ticks small cart__ticks">
+            <li><Icon name="check" size={16} /> Ships from Riga in 1–2 business days</li>
+            <li><Icon name="check" size={16} /> {ui.damagedReplace}</li>
+          </ul>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section container cart-more" aria-labelledby="more-title">
+    <div class="section-head">
+      <h2 id="more-title">People also add</h2>
+      <a class="link" href="/shop/">Shop all products</a>
+    </div>
+    <div class="cart-more__strip" data-cart-suggest>{suggestions.map((p) => <ProductCard product={p} compact />)}</div>
+  </section>
+</Base>
+
+<script>
+  /*
+   * The free-shipping meter under the lines. The cart itself lives in
+   * site.ts; this only reads it — through window.semersCart once that has
+   * loaded, straight from storage before it has — and listens for changes.
+   */
+  type Line = { slug: string; price: number; qty: number };
+  /*
+   * Boxes sold as shipping free at any total. The same list is FREE_SHIP_SLUGS
+   * in src/scripts/site.ts, freeShipSlugs in src/pages/catalog.json.ts and
+   * FREE_SHIP_SLUGS in src/lib/schema.ts; scripts/test.mjs holds all four to
+   * each other.
+   */
+  const FREE_SHIP_SLUGS = new Set(['tasting-box']);
+  type Cfg = { freeFrom?: number; intl?: string; currency?: string; strings?: Record<string, string> };
+  const w = window as unknown as { SEMERS?: Cfg; semersCart?: { items: Line[]; subtotal(): number } };
+  const cfg: Cfg = w.SEMERS || {};
+  const S = (k: string, fb: string) => (cfg.strings && cfg.strings[k]) || fb;
+  const fill = document.querySelector<HTMLElement>('[data-ship-fill]');
+  const text = document.querySelector<HTMLElement>('[data-ship-text]');
+  const money = (n: number, whole = false) =>
+    new Intl.NumberFormat(cfg.intl || 'en-IE', { style: 'currency', currency: cfg.currency || 'EUR', ...(whole && Number.isInteger(n) ? { minimumFractionDigits: 0, maximumFractionDigits: 0 } : {}) }).format(n);
+  const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] as string);
+  const rich = (tpl: string, vars: Record<string, string>) => esc(tpl.replace(/\{(\w+)\}/g, (_m, k) => vars[k] ?? '')).replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  const fromStorage = (): Line[] => {
+    try {
+      const raw = localStorage.getItem('semers.cart.v1');
+      const list = raw ? (JSON.parse(raw) as Line[]) : [];
+      return Array.isArray(list) ? list.filter((i) => i && Number(i.qty) > 0) : [];
+    } catch {
+      return [];
+    }
+  };
+  const render = () => {
+    const cart = w.semersCart;
+    const items = cart ? cart.items : fromStorage();
+    const count = items.reduce((n, i) => n + Number(i.qty), 0);
+    const total = cart ? cart.subtotal() : items.reduce((n, i) => n + Number(i.price) * Number(i.qty), 0);
+    // The threshold the page was built with, unless /api/storefront has since brought the owner's own.
+    const freeFrom = Number(cfg.freeFrom) || Number(document.querySelector<HTMLElement>('.cart[data-free-from]')?.dataset.freeFrom) || 0;
+    const free = count > 0 && (total >= freeFrom || items.some((i) => FREE_SHIP_SLUGS.has(i.slug)));
+    if (fill) {
+      fill.style.width = free ? '100%' : `${Math.min(100, (total / freeFrom) * 100)}%`;
+      fill.classList.toggle('is-free', free);
+    }
+    if (text) {
+      const left = Math.max(0, freeFrom - total);
+      text.innerHTML =
+        count === 0
+          ? rich(S('freeShippingOver', 'Free shipping on orders over **{from}**.'), { from: money(freeFrom, true) })
+          : free
+            ? rich(S('unlockedFreeShipping', 'You’ve unlocked **free shipping**.'), {})
+            : rich(S('addMoreForFree', 'Add **{amount}** more for free shipping.'), { amount: money(left) });
+    }
+  };
+  render();
+  window.setTimeout(render, 0);
+  document.addEventListener('cart:change', render);
+  window.addEventListener('storage', render);
+  window.addEventListener('pageshow', render);
+</script>
+
+<style>
+  /* The same air above the heading as the shop and checkout, which open with a breadcrumb or an eyebrow. */
+  .cart-page { padding-top: clamp(1.75rem, 4vw, 2.5rem); }
+  .cart-page__title { font-size: clamp(2rem, 1.4rem + 3vw, 2.75rem); }
+
+  /* ------------------------------------------------------------ the two cards */
+  .cart { display: grid; gap: clamp(1.4rem, 3vw, 3rem); align-items: start; padding-block: 1.75rem clamp(1rem, 3vw, 2rem); }
+  @media (min-width: 57.51rem) { .cart { grid-template-columns: minmax(0, 1fr) 24.375rem; } .cart__aside { position: sticky; top: calc(var(--hdr-h) + 1.25rem); } }
+  .cart__main { min-width: 0; }
+  .cart__lines { background: var(--bg-raised); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+
+  /* Rows come from the script with the drawer's markup; on this page they get room and a larger thumbnail. */
+  .cart__items { padding: 0 1.25rem; overflow: visible; }
+  .cart__items :global(.ci) { grid-template-columns: 4.875rem minmax(0, 1fr) auto; gap: 1rem; padding: 1.1rem 0; }
+  .cart__items :global(.ci__img) { width: 4.875rem; }
+  .cart__items :global(.ci__name) { font-size: var(--fs-md); }
+  .cart__items :global(.ci__var) { font-size: 0.8125rem; }
+  .cart__items :global(.ci__ctl) { gap: 0.9rem; }
+  .cart__items :global(.ci__ctl .qty) { grid-template-columns: 2.4rem 2.2rem 2.4rem; height: 2.75rem; }
+  .cart__items :global(.ci__rm) { min-height: 2.75rem; padding: 0 0.35rem; font-size: var(--fs-sm); }
+  .cart__items :global(.ci__price) { font-size: 1.0625rem; text-align: right; }
+
+  /* Under the lines: back to the shop, and how far it is to free shipping. */
+  .cart__nudge { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; padding: 0.95rem 1.25rem 1.1rem; }
+  .cart__back { font-size: var(--fs-sm); font-weight: 700; text-decoration: none; color: var(--cream-0); }
+  .cart__back:hover { text-decoration: underline; }
+  .cart__ship-text { margin: 0; font-size: 0.8125rem; color: var(--fg-3); }
+  .cart__ship-text :global(strong) { color: var(--cream-0); }
+  .cart__bar { flex-basis: 100%; height: 5px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; }
+  .cart__bar span { display: block; width: 0; height: 100%; border-radius: inherit; background: var(--accent); transition: width var(--dur-slow) var(--ease-out); }
+
+  .cart__empty { display: grid; justify-items: center; gap: 1rem; padding: 3rem 1.25rem; text-align: center; }
+  .cart__empty-text { margin: 0; color: var(--fg-2); }
+  .cart__empty-text strong { color: var(--cream-0); }
+
+  /* ------------------------------------------------------------ the summary */
+  .cart__panel { display: grid; gap: 1.1rem; padding: 1.6rem; border-radius: var(--r-lg); background: var(--bg-raised); border: 1px solid var(--line); box-shadow: var(--lift); }
+  .cart__panel-title { font-size: 1.4375rem; }
+  .cart__rows { display: grid; gap: 0.5rem; }
+  .cart__row { display: flex; justify-content: space-between; gap: 1rem; font-size: 0.9375rem; color: var(--fg-2); }
+  .cart__row strong { font-weight: 700; color: var(--cream-0); }
+  .cart__total { padding-top: 0.9rem; margin-top: 0.3rem; border-top: 1px solid var(--line); align-items: baseline; color: var(--cream-0); }
+  .cart__total > span:first-child { font-size: var(--fs-md); font-weight: 700; color: var(--cream-0); }
+  .cart__total > span:last-child { font-family: var(--font-display); font-weight: 500; font-size: 2.125rem; letter-spacing: -0.025em; line-height: 1; }
+  .cart__ticks { padding-top: 1rem; border-top: 1px solid var(--line-2); }
+  @media (prefers-reduced-motion: reduce) { .cart__bar span { transition: none; } }
+
+  /* ------------------------------------------------------------ cross-sell strip */
+  /* Runs edge to edge and scrolls sideways inside itself; the cut-off last card is the hint. */
+  .cart-more { padding-bottom: 0; }
+  .cart-more__strip { display: flex; gap: 1.375rem; overflow-x: auto; scroll-snap-type: x proximity; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); padding-bottom: 0.75rem; scrollbar-width: none; }
+  .cart-more__strip::-webkit-scrollbar { display: none; }
+  /* Cards grow to fill the row when the script has hidden the ones already in the cart, and overflow into a scroll when they cannot. */
+  .cart-more__strip > :global(*) { flex: 1 0 clamp(15rem, 22vw, 18rem); max-width: 22rem; min-width: 0; scroll-snap-align: start; }
+  .cart-more__strip > :global([hidden]) { display: none; }
+  @media (max-width: 40rem) {
+    .cart-more__strip { gap: 0.75rem; }
+    .cart-more__strip > :global(*) { flex: 0 0 70%; max-width: none; }
+  }
+  @media (max-width: 36rem) {
+    .cart__items { padding-inline: 1rem; }
+    .cart__items :global(.ci) { grid-template-columns: 4.25rem minmax(0, 1fr); grid-template-rows: auto auto; gap: 0.6rem 1rem; align-items: start; }
+    .cart__items :global(.ci__img) { width: 4.25rem; grid-row: 1 / 3; }
+    .cart__items :global(.ci__price) { grid-column: 2; grid-row: 2; text-align: left; }
+    .cart__items :global(.ci__ctl) { flex-wrap: wrap; }
+  }
+</style>
