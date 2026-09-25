@@ -67,9 +67,10 @@ const textOf = (html) =>
     .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ');
 
-/** The fourteen allergen groups, in the three languages a reader may be in. */
+/** The fourteen allergen groups, in the three languages a reader may be in. Word edges are
+ * Unicode-aware: JavaScript's \b only knows ASCII, so it never matched a Cyrillic word. */
 const ALLERGEN_WORDS =
-  /\b(egg|eggs|milk|gluten|wheat|nut|nuts|peanut|soy|soya|sesame|celery|mustard|sulphite|lupin|molluscs?|fish|crustacean|яйц\w*|молок\w*|глютен\w*|пшениц\w*|орех\w*|арахис\w*|со[яию]\w*|кунжут\w*|сельдер\w*|горчиц\w*|сульфит\w*|люпин\w*|olu\b|olas\b|piena?\b|lipekl\w*|kviešu\w*|rieks?t\w*|zemesrieks?t\w*|sojas?\b|sezama?\b|selerij\w*|sinep\w*|sulfīt\w*|lupīn\w*)/i;
+  /(?<!\p{L})(egg|eggs|milk|gluten|wheat|nut|nuts|peanut|soy|soya|sesame|celery|mustard|sulphite|lupin|molluscs?|fish|crustacean|яйц\p{L}*|яичн\p{L}*|молок\p{L}*|глютен\p{L}*|пшениц\p{L}*|орех\p{L}*|арахис\p{L}*|со[яию]\p{L}*|кунжут\p{L}*|сельдер\p{L}*|горчиц\p{L}*|сульфит\p{L}*|люпин\p{L}*|olu(?!\p{L})|olas(?!\p{L})|piena?(?!\p{L})|lipekl\p{L}*|kviešu\p{L}*|rieks?t\p{L}*|zemesrieks?t\p{L}*|sojas?(?!\p{L})|sezama?(?!\p{L})|selerij\p{L}*|sinep\p{L}*|sulfīt\p{L}*|lupīn\p{L}*)/iu;
 
 const problems = [];
 /** Things that are present but want a human decision rather than a fix. */
@@ -105,7 +106,13 @@ for (const slug of SLUGS) {
     const allText = allBlock ? textOf(allBlock[1]) : '';
 
     if (!ingText || ingText.length < 20) miss(slug, 'ingredients', `not on the ${lang} page`);
-    if (!allText || allText.length < 10) miss(slug, 'allergens', `no allergen statement on the ${lang} page`);
+    /*
+     * A separate "Contains …" sentence is only required where there is no
+     * ingredient list to emphasise the allergen in (art. 21(1)). A page whose
+     * list already sets the allergen in bold has done what the article asks.
+     */
+    const emphasisedInList = !!ingBlock && ALLERGEN_WORDS.test(ingText) && /<(strong|b)\b/i.test(ingBlock[1]);
+    if ((!allText || allText.length < 10) && !emphasisedInList) miss(slug, 'allergens', `no allergen statement on the ${lang} page`);
 
     /*
      * Article 21 wants the allergen emphasised *within* the list of

@@ -234,10 +234,15 @@ const NOT_DECLARED: Nutrition = {
 /** The meringue cards give energy, carbohydrate and protein only, and the two flavours differ. */
 // Classic: the full panel from the tub's own label (fibre 10 g is printed too; it is voluntary and not shown).
 const MERINGUE_CLASSIC_NUTRITION: Nutrition = { energyKj: 1560, energyKcal: 370, fat: 0, saturates: 0, carbs: 84, sugars: 13, protein: 7.5, salt: 0 };
-const MERINGUE_BERRY_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1530, energyKcal: 360, carbs: 82, protein: 7.5 };
+// Berry Mix: energy, carbohydrate and protein from its card; fat, saturates and salt 0 and sugars as the
+// Classic label, confirmed by the owner on 25.09.2026.
+const MERINGUE_BERRY_NUTRITION: Nutrition = { energyKj: 1530, energyKcal: 360, fat: 0, saturates: 0, carbs: 82, sugars: 13, protein: 7.5, salt: 0 };
 
-/** Identical for all three flavours on the cards; fat, saturates, sugars and salt were not supplied. */
-const DESSERT_50G_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1173, energyKcal: 276, carbs: 65, protein: 4 };
+/**
+ * Identical for all three flavours. Energy, carbohydrate and protein are the cards'; fat, saturates, sugars
+ * and salt are the flourless cake's, which the owner confirmed on 25.09.2026 hold for the dessert too.
+ */
+const DESSERT_50G_NUTRITION: Nutrition = { energyKj: 1173, energyKcal: 276, fat: 0, saturates: 0, carbs: 65, sugars: 52, protein: 4, salt: 0 };
 
 /** The one complete declaration, and the same for all four flavours. */
 const FLOURLESS_NUTRITION: Nutrition = {
@@ -252,11 +257,14 @@ const FLOURLESS_NUTRITION: Nutrition = {
 };
 
 /*
- * The 500 g card gives 13 g carbohydrate and 1 g protein, which make about
- * 56 kcal, beside 276 kcal / 1156 kJ. The two cannot both be right, so only
- * the energy line is kept, as printed, until the owner says which figures hold.
+ * The 500 g card gave 13 g carbohydrate and 1 g protein, which make about 56 kcal, beside 276 kcal /
+ * 1156 kJ. On 25.09.2026 the owner confirmed it is the same dessert per 100 g as the 50 g pack, so the
+ * rest of the panel is the 50 g one; the energy line stays as this card prints it.
  */
-const DESSERT_500G_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1156, energyKcal: 276 };
+const DESSERT_500G_NUTRITION: Nutrition = { energyKj: 1156, energyKcal: 276, fat: 0, saturates: 0, carbs: 65, sugars: 52, protein: 4, salt: 0 };
+
+/** The bar cards carry no panel; on 25.09.2026 the owner confirmed the bars declare the flourless cake's. */
+const BAR_NUTRITION: Nutrition = { energyKj: 1337, energyKcal: 320, fat: 0, saturates: 0, carbs: 72, sugars: 52, protein: 8, salt: 0 };
 
 /** Both bar flavours, as their cards list them. The pack front says "99% baked apples", so the list carries the figure (Reg. 1169/2011 art. 22). */
 const BAR_INGREDIENTS =
@@ -286,9 +294,10 @@ export const PRODUCTS: Product[] = [
     ],
     ingredients: BAR_INGREDIENTS,
     // The bar cards carry no allergen sentence; the egg white is emphasised in the ingredient list.
-    nutrition: NOT_DECLARED,
+    nutrition: BAR_NUTRITION,
     storage: null,
-    kcalPerUnit: null,
+    // 320 kcal per 100 g, and one bar weighs 35 g.
+    kcalPerUnit: 112,
     // The pack front: no flour, gluten free, no sugar added.
     diet: ['no-added-sugar', 'gluten-free', 'flourless'],
     variants: [
@@ -513,7 +522,8 @@ export const PRODUCTS: Product[] = [
     ],
     ingredients: BAR_INGREDIENTS,
     // As for the single bar: no allergen sentence on the card, the egg white emphasised in the list.
-    nutrition: NOT_DECLARED,
+    // The same bars, twelve of them, so the same panel.
+    nutrition: { ...BAR_NUTRITION },
     storage: null,
     kcalPerUnit: null,
     diet: ['no-added-sugar', 'gluten-free', 'flourless'],
