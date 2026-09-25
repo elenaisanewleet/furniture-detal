@@ -6,7 +6,7 @@
   "compatibility_date": "2026-09-01",
   "assets": { "directory": "./dist", "binding": "ASSETS" },
   "d1_databases": [
-    { "binding": "DB", "database_name": "semers-shop", "database_id": "REPLACE_WITH_D1_ID" }
+    { "binding": "DB", "database_name": "semers-shop", "database_id": "d95b0da9-49ad-48e8-911e-34dc8547b341" }
   ],
   "observability": { "enabled": true }
 }
