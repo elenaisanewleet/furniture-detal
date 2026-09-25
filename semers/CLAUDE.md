@@ -19,9 +19,14 @@
   protocol, then the one task card you need. One task, one verifiable result, a ten-point
   HUMAN REVIEW CARD, and a stop before the next stage. Update the task card, the history and the
   handoff when a piece of work is finished; do not start a second plan anywhere else.
-- The live shop is the Higgsfield project (website id `ce8b3b43-da2f-4be4-8d97-05b5b8251797`,
-  https://semers-store.higgsfield.app). See `DEPLOY.md` § 1b for the sync and the files that must
-  survive it. The project has no runtime dependencies beyond Astro, its sitemap integration and
+- **Hosting is the company's own Cloudflare account** (owner's login smm@semers.org), since
+  25.09.2026: Worker `semers-shop` at https://semers-shop.semers-shop.workers.dev, config in
+  `wrangler.jsonc`, D1 database `semers-shop`. The network proxy here blocks Cloudflare, so deploys
+  run `wrangler login --device` + `wrangler deploy` from the Higgsfield sandbox (it has internet);
+  the owner approves the device code. `ADMIN_PASSWORD` is a Worker secret the owner can change in
+  the Cloudflare dashboard. The old Higgsfield project (`ce8b3b43-…`, semers-store.higgsfield.app,
+  `DEPLOY.md` § 1b) is retired — do not deploy there. Target address: shop.semers.org (DNS for
+  semers.org is at Nano IT; the WordPress site semers.org stays there). The project has no runtime dependencies beyond Astro, its sitemap integration and
   sharp, so the sync is a file copy; `three`, `gsap` and `lenis` were removed in September 2026.
 - **Payment is Paysera (owner, 25.09.2026).** `worker/server.js` builds the WebToPay request and
   verifies `/api/paysera/callback`; it turns on when PAYSERA_PROJECT_ID and PAYSERA_PASSWORD are set
