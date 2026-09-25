@@ -85,7 +85,7 @@ export const PRODUCT_COPY: Partial<
       allergens: "Содержит яичный белок.",
       allergensByFlavour: { berry: "Содержит яйца." },
       storage:
-        "Хранить при температуре не выше 25 °C и относительной влажности не более 75%. Не хранить рядом с продуктами с сильным запахом.",
+        "Хранить при температуре от +8 до +21 °C.",
     },
     "applite-baked-apple-dessert-50g": {
       name: "Десерт App'Lite",
@@ -209,7 +209,7 @@ export const PRODUCT_COPY: Partial<
       allergens: "Satur olu baltumu.",
       allergensByFlavour: { berry: "Satur olas." },
       storage:
-        "Uzglabāt temperatūrā līdz 25 °C un relatīvajā gaisa mitrumā līdz 75%. Neglabāt blakus produktiem ar spēcīgu smaržu.",
+        "Uzglabāt temperatūrā no +8 līdz +21 °C.",
     },
     "applite-baked-apple-dessert-50g": {
       name: "App'Lite deserts",

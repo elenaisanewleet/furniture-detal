@@ -232,7 +232,8 @@ const NOT_DECLARED: Nutrition = {
 };
 
 /** The meringue cards give energy, carbohydrate and protein only, and the two flavours differ. */
-const MERINGUE_CLASSIC_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1560, energyKcal: 370, carbs: 84, protein: 7.5 };
+// Classic: the full panel from the tub's own label (fibre 10 g is printed too; it is voluntary and not shown).
+const MERINGUE_CLASSIC_NUTRITION: Nutrition = { energyKj: 1560, energyKcal: 370, fat: 0, saturates: 0, carbs: 84, sugars: 13, protein: 7.5, salt: 0 };
 const MERINGUE_BERRY_NUTRITION: Nutrition = { ...NOT_DECLARED, energyKj: 1530, energyKcal: 360, carbs: 82, protein: 7.5 };
 
 /** Identical for all three flavours on the cards; fat, saturates, sugars and salt were not supplied. */
@@ -369,8 +370,9 @@ export const PRODUCTS: Product[] = [
       'Classic: baked apples (99%), egg white. Berry Mix: baked apples (99%), blackcurrants, cranberries, lingonberries, blueberries, egg white.',
     allergens: 'Contains egg white.',
     nutrition: MERINGUE_CLASSIC_NUTRITION,
-    storage:
-      'Store at a temperature not exceeding 25 °C and a relative humidity not exceeding 75%. Do not store together with products that have a strong or distinctive odour.',
+    // The Classic tub's label says +8 to +21 °C, which replaces the card's "not above 25 °C"; the card gives
+    // the Berry Mix the same storage as the Classic.
+    storage: 'Store at a temperature of +8 to +21 °C.',
     kcalPerUnit: null,
     // The tub: no flour, gluten free; the card: no added sugar.
     diet: ['no-added-sugar', 'gluten-free', 'flourless'],

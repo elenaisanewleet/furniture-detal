@@ -34,7 +34,7 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "How long does it keep and how should I store it?": {
       q: "Какой срок хранения и как хранить?",
-      a: "Зависит от продукта, и верить нужно дате на упаковке. Яблочные батончики хранятся 12 месяцев. Десерт из печёных яблок 50 г хранится 9 месяцев при температуре от +8 до +10 °C или 4 месяца при температуре от +10 до +25 °C; упаковка 500 г — 18 месяцев при температуре от +8 до +25 °C. Безе храните при температуре не выше 25 °C и относительной влажности не более 75%, вдали от продуктов с сильным запахом, а яблочные пирожные без муки — в сухом прохладном месте при температуре от +8 до +21 °C.",
+      a: "Зависит от продукта, и верить нужно дате на упаковке. Яблочные батончики хранятся 12 месяцев. Десерт из печёных яблок 50 г хранится 9 месяцев при температуре от +8 до +10 °C или 4 месяца при температуре от +10 до +25 °C; упаковка 500 г — 18 месяцев при температуре от +8 до +25 °C. Безе храните при температуре от +8 до +21 °C, а яблочные пирожные без муки — в сухом прохладном месте при температуре от +8 до +21 °C.",
     },
     "Where do you ship?": {
       q: "Куда вы доставляете?",
@@ -84,7 +84,7 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "How long does it keep and how should I store it?": {
       q: "Cik ilgi tas glabājas un kā to uzglabāt?",
-      a: "Tas atkarīgs no produkta, un ticēt vajag datumam uz iepakojuma. Ābolu batoniņi glabājas 12 mēnešus. 50 g cepto ābolu deserts glabājas 9 mēnešus no +8 līdz +10 °C vai 4 mēnešus no +10 līdz +25 °C; 500 g iepakojums — 18 mēnešus no +8 līdz +25 °C. Bezē uzglabājiet temperatūrā līdz 25 °C un relatīvajā gaisa mitrumā līdz 75%, ne blakus produktiem ar spēcīgu smaržu, bet ābolu kūciņas bez miltiem — sausā, vēsā vietā no +8 līdz +21 °C.",
+      a: "Tas atkarīgs no produkta, un ticēt vajag datumam uz iepakojuma. Ābolu batoniņi glabājas 12 mēnešus. 50 g cepto ābolu deserts glabājas 9 mēnešus no +8 līdz +10 °C vai 4 mēnešus no +10 līdz +25 °C; 500 g iepakojums — 18 mēnešus no +8 līdz +25 °C. Bezē uzglabājiet temperatūrā no +8 līdz +21 °C, bet ābolu kūciņas bez miltiem — sausā, vēsā vietā no +8 līdz +21 °C.",
     },
     "Where do you ship?": {
       q: "Kur jūs piegādājat?",
