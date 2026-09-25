@@ -63,7 +63,7 @@ const upsell = localizedProducts(PRODUCTS, locale)
     <footer class="drawer__foot">
       <div class="drawer__row"><span>{ui.subtotal}</span><strong id="cart-subtotal" class="num">{formatPrice(0, locale)}</strong></div>
       <p class="tiny muted" style="margin:0">{ui.shippingAtCheckout}</p>
-      <a class="btn btn--lg btn--block" href={L('/checkout/')} id="cart-checkout">{ui.checkout} <Icon name="arrow" size={18} class="arrow" /></a>
+      <a class="btn btn--lg btn--block btn--accent" href={L('/checkout/')} id="cart-checkout">{ui.checkout} <Icon name="arrow" size={18} class="arrow" /></a>
       <button class="btn btn--ghost btn--block" type="button" data-cart-close>{ui.keepShopping}</button>
     </footer>
   </aside>

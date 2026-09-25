@@ -44,6 +44,20 @@ export const IMAGES: Record<string, SiteImage> = {
     width: 1611,
     height: 2000,
   },
+  /*
+   * The home page hero: four real Apple Bar wrappers (two Classic, two Berry Mix) cut out of the
+   * owner's pack photographs and fanned with their shadows on a transparent canvas, so it sits on
+   * the hero band's own colour. Local only, like the pack photos; its own name, so localize-images
+   * can never mistake it for the 'hero-bars' photograph above.
+   */
+  'hero-packs': {
+    local: '/img/hero-packs.webp',
+    alt: "App'Lite Apple Bar packs in Classic and Berry Mix",
+    width: 1800,
+    height: 1350,
+    fit: 'contain',
+    widths: [960, 1800],
+  },
   'hero-wide': {
     // WebP (≤2000 px) re-encoded from the original hf_20260901_225023_926c3652-7ec1-4594-b920-a8699340f89e.png
     remote: UPLOADS + 'e37fd1e4-cc15-419c-a4eb-cf87d4b77168.webp',

@@ -56,11 +56,11 @@ const bigger = BOX_SIZES.filter((b) => b.size > box.size).sort((a, b) => a.size 
   .bb-hero__title { font-size: var(--fs-4xl); max-width: 12ch; }
   .bb-hero__lead { margin-top: 1.5rem; max-width: 52ch; }
   .bb-hero__n { position: relative; margin: 0; justify-self: end; font-family: var(--font-display); font-weight: 400; font-size: clamp(9rem, 26vw, 24rem); line-height: 0.78; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; user-select: none; pointer-events: none; }
-  .bb-hero__n::after { content: ''; position: absolute; left: 50%; top: 50%; z-index: -1; width: 60%; height: 60%; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, rgb(240 176 74 / 0.28), transparent 70%); filter: blur(30px); }
+  .bb-hero__n::after { content: ''; position: absolute; left: 50%; top: 50%; z-index: -1; width: 60%; height: 60%; transform: translate(-50%, -50%); border-radius: 50%; background: none; filter: blur(30px); }
   @media (min-width: 56rem) {
     .bb-hero { grid-template-columns: minmax(0, 1fr) auto; gap: 3rem; }
   }
   @media (max-width: 55.99rem) {
-    .bb-hero__n { position: absolute; right: -0.05em; top: 0.9rem; z-index: -1; font-size: clamp(9rem, 40vw, 14rem); -webkit-text-stroke-color: rgb(200 182 151 / 0.5); }
+    .bb-hero__n { position: absolute; right: -0.05em; top: 0.9rem; z-index: -1; font-size: clamp(9rem, 40vw, 14rem); -webkit-text-stroke-color: rgb(20 26 18 / 0.5); }
   }
 </style>

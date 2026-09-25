@@ -29,8 +29,6 @@ interface Props {
   /** Image key or absolute URL for Open Graph. */
   ogImage?: string;
   ogType?: 'website' | 'product' | 'article';
-  /** Header becomes transparent over the hero. */
-  heroHeader?: boolean;
   bodyClass?: string;
 }
 
@@ -43,7 +41,6 @@ const {
   schema = [],
   ogImage = 'hero-wide',
   ogType = 'website',
-  heroHeader = false,
   bodyClass = '',
 } = Astro.props;
 
@@ -107,7 +104,7 @@ const nodes = [
       </Fragment>
     )}
     <meta name="robots" content={noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large, max-snippet:-1'} />
-    <meta name="theme-color" content="#0b120e" />
+    <meta name="theme-color" content="#fbf9f4" />
     <meta name="format-detection" content="telephone=no" />
     <meta name="author" content={site.brand.legalName} />
 
@@ -147,11 +144,11 @@ const nodes = [
     <slot name="head" />
   </head>
 
-  <body class={`${heroHeader ? 'has-hero-header' : ''} ${bodyClass}`}>
+  <body class={bodyClass || undefined}>
     <a class="skip-link" href={`${localePath(enPath, locale)}#main`}>{ui.skipToContent}</a>
     {/* Filled from /api/storefront when the owner has an announcement running; stays out of the layout until then. */}
     <div class="announce" data-announce hidden><div class="container"><span data-announce-text></span></div></div>
-    <Header transparent={heroHeader} />
+    <Header />
     {trail.length > 1 && <Breadcrumbs trail={trail} />}
     {/*
       tabindex="-1" is what makes the skip link work. Chrome and Safari scroll to
@@ -164,7 +161,6 @@ const nodes = [
     </main>
     <Footer />
     <CartDrawer />
-    {/* The drawn cursor is appended by motion.ts on fine pointers. */}
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     <div class="sr-only" id="cart-live" role="status" aria-live="polite"></div>
 

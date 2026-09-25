@@ -1,6 +1,8 @@
 /**
- * The site's motion layer: word-by-word headline reveals, the drawn cursor,
- * a little parallax, card tilt and counters that count up.
+ * The site's motion layer: a little parallax and counters that count up, on
+ * the content pages that still use them. The drawn cursor, the card tilt and
+ * the word-by-word headlines went with the dark site: the shop is plain, and
+ * a headline is there when the page paints.
  *
  * It used to be Lenis plus GSAP with ScrollTrigger — 49 KB gzipped — to do work
  * that IntersectionObserver and one rAF loop do for nothing. Smooth scrolling in
@@ -23,133 +25,9 @@ declare global {
 }
 
 const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const finePointer = matchMedia('(pointer: fine)').matches;
-const root = document.documentElement;
 
 /** Everything that must be undone when a check script asks for stillness. */
 const teardown: Array<() => void> = [];
-
-/* ------------------------------------------------------------- the cursor */
-/*
- * A dot exactly where the pointer is and a ring that arrives a beat later. Over
- * a link the ring grows; over anything carrying data-cursor it grows further and
- * prints the word — "view", "add" — so a card need not wear a button to say what
- * a click will do.
- */
-if (finePointer && !reduced) {
-  const el = document.createElement('div');
-  el.className = 'cursor';
-  el.setAttribute('aria-hidden', 'true');
-  el.innerHTML = '<div class="cursor__ring"><span class="cursor__label"></span></div><div class="cursor__dot"></div>';
-  document.body.appendChild(el);
-  const ring = el.querySelector<HTMLElement>('.cursor__ring')!;
-  const dot = el.querySelector<HTMLElement>('.cursor__dot')!;
-  const label = el.querySelector<HTMLElement>('.cursor__label')!;
-  let x = innerWidth / 2, y = innerHeight / 2, rx = x, ry = y, shown = false, raf = 0;
-
-  const onMove = (e: PointerEvent) => {
-    x = e.clientX;
-    y = e.clientY;
-    if (!shown) {
-      shown = true;
-      root.classList.add('has-cursor');
-      rx = x;
-      ry = y;
-    }
-    const t = (e.target as Element | null)?.closest('a, button, summary, label, [data-cursor], input, select, textarea');
-    const word = t?.getAttribute('data-cursor') || t?.closest('[data-cursor]')?.getAttribute('data-cursor');
-    el.classList.toggle('is-link', !!t && !word);
-    el.classList.toggle('is-label', !!word);
-    if (word) label.textContent = word;
-  };
-  const down = () => el.classList.add('is-down');
-  const up = () => el.classList.remove('is-down');
-  const leave = () => root.classList.remove('has-cursor');
-  const enter = () => shown && root.classList.add('has-cursor');
-
-  addEventListener('pointermove', onMove, { passive: true });
-  addEventListener('pointerdown', down, { passive: true });
-  addEventListener('pointerup', up, { passive: true });
-  document.addEventListener('mouseleave', leave);
-  document.addEventListener('mouseenter', enter);
-
-  /* The ring eases towards the dot; the dot is exact. One rAF, two transforms. */
-  const tick = () => {
-    rx += (x - rx) * 0.18;
-    ry += (y - ry) * 0.18;
-    dot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-    ring.style.transform = `translate3d(${rx}px, ${ry}px, 0)`;
-    raf = requestAnimationFrame(tick);
-  };
-  raf = requestAnimationFrame(tick);
-
-  teardown.push(() => {
-    cancelAnimationFrame(raf);
-    removeEventListener('pointermove', onMove);
-    removeEventListener('pointerdown', down);
-    removeEventListener('pointerup', up);
-    document.removeEventListener('mouseleave', leave);
-    document.removeEventListener('mouseenter', enter);
-    root.classList.remove('has-cursor');
-    el.remove();
-  });
-}
-
-/* ---------------------------------------------------- words, one at a time */
-/*
- * A headline marked data-words is split into words the CSS can stagger. The
- * split happens here rather than in the markup so the prose stays one string for
- * the translation pass; it runs after the page's text has been localised.
- */
-for (const h of Array.from(document.querySelectorAll<HTMLElement>('[data-words]'))) {
-  if (reduced) continue;
-  const walker = document.createTreeWalker(h, NodeFilter.SHOW_TEXT);
-  const nodes: Text[] = [];
-  let n: Node | null;
-  while ((n = walker.nextNode())) nodes.push(n as Text);
-  let i = 0;
-  for (const node of nodes) {
-    const parts = node.textContent!.split(/(\s+)/);
-    const frag = document.createDocumentFragment();
-    for (const part of parts) {
-      if (!part) continue;
-      if (/^\s+$/.test(part)) {
-        frag.appendChild(document.createTextNode(part));
-        continue;
-      }
-      const w = document.createElement('span');
-      w.className = 'w';
-      w.style.setProperty('--i', String(i++));
-      w.textContent = part;
-      frag.appendChild(w);
-    }
-    node.replaceWith(frag);
-  }
-}
-
-/** Add a class the first time an element is seen, then stop watching it. */
-function onceInView(els: Iterable<Element>, cls: string, threshold = 0.2) {
-  const list = Array.from(els);
-  if (!list.length) return;
-  if (!('IntersectionObserver' in window)) {
-    list.forEach((el) => el.classList.add(cls));
-    return;
-  }
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        e.target.classList.add(cls);
-        io.unobserve(e.target);
-      }
-    },
-    { threshold },
-  );
-  list.forEach((el) => io.observe(el));
-  teardown.push(() => io.disconnect());
-}
-
-onceInView(document.querySelectorAll('[data-words]'), 'is-in');
 
 /* --------------------------------------------------------------- parallax */
 /*
@@ -197,26 +75,6 @@ if (!reduced) {
       removeEventListener('resize', onScroll);
       io.disconnect();
       all.forEach((el) => (el.style.transform = ''));
-    });
-  }
-}
-
-/* ------------------------------------------------------ 3-D tilt on cards */
-if (finePointer && !reduced) {
-  for (const card of Array.from(document.querySelectorAll<HTMLElement>('[data-tilt]'))) {
-    let raf = 0;
-    card.addEventListener('pointermove', (e) => {
-      const r = card.getBoundingClientRect();
-      const px = (e.clientX - r.left) / r.width - 0.5;
-      const py = (e.clientY - r.top) / r.height - 0.5;
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        card.style.transform = `perspective(900px) rotateX(${(-py * 7).toFixed(2)}deg) rotateY(${(px * 9).toFixed(2)}deg) translateY(-8px)`;
-      });
-    });
-    card.addEventListener('pointerleave', () => {
-      cancelAnimationFrame(raf);
-      card.style.transform = '';
     });
   }
 }

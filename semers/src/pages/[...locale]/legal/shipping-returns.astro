@@ -46,7 +46,7 @@ const sections = [
   { id: 'damaged', label: 'Damaged, wrong or missing' },
   { id: 'cancel', label: 'Cancelling before dispatch' },
   { id: 'returns', label: 'Returns' },
-  { id: 'contact', label: 'Contact' },
+  { id: 'legal-contact', label: 'Contact' },
 ];
 
 const zones = [
@@ -177,7 +177,7 @@ const webPage = {
       <!-- TODO Semers: add the return address here as visible text once confirmed. -->
       <p>Gift boxes and bundles, such as the <a href="/products/tasting-box/">Tasting Box</a>, can be returned whole and unopened, but not in parts.</p>
 
-      <h2 id="contact">Contact</h2>
+      <h2 id="legal-contact">Contact</h2>
       <p>{site.brand.legalName}, {site.locality}, {site.country}<br />
       <a href={`mailto:${site.email}`}>{site.email}</a></p>
       <p>Prefer a form? Use the <a href="/contact/">contact page</a>. Quick answers about storage, calories and ingredients are in the <a href="/faq/">FAQ</a>; how we handle your data is in the <a href="/legal/privacy/">privacy policy</a>.</p>
@@ -263,7 +263,7 @@ const webPage = {
   @media (max-width: 48rem) { .legal-title { max-width: none; font-size: clamp(2.25rem, 9.5vw, 3.25rem); overflow-wrap: anywhere; hyphens: auto; } }
   /* Russian legal nouns run to 19 letters; a step smaller keeps them whole on a 390 px screen. */
   @media (max-width: 48rem) { .legal-title:lang(ru) { font-size: clamp(2rem, 8.2vw, 3rem); } }
-  .legal-title em { font-style: italic; font-weight: 400; color: var(--honey-500); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .legal-title em { font-style: italic; font-weight: 400; color: var(--honey-ink); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   /* The honey phrase takes its own line, so it is never split with one word stranded above. */
   @media (min-width: 48.01rem) { .legal-title { max-width: 20ch; } .legal-title em { display: block; text-wrap: balance; } }
   .legal-hero__row { display: grid; gap: 1.25rem; margin-top: clamp(1.5rem, 4vw, 3rem); }
@@ -271,7 +271,7 @@ const webPage = {
   .legal-hero__lead .lead { max-width: none; font-size: var(--fs-lg); line-height: 1.55; }
   .legal-hero .legal-hero__lead :global(.governing) { margin: 1.25rem 0 0; }
   .legal__updated { display: inline-flex; align-items: center; gap: 0.5em; margin: 0; font-size: var(--fs-sm); color: var(--fg-3); }
-  .legal__updated svg { color: var(--honey-500); }
+  .legal__updated svg { color: var(--honey-ink); }
   @media (min-width: 60rem) {
     .legal-hero__row { grid-template-columns: 16rem minmax(0, 1fr); gap: var(--sp-8); align-items: start; }
     .legal-hero__meta { padding-top: 0.4rem; }
@@ -283,7 +283,7 @@ const webPage = {
     .legal { grid-template-columns: 16rem minmax(0, 1fr); gap: var(--sp-8); }
     /* The rail stays put and only the table of contents scrolls inside it, so the help box is never cut off. */
     .legal__aside { position: sticky; top: 7rem; max-height: calc(100vh - 7.5rem); grid-template-rows: auto minmax(0, 1fr) auto; }
-    .legal__toc { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 1.25rem; scrollbar-width: thin; scrollbar-color: rgb(243 233 214 / 0.18) transparent; mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent); -webkit-mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent); }
+    .legal__toc { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 1.25rem; scrollbar-width: thin; scrollbar-color: rgb(20 26 18 / 0.18) transparent; mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent); -webkit-mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent); }
     .legal__pills { flex-direction: column; align-items: stretch; }
     .legal__pills .pill { text-align: left; }
   }
@@ -294,13 +294,13 @@ const webPage = {
   /* The rail: every section as a small outlined numeral; the one in view lights, and a honey line grows with the reading. */
   .legal__toc ol { position: relative; counter-reset: toc; list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
   .legal__toc ol::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--line); }
-  .legal__toc ol::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--honey-500); box-shadow: 0 0 12px var(--honey-500); transform: scaleY(var(--p, 0)); transform-origin: top; transition: transform 0.25s linear; }
+  .legal__toc ol::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--honey-500); box-shadow: none; transform: scaleY(var(--p, 0)); transform-origin: top; transition: transform 0.25s linear; }
   .legal__toc li { counter-increment: toc; }
   .legal__toc a { position: relative; display: grid; grid-template-columns: 1.7rem 1fr; align-items: baseline; gap: 0.4rem; padding: 0.35rem 0 0.35rem 1.1rem; font-size: var(--fs-sm); line-height: 1.35; color: var(--fg-2); text-decoration: none; transition: color var(--dur-fast); }
   .legal__toc a::before { content: counter(toc, decimal-leading-zero); font-family: var(--font-display); font-size: 0.95rem; font-weight: 400; letter-spacing: 0.02em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 48, 'SOFT' 0; transition: color var(--dur-fast); }
   .legal__toc a:hover { color: var(--cream-0); }
   .legal__toc a.is-on { color: var(--cream-0); }
-  .legal__toc a.is-on::before { color: var(--honey-500); -webkit-text-stroke: 0; }
+  .legal__toc a.is-on::before { color: var(--honey-ink); -webkit-text-stroke: 0; }
   @media (max-width: 59.99rem) {
     .legal__toc { margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
     .legal__toc ol { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: none; scroll-snap-type: x proximity; }
@@ -331,7 +331,7 @@ const webPage = {
   .legal__summary .ticks { font-size: var(--fs-md); line-height: 1.5; }
 
   /* Tables as lit panels. */
-  .legal__body .table-wrap { margin: 1.25rem 0 2rem; padding: 0.35rem 1.25rem 0.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1), 0 0 70px -30px rgb(240 176 74 / 0.45); }
+  .legal__body .table-wrap { margin: 1.25rem 0 2rem; padding: 0.35rem 1.25rem 0.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
   .legal__body .table { font-size: var(--fs-sm); line-height: 1.5; }
   .legal__body .table th { padding: 1em 0.6em 0.75em; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-3); }
   .legal__body .table td { padding: 0.9em 0.6em; color: var(--fg-2); }
@@ -339,8 +339,8 @@ const webPage = {
   .legal__body .table td:first-child { font-weight: 600; color: var(--cream-0); }
 
   /* On the cream band a ghost button is dark-on-cream, or it vanishes into the room. */
-  .legal__ghost { --btn-fg: var(--night-900); border-color: rgb(11 18 14 / 0.35); }
-  .legal__ghost:hover { background: var(--night-900); color: var(--cream-0); border-color: var(--night-900); }
+  .legal__ghost { --btn-fg: var(--cream-0); border-color: var(--night-500); }
+  .legal__ghost:hover { background: var(--bg-raised); color: var(--cream-0); border-color: var(--cream-0); }
 
   .legal__stats { grid-template-columns: repeat(2, 1fr); gap: 1.25rem 1.5rem; }
   @media (min-width: 40rem) { .legal__stats { grid-template-columns: repeat(4, 1fr); } }

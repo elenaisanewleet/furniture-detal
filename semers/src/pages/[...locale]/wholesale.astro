@@ -468,7 +468,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   /* ---------------------------------------------------------- hero */
   .ws-hero { padding-bottom: clamp(2rem, 5vw, 4rem); }
   .ws-hero .ws-hero__title { font-size: clamp(3rem, 2rem + 6.5vw, 8.5rem); line-height: 0.92; letter-spacing: -0.04em; max-width: 14ch; }
-  .ws-hero__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .ws-hero__title em { font-style: italic; font-weight: 400; color: var(--accent-display); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .ws-hero__row { display: grid; gap: clamp(2rem, 5vw, 4rem); margin-top: clamp(2rem, 5vw, 3.5rem); align-items: end; }
   @media (min-width: 56rem) { .ws-hero__row { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
   .ws-hero__copy { max-width: 40rem; }
@@ -485,8 +485,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .ladder__list { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
   .rung { --size: clamp(4rem, 12vw + var(--i) * 2vw, calc(5.5rem + var(--i) * 2rem)); display: grid; gap: var(--sp-3) var(--sp-6); padding-block: clamp(1.5rem, 4vw, 3rem); border-top: 1px solid var(--line); align-items: end; }
   .rung__n { display: block; font-family: var(--font-display); font-size: var(--size); font-weight: 400; line-height: 0.85; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 144, 'SOFT' 30; transition: -webkit-text-stroke-color var(--dur-slow) var(--ease-out), color var(--dur-slow) var(--ease-out), filter var(--dur-slow) var(--ease-out); }
-  .rung.is-lit .rung__n { -webkit-text-stroke-color: var(--accent); filter: drop-shadow(0 0 22px rgb(255 90 60 / 0.35)); }
-  .rung:hover .rung__n { color: var(--cream-0); -webkit-text-stroke-color: var(--cream-0); filter: drop-shadow(0 0 30px rgb(255 252 245 / 0.35)); }
+  .rung.is-lit .rung__n { -webkit-text-stroke-color: var(--accent); filter: none; }
+  .rung:hover .rung__n { color: var(--cream-0); -webkit-text-stroke-color: var(--cream-0); filter: none; }
   .rung__text { display: grid; gap: 0.5rem; max-width: 34ch; }
   .rung__text p { margin: 0; font-family: var(--font-display); font-size: var(--fs-xl); font-weight: 500; letter-spacing: -0.015em; line-height: 1.2; color: var(--cream-0); text-wrap: balance; }
   @media (min-width: 56rem) {
@@ -505,7 +505,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   }
   @media (min-width: 56rem) { .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
   .lit { position: relative; isolation: isolate; overflow: clip; display: grid; gap: var(--sp-3); align-content: start; padding: clamp(1.4rem, 3vw, 2.25rem); border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
-  .lit::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(55% 50% at 100% 0%, rgb(240 176 74 / 0.14), transparent 70%); opacity: 0.7; transition: opacity var(--dur-slow); }
+  .lit::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: none; opacity: 0.7; transition: opacity var(--dur-slow); }
   .lit:hover { box-shadow: var(--shadow-2), var(--glow-honey); }
   .lit:hover::before { opacity: 1; }
   .lit__n { font-family: var(--font-display); font-size: var(--fs-2xl); font-weight: 400; line-height: 1; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); }
@@ -514,7 +514,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
 
   /* ---------------------------------------------------------- why it sells */
   .ws-stats { margin: var(--sp-6) 0; grid-template-columns: repeat(2, 1fr); }
-  .ws-stats .stat:first-child strong { color: var(--honey-500); }
+  .ws-stats .stat:first-child strong { color: var(--honey-ink); }
 
   /* ---------------------------------------------------------- formats table */
   .ws-table { border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); padding: 0.5rem 1.25rem; }
@@ -574,7 +574,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
   .ws-enq { display: grid; gap: var(--sp-6); align-items: start; }
   @media (min-width: 60rem) { .ws-enq { grid-template-columns: 1.15fr 0.85fr; } .ws-enq__aside { position: sticky; top: 6rem; } }
   .ws-form { position: relative; isolation: isolate; overflow: clip; padding: clamp(1.25rem, 3vw, 2.5rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-3), var(--glow-honey); }
-  .ws-form::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 40% at 0% 0%, rgb(240 176 74 / 0.12), transparent 70%); }
+  .ws-form::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: none; }
   .ws-form .checkbox { align-items: flex-start; }
   .ws-form [data-form-note]:not(:empty) { margin-top: var(--sp-4); }
   .ws-enq__aside { display: grid; gap: var(--sp-5); }

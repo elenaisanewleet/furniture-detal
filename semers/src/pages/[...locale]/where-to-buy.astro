@@ -245,7 +245,7 @@ const faqs = pick.flatMap((q) => {
   /* ---------------------------------------------------------- hero */
   .wtb-hero { padding-bottom: clamp(2rem, 5vw, 3.5rem); }
   .wtb-hero .wtb-hero__title { font-size: var(--fs-hero); line-height: 0.9; letter-spacing: -0.045em; max-width: 9ch; }
-  .wtb-hero__title em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  .wtb-hero__title em { font-style: italic; font-weight: 400; color: var(--accent-display); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
   .wtb-hero__row { display: grid; gap: var(--sp-5) var(--sp-8); margin-top: clamp(2rem, 4vw, 3rem); align-items: end; }
   @media (min-width: 56rem) { .wtb-hero__row { grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr); } .wtb-hero__cta { justify-content: end; } }
   .wtb-hero__row .lead { margin: 0; }
@@ -260,7 +260,7 @@ const faqs = pick.flatMap((q) => {
   .shelf__head h2 { max-width: 14ch; font-size: var(--fs-3xl); }
   .shelf__list { list-style: none; margin: 0; padding: 0; border-bottom: 1px solid var(--line); }
   .shelf__row { position: relative; border-top: 1px solid var(--line); }
-  .shelf__row::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background: radial-gradient(70% 140% at 0% 50%, rgb(255 90 60 / 0.16), transparent 70%); transition: opacity var(--dur-slow) var(--ease-out); }
+  .shelf__row::before { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; opacity: 0; background: none; transition: opacity var(--dur-slow) var(--ease-out); }
   .shelf__row:hover::before, .shelf__row:focus-within::before { opacity: 1; }
   .shelf__in { position: relative; z-index: 1; display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); column-gap: var(--sp-4); row-gap: 0.5rem; padding-block: clamp(1.25rem, 3vw, 2.25rem); text-decoration: none; color: inherit; }
   a.shelf__in:focus-visible { outline-offset: -4px; }
@@ -269,8 +269,8 @@ const faqs = pick.flatMap((q) => {
   .shelf__meta .eyebrow { color: var(--fg-3); }
   .shelf__word { grid-column: 1 / -1; grid-row: 2; display: block; font-family: var(--font-display); font-size: var(--fs-4xl); font-weight: 500; line-height: 0.95; letter-spacing: -0.04em; color: var(--cream-1); font-variation-settings: 'opsz' 144, 'SOFT' 50, 'WONK' 1; text-wrap: balance; overflow-wrap: anywhere; transition: color var(--dur) var(--ease-out), transform var(--dur-slow) var(--ease-expo), text-shadow var(--dur-slow) var(--ease-out); }
   .shelf__note { grid-column: 1 / -1; grid-row: 3; display: inline-flex; align-items: center; gap: 0.5rem; color: var(--fg-2); font-size: var(--fs-md); }
-  .shelf__note .arrow { color: var(--accent); transition: transform var(--dur) var(--ease-out); }
-  .shelf__row:hover .shelf__word, .shelf__row:focus-within .shelf__word { color: var(--cream-0); text-shadow: 0 0 48px rgb(255 252 245 / 0.35); transform: translateX(0.06em); }
+  .shelf__note .arrow { color: var(--accent-display); transition: transform var(--dur) var(--ease-out); }
+  .shelf__row:hover .shelf__word, .shelf__row:focus-within .shelf__word { color: var(--cream-0); text-shadow: none; transform: translateX(0.06em); }
   .shelf__row:hover .shelf__note .arrow, .shelf__row:focus-within .shelf__note .arrow { transform: translate(6px, -6px) rotate(-45deg); }
   .shelf__row:hover .shelf__n, .shelf__row:focus-within .shelf__n { -webkit-text-stroke-color: var(--accent); }
   @media (min-width: 56rem) {
@@ -287,8 +287,8 @@ const faqs = pick.flatMap((q) => {
   /* ---------------------------------------------------------- lit cards */
   .lit-row { display: grid; gap: var(--sp-5); }
   @media (min-width: 56rem) { .lit-row { grid-template-columns: 1fr 1fr; } }
-  .lit { --lit: rgb(243 233 214 / 0.14); position: relative; isolation: isolate; overflow: clip; display: grid; gap: var(--sp-4); align-content: start; padding: clamp(1.5rem, 3.5vw, 2.75rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
-  .lit::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(60% 55% at 100% 0%, var(--lit), transparent 70%); }
+  .lit { --lit: rgb(20 26 18 / 0.14); position: relative; isolation: isolate; overflow: clip; display: grid; gap: var(--sp-4); align-content: start; padding: clamp(1.5rem, 3.5vw, 2.75rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2); transition: box-shadow var(--dur-slow) var(--ease-out); }
+  .lit::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: none; }
   .lit--mint { --lit: rgb(62 207 168 / 0.22); }
   .lit--mint:hover { box-shadow: var(--shadow-2), var(--glow-mint); }
   .lit:not(.lit--mint):hover { box-shadow: var(--shadow-3); }
@@ -303,7 +303,7 @@ const faqs = pick.flatMap((q) => {
   @media (min-width: 56rem) { .postbox { grid-template-columns: 1.15fr 0.85fr; gap: clamp(2rem, 5vw, 4rem); } }
   .postbox__copy { display: grid; gap: var(--sp-4); }
   .postbox__lead { font-size: var(--fs-lg); max-width: 48ch; }
-  .postbox__lead a { color: var(--night-900); text-decoration-color: var(--apple-600); }
+  .postbox__lead a { color: var(--cream-0); text-decoration-color: var(--apple-600); }
   .postbox__ticks { margin: var(--sp-2) 0; }
   .postbox__ticks li { color: var(--ink-700); }
   .postbox__ticks :global(svg) { color: var(--leaf-600); }

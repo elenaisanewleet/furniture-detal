@@ -291,7 +291,7 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
   /* ------------------------------------------------------------ progress */
   .art__progress { position: fixed; left: 0; right: 0; top: 0; z-index: 60; height: 2px; pointer-events: none; opacity: 0; transition: opacity var(--dur); }
   .art__progress.is-on { opacity: 1; }
-  .art__progress i { display: block; height: 100%; width: 100%; background: var(--accent); box-shadow: 0 0 12px var(--accent); transform: scaleX(var(--p, 0)); transform-origin: left; }
+  .art__progress i { display: block; height: 100%; width: 100%; background: var(--accent); box-shadow: none; transform: scaleX(var(--p, 0)); transform-origin: left; }
 
   /* ------------------------------------------------------------ header */
   .art__head { padding-bottom: clamp(2rem, 4vw, 3.5rem); }
@@ -308,7 +308,7 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
 
   /* ------------------------------------------------------------ hero: a lit window as wide as the page */
   .art__hero { position: relative; isolation: isolate; overflow: clip; height: min(72svh, 46rem); min-height: 22rem; background: var(--night-800); }
-  .art__hero-media { position: absolute; inset: -12% 0; z-index: 0; background: radial-gradient(45% 55% at 50% 50%, rgb(253 185 19 / 0.12), transparent 70%), var(--night-800); }
+  .art__hero-media { position: absolute; inset: -12% 0; z-index: 0; background: var(--night-800); }
   .art__hero-media img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .art__hero::before { content: ''; position: absolute; inset: 0; z-index: 1; background: linear-gradient(to bottom, var(--night-900) 0%, transparent 18%, transparent 70%, var(--night-900) 100%); pointer-events: none; }
   @media (max-width: 48rem) { .art__hero { height: auto; aspect-ratio: 4 / 5; min-height: 0; } }
@@ -327,7 +327,7 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
   }
 
   /* the rail */
-  .toc { padding: 1.1rem 1.25rem 1rem; border-radius: var(--r-lg); background: rgb(11 18 14 / 0.62); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid var(--line); }
+  .toc { padding: 1.1rem 1.25rem 1rem; border-radius: var(--r-lg); background: rgb(251 249 244 / 0.62); backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%); border: 1px solid var(--line); }
   .toc ol { margin: 0.9rem 0 0; padding: 0; list-style: none; counter-reset: toc; display: grid; }
   .toc li { counter-increment: toc; }
   .toc a { display: grid; grid-template-columns: 1.6rem minmax(0, 1fr); align-items: baseline; gap: 0.5rem; min-height: 2.6rem; padding: 0.55rem 0; border-top: 1px solid var(--line); font-size: var(--fs-sm); line-height: 1.3; text-decoration: none; color: var(--fg-2); transition: color var(--dur-fast); }
@@ -335,18 +335,18 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
   .toc a::before { content: counter(toc, decimal-leading-zero); font-family: var(--font-display); font-size: var(--fs-xs); letter-spacing: 0.06em; color: var(--fg-3); font-variant-numeric: tabular-nums; transition: color var(--dur-fast); }
   .toc a:hover { color: var(--cream-0); }
   .toc a[aria-current="true"] { color: var(--cream-0); }
-  .toc a[aria-current="true"]::before { color: var(--accent); text-shadow: 0 0 12px var(--accent); }
+  .toc a[aria-current="true"]::before { color: var(--accent-display); text-shadow: none; }
   .art__share { display: grid; gap: 0.75rem; }
   .art__share-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .art__share-btn { display: inline-flex; align-items: center; gap: 0.45em; min-height: 2.75rem; padding: 0.5rem 1rem; border-radius: var(--r-pill); border: 1px solid rgb(243 233 214 / 0.25); background: transparent; color: var(--cream-1); font: inherit; font-size: var(--fs-sm); font-weight: 600; text-decoration: none; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
+  .art__share-btn { display: inline-flex; align-items: center; gap: 0.45em; min-height: 2.75rem; padding: 0.5rem 1rem; border-radius: var(--r-pill); border: 1px solid rgb(20 26 18 / 0.25); background: transparent; color: var(--cream-1); font: inherit; font-size: var(--fs-sm); font-weight: 600; text-decoration: none; cursor: pointer; transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); }
   .art__share-btn:hover { background: var(--cream-1); color: var(--night-900); border-color: var(--cream-1); }
-  .art__share-btn :global(svg) { color: var(--accent); transition: color var(--dur-fast); }
+  .art__share-btn :global(svg) { color: var(--accent-display); transition: color var(--dur-fast); }
   .art__share-btn:hover :global(svg) { color: var(--night-900); }
 
   /* ------------------------------------------------------------ prose: a 65ch measure, generous leading, a drop cap, numbered chapters, pull quotes at display size */
   .art__prose { max-width: 68ch; font-size: var(--fs-lg); line-height: 1.7; color: var(--fg-2); counter-reset: chapter; }
   .art__prose :global(p) { margin-bottom: 1.25em; }
-  .art__prose > :global(p:first-of-type)::first-letter { float: left; font-family: var(--font-display); font-weight: 500; font-size: 4.4em; line-height: 0.78; padding: 0.06em 0.12em 0 0; margin-bottom: -0.1em; color: var(--accent); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
+  .art__prose > :global(p:first-of-type)::first-letter { float: left; font-family: var(--font-display); font-weight: 500; font-size: 4.4em; line-height: 0.78; padding: 0.06em 0.12em 0 0; margin-bottom: -0.1em; color: var(--accent-display); font-variation-settings: 'opsz' 144, 'SOFT' 60, 'WONK' 1; }
   .art__prose :global(h2) { counter-increment: chapter; margin-top: 2.4em; margin-bottom: 0.6em; font-size: var(--fs-2xl); line-height: 1.02; letter-spacing: -0.025em; color: var(--cream-0); scroll-margin-top: 6rem; text-wrap: balance; }
   .art__prose :global(h2)::before { content: counter(chapter, decimal-leading-zero); display: block; margin-bottom: 0.7rem; font-family: var(--font-sans); font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; color: var(--accent-ink); font-variant-numeric: tabular-nums; }
   .art__prose :global(h3) { margin-top: 1.8em; margin-bottom: 0.5em; font-size: var(--fs-xl); color: var(--cream-0); scroll-margin-top: 6rem; }
@@ -355,18 +355,18 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
   .art__prose :global(strong) { color: var(--cream-0); }
   .art__prose :global(ul), .art__prose :global(ol) { padding-left: 1.2em; margin: 0 0 1.25em; }
   .art__prose :global(li) { margin-bottom: 0.5em; padding-left: 0.2em; }
-  .art__prose :global(li)::marker { color: var(--accent); }
+  .art__prose :global(li)::marker { color: var(--accent-display); }
   .art__prose :global(img) { border-radius: var(--r-lg); margin: 1.5em 0; }
   .art__prose :global(hr) { margin: 2.5em 0; border: 0; border-top: 1px solid var(--line); }
   .art__prose :global(.art__table) { overflow-x: auto; margin: 1.75em 0; border-radius: var(--r-md); border: 1px solid var(--line); -webkit-overflow-scrolling: touch; }
   .art__prose :global(table) { width: 100%; min-width: 34rem; border-collapse: collapse; font-size: var(--fs-sm); line-height: 1.45; }
   .art__prose :global(th), .art__prose :global(td) { padding: 0.75em 0.9em; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
   .art__prose :global(tr:last-child td) { border-bottom: 0; }
-  .art__prose :global(th) { font-weight: 600; color: var(--cream-0); background: rgb(243 233 214 / 0.04); }
+  .art__prose :global(th) { font-weight: 600; color: var(--cream-0); background: rgb(20 26 18 / 0.04); }
   /* The one typographic pause in the piece: a quote at display size, an accent mark in the text face, a hairline of light under it. */
   .art__prose :global(blockquote) { position: relative; margin: 1.6em 0 2.2em; padding: 1.4rem 0 0 0; border: 0; max-width: 20ch; font-family: var(--font-display); font-weight: 400; font-style: italic; font-size: var(--fs-3xl); line-height: 1.02; letter-spacing: -0.025em; color: var(--cream-0); text-wrap: balance; font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
-  .art__prose :global(blockquote)::before { content: '“'; position: absolute; left: -0.02em; top: 0.1em; font-family: var(--font-sans); font-size: 5rem; line-height: 0.4; font-style: normal; font-weight: 700; color: var(--accent); text-shadow: 0 0 24px rgb(255 90 60 / 0.4); pointer-events: none; }
-  .art__prose :global(blockquote)::after { content: ''; display: block; width: 3rem; height: 1px; margin-top: 0.7em; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .art__prose :global(blockquote)::before { content: '“'; position: absolute; left: -0.02em; top: 0.1em; font-family: var(--font-sans); font-size: 5rem; line-height: 0.4; font-style: normal; font-weight: 700; color: var(--accent-display); text-shadow: none; pointer-events: none; }
+  .art__prose :global(blockquote)::after { content: ''; display: block; width: 3rem; height: 1px; margin-top: 0.7em; background: var(--accent); box-shadow: none; }
   .art__prose :global(blockquote p) { margin: 0; color: inherit; }
 
   /* footer of the article */
@@ -377,7 +377,7 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
   /* ------------------------------------------------------------ the product panel */
   .art__shopwrap { padding-bottom: clamp(3rem, 7vw, 6rem); }
   .art__shop { position: relative; isolation: isolate; overflow: clip; display: grid; gap: 0; border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-mint); }
-  .art__shop::before { content: ''; position: absolute; inset: 0; z-index: -1; background: radial-gradient(50% 70% at 0% 50%, rgb(62 207 168 / 0.12), transparent 70%); pointer-events: none; }
+  .art__shop::before { content: ''; position: absolute; inset: 0; z-index: -1; background: none; pointer-events: none; }
   @media (min-width: 56rem) { .art__shop { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr); align-items: center; } }
   .art__shop-img { position: relative; aspect-ratio: 4 / 3; background: var(--mint-100); }
   @media (min-width: 56rem) { .art__shop-img { aspect-ratio: auto; align-self: stretch; min-height: 22rem; } }
@@ -389,7 +389,7 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
   .art__shop-cta { gap: 0.75rem 1.5rem; margin-top: 0.5rem; }
 
   /* ------------------------------------------------------------ also read: a strip on a phone, three across on a desk */
-  .art__also h2 em { font-style: italic; font-weight: 400; color: var(--accent); font-variation-settings: 'opsz' 96, 'SOFT' 100, 'WONK' 1; }
+  .art__also h2 em { font-style: italic; font-weight: 400; color: var(--accent-display); font-variation-settings: 'opsz' 96, 'SOFT' 100, 'WONK' 1; }
   .art__rel { display: grid; grid-auto-flow: column; grid-auto-columns: min(78vw, 22rem); gap: 1rem; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; padding-inline: var(--gutter); padding-bottom: 0.5rem; }
   .art__rel::-webkit-scrollbar { display: none; }
   .art__rel-card { scroll-snap-align: start; }
@@ -403,5 +403,5 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
   /* ------------------------------------------------------------ the one cream room */
   /* The band's own padding does the spacing before the footer; the section adds none of its own. */
   .art__end { padding-top: 0; padding-bottom: var(--sp-6); }
-  .cta-band__link { color: var(--night-900); border-color: var(--apple-600); }
+  .cta-band__link { color: var(--cream-0); border-color: var(--apple-600); }
 </style>

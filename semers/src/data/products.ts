@@ -198,7 +198,7 @@ export const COLLECTIONS: Collection[] = [
     intro:
       'Layered baked apple for a plate rather than a pocket: a 50 g pack, or a 500 g carton of individually wrapped pieces. Good with tea, coffee or a spoon of yoghurt.',
     image: 'pastila-texture',
-    accent: 'var(--cream-2)',
+    accent: 'var(--honey-100)',
   },
   {
     key: 'gift-sets',
@@ -435,7 +435,7 @@ export const PRODUCTS: Product[] = [
       { key: 'cinnamon', gtin: '4751043820020', image: 'pack-dessert-cinnamon' },
     ],
     images: ['pack-dessert-classic', 'pack-dessert-berry', 'pack-dessert-cinnamon'],
-    accent: 'var(--cream-2)',
+    accent: 'var(--honey-100)',
     // The room-temperature figure: nine months needs +8 to +10 °C, which a shelf does not promise.
     shelfLifeMonths: 4,
     order: 40,
@@ -463,7 +463,7 @@ export const PRODUCTS: Product[] = [
     diet: ['no-added-sugar'],
     variants: [{ key: 'classic' }],
     images: ['box-dessert-500'],
-    accent: 'var(--cream-2)',
+    accent: 'var(--honey-100)',
     new: true,
     shelfLifeMonths: 18,
     order: 45,

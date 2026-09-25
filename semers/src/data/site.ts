@@ -100,14 +100,17 @@ export const site = {
   },
 } as const;
 
-/** `key` indexes the nav labels in src/i18n/ui.ts; `href` is always the English path. */
+/**
+ * The header: the shop, two blocks of the home page and the footer's contacts.
+ * `key` indexes the nav labels in src/i18n/ui.ts; `href` is the English path,
+ * or a bare #anchor that stays on the page it is clicked on. The other pages
+ * (why pastila, how it's made, the story, the journal, wholesale) are in the footer.
+ */
 export const nav = [
   { key: 'shop', href: '/shop/' },
-  { key: 'whyPastila', href: '/why-pastila/' },
-  { key: 'howItsMade', href: '/how-its-made/' },
-  { key: 'story', href: '/story/' },
-  { key: 'journal', href: '/journal/' },
-  { key: 'wholesale', href: '/wholesale/' },
+  { key: 'inside', href: '/#about' },
+  { key: 'delivery', href: '/#delivery' },
+  { key: 'contacts', href: '#contact' },
 ] as const;
 
 /**

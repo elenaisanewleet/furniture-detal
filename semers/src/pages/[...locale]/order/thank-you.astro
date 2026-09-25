@@ -115,15 +115,13 @@ export function getStaticPaths() {
 <style>
   /* ------------------------------------------------------------ the moment */
   .ty { position: relative; isolation: isolate; overflow: clip; padding-block: clamp(4rem, 10vw, 8rem) clamp(2.5rem, 6vw, 5rem); }
-  .ty__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background:
-      radial-gradient(50% 45% at 18% 35%, rgb(240 176 74 / 0.18), transparent 70%),
-      radial-gradient(40% 40% at 78% 80%, rgb(62 207 168 / 0.08), transparent 70%); }
+  .ty__glow { position: absolute; inset: 0; z-index: -1; pointer-events: none; background: none; }
   .ty__grid { position: relative; display: grid; gap: clamp(2rem, 5vw, 4rem); align-items: end; }
   @media (min-width: 60rem) { .ty__grid:has(.ty__recap:not([hidden])) { grid-template-columns: minmax(0, 1.25fr) minmax(20rem, 0.75fr); } }
   /* The set piece: the word fills the right half, lit from below; the recap panel, when there is one, takes its place. */
-  .ty__word { position: absolute; right: max(var(--gutter), calc((100% - var(--container)) / 2)); bottom: clamp(1rem, 4vw, 2.5rem); z-index: -1; pointer-events: none; font-family: var(--font-display); font-weight: 400; font-size: clamp(6rem, 17vw, 17rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(243 233 214 / 0.42); white-space: nowrap; }
-  .ty__word span { display: block; text-shadow: 0 0 80px rgb(240 176 74 / 0.35); }
-  .ty__word::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: -0.3em; height: 0.5em; border-radius: 50%; background: radial-gradient(50% 60% at 50% 45%, rgb(240 176 74 / 0.4), transparent 72%); filter: blur(10px); }
+  .ty__word { position: absolute; right: max(var(--gutter), calc((100% - var(--container)) / 2)); bottom: clamp(1rem, 4vw, 2.5rem); z-index: -1; pointer-events: none; font-family: var(--font-display); font-weight: 400; font-size: clamp(6rem, 17vw, 17rem); line-height: 0.8; letter-spacing: -0.06em; color: transparent; -webkit-text-stroke: 1px rgb(20 26 18 / 0.42); white-space: nowrap; }
+  .ty__word span { display: block; text-shadow: none; }
+  .ty__word::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: -0.3em; height: 0.5em; border-radius: 50%; background: none; filter: blur(10px); }
   .ty:has(.ty__recap:not([hidden])) .ty__word { display: none; }
   @media (max-width: 59.99rem) { .ty__word { position: static; margin: clamp(1.5rem, 6vw, 3rem) 0 0; font-size: clamp(5rem, 22vw, 9rem); text-align: right; padding-inline: var(--gutter); } .ty__word::after { display: none; } .ty { display: grid; } .ty__word { order: 2; } }
   .ty__say { min-width: 0; }
@@ -133,7 +131,7 @@ export function getStaticPaths() {
   .ty__title { margin-top: 1.25rem; font-size: var(--fs-hero); letter-spacing: -0.045em; line-height: 0.88; color: var(--cream-0); font-variation-settings: 'opsz' 144, 'SOFT' 80, 'WONK' 1; }
   .ty__ref { display: grid; gap: 0.35rem; margin: clamp(1.5rem, 4vw, 2.5rem) 0 0; }
   .ty__ref-lbl { font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--fg-3); }
-  .ty__ref-n { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-3xl); letter-spacing: -0.03em; line-height: 1; color: var(--honey-500); text-shadow: 0 0 36px rgb(240 176 74 / 0.45); overflow-wrap: anywhere; }
+  .ty__ref-n { font-family: var(--font-display); font-weight: 400; font-size: var(--fs-3xl); letter-spacing: -0.03em; line-height: 1; color: var(--honey-ink); text-shadow: none; overflow-wrap: anywhere; }
   .ty__lead { margin-top: clamp(1.5rem, 4vw, 2.5rem); max-width: 48ch; }
 
   .ty__recap { display: grid; gap: 0.5rem; padding: clamp(1.5rem, 3vw, 2rem); border-radius: var(--r-xl); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-honey); min-width: 0; }
@@ -157,11 +155,11 @@ export function getStaticPaths() {
   .ty__steps li { counter-increment: s; position: relative; display: grid; gap: 0.5rem; align-content: start; padding-top: 1.5rem; border-top: 1px solid var(--line); }
   @media (min-width: 48rem) { .ty__steps li { border-top: 0; } }
   .ty__steps li::before { content: counter(s, decimal-leading-zero); font-family: var(--font-display); font-weight: 400; font-size: var(--fs-3xl); line-height: 0.85; letter-spacing: -0.05em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); margin-bottom: 0.75rem; }
-  .ty__steps li:first-child::before { color: var(--coral-500); -webkit-text-stroke: 0; text-shadow: 0 0 30px rgb(255 122 136 / 0.5); }
+  .ty__steps li:first-child::before { color: var(--coral-ink); -webkit-text-stroke: 0; text-shadow: none; }
   .ty__steps strong { font-family: var(--font-display); font-weight: 500; font-size: var(--fs-xl); letter-spacing: -0.02em; line-height: var(--lh-snug); color: var(--cream-0); }
   .ty__steps span { color: var(--fg-2); max-width: 32ch; }
   .ty__steps li::after { content: ''; position: absolute; top: -0.3rem; left: 0; width: 0.55rem; height: 0.55rem; border-radius: 50%; background: var(--cream-3); box-shadow: 0 0 0 4px var(--bg); }
-  .ty__steps li:first-child::after { background: var(--coral-500); box-shadow: 0 0 0 4px var(--bg), 0 0 16px var(--coral-500); }
+  .ty__steps li:first-child::after { background: var(--coral-500); box-shadow: 0 0 0 4px var(--bg); }
 
   /* ------------------------------------------------------------ back out */
   .ty__back { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(2rem, 4vw, 3rem); }

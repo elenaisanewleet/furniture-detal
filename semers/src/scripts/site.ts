@@ -270,10 +270,8 @@ function renderCart() {
   const total = cart.subtotal();
   const c = cart.count();
 
-  if (count) {
-    count.textContent = String(c);
-    count.hidden = c === 0;
-  }
+  // The pill always shows its number, 0 included, as the approved shop does.
+  if (count) count.textContent = String(c);
   $('#cart-open')?.setAttribute('aria-label', c ? interp(P('openCart', c, 'Open cart, {n}'), { n: c }) : S('openCartEmpty', 'Open cart, empty'));
   if (n) n.textContent = c ? interp(P('cartCount', c, '· {n} items'), { n: c }) : '';
   if (sub) sub.textContent = fmt(total);
@@ -603,10 +601,22 @@ if (pdp) {
   const thumbs = $$<HTMLButtonElement>('[data-gal-thumb]', pdp);
   const qtyIn = $<HTMLInputElement>('[data-qty-input]', pdp);
 
+  const showThumb = (b: HTMLButtonElement) => {
+    if (mainImg) {
+      mainImg.src = b.dataset.src || '';
+      mainImg.alt = b.dataset.alt || '';
+      mainImg.closest('[data-gal-wrap]')?.classList.toggle('is-contain', b.dataset.fit === 'contain');
+    }
+    thumbs.forEach((t) => t.setAttribute('aria-pressed', String(t === b)));
+  };
+
   /** `syncUrl` only on a user change: the initial call must not append ?flavour= to every product URL that gets shared or tracked. */
   const applyVariant = (input: HTMLInputElement, syncUrl = false) => {
     const price = Number(input.dataset.price);
     const label = input.dataset.label || '';
+    // A flavour with its own pack photograph shows it, as picking its thumbnail would.
+    const own = input.dataset.src ? thumbs.find((t) => t.dataset.src === input.dataset.src) : undefined;
+    if (own) showThumb(own);
     priceEls.forEach((el) => (el.textContent = fmt(price)));
     nameEls.forEach((el) => (el.textContent = label));
     if (gtinEl) gtinEl.textContent = input.dataset.gtin || '—';
@@ -637,16 +647,7 @@ if (pdp) {
     applyVariant(initial);
   }
 
-  thumbs.forEach((b) =>
-    b.addEventListener('click', () => {
-      if (mainImg) {
-        mainImg.src = b.dataset.src || '';
-        mainImg.alt = b.dataset.alt || '';
-        mainImg.closest('[data-gal-wrap]')?.classList.toggle('is-contain', b.dataset.fit === 'contain');
-      }
-      thumbs.forEach((t) => t.setAttribute('aria-pressed', String(t === b)));
-    }),
-  );
+  thumbs.forEach((b) => b.addEventListener('click', () => showThumb(b)));
 
   const clampQty = (v: number) => Math.max(1, Math.min(99, Math.round(v) || 1));
   pdp.addEventListener('click', (e) => {

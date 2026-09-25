@@ -1,9 +1,10 @@
 ---
 /**
- * Product card for grids. Whole card is a link (stretched from the title);
- * the "+" adds the first flavour straight to the box.
+ * Product card for grids, as on the approved shop: the pack on its own tint,
+ * the name, brand and weight, the flavours as dots, a line of copy, the price
+ * with its price per 100 g, and a small dark "Add to cart". The whole card is
+ * a link (stretched from the title); the button adds the first flavour.
  */
-import Icon from './Icon.astro';
 import { FLAVORS, formatPrice, unitPrice, hasNetWeight, type Product } from '~/data/products';
 import { img, imgSrc, imgSrcset, SIZES } from '~/data/images';
 import { stripLocale } from '~/i18n/config';
@@ -39,11 +40,11 @@ const badge = p.badge || (p.bestseller ? ui.bestseller : p.new ? ui.isNew : '');
 const kcal = p.kcalPerUnit != null && p.kcalPerUnit > 0 ? p.kcalPerUnit : null;
 /** A box whose contents are not settled has no net quantity, so neither a weight nor a price per 100 g. */
 const showWeight = hasNetWeight(p);
+/** "35 g", or "12 × 35 g" for a multi-pack: the weight as the pack states it. */
+const weight = showWeight ? (p.pack > 1 ? ui.packOf(p.pack, Math.round(p.weightGrams / p.pack)) : ui.grams(p.weightGrams)) : '';
 ---
 <article
   class={`pc ${compact ? 'pc--compact' : ''}`}
-  data-tilt
-  data-cursor={ui.view}
   style={`--pc-accent:${p.accent}`}
   data-product-card
   data-slug={p.slug}
@@ -62,14 +63,18 @@ const showWeight = hasNetWeight(p);
     <img src={imgSrc(p.images[0])} srcset={imgSrcset(p.images[0])} sizes={imgSrcset(p.images[0]) && SIZES.card} alt={image.alt} width={image.width} height={image.height} loading={loading} decoding="async" />
   </div>
   <div class="pc__body">
-    <h3 class="pc__name">
-      <a href={`/products/${p.slug}/`}>{p.name} {showWeight && <span class="muted small nowrap">{p.weightGrams} g</span>}</a>
-    </h3>
+    <h3 class="pc__name"><a href={`/products/${p.slug}/`}>{p.name}</a></h3>
+    {(p.brand || weight) && (
+      <p class="pc__sub">{p.brand && <span translate="no">{p.brand}</span>}{p.brand && weight && ' · '}{weight && <span class="nowrap">{weight}</span>}</p>
+    )}
+    {/* A row of colour dots standing in for the flavour list. Without a role the label is ignored and a screen reader announces nothing at all. */}
+    {p.variants.length > 1 && (
+      <div class="pc__swatches" role="img" title={flavours} aria-label={ui.flavoursAria(p.variants.length, flavours)}>
+        {p.variants.slice(0, 5).map((v) => <span class="pc__swatch" style={`--sw:${FLAVORS[v.key].color}`}></span>)}
+        {p.variants.length > 5 && <span class="pc__more">+{p.variants.length - 5}</span>}
+      </div>
+    )}
     <p class="pc__hook">{p.hook}</p>
-    <div class="pc__meta">
-      {kcal && <span>{kcal} kcal</span>}
-      {p.diet.slice(0, 2).map((d) => <span>{ui.diet[d]}</span>)}
-    </div>
     <div class="pc__foot">
       <div>
         <div class="pc__price">
@@ -81,16 +86,7 @@ const showWeight = hasNetWeight(p);
         {/* A multi-pack's comparison is the sum of its singles, so it is written out as one rather than struck through. */}
         {p.compareAt && <div class="pc__unit pc__singles">{ui.boughtSingly(p.pack, formatPrice(p.compareAt / p.pack, locale), formatPrice(p.compareAt, locale))}</div>}
       </div>
-      {/* A row of colour dots standing in for the flavour list. Without a role the label is ignored and a screen reader announces nothing at all. */}
-      {p.variants.length > 1 && (
-        <div class="pc__swatches" role="img" title={flavours} aria-label={`${p.variants.length} flavours: ${flavours}`}>
-          {p.variants.slice(0, 5).map((v) => <span class="pc__swatch" style={`--sw:${FLAVORS[v.key].color}`}></span>)}
-          {p.variants.length > 5 && <span class="pc__more">+{p.variants.length - 5}</span>}
-        </div>
-      )}
-      <button class="pc__add" type="button" data-add={add} data-add-open="false" aria-label={ui.addToBoxAria(p.title)}>
-        <Icon name="plus" size={20} />
-      </button>
+      <button class="pc__add" type="button" data-add={add} data-add-open="false" aria-label={ui.addToBoxAria(p.title)}>{ui.addToBox}</button>
     </div>
   </div>
 </article>
