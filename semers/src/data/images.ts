@@ -277,6 +277,14 @@ export const IMAGES: Record<string, SiteImage> = {
     fit: 'contain',
     widths: [480, 960, 1500],
   },
+  'pack-flourless-blueberry': {
+    local: '/img/pack-flourless-blueberry.webp',
+    alt: "Blum Baker's Flourless Apple Cake with Blueberries wrapper, 50 g, no sugar added",
+    width: 1400,
+    height: 581,
+    fit: 'contain',
+    widths: [480, 960, 1400],
+  },
   'pack-flourless-cranberry': {
     local: '/img/pack-flourless-cranberry.webp',
     alt: "Blum Baker's Flourless Apple Cake with Cranberries wrapper, 50 g, no sugar added",

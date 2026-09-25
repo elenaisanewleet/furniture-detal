@@ -331,14 +331,13 @@ export const PRODUCTS: Product[] = [
     kcalPerUnit: 160,
     // The pack prints no added sugar and gluten-free, and names the cake flourless.
     diet: ['no-added-sugar', 'gluten-free', 'flourless'],
-    // There is no photograph of the Blueberry pack yet, so that flavour shows the Classic one.
     variants: [
       { key: 'classic', gtin: '850039474002', image: 'pack-flourless-classic' },
       { key: 'cranberry', gtin: '850039474026', image: 'pack-flourless-cranberry' },
       { key: 'cinnamon', gtin: '850039474033', image: 'pack-flourless-cinnamon' },
-      { key: 'blueberry', gtin: '850039474019', image: 'pack-flourless-classic' },
+      { key: 'blueberry', gtin: '850039474019', image: 'pack-flourless-blueberry' },
     ],
-    images: ['pack-flourless-classic', 'pack-flourless-cranberry', 'pack-flourless-cinnamon'],
+    images: ['pack-flourless-classic', 'pack-flourless-cranberry', 'pack-flourless-cinnamon', 'pack-flourless-blueberry'],
     accent: 'var(--honey-100)',
     // The card gives storage conditions and no shelf life.
     shelfLifeMonths: null,
