@@ -2,7 +2,8 @@
  * Everything the store "is", in one place. Read by header, footer, JSON-LD,
  * Open Graph, checkout, and the contact page.
  *
- * TODO for Semers before launch: confirm email, phone, address, socials.
+ * The company, contact and delivery details are the ones the owner confirmed on
+ * 25.09.2026 for publication. The bank account is never published.
  */
 export const site = {
   brand: {
@@ -16,16 +17,30 @@ export const site = {
   },
 
   /**
+   * The company behind the shop, printed in the footer and on the legal pages.
+   * The owner confirmed these for publication on 25.09.2026.
+   */
+  company: {
+    legalName: 'SIA Semers Group',
+    regNo: '40203400507',
+    vatNo: 'LV40203400507',
+    /** The registered (legal) address. */
+    legalAddress: 'Vēju iela 14, Carnikava, Ādažu novads, LV-2163, Latvia',
+    /** The office, which is also where returns are sent. */
+    officeAddress: 'Pildas iela 10, Rīga, LV-1035',
+  },
+
+  /**
    * The food business operator a product page names beside the food
-   * (Reg. 1169/2011 art. 8 and 9(1)(h)). The address stays empty until the
-   * owner confirms the one to publish, and the page prints the operator line
-   * only once both halves are set: half an operator is not a declaration.
-   * No registration or VAT number belongs here until the owner confirms them.
+   * (Reg. 1169/2011 art. 8 and 9(1)(h)). The owner confirmed on 25.09.2026 that
+   * it is SIA Semers Group at its legal address for every product, App'Lite and
+   * Blum Baker's alike. The page prints the operator line only while both halves
+   * are set: half an operator is not a declaration.
    */
   operator: {
     name: 'SIA Semers Group',
-    // Widened from the literal '' so a page can test it without the type deciding the answer.
-    address: '' as string,
+    // Widened from the literal so a page can test it without the type deciding the answer.
+    address: 'Vēju iela 14, Carnikava, Ādažu novads, LV-2163, Latvia' as string,
   },
 
   locality: 'Riga',
@@ -33,8 +48,8 @@ export const site = {
   countryCode: 'LV',
 
   /** Public contact channels. Empty string = not rendered. */
-  email: import.meta.env.PUBLIC_MAIL || 'hello@semers.org',
-  phone: import.meta.env.PUBLIC_PHONE || '',
+  email: import.meta.env.PUBLIC_MAIL || 'av@semers.org',
+  phone: import.meta.env.PUBLIC_PHONE || '+371 22841714',
   whatsapp: import.meta.env.PUBLIC_WHATSAPP || '',
   wholesaleEmail: import.meta.env.PUBLIC_WHOLESALE_MAIL || 'sales@semers.org',
 
@@ -56,11 +71,19 @@ export const site = {
     { name: 'Selected retailers', country: 'Bulgaria', note: 'Specialty stores' },
   ],
 
-  /** Countries we ship consumer orders to. Adjust when logistics is set. */
+  /**
+   * Consumer delivery, as the owner set it on 25.09.2026: all of Europe, free
+   * from €20, no pickup. Omniva parcel lockers serve Latvia, Lithuania and
+   * Estonia at the flat rate below; everywhere else goes by courier, whose
+   * price the owner has not given yet. courierRate stays null until then, and
+   * the checkout offers the courier only once it is a number.
+   */
   shipping: {
-    freeFrom: 25, // EUR — free shipping threshold (was used in the old shop)
-    flatRate: 3.9, // EUR — flat rate in the Baltics below the threshold
-    regions: ['Latvia', 'Lithuania', 'Estonia', 'European Union'],
+    freeFrom: 20, // EUR — orders from this total ship free
+    flatRate: 3.9, // EUR — Omniva parcel locker (LV, LT, EE) below the threshold; the owner's own price is pending
+    courierRate: null as number | null, // EUR — EU courier; price pending from the owner, so not offered yet
+    lockerCountries: ['Latvia', 'Lithuania', 'Estonia'],
+    regions: ['Europe'],
     note: 'Orders ship from Riga within 1–2 business days.',
   },
 
@@ -73,8 +96,12 @@ export const site = {
    * correct before the fetch resolves and correct again after it.
    */
   storefront: {
-    /** "Not what you hoped for?" line beside the buy button — the cheapest conversion lever in the research. */
-    guarantee: 'Not what you hoped for? Tell us within 14 days and we refund the order — you keep the box.',
+    /**
+     * The reassurance line beside the buy button. It states the owner's own
+     * policy (25.09.2026) and nothing more: the refund-and-keep-the-box promise
+     * that stood here was never one the owner made.
+     */
+    guarantee: 'Arrived damaged or wrong? We replace it, or refund it if you ask.',
     guaranteeOn: true,
     /** Volume ladder: buy this many of one product and the per-unit price drops. */
     tier1Qty: 3,
@@ -123,6 +150,7 @@ export const footerNav = {
     { key: 'appleBars', href: '/shop/apple-bars/' },
     { key: 'flourlessBars', href: '/shop/flourless-bars/' },
     { key: 'meringues', href: '/shop/meringues/' },
+    // Rendered only while the collection has a product on sale; see Footer.astro.
     { key: 'giftSets', href: '/shop/gift-sets/' },
     { key: 'buildYourBox', href: '/shop/build-your-box/' },
   ],

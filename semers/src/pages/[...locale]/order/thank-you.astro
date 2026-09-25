@@ -2,13 +2,18 @@
 import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { site } from '~/data/site';
+import { t } from '~/i18n/ui';
 
-import { localeParams } from '~/i18n/config';
+import { localeParams, LOCALE_META } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
 
 /** One page per language; the default locale keeps the bare URL. */
 export function getStaticPaths() {
   return localeParams();
 }
+
+const { locale } = Astro.props as { locale: Locale };
+const ui = t(locale);
 ---
 <Base title="Thank you" description="We received your order request." canonical="/order/thank-you/" noindex>
   <!--
@@ -24,12 +29,30 @@ export function getStaticPaths() {
     <div class="ty__word" aria-hidden="true" translate="no" lang="lv"><span>Paldies</span></div>
     <div class="container ty__grid">
       <div class="ty__say">
-        <p class="eyebrow ty__eyebrow"><Icon name="check" size={14} /> Order request received</p>
+        <!--
+          Two versions of the same moment: an order request (no payment
+          provider on this deployment) and an order sent to Paysera, which
+          comes back with paid=1. The script shows the right one; without it
+          the request version stands.
+        -->
+        <p class="eyebrow ty__eyebrow"><Icon name="check" size={14} /> <span data-ty="request">Order request received</span><span data-ty="paid" hidden>{ui.tyPaidEyebrow}</span></p>
         <h1 class="ty__title" id="ty-title" data-words>Thank you.</h1>
         <p class="ty__ref" id="ty-ref-line" hidden><span class="ty__ref-lbl">Your reference is</span> <strong class="num ty__ref-n" id="ty-ref">—</strong></p>
-        <p class="lead ty__lead" data-reveal>Within one business day you will get an e-mail from {site.email} confirming availability, the delivery estimate and a secure payment link.</p>
+        <p class="lead ty__lead" data-reveal data-ty="request">{ui.tyLeadRequest(site.email)}</p>
+        <p class="lead ty__lead" data-reveal data-ty="paid" hidden>{ui.tyLeadPaid}</p>
       </div>
-      <section class="ty__recap" id="ty-recap" aria-labelledby="ty-recap-title" hidden>
+      <section
+        class="ty__recap"
+        id="ty-recap"
+        aria-labelledby="ty-recap-title"
+        hidden
+        data-intl={LOCALE_META[locale].intl}
+        data-l-subtotal={ui.subtotal}
+        data-l-shipping={ui.shipping}
+        data-l-total={ui.total}
+        data-l-free={ui.runtime.free}
+        data-l-to={ui.tyConfirmTo}
+      >
         <h2 id="ty-recap-title">What you ordered</h2>
         <ul id="ty-lines"></ul>
         <dl id="ty-totals"></dl>
@@ -45,10 +68,13 @@ export function getStaticPaths() {
         <h2 id="ty-next-title" data-words>What happens next</h2>
       </div>
     </div>
-    <ol class="ty__steps" data-stagger>
+    <ol class="ty__steps" data-stagger data-ty="request">
       <li><strong>Confirmation e-mail</strong><span>Check spam if it doesn’t arrive within a few hours.</span></li>
       <li><strong>Payment link</strong><span>Card or bank transfer, whichever you prefer.</span></li>
       <li><strong>Packed in Riga</strong><span>Sealed and shipped within 1–2 business days of payment.</span></li>
+    </ol>
+    <ol class="ty__steps" data-stagger data-ty="paid" hidden>
+      {ui.tyStepsPaid.map((step) => <li><strong>{step.title}</strong><span>{step.text}</span></li>)}
     </ol>
   </section>
 
@@ -69,16 +95,20 @@ export function getStaticPaths() {
       var q = new URLSearchParams(location.search);
       var ref = q.get('ref');
       /*
-       * Card payments leave the cart alone on the way out, because Stripe's
+       * A payment leaves the cart alone on the way out, because Paysera's
        * cancel link comes back to /cart/ and an emptied cart would lose the
-       * sale of anyone who changed their mind at the card form. Landing here
-       * with paid=1 is the first moment the box is safe to empty.
+       * sale of anyone who changed their mind on the payment page. Landing
+       * here with paid=1 is the first moment the box is safe to empty.
+       * (Paysera appends its own data and ss1 parameters to this address;
+       * nothing here reads them — the callback is what marks the order paid.)
        */
       if (q.get('paid')) {
         try {
           localStorage.removeItem('semers.cart.v1');
           if (window.semersCart) { window.semersCart.items = []; window.semersCart.save(); }
         } catch (e) { /* private mode */ }
+        document.querySelectorAll('[data-ty="request"]').forEach(function (n) { n.hidden = true; });
+        document.querySelectorAll('[data-ty="paid"]').forEach(function (n) { n.hidden = false; });
       }
       var el = document.getElementById('ty-ref');
       var line = document.getElementById('ty-ref-line');
@@ -88,7 +118,10 @@ export function getStaticPaths() {
         var raw = sessionStorage.getItem('semers.lastOrder');
         var o = raw ? JSON.parse(raw) : null;
         if (!o || !o.items || !o.items.length || (ref && o.ref && o.ref !== ref)) return;
-        var eur = function (n) { return new Intl.NumberFormat('en-IE', { style: 'currency', currency: 'EUR' }).format(n); };
+        var box = document.getElementById('ty-recap');
+        var L = box.dataset;
+        // Money the way this language writes it, as the cart and the checkout did.
+        var eur = function (n) { return new Intl.NumberFormat(L.intl || 'en-IE', { style: 'currency', currency: 'EUR' }).format(n); };
         var lines = document.getElementById('ty-lines');
         o.items.forEach(function (i) {
           var li = document.createElement('li');
@@ -101,12 +134,12 @@ export function getStaticPaths() {
         });
         var totals = document.getElementById('ty-totals');
         var row = function (k, v) { var dt = document.createElement('dt'); dt.textContent = k; var dd = document.createElement('dd'); dd.className = 'num'; dd.textContent = v; totals.appendChild(dt); totals.appendChild(dd); };
-        row('Subtotal', eur(o.subtotal));
-        row('Shipping', o.shippingNote ? 'quoted by e-mail' : o.shipping ? eur(o.shipping) : 'free');
-        row('Total', eur(o.total) + (o.shippingNote ? ' + shipping' : ''));
+        row(L.lSubtotal || 'Subtotal', eur(o.subtotal));
+        row(L.lShipping || 'Shipping', o.shipping ? eur(o.shipping) : L.lFree || 'Free');
+        row(L.lTotal || 'Total', eur(o.total));
         var note = document.getElementById('ty-recap-note');
-        note.textContent = (o.delivery ? o.delivery + '. ' : '') + (o.email ? 'Confirmation goes to ' + o.email + '.' : '');
-        document.getElementById('ty-recap').hidden = false;
+        note.textContent = (o.delivery ? o.delivery + '. ' : '') + (o.email ? (L.lTo || 'Confirmation goes to {email}.').replace('{email}', o.email) : '');
+        box.hidden = false;
       } catch (e) { /* no recap without storage */ }
     })();
   </script>
@@ -163,7 +196,7 @@ export function getStaticPaths() {
 
   /* ------------------------------------------------------------ back out */
   .ty__back { padding-top: clamp(3rem, 8vw, 6rem); padding-bottom: clamp(2rem, 4vw, 3rem); }
-  /* The footer's own margin would leave a room-sized void under the cream band; the newsletter band follows at the home page's rhythm instead. */
+  /* The footer's own margin would leave a room-sized void under the cream band; a smaller gap keeps the page's rhythm instead. */
   :global(.ftr) { margin-top: clamp(2.5rem, 5vw, 4rem); }
   @media (max-width: 36rem) {
     .ty__title { font-size: clamp(3.75rem, 20vw, 5.5rem); }

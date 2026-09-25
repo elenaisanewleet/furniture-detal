@@ -19,6 +19,9 @@ const ui = t(locale);
 /* A strip, not a grid: the script hides anything already in the box, so it starts with more than three. */
 const suggestions = [...PRODUCTS.filter((p) => p.bestseller), ...PRODUCTS.filter((p) => !p.bestseller)].slice(0, 5);
 const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+const flat = formatPrice(site.shipping.flatRate, locale);
+const rate = site.shipping.courierRate;
+const courier = typeof rate === 'number' && Number.isFinite(rate) && rate >= 0 ? formatPrice(rate, locale) : null;
 ---
 <Base title="Your box" description="Review the apple snacks in your box before checkout." canonical="/cart/" noindex>
   <!--
@@ -28,7 +31,8 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   -->
   <section class="container cart-page" aria-labelledby="box-title">
     <h1 id="box-title" class="cart-page__title">{ui.yourBox}</h1>
-    <div class="cart" data-cart-summary data-shipping="3.9">
+    <!-- Priced as the parcel locker until the checkout knows the method; site.ts reads the rate from here. -->
+    <div class="cart" data-cart-summary data-shipping={site.shipping.flatRate} data-free-from={site.shipping.freeFrom}>
       <div class="cart__main">
         <div class="cart__lines">
           <div data-summary-empty class="cart__empty">
@@ -51,14 +55,14 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
           <h2 class="cart__panel-title">Summary</h2>
           <div class="cart__rows">
             <div class="cart__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>{formatPrice(0, locale)}</strong></div>
-            <div class="cart__row"><span>Shipping</span><span class="num" data-summary-shipping>—</span></div>
-            <div class="cart__row cart__total"><span>Total</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
+            <div class="cart__row"><span>{ui.shipping}</span><span class="num" data-summary-shipping>—</span></div>
+            <div class="cart__row cart__total"><span>{ui.total}</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
           </div>
-          <p class="tiny muted">Free shipping over {freeFrom}; otherwise €3.90 in the Baltics, EU courier rates confirmed by e-mail. Prices include VAT.</p>
+          <p class="tiny muted">{ui.shippingRule(freeFrom, flat, courier)}</p>
           <a class="btn btn--lg btn--block btn--accent" href="/checkout/" data-summary-checkout>Checkout <Icon name="arrow" size={18} class="arrow" /></a>
           <ul class="ticks small cart__ticks">
             <li><Icon name="check" size={16} /> Ships from Riga in 1–2 business days</li>
-            <li><Icon name="check" size={16} /> Damaged in transit? We replace it.</li>
+            <li><Icon name="check" size={16} /> {ui.damagedReplace}</li>
           </ul>
         </div>
       </aside>
@@ -81,6 +85,13 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
    * loaded, straight from storage before it has — and listens for changes.
    */
   type Line = { slug: string; price: number; qty: number };
+  /*
+   * Boxes sold as shipping free at any total. The same list is FREE_SHIP_SLUGS
+   * in src/scripts/site.ts, freeShipSlugs in src/pages/catalog.json.ts and
+   * FREE_SHIP_SLUGS in src/lib/schema.ts; scripts/test.mjs holds all four to
+   * each other.
+   */
+  const FREE_SHIP_SLUGS = new Set(['tasting-box']);
   type Cfg = { freeFrom?: number; intl?: string; currency?: string; strings?: Record<string, string> };
   const w = window as unknown as { SEMERS?: Cfg; semersCart?: { items: Line[]; subtotal(): number } };
   const cfg: Cfg = w.SEMERS || {};
@@ -105,8 +116,9 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     const items = cart ? cart.items : fromStorage();
     const count = items.reduce((n, i) => n + Number(i.qty), 0);
     const total = cart ? cart.subtotal() : items.reduce((n, i) => n + Number(i.price) * Number(i.qty), 0);
-    const freeFrom = Number(cfg.freeFrom) || 25;
-    const free = count > 0 && (total >= freeFrom || items.some((i) => i.slug === 'tasting-box'));
+    // The threshold the page was built with, unless /api/storefront has since brought the owner's own.
+    const freeFrom = Number(cfg.freeFrom) || Number(document.querySelector<HTMLElement>('.cart[data-free-from]')?.dataset.freeFrom) || 0;
+    const free = count > 0 && (total >= freeFrom || items.some((i) => FREE_SHIP_SLUGS.has(i.slug)));
     if (fill) {
       fill.style.width = free ? '100%' : `${Math.min(100, (total / freeFrom) * 100)}%`;
       fill.classList.toggle('is-free', free);

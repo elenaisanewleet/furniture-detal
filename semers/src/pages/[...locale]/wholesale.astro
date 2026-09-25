@@ -71,9 +71,9 @@ const wholesaleFaq = FAQS.find((f) => f.group === 'wholesale');
 const faqs = [
   ...(wholesaleFaq ? [wholesaleFaq] : []),
   { q: 'Is there a minimum order?', a: 'It depends on the format and on whether the order travels by parcel or by pallet. Tell us what you have in mind in the form and we will say straight away.' },
-  { q: 'How long does it keep?', a: 'Apple Bars have a twelve-month shelf life. The 50 g desserts keep for nine months at +8 to +10 °C, or four at +10 to +25 °C, and the 500 g carton for eighteen months at +8 to +25 °C. The meringues and the flourless cakes carry storage conditions and a best-before date on the pack; see the formats table.' },
+  { q: 'How long does it keep?', a: 'Apple Bars have a twelve-month shelf life, and the meringues and the flourless cakes eighteen months. The 50 g desserts keep for nine months at +8 to +10 °C, or four at +10 to +25 °C, and the 500 g carton for eighteen months at +8 to +25 °C. Storage conditions are on every pack and on each product page.' },
   { q: 'Do you provide spec sheets and EAN codes?', a: 'Yes. Our SKUs are EAN-coded, and the line sheet comes with a spec sheet for each product: ingredients, allergens and the nutrition declaration wherever the pack carries one.' },
-  { q: 'Can we taste it before we order?', a: 'The quickest way is a Tasting Box from the web shop, shipped free. Or mention samples in the form and we will tell you what we can send.' },
+  { q: 'Can we taste it before we order?', a: 'The quickest way is a mixed box from the web shop. Or mention samples in the form and we will tell you what we can send.' },
   { q: 'Where do you already sell?', a: `In Latvia at Maxima and on Barbora, and through selected retailers in ${exportList}. See the Where to buy page for the list.` },
 ];
 
@@ -186,7 +186,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
         <h2 id="why-title" data-words>The label does the selling.</h2>
         <p class="lead mt-4">Shoppers read ingredient lists now. Ours has two entries, and the first one is 99% of the pack. That is the whole pitch, and it fits on the front.</p>
         <div class="stats ws-stats" data-stagger>
-          <div class="stat"><strong data-count="99">99%</strong><span>baked Antonovka apples</span></div>
+          <div class="stat"><strong data-count="99">99%</strong><span>baked apples</span></div>
           <div class="stat"><strong data-count="2">2</strong><span>ingredients: apples, egg white</span></div>
           <div class="stat"><strong>No</strong><span>added sugar</span></div>
           <div class="stat"><strong data-count="12">12</strong><span>months’ shelf life on Apple Bars</span></div>
@@ -241,7 +241,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
         </tbody>
       </table>
     </div>
-    <p class="small muted mt-4">Shelf life as the pack gives it. The 50 g dessert’s four months are at +10 to +25 °C (nine at +8 to +10 °C); the 500 g carton’s eighteen are at +8 to +25 °C. Case sizes, pallet configurations and trade prices are in the line sheet; <a href="#enquiry">request it below</a>. Gift boxes and the Apple Bar 12-pack are web-shop formats, but ask if you want them for corporate gifting.</p>
+    <p class="small muted mt-4">Shelf life as the pack gives it. The 50 g dessert’s four months are at +10 to +25 °C (nine at +8 to +10 °C); the 500 g carton’s eighteen are at +8 to +25 °C. Case sizes, pallet configurations and trade prices are in the line sheet; <a href="#enquiry">request it below</a>.</p>
   </section>
 
   <!-- ============================== HOW ORDERING WORKS ============================== -->
@@ -436,10 +436,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
   <section class="section container section--tight" aria-labelledby="taste-title">
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Taste it first</p>
-      <h2 id="taste-title">Order a Tasting Box today. Talk wholesale tomorrow.</h2>
-      <p>Our starter box, shipped free from Riga. Bring it to your next range meeting.</p>
+      <h2 id="taste-title">Build a box today. Talk wholesale tomorrow.</h2>
+      <p>Mix bars, meringues and flourless cakes in one box from the web shop, and bring it to your next range meeting.</p>
       <div class="cluster mt-2">
-        <a class="btn btn--paper" href="/products/tasting-box/">Order a Tasting Box</a>
+        <a class="btn btn--paper" href="/shop/build-your-box/">Build your box</a>
         <a class="btn btn--ghost" href="/shop/">Shop all products</a>
       </div>
     </div>

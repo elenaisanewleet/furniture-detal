@@ -4,16 +4,20 @@
  * Static pages and assets are served asset-first from dist/client, so this
  * handler only ever sees /api/* and paths that matched no file.
  *
- * Three groups of routes:
- *   public   /api/order, /api/storefront, GET+POST /api/reviews
+ * Four groups of routes:
+ *   public   /api/order, /api/storefront, GET+POST /api/reviews, GET /api/lockers
+ *   payment  POST /api/checkout, GET+POST /api/paysera/callback
  *   admin    /api/admin/* behind a password and a signed session cookie
  *   fallback the 404 page
  *
  * Secrets come from website_secrets (env bindings):
  *   TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, RESEND_API_KEY, ORDER_TO_EMAIL,
- *   ORDER_FROM_EMAIL, ADMIN_PASSWORD, ADMIN_SESSION_SECRET.
+ *   ORDER_FROM_EMAIL, REPLY_TO_EMAIL, ADMIN_PASSWORD, ADMIN_SESSION_SECRET,
+ *   PAYSERA_PROJECT_ID, PAYSERA_PASSWORD, PAYSERA_TEST, OPS_WEBHOOK_URL,
+ *   OPS_WEBHOOK_SECRET.
  * Without ADMIN_PASSWORD the admin API stays off entirely — a shop that has
- * not set a password must not be reachable with an empty one.
+ * not set a password must not be reachable with an empty one. Without both
+ * Paysera values the shop takes order requests instead of payments.
  *
  * D1 (env.DB) is optional: with no database the shop still takes orders by
  * Telegram and e-mail exactly as before, and the admin API reports it is
@@ -78,9 +82,15 @@ function tooLarge() {
  */
 async function readJson(request) {
   const asObject = (b) => (b && typeof b === 'object' && !Array.isArray(b) ? b : {});
+  const raw = await readText(request);
+  return raw ? asObject(JSON.parse(raw)) : {};
+}
+
+/** The body as text, under the same limit; '' when there is none. */
+async function readText(request) {
   const declared = Number(request.headers.get('content-length'));
   if (Number.isFinite(declared) && declared > MAX_BODY) throw tooLarge();
-  if (!request.body) return {};
+  if (!request.body) return '';
   const reader = request.body.getReader();
   const chunks = [];
   let size = 0;
@@ -94,11 +104,11 @@ async function readJson(request) {
     }
     chunks.push(value);
   }
-  if (!size) return {};
+  if (!size) return '';
   const buf = new Uint8Array(size);
   let at = 0;
   for (const c of chunks) buf.set(c, at), (at += c.byteLength);
-  return asObject(JSON.parse(new TextDecoder().decode(buf)));
+  return new TextDecoder().decode(buf);
 }
 
 const json = (status, data, extraHeaders) =>
@@ -123,9 +133,11 @@ function db(env) {
 /** [table, column, definition] for columns that postdate the first schema. */
 const ADDED_COLUMNS = [
   ['reviews', 'locale', `TEXT NOT NULL DEFAULT 'en'`],
-  ['orders', 'stripe_session', `TEXT NOT NULL DEFAULT ''`],
-  ['orders', 'stripe_intent', `TEXT NOT NULL DEFAULT ''`],
   ['orders', 'paid_at', `TEXT NOT NULL DEFAULT ''`],
+  /* Who took the money ('paysera'), their reference for it, and whether it was a test payment. */
+  ['orders', 'pay_provider', `TEXT NOT NULL DEFAULT ''`],
+  ['orders', 'pay_ref', `TEXT NOT NULL DEFAULT ''`],
+  ['orders', 'pay_test', `INTEGER NOT NULL DEFAULT 0`],
   /* 0 means the paid order has not reached the operations base yet, so it can be replayed. */
   ['orders', 'ops_sent', `INTEGER NOT NULL DEFAULT 0`],
   /* When the notifications went out. Empty means a retry still owes them; set means it must not send them twice. */
@@ -165,12 +177,6 @@ async function ensureSchema(env) {
     `CREATE INDEX IF NOT EXISTS login_attempts_ip ON login_attempts (ip, at)`,
     `CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY AUTOINCREMENT, at TEXT NOT NULL, action TEXT NOT NULL, detail TEXT NOT NULL DEFAULT '')`,
     `CREATE INDEX IF NOT EXISTS audit_at ON audit (at DESC)`,
-    /*
-     * Stripe retries a webhook until it gets a 2xx, so the same event arrives
-     * more than once as a matter of course. The event id being the primary key
-     * is what makes "mark it paid and tell the floor" happen exactly once.
-     */
-    `CREATE TABLE IF NOT EXISTS stripe_events (id TEXT PRIMARY KEY, at TEXT NOT NULL, type TEXT NOT NULL DEFAULT '')`,
   ];
   for (const q of stmts) await d.prepare(q).run();
   /*
@@ -207,7 +213,7 @@ async function audit(env, action, detail) {
  * from the table falls back to the value the built pages already show, so an
  * empty database behaves exactly like the site before the admin existed.
  */
-const SETTING_DEFAULTS = {
+export const SETTING_DEFAULTS = {
   announcement: '',
   /*
    * The shop is read in three languages, so a banner written once is a banner
@@ -219,10 +225,16 @@ const SETTING_DEFAULTS = {
   announcementLv: '',
   announcementHref: '',
   announcementOn: false,
-  freeFrom: 25,
-  guarantee: 'Not what you hoped for? Tell us within 14 days and we refund the order — you keep the box.',
-  guaranteeRu: 'Что-то не так? Напишите нам в течение 14 дней — вернём деньги за заказ, коробку оставьте себе.',
-  guaranteeLv: 'Kaut kas nav kārtībā? Uzrakstiet mums 14 dienu laikā — atmaksāsim pasūtījumu, kārbu paturiet sev.',
+  /*
+   * The same numbers and words the built pages carry from src/data/site.ts
+   * (shipping.freeFrom, storefront.guarantee). scripts/test.mjs holds the two
+   * to each other: this copy is what the admin shows as "current" and what the
+   * server charges by until the owner saves a value of their own.
+   */
+  freeFrom: 20,
+  guarantee: 'Arrived damaged or wrong? We replace it, or refund it if you ask.',
+  guaranteeRu: 'Пришло повреждённым или не то? Заменим или, если попросите, вернём деньги.',
+  guaranteeLv: 'Pienāca bojāts vai ne tas? Aizstāsim vai, ja lūgsiet, atmaksāsim naudu.',
   guaranteeOn: true,
   tier1Qty: 3,
   tier1Pct: 5,
@@ -246,6 +258,19 @@ function safeHref(v) {
   return /^(https?:\/\/|mailto:|tel:)/i.test(h) ? h : '';
 }
 
+/*
+ * Text defaults the shop has since replaced. writeSettings stores every key, so
+ * a save made while one of these was the default left a copy of it in D1 that
+ * nobody chose. Read back, such a copy is the current default again. The old
+ * guarantee promised a refund with the box kept, which the owner never offered
+ * (25.09.2026); it must not come back as if the owner had typed it.
+ */
+const RETIRED_DEFAULTS = {
+  guarantee: ['Not what you hoped for? Tell us within 14 days and we refund the order — you keep the box.'],
+  guaranteeRu: ['Что-то не так? Напишите нам в течение 14 дней — вернём деньги за заказ, коробку оставьте себе.'],
+  guaranteeLv: ['Kaut kas nav kārtībā? Uzrakstiet mums 14 dienu laikā — atmaksāsim pasūtījumu, kārbu paturiet sev.'],
+};
+
 function coerceSettings(raw) {
   const out = { ...SETTING_DEFAULTS };
   for (const [k, def] of Object.entries(SETTING_DEFAULTS)) {
@@ -253,7 +278,11 @@ function coerceSettings(raw) {
     const v = raw[k];
     if (typeof def === 'boolean') out[k] = v === true || v === 'true' || v === 1 || v === '1';
     else if (typeof def === 'number') out[k] = Number.isFinite(Number(v)) ? Number(v) : def;
-    else out[k] = k === 'announcementHref' ? safeHref(v) : s(v, 300);
+    else if (k === 'announcementHref') out[k] = safeHref(v);
+    else {
+      const text = s(v, 300);
+      out[k] = RETIRED_DEFAULTS[k]?.includes(text) ? def : text;
+    }
   }
   // A discount ladder that goes backwards would quietly overcharge the larger box.
   if (out.tier2Qty <= out.tier1Qty) out.tier2Qty = out.tier1Qty + 1;
@@ -497,7 +526,7 @@ async function handleStorefront(request, env) {
    * checkout button reads it and stops promising a card form that is not
    * there — or an e-mailed payment link once there is one.
    */
-  const out = { settings: ownerChangedOnly(settings), payments: !!env.STRIPE_SECRET_KEY, products: {}, reviews: {} };
+  const out = { settings: ownerChangedOnly(settings), payments: !!payProvider(env), products: {}, reviews: {} };
   const d = db(env);
   if (d) {
     const [ov, rv] = await Promise.all([
@@ -597,13 +626,21 @@ async function handleReviewPost(request, env) {
 
 /* --------------------------------------------------------------- order intake */
 
-function render(type, body, id) {
+/**
+ * The shop's own notification. `pay` is set only by markPaid, from a verified
+ * Paysera callback — never from anything in the request body, which on
+ * /api/order is whatever the public internet sent.
+ */
+function render(type, body, id, pay = null) {
   const lines = [];
   if (type === 'order') {
     const items = Array.isArray(body.items) ? body.items.slice(0, MAX_ITEMS) : [];
     const c = body.customer && typeof body.customer === 'object' ? body.customer : {};
     const cur = currency(body.currency);
-    lines.push(`🍏 NEW ORDER REQUEST ${id}`);
+    lines.push(pay ? `🍏 PAID ORDER ${id}` : `🍏 NEW ORDER REQUEST ${id}`);
+    // A test payment looks exactly like a real one otherwise, and the week
+    // before launch is when the floor will be sent a dozen of them.
+    if (pay) lines.push(`Payment: Paysera${pay.test ? ' — TEST, no money moved' : ''}`);
     lines.push('');
     for (const it of items) {
       if (!it || typeof it !== 'object') continue;
@@ -613,14 +650,19 @@ function render(type, body, id) {
     }
     lines.push('');
     lines.push(`Subtotal: ${money(body.subtotal, cur)}`);
-    lines.push(`Shipping: ${n(body.shipping) ? money(body.shipping, cur) : s(body.shippingNote, 120) || 'free'}`);
+    lines.push(`Shipping: ${n(body.shipping) ? money(body.shipping, cur) : 'free'}`);
     lines.push(`TOTAL: ${money(body.total, cur)}`);
     lines.push('');
     lines.push(`Name: ${s(c.name)}`);
     lines.push(`E-mail: ${s(c.email)}`);
     if (s(c.phone)) lines.push(`Phone: ${s(c.phone)}`);
     lines.push(`Address: ${[s(c.address), s(c.city), s(c.postcode), s(c.country)].filter(Boolean).join(', ')}`);
-    if (s(c.delivery)) lines.push(`Delivery: ${s(c.delivery)}`);
+    const method = s(body.method, 20);
+    const label = METHOD_LABEL[method] || s(c.delivery);
+    if (label) lines.push(`Delivery: ${label}`);
+    // The locker's own id is what the Omniva label is printed against; the
+    // address line above carries its name for a person to read.
+    if (lockerId(c.locker)) lines.push(`Omniva locker ID: ${lockerId(c.locker)}`);
     if (multi(c.note, 1000)) lines.push(`Note: ${multi(c.note, 1000)}`);
     if (s(c.gift)) lines.push(`Gift message: ${s(c.gift, 300)}`);
   } else if (type === 'newsletter') {
@@ -668,10 +710,11 @@ const MAIL = {
     prefix: '',
     receiptSubject: 'We have your order {id}',
     receiptOpen: 'Thank you. Your order {id} has reached us. We will confirm what is in stock and send a payment link within one business day.',
+    paidSubject: 'Payment received — order {id}',
+    paidOpen: 'Thank you. We have your payment for order {id}. We pack it in Riga and send it within 1–2 business days.',
     orderLine: 'Your order',
     subtotal: 'Subtotal',
     shipping: 'Shipping',
-    quoted: 'EU courier rate, quoted by e-mail',
     free: 'Free',
     total: 'Total',
     deliverTo: 'Delivery address',
@@ -680,6 +723,9 @@ const MAIL = {
     note: 'Your note',
     gift: 'Gift message',
     reply: 'Reply to this e-mail if anything needs changing — the order is not final until we confirm it.',
+    paidReply: 'Questions about your order? Reply to this e-mail.',
+    methodLocker: 'Omniva parcel locker',
+    methodCourier: 'Courier',
     signoff: '— Semers, Riga',
     welcomeSubject: 'Welcome to Semers',
     welcomeOpen: 'Thank you for subscribing.',
@@ -688,11 +734,10 @@ const MAIL = {
       'lands, a note when something you liked is back in stock, and now and then a recipe.',
       'A few times a month at most, and one click unsubscribes.',
     ],
-    welcomeStart: 'While you are here, the three people usually start with:',
+    welcomeStart: 'While you are here, this is where people usually start:',
     picks: [
       "App'Lite Apple Bar — 99% baked apple, egg white, nothing else",
       'Apple Meringue — the same apple, whipped and dried crisp',
-      'Tasting Box — one of everything, so you can decide in one order',
     ],
     welcomeBox: 'Or build your own box and take 10% off:',
   },
@@ -701,10 +746,11 @@ const MAIL = {
     prefix: '/ru',
     receiptSubject: 'Ваш заказ {id} у нас',
     receiptOpen: 'Спасибо! Заказ {id} получен. В течение рабочего дня подтвердим наличие и пришлём ссылку на оплату.',
+    paidSubject: 'Оплата получена — заказ {id}',
+    paidOpen: 'Спасибо! Оплата заказа {id} получена. Мы упакуем его в Риге и отправим в течение 1–2 рабочих дней.',
     orderLine: 'Ваш заказ',
     subtotal: 'Товары',
     shipping: 'Доставка',
-    quoted: 'Тариф курьера по ЕС — посчитаем в письме',
     free: 'Бесплатно',
     total: 'Итого',
     deliverTo: 'Адрес доставки',
@@ -713,6 +759,9 @@ const MAIL = {
     note: 'Ваш комментарий',
     gift: 'Текст для открытки',
     reply: 'Если что-то нужно поменять — просто ответьте на это письмо: заказ не окончательный, пока мы его не подтвердили.',
+    paidReply: 'Вопросы по заказу? Просто ответьте на это письмо.',
+    methodLocker: 'Постамат Omniva',
+    methodCourier: 'Курьер',
     signoff: '— Semers, Рига',
     welcomeSubject: 'Добро пожаловать в Semers',
     welcomeOpen: 'Спасибо за подписку.',
@@ -721,11 +770,10 @@ const MAIL = {
       'письмо, когда снова будет в наличии то, что вам понравилось, и время от времени рецепт.',
       'Не чаще нескольких раз в месяц, отписаться можно в один клик.',
     ],
-    welcomeStart: 'Раз уж вы здесь — вот три вещи, с которых обычно начинают:',
+    welcomeStart: 'Раз уж вы здесь — вот с чего обычно начинают:',
     picks: [
       "App'Lite Apple Bar — 99% печёного яблока, яичный белок и больше ничего",
       'Яблочное безе — то же яблоко, взбитое и высушенное до хруста',
-      'Дегустационная коробка — по одной каждого, чтобы выбрать за один заказ',
     ],
     welcomeBox: 'Или соберите свою коробку со скидкой 10%:',
   },
@@ -734,10 +782,11 @@ const MAIL = {
     prefix: '/lv',
     receiptSubject: 'Jūsu pasūtījums {id} ir saņemts',
     receiptOpen: 'Paldies! Pasūtījums {id} ir pie mums. Vienas darbdienas laikā apstiprināsim pieejamību un atsūtīsim maksājuma saiti.',
+    paidSubject: 'Apmaksa saņemta — pasūtījums {id}',
+    paidOpen: 'Paldies! Pasūtījuma {id} apmaksa ir saņemta. Iepakosim to Rīgā un nosūtīsim 1–2 darba dienu laikā.',
     orderLine: 'Jūsu pasūtījums',
     subtotal: 'Preces',
     shipping: 'Piegāde',
-    quoted: 'ES kurjera tarifs — aprēķināsim e-pastā',
     free: 'Bez maksas',
     total: 'Kopā',
     deliverTo: 'Piegādes adrese',
@@ -746,6 +795,9 @@ const MAIL = {
     note: 'Jūsu piezīme',
     gift: 'Teksts dāvanu kartītei',
     reply: 'Ja kaut kas jāmaina, vienkārši atbildiet uz šo vēstuli — pasūtījums nav galīgs, kamēr to neesam apstiprinājuši.',
+    paidReply: 'Jautājumi par pasūtījumu? Vienkārši atbildiet uz šo vēstuli.',
+    methodLocker: 'Omniva pakomāts',
+    methodCourier: 'Kurjers',
     signoff: '— Semers, Rīga',
     welcomeSubject: 'Laipni lūdzam Semers',
     welcomeOpen: 'Paldies, ka pierakstījāties.',
@@ -754,11 +806,10 @@ const MAIL = {
       'vēstule, kad atkal ir pieejams kaut kas, kas jums patika, un ik pa laikam recepte.',
       'Ne biežāk kā dažas reizes mēnesī, un atrakstīties var ar vienu klikšķi.',
     ],
-    welcomeStart: 'Un, ja jau esat šeit, trīs lietas, ar kurām parasti sāk:',
+    welcomeStart: 'Un, ja jau esat šeit, lūk, ar ko parasti sāk:',
     picks: [
       "App'Lite ābolu batoniņš — 99% cepta ābola, olas baltums un nekā vairāk",
       'Ābolu bezē — tas pats ābols, saputots un izkaltēts kraukšķīgs',
-      'Degustācijas kaste — pa vienam no katra, lai izvēlētos vienā pasūtījumā',
     ],
     welcomeBox: 'Vai salieciet savu kasti ar 10% atlaidi:',
   },
@@ -785,12 +836,13 @@ function customerMoney(v, cur, intl) {
  * the reference page, the language line and the e-mail address they just typed,
  * and it names each field in their language.
  */
-function customerSummary(body, id, loc) {
+function customerSummary(body, id, loc, pay = null) {
   const m = mail(loc);
   const cur = currency(body.currency);
   const c = body.customer && typeof body.customer === 'object' ? body.customer : {};
   const items = Array.isArray(body.items) ? body.items.slice(0, MAX_ITEMS) : [];
-  const lines = [fill(m.receiptOpen, { id }), '', `${m.orderLine}:`];
+  // A paid order is settled; an order request still waits for a payment link.
+  const lines = [fill(pay ? m.paidOpen : m.receiptOpen, { id }), '', `${m.orderLine}:`];
   for (const it of items) {
     if (!it || typeof it !== 'object') continue;
     const v = s(it.variant, 80);
@@ -799,15 +851,19 @@ function customerSummary(body, id, loc) {
   }
   lines.push('');
   lines.push(`${m.subtotal}: ${customerMoney(body.subtotal, cur, m.intl)}`);
-  lines.push(`${m.shipping}: ${body.shippingQuote ? m.quoted : n(body.shipping) ? customerMoney(body.shipping, cur, m.intl) : m.free}`);
+  lines.push(`${m.shipping}: ${n(body.shipping) ? customerMoney(body.shipping, cur, m.intl) : m.free}`);
   lines.push(`${m.total}: ${customerMoney(body.total, cur, m.intl)}`);
   const address = [s(c.address), s(c.city), s(c.postcode), s(c.country)].filter(Boolean).join(', ');
   if (address) lines.push('', `${m.deliverTo}: ${address}`);
-  if (s(c.delivery)) lines.push(`${m.delivery}: ${s(c.delivery)}`);
+  // The method by its key, in the customer's language; the label the form
+  // sent is English whatever page it came from.
+  const method = s(body.method, 20);
+  const delivery = method === 'locker' ? m.methodLocker : method === 'courier' ? m.methodCourier : s(c.delivery);
+  if (delivery) lines.push(`${m.delivery}: ${delivery}`);
   if (s(c.phone)) lines.push(`${m.phone}: ${s(c.phone)}`);
   if (multi(c.note, 1000)) lines.push(`${m.note}: ${multi(c.note, 1000)}`);
   if (s(c.gift)) lines.push(`${m.gift}: ${s(c.gift, 300)}`);
-  lines.push('', m.reply, '', m.signoff);
+  lines.push('', pay ? m.paidReply : m.reply, '', m.signoff);
   return lines.join('\n');
 }
 
@@ -843,7 +899,7 @@ async function sendEmail(env, subject, text, replyTo) {
   return r.ok;
 }
 
-const WELCOME_PICKS = ['apple-bar-35g', 'apple-meringue-35g', 'tasting-box'];
+const WELCOME_PICKS = ['apple-bar-35g', 'apple-meringue-35g'];
 
 async function sendWelcome(env, email, loc) {
   const key = env.RESEND_API_KEY;
@@ -874,20 +930,25 @@ async function sendWelcome(env, email, loc) {
   return r.ok;
 }
 
-async function sendCustomerReceipt(env, body, id) {
+/** `pay`, as for render(), comes only from a verified callback. */
+async function sendCustomerReceipt(env, body, id, pay = null) {
   const key = env.RESEND_API_KEY;
   const email = s(body?.customer?.email);
   if (!key || !email || !EMAIL_RE.test(email)) return false;
   const from = env.ORDER_FROM_EMAIL || 'Semers Shop <shop@semers.org>';
   const m = mail(body.locale);
+  // An answer to the receipt should reach a person who handles customers, not
+  // the sending address; REPLY_TO_EMAIL names that inbox when it is set.
+  const replyTo = EMAIL_RE.test(s(env.REPLY_TO_EMAIL, 160)) ? s(env.REPLY_TO_EMAIL, 160) : '';
   const r = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       from,
       to: [email],
-      subject: fill(m.receiptSubject, { id }),
-      text: customerSummary(body, id, body.locale),
+      ...(replyTo ? { reply_to: replyTo } : {}),
+      subject: fill(pay ? m.paidSubject : m.receiptSubject, { id }),
+      text: customerSummary(body, id, body.locale, pay),
     }),
   });
   return r.ok;
@@ -978,40 +1039,187 @@ async function handleOrder(request, env) {
 /* -------------------------------------------------------------------- payment */
 
 /*
- * Stripe over plain fetch, on purpose.
+ * Paysera, over its classic WebToPay protocol (version 1.6).
  *
- * The npm SDK's constructEvent() verifies a webhook with Node's crypto, which
- * the Workers runtime does not have; the async path through a SubtleCrypto
- * provider exists but drags a megabyte of SDK behind it for two REST calls. The
- * REST API is form-encoded and stable, and the signature scheme is an HMAC this
- * file already knows how to compute — so both are done here, and the Worker
- * keeps having no dependencies at all.
+ * Starting a payment needs no call to Paysera at all: the shop writes the
+ * order's parameters as a query string, base64-encodes it, signs it, and sends
+ * the shopper to Paysera with the two. Paysera answers the same way — a
+ * callback carrying its own encoded parameters and a signature over them. Both
+ * signatures are MD5 over the encoded text followed by the project password.
+ *
+ * WebCrypto has no MD5. It is not a hash anyone would choose today, but it is
+ * the one this protocol signs with, and RFC 1321 is a page of arithmetic — so
+ * it is below, and the Worker keeps having no dependencies at all.
+ *
+ * What is protected is what always was: the amount is priced here from the
+ * published catalogue, the order row exists before the shopper leaves, and only
+ * a callback carrying our signature marks an order paid.
  */
-const STRIPE_API = 'https://api.stripe.com/v1';
-/** A captured webhook POST must not be replayable tomorrow. Stripe's own default. */
-const STRIPE_TOLERANCE_S = 300;
-/** Stripe Checkout's own translations; anything else falls back to its auto-detect. */
-const STRIPE_LOCALE = { en: 'en', ru: 'ru', lv: 'lv' };
+const PAYSERA_PAY_URL = 'https://www.paysera.com/pay/';
+const PAYSERA_VERSION = '1.6';
+/** Paysera's own language codes; anything else is English. */
+const PAYSERA_LANG = { en: 'ENG', ru: 'RUS', lv: 'LAV' };
+
+/** The provider this deployment can take money with, or '' when none is configured. */
+export function payProvider(env) {
+  return env && env.PAYSERA_PROJECT_ID && env.PAYSERA_PASSWORD ? 'paysera' : '';
+}
+
+/* RFC 1321: the per-round shifts, and the sine-derived constants computed once. */
+const MD5_S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];
+const MD5_K = Array.from({ length: 64 }, (_, i) => Math.floor(Math.abs(Math.sin(i + 1)) * 2 ** 32) | 0);
+
+/** MD5 of a string (hashed as UTF-8) or of bytes, as lowercase hex. */
+export function md5(input) {
+  const bytes = typeof input === 'string' ? new TextEncoder().encode(input) : input;
+  const len = bytes.length;
+  // The message, a 1 bit, zeros, and the length in bits: a whole number of 64-byte blocks.
+  const blocks = ((len + 8) >>> 6) + 1;
+  const w = new Uint32Array(blocks * 16);
+  for (let i = 0; i < len; i++) w[i >>> 2] |= bytes[i] << ((i & 3) << 3);
+  w[len >>> 2] |= 0x80 << ((len & 3) << 3);
+  w[blocks * 16 - 2] = (len * 8) >>> 0;
+  w[blocks * 16 - 1] = Math.floor(len / 0x20000000);
+
+  let a0 = 0x67452301 | 0;
+  let b0 = 0xefcdab89 | 0;
+  let c0 = 0x98badcfe | 0;
+  let d0 = 0x10325476 | 0;
+  for (let o = 0; o < w.length; o += 16) {
+    let a = a0;
+    let b = b0;
+    let c = c0;
+    let d = d0;
+    for (let i = 0; i < 64; i++) {
+      let f;
+      let g;
+      if (i < 16) (f = (b & c) | (~b & d)), (g = i);
+      else if (i < 32) (f = (d & b) | (~d & c)), (g = (5 * i + 1) & 15);
+      else if (i < 48) (f = b ^ c ^ d), (g = (3 * i + 5) & 15);
+      else (f = c ^ (b | ~d)), (g = (7 * i) & 15);
+      const t = (a + f + MD5_K[i] + w[o + g]) | 0;
+      const r = MD5_S[((i >>> 4) << 2) + (i & 3)];
+      a = d;
+      d = c;
+      c = b;
+      b = (b + ((t << r) | (t >>> (32 - r)))) | 0;
+    }
+    a0 = (a0 + a) | 0;
+    b0 = (b0 + b) | 0;
+    c0 = (c0 + c) | 0;
+    d0 = (d0 + d) | 0;
+  }
+  let hex = '';
+  for (const v of [a0, b0, c0, d0]) for (let i = 0; i < 4; i++) hex += ((v >>> (i * 8)) & 0xff).toString(16).padStart(2, '0');
+  return hex;
+}
+
+/**
+ * Paysera's base64: the standard alphabet with '+' and '/' swapped for '-' and
+ * '_'. (A URL-encoded query is plain ASCII, whose base64 never reaches those two
+ * characters; the swap is the protocol's, and costs nothing to keep.)
+ */
+export function payseraEncode(text) {
+  let bin = '';
+  for (const b of new TextEncoder().encode(text)) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+/** The parameters inside a `data` value, or null when it is not one. */
+export function payseraDecode(data) {
+  try {
+    const b64 = String(data || '').replace(/-/g, '+').replace(/_/g, '/').replace(/\s+/g, '');
+    if (!b64) return null;
+    const bin = atob(b64 + '==='.slice((b64.length + 3) % 4));
+    const bytes = Uint8Array.from(bin, (ch) => ch.charCodeAt(0));
+    return Object.fromEntries(new URLSearchParams(new TextDecoder().decode(bytes)));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A signed payment request. Empty values are left out rather than sent blank,
+ * so an order without a phone does not tell Paysera it has an empty one.
+ */
+export function payseraRequest(params, password) {
+  const query = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v !== undefined && v !== null && v !== '') query.append(k, String(v));
+  const data = payseraEncode(query.toString());
+  const sign = md5(data + password);
+  return { data, sign, url: `${PAYSERA_PAY_URL}?data=${data}&sign=${sign}` };
+}
+
+/** Whether ss1 is our signature over `data`, compared without leaking where it first differs. */
+export function payseraVerify(data, ss1, password) {
+  if (!password || typeof data !== 'string' || typeof ss1 !== 'string' || !data || !ss1) return false;
+  return timingSafeEqual(md5(data + password), ss1.trim().toLowerCase());
+}
+
+/** "Anna Marija Bērziņa" → ["Anna Marija", "Bērziņa"]; one word is a first name. */
+function splitName(full) {
+  const parts = s(full, 120).split(/\s+/).filter(Boolean);
+  if (parts.length < 2) return [parts[0] || '', ''];
+  return [parts.slice(0, -1).join(' '), parts[parts.length - 1]];
+}
+
+/**
+ * The request Paysera receives for one order.
+ *
+ * The shopper comes back to the thank-you page in the language they paid in,
+ * with paid=1 so it can empty the cart, or to the cart itself if they cancel —
+ * their box still packed. The callback is what actually marks the order paid.
+ */
+export function payseraOrderParams(env, { id, origin, loc, total, currency: cur, email, name }) {
+  const prefix = loc === 'en' ? '' : `${loc}/`;
+  const [first, last] = splitName(name);
+  return {
+    projectid: String(env.PAYSERA_PROJECT_ID),
+    orderid: id,
+    accepturl: `${origin}/${prefix}order/thank-you/?paid=1&ref=${encodeURIComponent(id)}`,
+    cancelurl: `${origin}/${prefix}cart/`,
+    callbackurl: `${origin}/api/paysera/callback`,
+    version: PAYSERA_VERSION,
+    lang: PAYSERA_LANG[loc] || 'ENG',
+    amount: cents(total),
+    currency: cur,
+    country: 'LV',
+    // Paysera replaces [order_nr] and [site_name]; its own rules want both in a custom purpose.
+    paytext: 'Semers order [order_nr] ([site_name])',
+    p_email: email,
+    p_firstname: first,
+    p_lastname: last,
+    test: env.PAYSERA_TEST === '1' ? 1 : 0,
+  };
+}
+
 /*
  * Delivery methods, as keys rather than as the words on the button.
  *
  * The label a shopper reads is prose, and it is translated, so matching on it
  * would be a different test in every language — and it arrives in a free-text
- * field the browser fills in. Reading "pickup" out of that text meant anyone
- * who typed the word into their address got their postage waived and a courier
- * anyway. Only these three keys decide anything, and anything else is the
- * cheapest paid option rather than the free one.
+ * field the browser fills in. Reading "pickup" out of that text once meant
+ * anyone who typed the word into their address got their postage waived. Only
+ * these keys decide anything, and anything else is the parcel locker: the
+ * method every order can have.
  */
-const DELIVERY_METHODS = new Set(['locker', 'courier', 'pickup']);
+const DELIVERY_METHODS = new Set(['locker', 'courier']);
 export const deliveryMethod = (v) => (DELIVERY_METHODS.has(v) ? v : 'locker');
+/** The shop's own notification names the method by its key, in English. */
+const METHOD_LABEL = { locker: 'Omniva parcel locker', courier: 'Courier' };
+/** An Omniva locker id as the feed spells it (ZIP: digits, sometimes letters); anything else is dropped. */
+export function lockerId(v) {
+  const t = s(typeof v === 'number' ? String(v) : v, 16);
+  return /^[A-Za-z0-9-]{1,16}$/.test(t) ? t : '';
+}
 
 /**
  * The catalogue the Worker charges from, fetched once per isolate.
  *
- * It is a build artefact of src/data/products.ts served beside the pages, so
- * the price a reader was shown and the price a card is charged come from one
- * file. Without the ASSETS binding there is no price list, and checkout refuses
- * rather than trusting the browser's numbers.
+ * It is a build artefact of src/data/products.ts and src/data/site.ts served
+ * beside the pages, so the price a reader was shown and the price a card is
+ * charged come from one file. Without the ASSETS binding there is no price
+ * list, and checkout refuses rather than trusting the browser's numbers.
  */
 let catalogCache = null;
 
@@ -1048,6 +1256,28 @@ export function tierPctFor(tiers, qty) {
   return pct;
 }
 
+/** A catalogue country: an ISO code, or the English name the checkout form sends. */
+function countryCodeIn(catalog, v) {
+  const t = s(v, 80);
+  if (!t) return '';
+  const names = catalog.countryNames && typeof catalog.countryNames === 'object' ? catalog.countryNames : {};
+  if (/^[A-Za-z]{2}$/.test(t) && names[t.toUpperCase()]) return t.toUpperCase();
+  const hit = Object.entries(names).find(([, name]) => String(name).toLowerCase() === t.toLowerCase());
+  return hit ? hit[0] : '';
+}
+
+/**
+ * What delivery costs, by the one rule the cart, the checkout and the catalogue
+ * all state: an Omniva parcel locker in the Baltics at the flat rate, a courier
+ * across the EU at its own rate once the owner has set one, and either of them
+ * free from the threshold — or at any total for a box sold as shipping free.
+ */
+export function shippingFor(catalog, { method, subtotal, free, freeFrom }) {
+  const rate = method === 'courier' ? catalog.courierRate : catalog.flatRate;
+  if (typeof rate !== 'number' || !Number.isFinite(rate) || rate < 0) return null;
+  return free || subtotal >= freeFrom ? 0 : Math.round(rate * 100) / 100;
+}
+
 /**
  * Turn what the browser sent into what the shop will actually charge.
  *
@@ -1056,6 +1286,10 @@ export function tierPctFor(tiers, qty) {
  * from the catalogue, the owner's overrides and the owner's settings. A cart
  * edited in the console therefore buys the same goods at the same price as one
  * that was not.
+ *
+ * `opts.method` is the delivery key and `opts.country` the destination; a
+ * method the shop does not offer, or a country it does not reach that way, is
+ * refused rather than priced at something nobody agreed to.
  *
  * Exported because this is the function that decides what a card is charged;
  * scripts/test.mjs asserts it directly.
@@ -1066,56 +1300,114 @@ export function priceCart(catalog, settings, overrides, lines, opts = {}) {
   if (lines.length > MAX_ITEMS) return { ok: false, reason: 'too-many' };
 
   const tiers = tiersOf(settings);
-  const freeFrom = Number(settings?.freeFrom ?? catalog.freeFrom ?? 25);
-  const flatRate = Number(catalog.flatRate ?? 3.9);
+  const freeFrom = Number(settings?.freeFrom ?? catalog.freeFrom ?? 20);
   const freeSlugs = new Set(catalog.freeShipSlugs || []);
   const items = [];
   let subtotal = 0;
   let free = false;
 
+  /** A catalogue row's live price, or a refusal when the owner has taken it off sale. */
+  const priceOf = (key) => {
+    const entry = catalog.items[key];
+    if (!entry) return { reason: 'unknown-item' };
+    // An override is the owner's live price for that product; a hidden or
+    // out-of-stock product must not be sellable through a stale tab.
+    const ov = overrides?.[entry.slug];
+    if (ov && (ov.hidden === true || ov.inStock === false)) return { reason: 'unavailable' };
+    const base = ov && ov.price !== null && ov.price !== undefined ? Number(ov.price) : Number(entry.price);
+    if (!Number.isFinite(base) || base <= 0) return { reason: 'price' };
+    return { entry, base };
+  };
+
   for (const raw of lines) {
-    const id = s(raw?.id, 128);
-    const entry = catalog.items[id];
-    if (!entry) return { ok: false, reason: 'unknown-item', id };
+    const id = s(raw?.id, 400);
     // Rounding here would invent a quantity nobody chose: "1.5" would be
     // charged as two. The browser may tidy its own input; the endpoint that
     // takes the money refuses anything that is not already a whole number.
     const qty = Number(raw?.qty);
+
+    let line;
+    if (id.startsWith('bundle:')) {
+      /*
+       * A box from the builder: its id lists the pieces in it, and its price is
+       * their sum less the discount for a box of that size — the builder's own
+       * arithmetic, done again here from the catalogue. It carries its own
+       * discount, so the volume ladder does not stack on top.
+       */
+      const picks = id.slice('bundle:'.length).split('+').filter(Boolean);
+      const box = (catalog.boxes?.sizes || []).find((b) => Number(b.size) === picks.length);
+      const allowed = new Set(catalog.boxes?.items || []);
+      if (!box || !picks.every((p) => allowed.has(p))) return { ok: false, reason: 'unknown-item', id };
+      let full = 0;
+      let weight = 0;
+      const counts = new Map();
+      for (const p of picks) {
+        const got = priceOf(p);
+        if (!got.entry) return { ok: false, reason: got.reason, id };
+        full += got.base;
+        weight += Number(got.entry.weight) || 0;
+        const label = [got.entry.name, got.entry.variant].filter(Boolean).join(' ');
+        counts.set(label, (counts.get(label) || 0) + 1);
+      }
+      line = {
+        slug: 'build-your-box',
+        name: `Box of ${picks.length}`,
+        title: `Build-your-own box of ${picks.length}`,
+        variant: [...counts].map(([label, c]) => `${c}× ${label}`).join(', '),
+        gtin: '',
+        weight,
+        unit: Math.round(full * (1 - Number(box.discount || 0)) * 100) / 100,
+        pct: 0,
+      };
+    } else {
+      const got = priceOf(id);
+      if (!got.entry) return { ok: false, reason: got.reason, id };
+      const { entry, base } = got;
+      const pct = entry.tier === false ? 0 : tierPctFor(tiers, qty);
+      if (freeSlugs.has(entry.slug)) free = true;
+      line = {
+        slug: entry.slug,
+        name: entry.name,
+        title: entry.title || entry.name,
+        variant: entry.variant || '',
+        gtin: entry.gtin || '',
+        weight: Number(entry.weight) || 0,
+        unit: pct ? Math.round(base * (100 - pct)) / 100 : Math.round(base * 100) / 100,
+        pct,
+      };
+    }
     if (!Number.isInteger(qty) || qty < 1 || qty > 99) return { ok: false, reason: 'quantity', id };
 
-    // An override is the owner's live price for that product; a hidden or
-    // out-of-stock product must not be sellable through a stale tab.
-    const ov = overrides?.[entry.slug];
-    if (ov && (ov.hidden === true || ov.inStock === false)) return { ok: false, reason: 'unavailable', id };
-    const base = ov && ov.price !== null && ov.price !== undefined ? Number(ov.price) : Number(entry.price);
-    if (!Number.isFinite(base) || base <= 0) return { ok: false, reason: 'price', id };
-
-    const pct = entry.tier === false ? 0 : tierPctFor(tiers, qty);
-    const unit = pct ? Math.round(base * (100 - pct)) / 100 : Math.round(base * 100) / 100;
-    const line = Math.round(unit * qty * 100) / 100;
-    subtotal = Math.round((subtotal + line) * 100) / 100;
-    if (freeSlugs.has(entry.slug)) free = true;
-
+    const total = Math.round(line.unit * qty * 100) / 100;
+    subtotal = Math.round((subtotal + total) * 100) / 100;
     items.push({
       id,
-      slug: entry.slug,
-      name: entry.name,
-      title: entry.title || entry.name,
-      variant: entry.variant || '',
-      gtin: entry.gtin || '',
-      weight: Number(entry.weight) || 0,
+      slug: line.slug,
+      name: line.name,
+      title: line.title,
+      variant: line.variant,
+      gtin: line.gtin,
+      weight: line.weight,
       qty,
-      unit,
-      line,
-      discountPct: pct,
+      unit: line.unit,
+      line: total,
+      discountPct: line.pct,
     });
   }
 
-  const pickup = !!opts.pickup;
-  const shipping = pickup || free || subtotal >= freeFrom ? 0 : Math.round(flatRate * 100) / 100;
+  // A method with no price is not on offer at all, wherever it was going.
+  const method = deliveryMethod(opts.method);
+  const shipping = shippingFor(catalog, { method, subtotal, free, freeFrom });
+  if (shipping === null) return { ok: false, reason: 'method' };
+  if (opts.country !== undefined) {
+    const code = countryCodeIn(catalog, opts.country);
+    const reach = method === 'courier' ? catalog.courierCountries : catalog.lockerCountries;
+    if (!code || !Array.isArray(reach) || !reach.includes(code)) return { ok: false, reason: 'country' };
+  }
   return {
     ok: true,
     currency: currency(catalog.currency),
+    method,
     items,
     subtotal,
     shipping,
@@ -1124,71 +1416,17 @@ export function priceCart(catalog, settings, overrides, lines, opts = {}) {
   };
 }
 
-/**
- * Stripe's REST API takes bracketed form keys, not JSON. Flattening here keeps
- * the call sites readable as the object shape Stripe documents.
- */
-export function stripeForm(obj, prefix = '', out = new URLSearchParams()) {
-  for (const [k, v] of Object.entries(obj)) {
-    if (v === undefined || v === null || v === '') continue;
-    const key = prefix ? `${prefix}[${k}]` : k;
-    if (Array.isArray(v)) v.forEach((el, i) => (el !== null && typeof el === 'object' ? stripeForm(el, `${key}[${i}]`, out) : out.append(`${key}[${i}]`, String(el))));
-    else if (typeof v === 'object') stripeForm(v, key, out);
-    else out.append(key, String(v));
-  }
-  return out;
-}
-
-async function stripePost(env, path, params, idempotencyKey) {
-  const headers = {
-    authorization: `Bearer ${env.STRIPE_SECRET_KEY}`,
-    'content-type': 'application/x-www-form-urlencoded',
-  };
-  if (idempotencyKey) headers['idempotency-key'] = idempotencyKey;
-  const res = await fetch(`${STRIPE_API}${path}`, { method: 'POST', headers, body: stripeForm(params).toString() });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    // Stripe's message names the parameter it rejected, which is what makes a
-    // bad integration findable — but it goes to the log, never to the shopper.
-    console.error('stripe', path, res.status, data?.error?.message || '');
-    return { ok: false, status: res.status, code: data?.error?.code || '' };
-  }
-  return { ok: true, data };
-}
-
-/** Cents, because Stripe counts in the currency's smallest unit and 19.9 * 100 is 1989.9999. */
+/** Cents, because a payment counts in the currency's smallest unit and 19.9 * 100 is 1989.9999. */
 const cents = (v) => Math.round(Number(v) * 100);
 
-/**
- * Verify a Stripe webhook signature.
- *
- * The header carries the signed timestamp and one or more v1 signatures — more
- * than one while an endpoint secret is being rotated, so every v1 is tried. The
- * timestamp is part of the signed payload and is checked against the clock,
- * which is what stops a captured request from being replayed later.
- *
- * `hmacFn` and `nowS` are parameters so the test can drive this with a known
- * vector instead of the wall clock.
- */
-export async function verifyStripeSignature(header, payload, secret, nowS, hmacFn = hmac) {
-  if (!secret) return { ok: false, reason: 'not-configured' };
-  let t = '';
-  const sigs = [];
-  for (const part of String(header || '').split(',')) {
-    const i = part.indexOf('=');
-    if (i < 0) continue;
-    const k = part.slice(0, i).trim();
-    const v = part.slice(i + 1).trim();
-    if (k === 't') t = v;
-    else if (k === 'v1') sigs.push(v.toLowerCase());
+/** Where a stored order says it should go, and by which method; the column holds only the label. */
+function orderExtras(row) {
+  try {
+    const p = JSON.parse(row.payload_json || '{}');
+    return { locale: locale(p.locale), method: DELIVERY_METHODS.has(p.method) ? p.method : '', locker: lockerId(p.locker) };
+  } catch {
+    return { locale: 'en', method: '', locker: '' };
   }
-  if (!t || !sigs.length) return { ok: false, reason: 'malformed' };
-  const ts = Number(t);
-  if (!Number.isFinite(ts)) return { ok: false, reason: 'malformed' };
-  if (Math.abs(nowS - ts) > STRIPE_TOLERANCE_S) return { ok: false, reason: 'stale' };
-  const expected = await hmacFn(secret, `${t}.${payload}`);
-  for (const sig of sigs) if (timingSafeEqual(expected, sig)) return { ok: true };
-  return { ok: false, reason: 'signature' };
 }
 
 /**
@@ -1202,9 +1440,11 @@ export async function verifyStripeSignature(header, payload, secret, nowS, hmacF
  * needs to pick and ship, and the buyer's details stay in the shop.
  *
  * The line key is the GTIN, because that is the one code the catalogue and the
- * operations product master already share.
+ * operations product master already share. `order_no` is unique per order, so
+ * a receiver that sees one twice can drop the second.
  */
-function opsPayload(order, session) {
+export function opsPayload(order) {
+  const extra = orderExtras(order);
   return {
     source: 'semers-store',
     version: 1,
@@ -1213,7 +1453,7 @@ function opsPayload(order, session) {
      * on the shop floor otherwise, and the week before a launch is precisely
      * when the floor will be sent a dozen of them.
      */
-    livemode: session?.livemode === true,
+    livemode: !Number(order.pay_test),
     channel: 'Интернет-магазин',
     client: 'Интернет-заказы',
     order_no: order.id,
@@ -1226,11 +1466,20 @@ function opsPayload(order, session) {
     subtotal: order.subtotal,
     shipping: order.shipping,
     total: order.total,
-    payment: { provider: 'stripe', session: order.stripe_session || '', intent: order.stripe_intent || '' },
+    payment: { provider: order.pay_provider || 'paysera', ref: order.pay_ref || '', test: !!Number(order.pay_test) },
     contact: { name: order.name, email: order.email, phone: order.phone },
-    delivery: { method: order.delivery, country: order.country, city: order.city, postcode: order.postcode, address: order.address },
+    delivery: {
+      method: extra.method,
+      carrier: extra.method === 'locker' ? 'Omniva' : '',
+      locker_id: extra.locker,
+      label: order.delivery,
+      country: order.country,
+      city: order.city,
+      postcode: order.postcode,
+      address: order.address,
+    },
     note: order.note || '',
-    locale: order.locale || '',
+    locale: extra.locale,
     items: (order.items || []).map((i) => ({ gtin: i.gtin || '', name: i.title || i.name, variant: i.variant || '', qty: i.qty, unit: i.unit, line: i.line, weight_g: i.weight })),
   };
 }
@@ -1241,11 +1490,11 @@ function opsPayload(order, session) {
  * nobody can post fake orders into the shop floor's queue.
  *
  * The D1 row is the durable record. If this fails the order is not lost: it is
- * still in the database with ops_sent = 0, and the admin can replay it.
+ * still in the database with ops_sent = 0, and the next callback retries it.
  */
-async function pushToOps(env, order, session) {
+async function pushToOps(env, order) {
   if (!env.OPS_WEBHOOK_URL) return false;
-  const body = JSON.stringify(opsPayload(order, session));
+  const body = JSON.stringify(opsPayload(order));
   const headers = { 'content-type': 'application/json' };
   if (env.OPS_WEBHOOK_SECRET) {
     const ts = Math.floor(Date.now() / 1000);
@@ -1263,14 +1512,15 @@ async function pushToOps(env, order, session) {
 /**
  * Start a payment.
  *
- * The order row is written before the redirect, so an abandoned checkout is a
- * visible unpaid order rather than nothing at all, and the webhook has a row to
- * find when the money lands.
+ * The order is priced here, written down, and only then turned into a signed
+ * Paysera link — so an abandoned checkout is a visible unpaid order rather than
+ * nothing at all, and the callback has a row to find when the money lands.
  */
 async function handleCheckout(request, env) {
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
   if (request.method !== 'POST') return json(405, { ok: false, reason: 'method' });
-  if (!env.STRIPE_SECRET_KEY) return json(503, { ok: false, reason: 'not-configured' });
+  const provider = payProvider(env);
+  if (!provider) return json(503, { ok: false, reason: 'not-configured' });
 
   let body;
   try {
@@ -1281,81 +1531,39 @@ async function handleCheckout(request, env) {
   if (s(body.website) || s(body.customer?.website)) return json(200, { ok: true, url: '' });
   if (await overLimit(env, `checkout:${clientIp(request)}`, SUBMIT_MAX, SUBMIT_WINDOW_S)) return json(429, { ok: false, reason: 'too-many' });
 
-  const c = body.customer || {};
+  const c = body.customer && typeof body.customer === 'object' ? body.customer : {};
   const email = s(c.email, 160);
   if (!EMAIL_RE.test(email)) return json(422, { ok: false, reason: 'email' });
+  const method = deliveryMethod(s(body.method, 20));
+  // Somewhere to send it: a locker (by the picker, or typed when the list
+  // would not load), or a street address with its city and postcode.
+  if (!s(c.address, 200) || (method === 'courier' && (!s(c.city, 80) || !s(c.postcode, 30)))) return json(422, { ok: false, reason: 'address' });
 
   const catalog = await loadCatalog(request, env);
   const settings = await readSettings(env);
   const store = await storefrontOverrides(env);
-  const delivery = s(c.delivery, 120);
-  const method = deliveryMethod(s(body.method, 20));
-  const priced = priceCart(catalog, settings, store, body.items, { pickup: method === 'pickup' });
-  if (!priced.ok) return json(priced.reason === 'no-catalog' ? 503 : 422, { ok: false, reason: priced.reason });
+  const priced = priceCart(catalog, settings, store, body.items, { method, country: s(c.country, 80) });
+  if (!priced.ok) return json(priced.reason === 'no-catalog' ? 503 : 422, { ok: false, reason: priced.reason, ...(priced.id ? { id: priced.id } : {}) });
 
   const id = ref();
-  const origin = new URL(request.url).origin;
   const loc = locale(body.locale);
-  const prefix = loc === 'en' ? '' : `/${loc}`;
-
-  const params = {
-    mode: 'payment',
-    customer_email: email,
-    client_reference_id: id,
-    locale: STRIPE_LOCALE[loc] || 'auto',
-    success_url: `${origin}${prefix}/order/thank-you/?ref=${encodeURIComponent(id)}&paid=1`,
-    cancel_url: `${origin}${prefix}/cart/?ref=${encodeURIComponent(id)}`,
-    metadata: { order_ref: id, locale: loc },
-    payment_intent_data: { metadata: { order_ref: id } },
-    line_items: priced.items.map((i) => ({
-      quantity: i.qty,
-      price_data: {
-        currency: priced.currency.toLowerCase(),
-        unit_amount: cents(i.unit),
-        product_data: {
-          name: [i.title, i.variant].filter(Boolean).join(' — '),
-          metadata: { gtin: i.gtin, slug: i.slug },
-        },
-      },
-    })),
-  };
-  if (priced.shipping > 0) {
-    params.shipping_options = [
-      {
-        shipping_rate_data: {
-          type: 'fixed_amount',
-          display_name: s(delivery, 60) || 'Delivery',
-          fixed_amount: { amount: cents(priced.shipping), currency: priced.currency.toLowerCase() },
-        },
-      },
-    ];
-  }
-
-  /*
-    * The key makes Stripe's own retries safe, and nothing more: the reference
-    * is freshly random per request, so a double-click produces two references,
-    * two keys and two sessions. The form's busy flag is what stops that in
-    * practice, and the loser of the race stays an unpaid row the owner can see
-    * — which is the harmless half of the two ways this could go wrong.
-    */
-  const created = await stripePost(env, '/checkout/sessions', params, `checkout:${id}`);
-  if (!created.ok) return json(502, { ok: false, reason: 'payment-provider' });
-
   /*
    * The row comes before the payment link, and a failure here stops the sale.
    *
-   * Handing back the link anyway would mean a card charged against an order
-   * that was never written down: the webhook arrives, finds no row, and the
-   * money exists with nothing attached to it. A shopper told "try again in a
-   * minute" is a far better outcome than that, so the write is allowed to
-   * refuse the sale.
+   * Handing back the link anyway would mean money taken against an order that
+   * was never written down: the callback arrives, finds no row, and the
+   * payment exists with nothing attached to it. A shopper told "try again in a
+   * minute" is a far better outcome than that.
    */
-  const stored = await persistPending(env, id, body, priced, created.data.id, method).catch((e) => {
+  const stored = await persistPending(env, id, body, priced, { method, locker: method === 'locker' ? lockerId(c.locker) : '', provider }).catch((e) => {
     console.error('checkout persist', e);
     return false;
   });
   if (!stored) return json(503, { ok: false, reason: 'not-recorded' });
-  return json(200, { ok: true, ref: id, url: created.data.url });
+
+  const params = payseraOrderParams(env, { id, origin: new URL(request.url).origin, loc, total: priced.total, currency: priced.currency, email, name: c.name });
+  const { url } = payseraRequest(params, env.PAYSERA_PASSWORD);
+  return json(200, { ok: true, ref: id, url });
 }
 
 /** The overrides the storefront already exposes, in the shape priceCart wants. */
@@ -1378,13 +1586,13 @@ async function storefrontOverrides(env) {
   return out;
 }
 
-async function persistPending(env, id, body, priced, session, method) {
+async function persistPending(env, id, body, priced, extra) {
   const d = await ensureSchema(env);
   if (!d) return false;
   const c = body.customer || {};
   await d
     .prepare(
-      `INSERT INTO orders (id, created_at, type, status, name, email, phone, country, city, postcode, address, delivery, note, gift, currency, subtotal, shipping, total, items_json, payload_json, page, stripe_session)
+      `INSERT INTO orders (id, created_at, type, status, name, email, phone, country, city, postcode, address, delivery, note, gift, currency, subtotal, shipping, total, items_json, payload_json, page, pay_provider)
        VALUES (?, ?, 'order', 'new', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
@@ -1397,7 +1605,7 @@ async function persistPending(env, id, body, priced, session, method) {
       s(c.city, 80),
       s(c.postcode, 30),
       s(c.address, 200),
-      s(c.delivery, 120),
+      METHOD_LABEL[extra.method] || s(c.delivery, 120),
       text(c.note, 2000),
       s(c.gift, 300),
       priced.currency,
@@ -1405,171 +1613,300 @@ async function persistPending(env, id, body, priced, session, method) {
       priced.shipping,
       priced.total,
       JSON.stringify(priced.items),
-      JSON.stringify({ locale: locale(body.locale), method, page: s(body.page, 200) }),
+      JSON.stringify({ locale: locale(body.locale), method: extra.method, locker: extra.locker, page: s(body.page, 200) }),
       s(body.page, 200),
-      s(session, 120),
+      extra.provider,
     )
     .run();
   return true;
 }
 
+const plain = (status, body) => new Response(body, { status, headers: { 'content-type': 'text/plain; charset=utf-8', 'cache-control': 'no-store' } });
+
 /**
- * Stripe's word that the money arrived.
+ * Paysera's word on a payment.
  *
  * This, not the browser landing on the thank-you page, is what marks an order
- * paid — a shopper who closes the tab the moment the card clears still has a
- * paid order, and a shopper who bookmarks the success URL cannot manufacture
- * one. Stripe retries a webhook it did not get a 2xx for, so the handler has to
- * survive seeing the same event twice: the event id is a primary key, and the
- * second delivery finds the row already there and stops.
+ * paid — a shopper who closes the tab the moment the bank confirms still has a
+ * paid order, and one who bookmarks the accept URL cannot manufacture one.
+ *
+ * Paysera keeps calling until it reads "OK", so every verified callback gets
+ * "OK" — a pending or failed status included, since asking again would not
+ * change it. The one exception is our own failure to record a payment, which
+ * answers 500 on purpose: the retry is what brings the order back.
  */
-async function handleStripeWebhook(request, env) {
-  if (request.method !== 'POST') return json(405, { ok: false, reason: 'method' });
-  const payload = await request.text();
-  // tooLarge() builds an Error meant for `throw`; returning it hands the
-  // runtime something that is not a Response, which becomes an opaque 500.
-  if (payload.length > MAX_BODY) return json(413, { ok: false, reason: 'too-large' });
-  const verdict = await verifyStripeSignature(request.headers.get('stripe-signature'), payload, env.STRIPE_WEBHOOK_SECRET, Math.floor(Date.now() / 1000));
-  if (!verdict.ok) {
-    // 400 tells Stripe not to retry a request we will never accept, and the
-    // reason stays out of the response: an attacker probing the endpoint learns
-    // nothing about which half of the check they failed.
-    console.error('stripe webhook rejected', verdict.reason);
-    return json(400, { ok: false, reason: 'signature' });
+async function handlePayseraCallback(request, env) {
+  if (request.method !== 'GET' && request.method !== 'POST') return json(405, { ok: false, reason: 'method' });
+  if (!payProvider(env)) return plain(503, 'not configured');
+  const url = new URL(request.url);
+  let data = url.searchParams.get('data') || '';
+  let ss1 = url.searchParams.get('ss1') || '';
+  if (request.method === 'POST') {
+    const form = new URLSearchParams(await readText(request));
+    data = form.get('data') || data;
+    ss1 = form.get('ss1') || ss1;
   }
-
-  let event;
+  if (!payseraVerify(data, ss1, env.PAYSERA_PASSWORD)) {
+    // The reason stays out of the response: a caller probing the endpoint
+    // learns nothing about which half of the check it failed.
+    console.error('paysera callback rejected: signature');
+    return plain(400, 'bad signature');
+  }
+  const p = payseraDecode(data);
+  if (!p || String(p.projectid || '') !== String(env.PAYSERA_PROJECT_ID)) {
+    console.error('paysera callback rejected: project', p ? s(p.projectid, 20) : 'undecodable');
+    return plain(400, 'bad request');
+  }
   try {
-    event = JSON.parse(payload);
-  } catch {
-    return json(400, { ok: false, reason: 'bad-json' });
-  }
-
-  const d = await ensureSchema(env);
-  /*
-   * Claim the event before the work, so two deliveries racing each other cannot
-   * both act on it — and give the claim back if the work fails. Keeping a claim
-   * that outlived a failure was the subtler bug: Stripe retries a webhook for
-   * three days, and answering 200 while the handler had thrown spent all three
-   * days' worth of retries on an order nobody had recorded.
-   */
-  if (d && event.id) {
-    const claimed = await d.prepare(`INSERT OR IGNORE INTO stripe_events (id, at, type) VALUES (?, ?, ?)`).bind(s(event.id, 80), nowIso(), s(event.type, 80)).run();
-    if (!claimed?.meta?.changes) return json(200, { ok: true, duplicate: true });
-  }
-
-  try {
-    // A card clears inside the session. Bank-backed methods complete the
-    // session first and pay afterwards, and that second event is the one
-    // carrying the money — onPaid ignores a session that is not paid yet, so
-    // both have to be listened for or a delayed payment is never recorded.
-    if (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded') await onPaid(env, event.data?.object || {});
+    await settlePaysera(env, p);
   } catch (err) {
-    console.error('stripe paid', (err && err.stack) || err);
-    if (d && event.id) await d.prepare(`DELETE FROM stripe_events WHERE id = ?`).bind(s(event.id, 80)).run().catch(() => {});
-    // Anything but a 2xx makes Stripe come back. That is what should happen:
-    // the alternative is money taken and nobody told.
-    return json(500, { ok: false, reason: 'not-processed' });
+    console.error('paysera paid', (err && err.stack) || err);
+    return plain(500, 'not processed');
   }
-  return json(200, { ok: true });
+  return plain(200, 'OK');
 }
 
-async function onPaid(env, session) {
-  // A session can complete with payment still pending for some asynchronous
-  // methods; only a paid one is an order the floor should start picking.
-  if (session.payment_status && session.payment_status !== 'paid') return;
-  const id = s(session.client_reference_id || session.metadata?.order_ref, 40);
+/**
+ * Act on a verified callback. Returns what it did, which the tests read:
+ * 'paid', 'ignored' (a status other than paid), 'mismatch' (the amount or the
+ * currency is not the order's), or 'recovered' (money for an order we have no
+ * row for).
+ */
+export async function settlePaysera(env, p) {
+  const status = String(p.status ?? '');
+  const id = s(p.orderid, 40);
+  const test = String(p.test ?? '') === '1';
+  // 0 not paid, 2 accepted but not yet executed, 3 extra information: none of
+  // them is money, so none of them changes the order.
+  if (status !== '1') {
+    await audit(env, 'paysera.status', `${id} status=${s(status, 4)}${test ? ' test' : ''}`);
+    return 'ignored';
+  }
   const d = await ensureSchema(env);
   if (!d) throw new Error('no database to record the payment in');
-  if (!id) throw new Error('paid session carries no order reference');
+  const amount = Number(p.amount);
+  const cur = s(p.currency, 3).toUpperCase();
+  const payRef = s(String(p.requestid ?? ''), 60);
 
-  await d
-    .prepare(`UPDATE orders SET status = 'paid', paid_at = ?, stripe_intent = ? WHERE id = ? AND status <> 'paid'`)
-    .bind(nowIso(), s(session.payment_intent, 120), id)
-    .run();
-
-  let row = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(id).first();
+  const row = id ? await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(id).first() : null;
   if (!row) {
     /*
-     * Money with no order attached to it. Checkout refuses to hand out a
-     * payment link it could not record, so this should be unreachable — but if
-     * it ever happens, losing the sale silently is the one outcome worth
-     * writing defensive code against. Stripe knows the total and the buyer's
-     * e-mail, which is enough to raise a row a human can finish.
+     * Money with no order attached to it. Checkout refuses to hand out a link
+     * it could not record, so this should be unreachable — but if it happens,
+     * losing the sale silently is the one outcome worth writing defensive code
+     * against. Paysera knows the amount and the buyer's e-mail, which is enough
+     * to raise a row a human can finish.
      */
-    await d
+    const key = id || `PAYSERA-${payRef || nowIso()}`;
+    const made = await d
       .prepare(
-        `INSERT OR IGNORE INTO orders (id, created_at, type, status, name, email, currency, total, items_json, payload_json, paid_at, stripe_session, stripe_intent, admin_note)
-         VALUES (?, ?, 'order', 'paid', '', ?, ?, ?, '[]', '{}', ?, ?, ?, ?)`,
+        `INSERT OR IGNORE INTO orders (id, created_at, type, status, email, currency, total, items_json, payload_json, paid_at, pay_provider, pay_ref, pay_test, admin_note)
+         VALUES (?, ?, 'order', 'paid', ?, ?, ?, '[]', '{}', ?, 'paysera', ?, ?, ?)`,
       )
-      .bind(
-        id,
-        nowIso(),
-        s(session.customer_details?.email || session.customer_email, 160),
-        currency((session.currency || 'eur').toUpperCase()),
-        n((Number(session.amount_total) || 0) / 100),
-        nowIso(),
-        s(session.id, 120),
-        s(session.payment_intent, 120),
-        'RECOVERED: paid, but the order was never recorded at checkout. Contact the customer for the lines.',
-      )
+      .bind(key, nowIso(), s(p.p_email, 160), currency(cur), n(amount / 100), nowIso(), payRef, test ? 1 : 0, 'RECOVERED: paid through Paysera, but the order was never recorded at checkout. Contact the customer for the lines.')
       .run();
-    row = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(id).first();
-    await audit(env, 'order-recovered', id);
-    if (!row) throw new Error(`could not record payment for ${id}`);
+    if (made?.meta?.changes) {
+      await audit(env, 'order-recovered', key);
+      const alert = `⚠️ PAYSERA PAYMENT WITH NO ORDER ${key}\n${money(amount / 100, currency(cur))} from ${s(p.p_email, 160) || 'an unknown e-mail'}${test ? ' (TEST)' : ''}.\nThe row is in the admin; contact the customer for the lines.`;
+      await Promise.all([sendTelegram(env, alert).catch(() => false), sendEmail(env, `Paysera payment with no order ${key}`, alert).catch(() => false)]);
+    }
+    return 'recovered';
   }
 
-  const order = { ...row, items: JSON.parse(row.items_json || '[]') };
+  if (!Number.isInteger(amount) || amount !== cents(row.total) || cur !== String(row.currency).toUpperCase()) {
+    /*
+     * Signed by Paysera, but not the sum this order asked for. It is not
+     * marked paid — shipping against a different amount is how a tampered
+     * request would turn into goods — and it is flagged once, loudly, for a
+     * person to look at in Paysera.
+     */
+    const flag = `PAYSERA AMOUNT MISMATCH: paid ${amount} ${cur} (cents), the order is ${cents(row.total)} ${row.currency}. Not marked paid; check the payment in Paysera.`;
+    const res = await d
+      .prepare(`UPDATE orders SET admin_note = CASE WHEN admin_note = '' THEN ? ELSE admin_note || char(10) || ? END WHERE id = ? AND instr(admin_note, 'PAYSERA AMOUNT MISMATCH') = 0`)
+      .bind(flag, flag, id)
+      .run();
+    if (res?.meta?.changes) {
+      await audit(env, 'paysera.mismatch', `${id} got ${amount} ${cur}`);
+      await sendTelegram(env, `⚠️ ${id}: ${flag}`).catch(() => false);
+    }
+    return 'mismatch';
+  }
+
+  await markPaid(env, id, { provider: 'paysera', ref: payRef, test });
+  return 'paid';
+}
+
+/**
+ * Record a payment and tell the people who need to know — exactly once.
+ *
+ * Paysera repeats a callback it did not get "OK" for, and may repeat one it
+ * did. The status change only moves an order forward, so a late repeat cannot
+ * pull a shipped order back to paid. The e-mails are claimed before they are
+ * sent (the row that flips notified_at is the one that sends), so two callbacks
+ * racing each other cannot both send them. The operations push is the one
+ * follow-up that is retried: an order the floor never hears about never ships.
+ */
+async function markPaid(env, id, pay) {
+  const d = await ensureSchema(env);
+  if (!d) throw new Error('no database to record the payment in');
+  await d
+    .prepare(`UPDATE orders SET status = 'paid', paid_at = ?, pay_provider = ?, pay_ref = ?, pay_test = ? WHERE id = ? AND status IN ('new', 'confirmed', 'cancelled')`)
+    .bind(nowIso(), pay.provider, s(pay.ref, 120), pay.test ? 1 : 0, id)
+    .run();
+  const row = await d.prepare(`SELECT * FROM orders WHERE id = ?`).bind(id).first();
+  if (!row) throw new Error(`could not record payment for ${id}`);
+
+  let items = [];
+  try {
+    items = JSON.parse(row.items_json || '[]');
+  } catch {
+    items = [];
+  }
+  const order = { ...row, items };
+  const extra = orderExtras(row);
   const body = {
     type: 'order',
-    customer: { name: row.name, email: row.email, phone: row.phone, country: row.country, city: row.city, postcode: row.postcode, address: row.address, delivery: row.delivery, note: row.note, gift: row.gift },
-    items: order.items.map((i) => ({ id: i.id, name: i.title || i.name, variant: i.variant, qty: i.qty, price: i.unit, total: i.line })),
+    customer: { name: row.name, email: row.email, phone: row.phone, country: row.country, city: row.city, postcode: row.postcode, address: row.address, delivery: row.delivery, locker: extra.locker, note: row.note, gift: row.gift },
+    items: items.map((i) => ({ id: i.id, name: i.title || i.name, variant: i.variant, qty: i.qty, price: i.unit, total: i.line })),
     subtotal: row.subtotal,
     shipping: row.shipping,
     total: row.total,
     currency: row.currency,
-    paid: true,
-    locale: (() => {
-      try {
-        return locale(JSON.parse(row.payload_json || '{}').locale);
-      } catch {
-        return 'en';
-      }
-    })(),
+    method: extra.method,
+    locale: extra.locale,
   };
+  // The row, not the argument, is what the callback recorded; a repeat reads it back.
+  const settled = { test: !!Number(row.pay_test) };
 
-  // The language the buyer was reading in lives in the stored payload, not in a
-  // column; operations needs it to answer in the same one.
-  order.locale = body.locale;
-
-  /*
-   * Telling people is best-effort and is recorded, so a retry of this webhook
-   * does not send the same receipt twice. A mail provider being down must not
-   * hold up the order, and it must not cost the customer a second e-mail when
-   * the operations push is what brings Stripe back.
-   */
-  if (!row.notified_at) {
-    const notice = render('order', body, id);
+  const claim = await d.prepare(`UPDATE orders SET notified_at = ? WHERE id = ? AND notified_at = ''`).bind(nowIso(), id).run();
+  if (claim?.meta?.changes) {
+    // Best-effort, and never twice: a mail provider being down must not hold
+    // up the order, nor cost the customer a second receipt on the next retry.
+    const notice = render('order', body, id, settled);
     await Promise.all([
-      sendTelegram(env, `ОПЛАЧЕНО\n${notice}`).catch(() => false),
-      sendEmail(env, `Оплачен заказ ${id}`, notice, row.email).catch(() => false),
-      sendCustomerReceipt(env, body, id).catch(() => false),
+      sendTelegram(env, `ОПЛАЧЕНО${settled.test ? ' (ТЕСТ)' : ''}\n${notice}`).catch(() => false),
+      sendEmail(env, `Оплачен заказ ${id}${settled.test ? ' (ТЕСТ)' : ''}`, notice, row.email).catch(() => false),
+      sendCustomerReceipt(env, body, id, settled).catch(() => false),
     ]);
-    await d.prepare(`UPDATE orders SET notified_at = ? WHERE id = ?`).bind(nowIso(), id).run().catch(() => {});
+    await audit(env, 'order-paid', `${id}${settled.test ? ' test' : ''}`);
   }
 
-  /*
-   * The operations base is the one follow-up worth a retry: an order the floor
-   * never hears about is an order that never ships. Throwing hands the problem
-   * back to Stripe, which comes back over the next three days with the
-   * notifications already marked done.
-   */
-  if (!row.ops_sent) {
-    const sent = await pushToOps(env, order, session);
+  if (env.OPS_WEBHOOK_URL && !Number(row.ops_sent)) {
+    const sent = await pushToOps(env, order);
     await d.prepare(`UPDATE orders SET ops_sent = ? WHERE id = ?`).bind(sent ? 1 : 0, id).run().catch(() => {});
-    await audit(env, 'order-paid', `${id} ops=${sent ? 'ok' : env.OPS_WEBHOOK_URL ? 'failed' : 'no-endpoint'}`);
-    if (!sent && env.OPS_WEBHOOK_URL) throw new Error(`operations webhook refused order ${id}`);
+    await audit(env, 'order-ops', `${id} ${sent ? 'ok' : 'failed'}`);
+    // Throwing makes the callback answer 500, and Paysera comes back later
+    // with the notifications already marked done.
+    if (!sent) throw new Error(`operations webhook refused order ${id}`);
   }
+}
+
+/* ------------------------------------------------------------ parcel lockers */
+
+/*
+ * Omniva's own list of its locations, trimmed to the parcel machines the shop
+ * delivers to. The feed is one large file for all three countries and changes slowly,
+ * so it is fetched at most once a day: from this isolate's memory first, then
+ * from the edge cache, and only then from Omniva. A feed that fails or cannot
+ * be read gives the last good copy if there is one, and otherwise a 502 the
+ * checkout answers by asking for the locker in words.
+ */
+const OMNIVA_FEED = 'https://www.omniva.ee/locations.json';
+const LOCKER_TTL_S = 24 * 60 * 60;
+/** Kept under the shop's own origin, so the edge cache treats it as this zone's. */
+const LOCKER_CACHE_PATH = '/__cache/omniva-lockers-v1';
+const LOCKER_FEED_COUNTRIES = new Set(['LV', 'LT', 'EE']);
+let lockerMemo = null;
+
+/** A feed field as text; the feed writes a missing value as "NULL" in places. */
+const feedText = (v, max) => {
+  const t = s(typeof v === 'number' ? String(v) : v, max);
+  return /^null$/i.test(t) ? '' : t;
+};
+
+/**
+ * The feed as the checkout needs it: parcel machines only (TYPE "0"; "1" is a
+ * post office), in Latvia, Lithuania and Estonia, one row per locker id,
+ * sorted by country and then by name. Anything that is not a list of objects
+ * gives an empty list rather than an exception.
+ */
+export function compactLockers(feed) {
+  if (!Array.isArray(feed)) return [];
+  const seen = new Set();
+  const out = [];
+  for (const r of feed) {
+    if (!r || typeof r !== 'object') continue;
+    if (String(r.TYPE ?? '') !== '0') continue;
+    const country = feedText(r.A0_NAME, 2).toUpperCase();
+    if (!LOCKER_FEED_COUNTRIES.has(country)) continue;
+    const id = lockerId(r.ZIP);
+    const name = feedText(r.NAME, 120);
+    if (!id || !name || seen.has(id)) continue;
+    seen.add(id);
+    out.push({
+      id,
+      name,
+      city: feedText(r.A2_NAME, 80) || feedText(r.A1_NAME, 80),
+      address: [feedText(r.A5_NAME, 120), feedText(r.A7_NAME, 20)].filter(Boolean).join(' '),
+      country,
+    });
+  }
+  return out.sort((a, b) => a.country.localeCompare(b.country) || a.name.localeCompare(b.name));
+}
+
+async function fetchLockers() {
+  const ctl = new AbortController();
+  const timer = setTimeout(() => ctl.abort(), 10_000);
+  try {
+    const res = await fetch(OMNIVA_FEED, { signal: ctl.signal, headers: { accept: 'application/json' } });
+    if (!res.ok) return null;
+    const list = compactLockers(await res.json());
+    return list.length ? list : null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+const lockersResponse = (body) => new Response(body, { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=3600' } });
+
+async function handleLockers(request) {
+  if (request.method !== 'GET') return json(405, { ok: false, reason: 'method' });
+  const now = Date.now();
+  if (lockerMemo && now - lockerMemo.at < LOCKER_TTL_S * 1000) return lockersResponse(lockerMemo.body);
+
+  const cache = typeof caches !== 'undefined' && caches && caches.default ? caches.default : null;
+  const key = new Request(new URL(LOCKER_CACHE_PATH, request.url));
+  if (cache) {
+    try {
+      const hit = await cache.match(key);
+      if (hit) {
+        const body = await hit.text();
+        lockerMemo = { at: Number(hit.headers.get('x-semers-fetched')) || now, body };
+        return lockersResponse(body);
+      }
+    } catch {
+      /* a cache that cannot be read is a cache miss */
+    }
+  }
+
+  const list = await fetchLockers();
+  if (!list) {
+    // Yesterday's list is far better than none: lockers rarely move.
+    if (lockerMemo) return lockersResponse(lockerMemo.body);
+    return json(502, { ok: false, reason: 'lockers-unavailable' });
+  }
+  const body = JSON.stringify(list);
+  lockerMemo = { at: now, body };
+  if (cache) {
+    try {
+      await cache.put(key, new Response(body, { headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': `public, max-age=${LOCKER_TTL_S}`, 'x-semers-fetched': String(now) } }));
+    } catch {
+      /* the next request fetches again; nothing is lost */
+    }
+  }
+  return lockersResponse(body);
 }
 
 /* ------------------------------------------------------------------- admin API */
@@ -1854,7 +2191,8 @@ export default {
     try {
       if (path === '/api/order') return await handleOrder(request, env);
       if (path === '/api/checkout') return await handleCheckout(request, env);
-      if (path === '/api/stripe/webhook') return await handleStripeWebhook(request, env);
+      if (path === '/api/paysera/callback') return await handlePayseraCallback(request, env);
+      if (path === '/api/lockers') return await handleLockers(request, env);
       if (path === '/api/storefront') return await handleStorefront(request, env);
       if (path === '/api/reviews') {
         if (request.method === 'GET') return await handleReviewsGet(request, env);

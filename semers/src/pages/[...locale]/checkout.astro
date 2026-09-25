@@ -5,7 +5,7 @@ import { formatPrice, formatThreshold } from '~/data/products';
 import { site } from '~/data/site';
 import { t } from '~/i18n/ui';
 
-import { localeParams } from '~/i18n/config';
+import { localeParams, LOCALE_META } from '~/i18n/config';
 import type { Locale } from '~/i18n/config';
 
 /** One page per language; the default locale keeps the bare URL. */
@@ -15,14 +15,38 @@ export function getStaticPaths() {
 
 const { locale } = Astro.props as { locale: Locale };
 const ui = t(locale);
-const countries = ['Latvia', 'Lithuania', 'Estonia', 'Finland', 'Germany', 'Poland', 'Austria', 'Netherlands', 'Belgium', 'France', 'Italy', 'Spain', 'Sweden', 'Denmark', 'Czechia', 'Bulgaria', 'Other EU'];
+const intl = LOCALE_META[locale].intl;
+
+/*
+ * Where a parcel can go. Parcel lockers serve the countries site.ts names; the
+ * courier covers the EU, and is offered — with the rest of the EU in the list —
+ * only once site.ts gives it a price. The same EU list is in
+ * src/pages/catalog.json.ts, which is what the Worker charges by, and
+ * scripts/test.mjs holds the two copies to each other.
+ *
+ * The option's value is the country's English name, which is what the order
+ * records; its label is the same country in the reader's language.
+ */
+const EU_COUNTRIES = ['AT', 'BE', 'BG', 'HR', 'CY', 'CZ', 'DK', 'EE', 'FI', 'FR', 'DE', 'GR', 'HU', 'IE', 'IT', 'LV', 'LT', 'LU', 'MT', 'NL', 'PL', 'PT', 'RO', 'SK', 'SI', 'ES', 'SE'];
+const english = new Intl.DisplayNames(['en'], { type: 'region' });
+const native = new Intl.DisplayNames([intl], { type: 'region' });
+const nameOf = (code: string) => english.of(code) || code;
+const lockerCodes = EU_COUNTRIES.filter((code) => (site.shipping.lockerCountries as readonly string[]).includes(nameOf(code)))
+  // In the order site.ts lists them: Latvia first.
+  .sort((a, b) => site.shipping.lockerCountries.findIndex((n) => n === nameOf(a)) - site.shipping.lockerCountries.findIndex((n) => n === nameOf(b)));
+const rate = site.shipping.courierRate;
+const courierRate = typeof rate === 'number' && Number.isFinite(rate) && rate >= 0 ? rate : null;
+const rest = courierRate === null ? [] : EU_COUNTRIES.filter((code) => !lockerCodes.includes(code)).sort((a, b) => (native.of(a) || a).localeCompare(native.of(b) || b, intl));
+const countries = [...lockerCodes, ...rest].map((code) => ({ code, value: nameOf(code), label: native.of(code) || code, locker: lockerCodes.includes(code) }));
 const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+const flat = formatPrice(site.shipping.flatRate, locale);
+const courier = courierRate === null ? null : formatPrice(courierRate, locale);
 ---
 <Base title="Checkout" description="Place your Semers order." canonical="/checkout/" noindex>
   <section class="container page-hero co-hero">
     <p class="eyebrow">Checkout</p>
     <h1 data-words>Almost there.</h1>
-    <p class="lead">Tell us where to send the box. We confirm by e-mail with a secure payment link within one business day; online card payment is being connected.</p>
+    <p class="lead">{ui.checkoutLead}</p>
   </section>
 
   <!--
@@ -31,7 +55,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     accent on the page is the button that places the order.
   -->
   <section class="container co-stage" aria-label="Checkout">
-    <form class="co-form" data-checkout data-shipping="3.9">
+    <form class="co-form" data-checkout data-shipping={site.shipping.flatRate} data-courier={courierRate ?? ''}>
       <div class="honey" aria-hidden="true"><label>Website <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
 
       <fieldset class="co-step">
@@ -42,7 +66,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
           <div class="form-grid form-grid--2">
             <div class="field"><label for="co-name">Full name</label><input class="input" id="co-name" name="name" required autocomplete="name" /></div>
             <div class="field"><label for="co-email">E-mail</label><input class="input" id="co-email" name="email" type="email" required autocomplete="email" /></div>
-            <div class="field span-2"><label for="co-phone">Phone <span class="muted">(for the courier)</span></label><input class="input" id="co-phone" name="phone" type="tel" autocomplete="tel" /></div>
+            <div class="field span-2"><label for="co-phone">{ui.phone} <span class="muted">{ui.phoneHint}</span></label><input class="input" id="co-phone" name="phone" type="tel" required autocomplete="tel" /></div>
           </div>
         </div>
       </fieldset>
@@ -52,19 +76,47 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
         <span class="co-step__n" aria-hidden="true">02</span>
         <div class="co-step__body">
           <h2 class="co-step__title">Delivery</h2>
+          <div class="field"><label for="co-country">Country</label>
+            <select class="select" id="co-country" name="country" required autocomplete="country-name">{countries.map((c) => <option value={c.value} data-code={c.code} data-locker={c.locker ? '1' : undefined}>{c.label}</option>)}</select>
+            {!courier && <p class="tiny muted co-note">{ui.deliveryElsewhere} <a href={`mailto:${site.email}`}>{site.email}</a></p>}
+          </div>
           <div class="co-methods">
-            <label class="method"><input type="radio" name="delivery" data-method="locker" value="Parcel locker (Omniva / DPD)" checked /><span><strong>Parcel locker</strong><em>Omniva or DPD · 1–3 days in the Baltics</em></span></label>
-            <label class="method"><input type="radio" name="delivery" data-method="courier" value="Courier to door" /><span><strong>Courier to door</strong><em>DPD / DHL · 2–5 days across the EU</em></span></label>
-            <label class="method"><input type="radio" name="delivery" data-method="pickup" value="Pickup in Riga" /><span><strong>Pick up in Riga</strong><em>Free · we send the address with your confirmation</em></span></label>
+            <label class="method"><input type="radio" name="delivery" data-method="locker" value="Omniva parcel locker" checked /><span><strong>{ui.deliveryLocker}</strong><em>{ui.deliveryLockerWhere} · {ui.shippingFlat(flat, freeFrom)}</em></span></label>
+            {courier && <label class="method"><input type="radio" name="delivery" data-method="courier" value="Courier" /><span><strong>{ui.deliveryCourier}</strong><em>{ui.deliveryCourierWhere} · {ui.shippingFlat(courier, freeFrom)}</em></span></label>}
           </div>
-          <div class="form-grid form-grid--2 co-address" data-address-fields>
-            <div class="field span-2"><label for="co-address">Street address or parcel locker</label><input class="input" id="co-address" name="address" required autocomplete="street-address" placeholder="Street, house, flat — or the locker name" /></div>
-            <div class="field"><label for="co-city">City</label><input class="input" id="co-city" name="city" required autocomplete="address-level2" /></div>
-            <div class="field"><label for="co-post">Postcode</label><input class="input" id="co-post" name="postcode" required autocomplete="postal-code" /></div>
-            <div class="field span-2"><label for="co-country">Country</label>
-              <select class="select" id="co-country" name="country" required autocomplete="country-name">{countries.map((c) => <option value={c}>{c}</option>)}</select>
+
+          <!--
+            The parcel-locker picker. The script turns the field into a
+            combobox over /api/lockers; a choice fills the three hidden fields,
+            which are all the order needs. If the list will not load, the
+            picker gives way to the typed field below it and the status line
+            says why.
+          -->
+          <div class="co-locker" data-locker-fields>
+            <div class="field" data-locker-picker>
+              <label for="co-locker-q">{ui.lockerFind}</label>
+              <span class="hint" id="co-locker-hint">{ui.lockerHint}</span>
+              <input class="input" id="co-locker-q" type="text" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="co-locker-list" aria-describedby="co-locker-hint" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder={ui.lockerPlaceholder} data-locker-q />
+              <ul class="co-locker__list" id="co-locker-list" role="listbox" aria-label={ui.lockerResults} data-locker-list hidden></ul>
+              <p class="co-locker__chosen" data-locker-chosen hidden></p>
             </div>
+            <div class="field" data-locker-manual hidden>
+              <label for="co-locker-text">{ui.lockerManual}</label>
+              <input class="input" id="co-locker-text" name="address" autocomplete="off" disabled data-locker-text />
+            </div>
+            <p class="tiny muted co-locker__status" role="status" aria-live="polite" data-locker-status></p>
+            <input type="hidden" name="address" disabled data-locker-address />
+            <input type="hidden" name="locker" disabled data-locker-id />
+            <input type="hidden" name="city" disabled data-locker-city />
           </div>
+
+          {courier && (
+            <div class="form-grid form-grid--2 co-address" data-address-fields hidden>
+              <div class="field span-2"><label for="co-address">{ui.streetAddress}</label><input class="input" id="co-address" name="address" required disabled autocomplete="street-address" placeholder={ui.streetPlaceholder} /></div>
+              <div class="field"><label for="co-city">City</label><input class="input" id="co-city" name="city" required disabled autocomplete="address-level2" /></div>
+              <div class="field"><label for="co-post">Postcode</label><input class="input" id="co-post" name="postcode" required disabled autocomplete="postal-code" /></div>
+            </div>
+          )}
         </div>
       </fieldset>
 
@@ -77,7 +129,6 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
             <div class="field"><label for="co-gift">Gift message <span class="muted">(optional, we print it on a card)</span></label><input class="input" id="co-gift" name="gift" maxlength="200" /></div>
             <div class="field"><label for="co-note">Note for us <span class="muted">(optional)</span></label><textarea class="textarea" id="co-note" name="note" maxlength="1000"></textarea></div>
             <label class="checkbox"><input type="checkbox" name="terms" value="yes" required /> <span>I agree to the <a href="/legal/terms/">terms</a> and <a href="/legal/privacy/">privacy policy</a>.</span></label>
-            <label class="checkbox"><input type="checkbox" name="newsletter" value="yes" /> <span>Send me new flavours and restock alerts (rarely, no spam).</span></label>
           </div>
         </div>
       </fieldset>
@@ -89,7 +140,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
       </div>
     </form>
 
-    <aside class="co-aside" data-cart-summary data-shipping="3.9">
+    <aside class="co-aside" data-cart-summary data-shipping={site.shipping.flatRate} data-courier={courierRate ?? ''}>
       <div class="co-sum">
         <h2 class="co-sum__title">{ui.yourBox}</h2>
         <div data-summary-empty class="co-sum__empty"><p class="muted">Your box is empty. <a href="/shop/">Add something first.</a></p></div>
@@ -98,13 +149,13 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
         </div>
         <div class="co-sum__rows">
           <div class="co-sum__row"><span>Subtotal</span><strong class="num" data-summary-subtotal>{formatPrice(0, locale)}</strong></div>
-          <div class="co-sum__row"><span>Shipping</span><span class="num" data-summary-shipping>—</span></div>
-          <div class="co-sum__row co-sum__total"><span>Total</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
+          <div class="co-sum__row"><span>{ui.shipping}</span><span class="num" data-summary-shipping>—</span></div>
+          <div class="co-sum__row co-sum__total"><span>{ui.total}</span><span class="num" data-summary-total>{formatPrice(0, locale)}</span></div>
         </div>
-        <p class="tiny muted">Free shipping over {freeFrom}; otherwise €3.90 (Baltics) — EU courier rates confirmed by e-mail. Prices include VAT.</p>
+        <p class="tiny muted">{ui.shippingRule(freeFrom, flat, courier)}</p>
         <ul class="ticks small co-sum__ticks">
           <li><Icon name="truck" size={16} /> {site.shipping.note}</li>
-          <li><Icon name="shield" size={16} /> Damaged in transit? We replace it.</li>
+          <li><Icon name="shield" size={16} /> {ui.damagedReplace}</li>
           <li><Icon name="mail" size={16} /> Questions? <a href={`mailto:${site.email}`}>{site.email}</a></li>
         </ul>
       </div>
@@ -141,6 +192,22 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .method strong { font-weight: 600; color: var(--cream-0); }
   .method em { font-style: normal; font-size: var(--fs-sm); color: var(--fg-3); }
   .co-address { margin-top: 0.75rem; }
+  .co-note { margin: 0.35rem 0 0; }
+  .co-note a { color: var(--cream-0); }
+
+  /* The locker picker: the matches list under the field, in the page's own card and hairline, never over other fields. */
+  .co-locker { display: grid; gap: 0.5rem; margin-top: 0.75rem; min-width: 0; }
+  /* Block layout on purpose: grid rows inside a height-capped scroll box shrink below a wrapped name and overlap. */
+  .co-locker__list { list-style: none; margin: 0; padding: 0.3rem; max-height: 19rem; overflow-y: auto; overscroll-behavior: contain; border: 1px solid var(--night-500); border-radius: var(--r-md); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .co-locker__list :global(.co-locker__opt) { display: block; padding: 0.65rem 0.8rem; border-radius: var(--r-sm); cursor: pointer; }
+  .co-locker__list :global(.co-locker__opt + .co-locker__opt) { margin-top: 0.15rem; }
+  .co-locker__list :global(.co-locker__opt strong) { display: block; font-weight: 600; line-height: 1.3; color: var(--cream-0); overflow-wrap: anywhere; }
+  .co-locker__list :global(.co-locker__opt span) { display: block; margin-top: 0.15rem; font-size: var(--fs-sm); line-height: 1.3; color: var(--fg-3); overflow-wrap: anywhere; }
+  .co-locker__list :global(.co-locker__opt:hover), .co-locker__list :global(.co-locker__opt[aria-selected='true']) { background: var(--bg-sunken); outline: 1px solid var(--cream-3); }
+  .co-locker__chosen { margin: 0.25rem 0 0; padding: 0.8rem 1rem; border: 1px solid var(--cream-0); border-radius: var(--r-md); background: var(--bg-raised); font-size: var(--fs-sm); color: var(--fg-2); overflow-wrap: anywhere; }
+  .co-locker__chosen :global(strong) { color: var(--cream-0); }
+  /* Always rendered, even empty: a live region that is display:none is not announced when it fills. */
+  .co-locker__status { margin: 0; }
 
   .co-submit { display: grid; gap: 1rem; padding-top: clamp(1.75rem, 4vw, 2.75rem); border-top: 1px solid var(--line); }
   .co-submit__note { max-width: 40ch; }
@@ -169,7 +236,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
   .co-sum__ticks { padding-top: 1rem; border-top: 1px solid var(--line); }
   .co-sum__ticks a { color: var(--cream-0); }
 
-  [data-summary-full][hidden], [data-summary-empty][hidden], [data-checkout-note][hidden], [data-address-fields][hidden] { display: none; }
+  [data-summary-full][hidden], [data-summary-empty][hidden], [data-checkout-note][hidden], [data-address-fields][hidden], [data-locker-fields][hidden] { display: none; }
 
   /* Phones: the numeral sits above its step, and the box comes first so the reader sees what the form is for. */
   @media (max-width: 40rem) {

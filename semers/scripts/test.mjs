@@ -10,9 +10,25 @@
  * Usage: node scripts/test.mjs
  */
 import { readdir, readFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { DatabaseSync } from 'node:sqlite';
 import { localizeHtml, isExempt } from './localize-links.mjs';
 import { scanProse, applyProse, isProse } from './prose-scan.mjs';
-import { priceCart, stripeForm, tiersOf, tierPctFor, verifyStripeSignature, deliveryMethod } from '../worker/server.js';
+import {
+  priceCart,
+  shippingFor,
+  tiersOf,
+  tierPctFor,
+  deliveryMethod,
+  lockerId,
+  md5,
+  payseraRequest,
+  payseraEncode,
+  payseraDecode,
+  payseraVerify,
+  payseraOrderParams,
+  compactLockers,
+} from '../worker/server.js';
 
 const O = 'https://semers-store.higgsfield.app';
 let failed = 0;
@@ -338,12 +354,27 @@ group('storefront payload');
   const untouched = await payload([]);
   is('an untouched guarantee is not sent', 'guarantee' in untouched, false);
   is('nor its russian and latvian', 'guaranteeRu' in untouched || 'guaranteeLv' in untouched, false);
-  is('numbers are always sent', untouched.freeFrom, 25);
+  is('numbers are always sent', untouched.freeFrom, worker.SETTING_DEFAULTS.freeFrom);
   is('and so are switches', untouched.guaranteeOn, true);
 
   const changed = await payload([{ key: 'guaranteeRu', value: 'Вернём деньги в течение 14 дней.' }]);
   is('a guarantee the owner wrote is sent', changed.guaranteeRu, 'Вернём деньги в течение 14 дней.');
   is('and the ones they did not are still absent', 'guarantee' in changed, false);
+
+  /*
+   * A save stores every setting, so a database written while the old guarantee
+   * was the default still holds it, in all three languages. That promise (a
+   * refund with the box kept) was never the owner's; it must read as the new
+   * default and stay off the page, not return as if the owner had typed it.
+   */
+  const stale = await payload([
+    { key: 'guarantee', value: JSON.stringify('Not what you hoped for? Tell us within 14 days and we refund the order — you keep the box.') },
+    { key: 'guaranteeRu', value: JSON.stringify('Что-то не так? Напишите нам в течение 14 дней — вернём деньги за заказ, коробку оставьте себе.') },
+    { key: 'guaranteeLv', value: JSON.stringify('Kaut kas nav kārtībā? Uzrakstiet mums 14 dienu laikā — atmaksāsim pasūtījumu, kārbu paturiet sev.') },
+  ]);
+  is('a stored copy of the retired guarantee is not sent', 'guarantee' in stale || 'guaranteeRu' in stale || 'guaranteeLv' in stale, false);
+  const oldKeep = /keep the box|коробку оставьте|kārbu paturiet/;
+  is('and nothing in the payload still promises the refund-and-keep line', oldKeep.test(JSON.stringify(stale)), false);
 }
 
 /* ------------------------------------------------------------ schema */
@@ -557,9 +588,17 @@ group('customer e-mail');
   is('and does not repeat their own address back as a field', ru.text.includes('E-mail: buyer@example.com'), false);
   is('but does confirm where it is going', ru.text.includes('Адрес доставки: Iela 1, Rīga, LV-1010, Latvia'), true);
 
-  const quoted = toBuyer(await post(order('lv', { shipping: 0, shippingQuote: true, shippingNote: 'EU courier rate to be quoted by e-mail', total: 2.9 })));
-  is('a shipping quote is not english prose', quoted.text.includes('ES kurjera tarifs'), true);
-  is('and the english note stays with the shop', /EU courier rate/.test(quoted.text), false);
+  // The form sends the method's English label; the receipt names it by its key, in the buyer's language.
+  const byLocker = await post(order('lv', { method: 'locker', customer: { name: 'A', email: 'buyer@example.com', address: 'Omniva: Rīga Brīvības pakomāts (96331)', city: 'Rīga', country: 'Latvia', delivery: 'Omniva parcel locker', locker: '96331' } }));
+  is('the method is named in their language', toBuyer(byLocker).text.includes('Piegādes veids: Omniva pakomāts'), true);
+  is('and the english label stays with the shop', toBuyer(byLocker).text.includes('Omniva parcel locker'), false);
+  is('the shop sees the locker id', toShop(byLocker).text.includes('Omniva locker ID: 96331'), true);
+  is('an order request still promises a payment link', /maksājuma saiti/.test(toBuyer(byLocker).text), true);
+
+  // /api/order is public. Only a verified Paysera callback can make an order read as paid.
+  const forged = await post(order('en', { paid: true, payTest: false, pay: { test: false } }));
+  is('a request that says it is paid is still a request to the shop', /NEW ORDER REQUEST/.test(toShop(forged).text) && !/PAID|Paysera/.test(toShop(forged).text), true);
+  is('and to the buyer', /We have your order/.test(toBuyer(forged).subject) && !/payment for order/.test(toBuyer(forged).text), true);
 
   const welcome = async (locale) => {
     sent = [];
@@ -570,7 +609,9 @@ group('customer e-mail');
   is('the welcome is in their language', wLv.subject, 'Laipni lūdzam Semers');
   is('and links into it', wLv.text.includes('https://semers.org/lv/products/apple-bar-35g/'), true);
   is('an english subscriber gets the plain path', (await welcome('en')).text.includes('https://semers.org/products/apple-bar-35g/'), true);
-  is('every pick is linked', [...(await welcome('ru')).text.matchAll(/https:\/\/semers\.org\/ru\/products\//g)].length, 3);
+  // Only products on sale: the tasting box is not sold now.
+  is('every pick is linked', [...(await welcome('ru')).text.matchAll(/https:\/\/semers\.org\/ru\/products\//g)].length, 2);
+  is('and none of them is off sale', /tasting-box/.test((await welcome('en')).text), false);
 
   globalThis.fetch = realFetch;
 }
@@ -637,38 +678,64 @@ group('font coverage');
 
 /* ------------------------------------------------------------------ payment */
 /*
- * The two places where a mistake costs real money: what the card is charged,
- * and whether a "Stripe says it is paid" message is actually from Stripe.
+ * The places where a mistake costs real money: what the shopper is charged,
+ * what delivery costs, and whether a "Paysera says it is paid" message is
+ * actually from Paysera.
  */
 group('cart pricing');
+const CATALOG = {
+  currency: 'EUR',
+  freeFrom: 20,
+  flatRate: 3.9,
+  lockerCountries: ['LV', 'LT', 'EE'],
+  courierRate: null,
+  courierCountries: [],
+  countryNames: { LV: 'Latvia', LT: 'Lithuania', EE: 'Estonia', DE: 'Germany', FI: 'Finland' },
+  freeShipSlugs: ['tasting-box'],
+  boxes: { sizes: [{ size: 4, discount: 0.05 }, { size: 6, discount: 0.1 }], items: ['apple-bar-35g:classic', 'apple-bar-35g:berry'] },
+  items: {
+    'apple-bar-35g:classic': { slug: 'apple-bar-35g', name: 'Apple Bar', title: "App'Lite Apple Bar 35 g", variant: 'Classic', price: 1.45, gtin: '4751043820181', weight: 35, pack: 1, tier: true },
+    'apple-bar-35g:berry': { slug: 'apple-bar-35g', name: 'Apple Bar', title: "App'Lite Apple Bar 35 g", variant: 'Berry Mix', price: 1.45, gtin: '4751043820198', weight: 35, pack: 1, tier: true },
+    'apple-bar-12-pack': { slug: 'apple-bar-12-pack', name: 'Apple Bar 12-pack', title: 'Apple Bar 12-pack', variant: '', price: 14.9, gtin: '', weight: 420, pack: 12, tier: false },
+    'tasting-box': { slug: 'tasting-box', name: 'Tasting Box', title: 'Tasting Box', variant: '', price: 17.9, gtin: '', weight: 600, pack: 1, tier: false },
+    'ten-euro': { slug: 'ten-euro', name: 'Ten', title: 'Ten', variant: '', price: 10, gtin: '', weight: 100, pack: 1, tier: true },
+  },
+};
+/** The same catalogue once the owner has given the courier a price. */
+const WITH_COURIER = { ...CATALOG, courierRate: 7.5, courierCountries: ['LV', 'LT', 'EE', 'DE', 'FI'] };
+const SETTINGS = { freeFrom: 20, tiersOn: true, tier1Qty: 3, tier1Pct: 5, tier2Qty: 6, tier2Pct: 10 };
 {
-  const CATALOG = {
-    currency: 'EUR',
-    freeFrom: 25,
-    flatRate: 3.9,
-    freeShipSlugs: ['tasting-box'],
-    items: {
-      'apple-bar-35g:classic': { slug: 'apple-bar-35g', name: 'Apple Bar', title: "App'Lite Apple Bar 35 g", variant: 'Classic', price: 1.45, gtin: '4751043820181', weight: 35, pack: 1, tier: true },
-      'apple-bar-12-pack': { slug: 'apple-bar-12-pack', name: 'Apple Bar 12-pack', title: 'Apple Bar 12-pack', variant: '', price: 14.9, gtin: '', weight: 420, pack: 12, tier: false },
-      'tasting-box': { slug: 'tasting-box', name: 'Tasting Box', title: 'Tasting Box', variant: '', price: 17.9, gtin: '', weight: 600, pack: 1, tier: false },
-    },
-  };
-  const SETTINGS = { freeFrom: 25, tiersOn: true, tier1Qty: 3, tier1Pct: 5, tier2Qty: 6, tier2Pct: 10 };
-  const price = (lines, settings = SETTINGS, overrides = {}, opts = {}) => priceCart(CATALOG, settings, overrides, lines, opts);
+  const price = (lines, settings = SETTINGS, overrides = {}, opts = {}, catalog = CATALOG) => priceCart(catalog, settings, overrides, lines, opts);
 
   is('the ladder is read from settings', tiersOf(SETTINGS), [[3, 5], [6, 10]]);
   is('the owner can switch the ladder off', tiersOf({ ...SETTINGS, tiersOn: false }), []);
   is('a step below the first rung is full price', tierPctFor([[3, 5], [6, 10]], 2), 0);
   is('the highest rung reached wins', tierPctFor([[3, 5], [6, 10]], 7), 10);
 
-  // The exact basket from the prototype: one bar, one 12-pack, under the
-  // threshold, so delivery is charged.
+  // One bar and one 12-pack: under the threshold, so the parcel locker is charged.
   const basket = price([{ id: 'apple-bar-35g:classic', qty: 1 }, { id: 'apple-bar-12-pack', qty: 1 }]);
   is('a two-line basket totals correctly', [basket.subtotal, basket.shipping, basket.total], [16.35, 3.9, 20.25]);
+  is('and is priced as the parcel locker', basket.method, 'locker');
 
-  is('delivery is free at the threshold', price([{ id: 'apple-bar-12-pack', qty: 2 }]).shipping, 0);
+  is('delivery is free from the threshold, not only over it', price([{ id: 'ten-euro', qty: 2 }]).shipping, 0);
+  is('a cent under the threshold pays delivery', price([{ id: 'ten-euro', qty: 1 }, { id: 'apple-bar-35g:classic', qty: 1 }], { ...SETTINGS, freeFrom: 11.46 }).shipping, 3.9);
+  is("the owner's threshold is the one that applies", price([{ id: 'ten-euro', qty: 2 }], { ...SETTINGS, freeFrom: 25 }).shipping, 3.9);
   is('the tasting box carries free delivery at any total', price([{ id: 'tasting-box', qty: 1 }]).shipping, 0);
-  is('pickup is never charged delivery', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { pickup: true }).shipping, 0);
+
+  // Delivery methods: the parcel locker in the Baltics, the courier only once it has a price.
+  is('there is no pickup: the word is a parcel locker', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'pickup' }).shipping, 3.9);
+  is('the courier is refused while it has no price', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'courier', country: 'Latvia' }).reason, 'method');
+  is('a parcel locker in Lithuania', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'locker', country: 'Lithuania' }).ok, true);
+  is('the country can come as a code', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'locker', country: 'ee' }).ok, true);
+  is('a parcel locker in Germany is refused', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'locker', country: 'Germany' }).reason, 'country');
+  is('a country nobody listed is refused', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'locker', country: 'Narnia' }).reason, 'country');
+  const byCourier = price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'courier', country: 'Germany' }, WITH_COURIER);
+  is('with a price, the courier is charged its own rate', [byCourier.method, byCourier.shipping, byCourier.total], ['courier', 7.5, 8.95]);
+  is('and is free from the same threshold', price([{ id: 'ten-euro', qty: 2 }], SETTINGS, {}, { method: 'courier', country: 'Finland' }, WITH_COURIER).shipping, 0);
+  is('the parcel locker keeps its own rate beside it', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'locker', country: 'Latvia' }, WITH_COURIER).shipping, 3.9);
+  is('a courier outside its countries is refused', price([{ id: 'apple-bar-35g:classic', qty: 1 }], SETTINGS, {}, { method: 'courier', country: 'Norway' }, WITH_COURIER).reason, 'country');
+  is('shippingFor agrees with priceCart', shippingFor(WITH_COURIER, { method: 'courier', subtotal: 5, free: false, freeFrom: 20 }), 7.5);
+  is('and says so when a method has no price', shippingFor(CATALOG, { method: 'courier', subtotal: 5, free: false, freeFrom: 20 }), null);
 
   // The ladder must reach the money, not only the label.
   const three = price([{ id: 'apple-bar-35g:classic', qty: 3 }]);
@@ -677,9 +744,20 @@ group('cart pricing');
   is('six bars take 10% off the unit', [six.items[0].unit, six.subtotal], [1.31, 7.86]);
   is('a line opted out of the ladder keeps its price', price([{ id: 'apple-bar-12-pack', qty: 6 }]).items[0].unit, 14.9);
 
+  // A box from the builder is priced from its pieces, with the builder's own discount.
+  const four = 'bundle:apple-bar-35g:berry+apple-bar-35g:classic+apple-bar-35g:classic+apple-bar-35g:classic';
+  const box = price([{ id: four, qty: 1 }]);
+  is('a built box is its pieces less the discount for its size', [box.items[0].unit, box.items[0].name], [5.51, 'Box of 4']);
+  is('and names what is in it', box.items[0].variant, '1× Apple Bar Berry Mix, 3× Apple Bar Classic');
+  is('the ladder does not stack on a box', price([{ id: four, qty: 3 }]).items[0].unit, 5.51);
+  is('a box of a size nobody sells is refused', price([{ id: 'bundle:apple-bar-35g:classic+apple-bar-35g:classic+apple-bar-35g:classic', qty: 1 }]).reason, 'unknown-item');
+  is('a piece that does not go in a box is refused', price([{ id: 'bundle:apple-bar-12-pack+apple-bar-35g:classic+apple-bar-35g:classic+apple-bar-35g:classic', qty: 1 }]).reason, 'unknown-item');
+  is('a box with a piece taken off sale is refused', price([{ id: four, qty: 1 }], SETTINGS, { 'apple-bar-35g': { inStock: false } }).reason, 'unavailable');
+
   // Everything a hostile cart could try.
   is('a price sent by the browser is ignored', price([{ id: 'apple-bar-35g:classic', qty: 1, price: 0.01 }]).total, 5.35);
   is('an unknown line is refused', price([{ id: 'free-lunch', qty: 1 }]).reason, 'unknown-item');
+  is('and names itself, so the page can say which', price([{ id: 'free-lunch', qty: 1 }]).id, 'free-lunch');
   is('a zero quantity is refused', price([{ id: 'tasting-box', qty: 0 }]).reason, 'quantity');
   is('a fractional quantity is refused', price([{ id: 'tasting-box', qty: 1.5 }]).reason, 'quantity');
   is('a negative quantity is refused', price([{ id: 'tasting-box', qty: -3 }]).reason, 'quantity');
@@ -700,24 +778,64 @@ group('cart pricing');
 group('free shipping, in every place that decides it');
 {
   /*
-   * Which products ship free regardless of the total is written down three
-   * times: the cart summary the shopper reads, the structured data Google
-   * reads, and the catalogue the card is charged from. Three copies of one
-   * fact is how a shop comes to show one total and bill another, so they are
-   * compared here rather than trusted to stay in step.
+   * The rule is written down in several places: the cart summary and the
+   * drawer the shopper reads, the cart page's own meter, the structured data
+   * Google reads, the catalogue the payment is priced from, and the Worker's
+   * defaults. Several copies of one fact is how a shop comes to show one total
+   * and bill another, so they are compared here rather than trusted to stay in
+   * step.
    */
-  const read = async (file, re) => {
-    const src = await readFile(new URL(`../src/${file}`, import.meta.url), 'utf-8');
-    return [...(re.exec(src)?.[1].matchAll(/'([^']+)'/g) || [])].map((m) => m[1]).sort();
-  };
-  const [cart, schema, catalogue] = await Promise.all([
-    read('scripts/site.ts', /const FREE_SHIP_SLUGS = new Set\(\[([^\]]*)\]\)/),
-    read('lib/schema.ts', /const FREE_SHIP_SLUGS = new Set\(\[([^\]]*)\]\)/),
-    read('pages/catalog.json.ts', /freeShipSlugs: \[([^\]]*)\]/),
+  const src = (file) => readFile(new URL(`../src/${file}`, import.meta.url), 'utf-8');
+  const list = (text, re) => [...(re.exec(text)?.[1].matchAll(/'([^']+)'/g) || [])].map((m) => m[1]).sort();
+  const [siteTs, schema, catalogue, cartPage, checkoutPage, data, base] = await Promise.all([
+    src('scripts/site.ts'),
+    src('lib/schema.ts'),
+    src('pages/catalog.json.ts'),
+    src('pages/[...locale]/cart.astro'),
+    src('pages/[...locale]/checkout.astro'),
+    src('data/site.ts'),
+    src('layouts/Base.astro'),
   ]);
-  is('the cart and the price the card is charged agree', catalogue, cart);
-  is('the structured data agrees too', schema, cart);
-  is('and the list is not empty, which would pass by accident', cart.length > 0, true);
+  const slugs = {
+    cart: list(siteTs, /const FREE_SHIP_SLUGS = new Set\(\[([^\]]*)\]\)/),
+    cartPage: list(cartPage, /const FREE_SHIP_SLUGS = new Set\(\[([^\]]*)\]\)/),
+    schema: list(schema, /const FREE_SHIP_SLUGS = new Set\(\[([^\]]*)\]\)/),
+    catalogue: list(catalogue, /freeShipSlugs: \[([^\]]*)\]/),
+  };
+  is('the cart and the price the payment is charged agree', slugs.catalogue, slugs.cart);
+  is("the cart page's meter agrees", slugs.cartPage, slugs.cart);
+  is('the structured data agrees too', slugs.schema, slugs.cart);
+  is('and the list is not empty, which would pass by accident', slugs.cart.length > 0, true);
+
+  // The threshold itself: one number in site.ts, read everywhere else.
+  const freeFrom = Number(/shipping:\s*\{[^}]*?freeFrom:\s*([\d.]+)/.exec(data)?.[1]);
+  is('site.ts states a threshold', Number.isFinite(freeFrom) && freeFrom > 0, true);
+  is("the Worker's default is the same number", worker.SETTING_DEFAULTS.freeFrom, freeFrom);
+  is('the catalogue reads it from site.ts', /freeFrom: site\.shipping\.freeFrom/.test(catalogue), true);
+  is('so does the page config', /freeFrom: site\.shipping\.freeFrom/.test(base), true);
+  // A literal fallback in the browser is a second copy waiting to go stale.
+  is('the cart script keeps no threshold of its own', /freeFrom:\s*\d/.test(siteTs), false);
+  is('nor does the cart page', /\|\|\s*25\b|\|\|\s*20\b/.test(cartPage), false);
+
+  // The rates: site.ts again, and never a number typed into a page.
+  is('the catalogue reads the locker rate from site.ts', /flatRate: site\.shipping\.flatRate/.test(catalogue), true);
+  is('and the courier rate', /site\.shipping\.courierRate/.test(catalogue), true);
+  is('the checkout prices from site.ts', /data-shipping=\{site\.shipping\.flatRate\}/.test(checkoutPage), true);
+  is('so does the cart page', /data-shipping=\{site\.shipping\.flatRate\}/.test(cartPage), true);
+  is('no page types a rate', /data-shipping="[\d.]+"/.test(checkoutPage + cartPage), false);
+
+  // Where a parcel can go: one EU list in the checkout and one in the catalogue.
+  const eu = (text) => list(text, /const EU_COUNTRIES = \[([^\]]*)\]/);
+  is('the checkout and the catalogue list the same countries', eu(checkoutPage), eu(catalogue));
+  is('and it is the whole EU', eu(catalogue).length, 27);
+
+  // A box the builder can make must be a box the Worker can price.
+  const builder = await src('components/BoxBuilder.astro');
+  is('the builder and the catalogue agree on what goes in a box', list(catalogue, /const BOX_SOURCES = \[([^\]]*)\]/), list(builder, /const sources = \[([^\]]*)\]/));
+
+  // The promise beside the buy button, as the admin shows it and as the page prints it.
+  const guarantee = /guarantee:\s*'((?:[^'\\]|\\.)*)'/.exec(data)?.[1];
+  is("the Worker's guarantee is the one the page prints", worker.SETTING_DEFAULTS.guarantee, guarantee);
 }
 
 group('delivery method');
@@ -725,57 +843,308 @@ group('delivery method');
   /*
    * Free postage used to be reachable by typing the word "pickup" into the
    * address field: the server read the method out of that free text, waived
-   * the postage, and a courier went out anyway. Only the three keys decide.
+   * the postage, and a courier went out anyway. Only the keys decide — and
+   * pickup is not one of them any more.
    */
-  is('a real key is kept', [deliveryMethod('locker'), deliveryMethod('courier'), deliveryMethod('pickup')], ['locker', 'courier', 'pickup']);
+  is('a real key is kept', [deliveryMethod('locker'), deliveryMethod('courier')], ['locker', 'courier']);
+  is('pickup is gone', deliveryMethod('pickup'), 'locker');
   is('prose is not a key', deliveryMethod('Pickup in Riga'), 'locker');
-  is('a word typed into an address is not a key', deliveryMethod('Brīvības iela 42, pickup'), 'locker');
+  is('a word typed into an address is not a key', deliveryMethod('Brīvības iela 42, courier'), 'locker');
   is('the russian word is not a key either', deliveryMethod('самовывоз'), 'locker');
-  is('nothing sent falls back to the paid option', [deliveryMethod(''), deliveryMethod(undefined), deliveryMethod(null)], ['locker', 'locker', 'locker']);
-  is('an object cannot slip through', deliveryMethod({ toString: () => 'pickup' }), 'locker');
+  is('nothing sent falls back to the parcel locker', [deliveryMethod(''), deliveryMethod(undefined), deliveryMethod(null)], ['locker', 'locker', 'locker']);
+  is('an object cannot slip through', deliveryMethod({ toString: () => 'courier' }), 'locker');
+  is('a locker id is kept', [lockerId('96331'), lockerId(96331)], ['96331', '96331']);
+  is('anything else is dropped', [lockerId('96331; drop'), lockerId('<b>'), lockerId(''), lockerId({})], ['', '', '', '']);
 }
 
-group('stripe form encoding');
+group('md5');
 {
-  const q = (o) => stripeForm(o).toString();
-  is('nesting becomes brackets', decodeURIComponent(q({ a: { b: 'c' } })), 'a[b]=c');
-  is('arrays are indexed', decodeURIComponent(q({ line_items: [{ quantity: 2 }] })), 'line_items[0][quantity]=2');
-  is('empty values are dropped', q({ a: '', b: null, c: undefined, d: 1 }), 'd=1');
-  is('a zero is not an empty value', q({ amount: 0 }), 'amount=0');
+  /*
+   * WebCrypto has no MD5, so the Worker carries its own, and Paysera's
+   * signatures are only as right as it is. Node's is the reference. The
+   * lengths either side of 56 and 64 bytes are where the padding changes shape.
+   */
+  const ref = (v) => createHash('md5').update(v).digest('hex');
+  const cases = ['', 'a', 'abc', 'message digest', 'abcdefghijklmnopqrstuvwxyz', 'The quick brown fox jumps over the lazy dog', 'Ābolu batoniņš, bez pievienota cukura', 'Печёное яблоко — без добавленного сахара', '🍏🍎', 'x'.repeat(55), 'x'.repeat(56), 'x'.repeat(63), 'x'.repeat(64), 'x'.repeat(65), 'y'.repeat(100_000)];
+  is('every case matches node', cases.filter((c) => md5(c) !== ref(c)).map((c) => c.slice(0, 20)), []);
+  // RFC 1321's own test suite, so the reference is not the only witness.
+  is('the RFC 1321 vectors', [md5(''), md5('abc'), md5('message digest')], ['d41d8cd98f00b204e9800998ecf8427e', '900150983cd24fb0d6963f7d28e17f72', 'f96b697d7cb7938d525a2f31aaf161d0']);
+  is('bytes hash the same as their text', md5(new TextEncoder().encode('Rīga')), ref('Rīga'));
 }
 
-group('stripe webhook signature');
+group('paysera request');
+const PAYSERA = { PAYSERA_PROJECT_ID: '123456', PAYSERA_PASSWORD: 'p@ss-Wörd' };
 {
-  const SECRET = 'whsec_test_deadbeef';
-  const PAYLOAD = '{"id":"evt_1","type":"checkout.session.completed"}';
-  const NOW = 1_700_000_000;
-  // Same HMAC the Worker computes, so the test signs exactly as Stripe does.
-  const sign = async (secret, message) => {
-    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
-    const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(message));
-    return [...new Uint8Array(sig)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  const params = payseraOrderParams(PAYSERA, { id: 'SM-260925-ABCD', origin: 'https://shop.example', loc: 'lv', total: 19.9, currency: 'EUR', email: 'anna@example.com', name: 'Anna Marija Bērziņa' });
+  is('the order is identified by its reference', [params.projectid, params.orderid], ['123456', 'SM-260925-ABCD']);
+  is('the amount is whole cents', [params.amount, Number.isInteger(params.amount)], [1990, true]);
+  is('in euro, paid from Latvia', [params.currency, params.country, params.version], ['EUR', 'LV', '1.6']);
+  is('back to the thank-you page in the language it was paid in', params.accepturl, 'https://shop.example/lv/order/thank-you/?paid=1&ref=SM-260925-ABCD');
+  is('a change of mind goes back to the cart', params.cancelurl, 'https://shop.example/lv/cart/');
+  is('the callback is the Worker', params.callbackurl, 'https://shop.example/api/paysera/callback');
+  is("and Paysera's own language code", params.lang, 'LAV');
+  const en = payseraOrderParams(PAYSERA, { id: 'SM-1', origin: 'https://shop.example', loc: 'en', total: 5, currency: 'EUR', email: 'a@b.co', name: 'Cher' });
+  is('english keeps the bare paths', [en.accepturl, en.cancelurl, en.lang], ['https://shop.example/order/thank-you/?paid=1&ref=SM-1', 'https://shop.example/cart/', 'ENG']);
+  is('russian', payseraOrderParams(PAYSERA, { id: 'SM-1', origin: 'https://x', loc: 'ru', total: 1, currency: 'EUR', email: 'a@b.co', name: '' }).lang, 'RUS');
+  is('the name is split into first and last', [params.p_firstname, params.p_lastname], ['Anna Marija', 'Bērziņa']);
+  is('one word is a first name', [en.p_firstname, en.p_lastname], ['Cher', '']);
+  is('the purpose names the order', /\[order_nr\]/.test(params.paytext), true);
+  is('live unless told otherwise', params.test, 0);
+  is('PAYSERA_TEST=1 is a test payment', payseraOrderParams({ ...PAYSERA, PAYSERA_TEST: '1' }, { id: 'SM-1', origin: 'https://x', loc: 'en', total: 1, currency: 'EUR', email: 'a@b.co', name: 'A' }).test, 1);
+
+  const req = payseraRequest(params, PAYSERA.PAYSERA_PASSWORD);
+  const url = new URL(req.url);
+  is('the shopper goes to paysera.com/pay', [url.origin, url.pathname], ['https://www.paysera.com', '/pay/']);
+  is('carrying the data and its signature', [url.searchParams.get('data'), url.searchParams.get('sign')], [req.data, req.sign]);
+  is('the data is URL-safe base64', /^[A-Za-z0-9_=-]+$/.test(req.data), true);
+  is('the signature is md5(data + password), lowercase hex', req.sign, createHash('md5').update(req.data + PAYSERA.PAYSERA_PASSWORD).digest('hex'));
+  is('it decodes back to what was sent', payseraDecode(req.data), Object.fromEntries(Object.entries(params).filter(([, v]) => v !== '').map(([k, v]) => [k, String(v)])));
+  is('an empty last name is left out, not sent blank', 'p_lastname' in payseraDecode(payseraRequest(en, 'x').data), false);
+
+  // A URL-encoded query never reaches '+' or '/' in base64, so the swap is
+  // proven on text that does: '?', '>' and '~' left unencoded, and UTF-8.
+  const raw = ['a=???>>>~~~', 'paytext=Ābols?>', 'x=~~~~~~&y=????'];
+  const standard = raw.map((r) => Buffer.from(r).toString('base64'));
+  is('these really do use + and /', standard.every((b) => /[+/]/.test(b)), true);
+  is('the encoder swaps them for - and _', raw.map(payseraEncode), standard.map((b) => b.replace(/\+/g, '-').replace(/\//g, '_')));
+  is('and the decoder swaps them back', raw.map((r) => payseraDecode(payseraEncode(r))), raw.map((r) => Object.fromEntries(new URLSearchParams(r))));
+  is('the request is exactly that encoding of its query', req.data, Buffer.from(new URLSearchParams(Object.entries(params).filter(([, v]) => v !== '').map(([k, v]) => [k, String(v)])).toString()).toString('base64').replace(/\+/g, '-').replace(/\//g, '_'));
+  is('padding may be missing on the way back', payseraDecode(payseraEncode('a=1').replace(/=+$/, '')), { a: '1' });
+  is('garbage does not decode', [payseraDecode(''), payseraDecode('***'), payseraDecode(null)], [null, null, null]);
+
+  is('a good ss1 verifies', payseraVerify(req.data, req.sign, PAYSERA.PAYSERA_PASSWORD), true);
+  is('in capitals too', payseraVerify(req.data, req.sign.toUpperCase(), PAYSERA.PAYSERA_PASSWORD), true);
+  is('a wrong ss1 does not', payseraVerify(req.data, md5('something else'), PAYSERA.PAYSERA_PASSWORD), false);
+  is('nor one for other data', payseraVerify(`${req.data}A`, req.sign, PAYSERA.PAYSERA_PASSWORD), false);
+  is('nor a truncated one', payseraVerify(req.data, req.sign.slice(0, 31), PAYSERA.PAYSERA_PASSWORD), false);
+  is('nor anything without a password', payseraVerify(req.data, md5(req.data), ''), false);
+  is('nor a missing ss1', payseraVerify(req.data, undefined, PAYSERA.PAYSERA_PASSWORD), false);
+}
+
+/**
+ * Enough of D1 for the Worker, over a real SQLite database, so the payment
+ * path is tested against the SQL that ships rather than a description of it.
+ */
+function sqliteD1() {
+  const db = new DatabaseSync(':memory:');
+  const wrap = (sql) => {
+    let args = [];
+    const api = {
+      bind: (...a) => ((args = a), api),
+      run: async () => ({ success: true, meta: { changes: Number(db.prepare(sql).run(...args).changes) } }),
+      first: async () => db.prepare(sql).get(...args) ?? null,
+      all: async () => ({ results: db.prepare(sql).all(...args) }),
+    };
+    return api;
   };
-  const header = async (t, secret = SECRET, payload = PAYLOAD) => `t=${t},v1=${await sign(secret, `${t}.${payload}`)}`;
-  const check = (h, payload = PAYLOAD, now = NOW) => verifyStripeSignature(h, payload, SECRET, now, sign);
-
-  is('a genuine signature passes', (await check(await header(NOW))).ok, true);
-  is('a tampered payload fails', (await check(await header(NOW), '{"id":"evt_1","type":"refund"}')).reason, 'signature');
-  is('another secret fails', (await check(await header(NOW, 'whsec_someone_else'))).reason, 'signature');
-  is('an old capture cannot be replayed', (await check(await header(NOW - 600))).reason, 'stale');
-  is('a clock-skewed future stamp is refused', (await check(await header(NOW + 600))).reason, 'stale');
-  is('a stamp inside the tolerance passes', (await check(await header(NOW - 60))).ok, true);
-  is('a header with no signature fails', (await check(`t=${NOW}`)).reason, 'malformed');
-  is('a header with no timestamp fails', (await check('v1=abc')).reason, 'malformed');
-  is('an empty header fails', (await check('')).reason, 'malformed');
-  is('a non-numeric timestamp fails', (await check(`t=soon,v1=abc`)).reason, 'malformed');
-  is('no endpoint secret means no trust', (await verifyStripeSignature(await header(NOW), PAYLOAD, '', NOW, sign)).reason, 'not-configured');
-
-  // Stripe sends two v1 signatures while an endpoint secret is being rotated;
-  // the new one must be accepted without the old one being refused first.
-  const rotating = `t=${NOW},v1=${await sign('whsec_old_one', `${NOW}.${PAYLOAD}`)},v1=${await sign(SECRET, `${NOW}.${PAYLOAD}`)}`;
-  is('either signature of a rotating pair passes', (await check(rotating)).ok, true);
+  return { db, d1: { prepare: wrap, batch: async (stmts) => Promise.all(stmts.map((st) => st.run())) } };
 }
 
+/** A fresh Worker module: it keeps its schema flag, catalogue and locker list per isolate. */
+let isolateN = 0;
+const workerSrc = await readFile(new URL('../worker/server.js', import.meta.url), 'utf-8');
+const freshIsolate = () => import('data:text/javascript;base64,' + Buffer.from(`${workerSrc}\n// isolate ${isolateN++}`).toString('base64'));
+
+group('paysera checkout and callback');
+{
+  const realFetch = globalThis.fetch;
+  // The Worker's log is part of what is asserted: a forged callback must leave a trace.
+  const realError = console.error;
+  const logged = [];
+  console.error = (...a) => logged.push(a.map(String).join(' '));
+  const sent = { mail: [], telegram: [], ops: [] };
+  let opsOk = true;
+  globalThis.fetch = async (url, init = {}) => {
+    const u = String(url);
+    if (u.includes('api.resend.com')) sent.mail.push(JSON.parse(init.body));
+    else if (u.includes('api.telegram.org')) sent.telegram.push(JSON.parse(init.body));
+    else if (u.startsWith('https://ops.example')) {
+      sent.ops.push(JSON.parse(init.body));
+      return new Response('{}', { status: opsOk ? 200 : 500 });
+    }
+    return new Response('{"ok":true}', { status: 200 });
+  };
+  const w = await freshIsolate();
+  const { db, d1 } = sqliteD1();
+  const catalog = { ...CATALOG };
+  const env = {
+    ...PAYSERA,
+    PAYSERA_TEST: '1',
+    DB: d1,
+    ASSETS: { fetch: async (u) => (new URL(u).pathname === '/catalog.json' ? new Response(JSON.stringify(catalog)) : new Response('', { status: 404 })) },
+    RESEND_API_KEY: 'k',
+    ORDER_TO_EMAIL: 'orders@example.com',
+    TELEGRAM_BOT_TOKEN: 't',
+    TELEGRAM_CHAT_ID: '1',
+    OPS_WEBHOOK_URL: 'https://ops.example/hook',
+  };
+  const call = (path, init) => w.default.fetch(new Request(`https://shop.example${path}`, init), env);
+  const post = (body) => call('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json', 'cf-connecting-ip': '1.2.3.4' }, body: JSON.stringify(body) });
+  const customer = { name: 'Anna Bērziņa', email: 'anna@example.com', phone: '+37120000000', country: 'Latvia', address: 'Omniva: Rīga Brīvības pakomāts (96331)', city: 'Rīga', locker: '96331', delivery: 'Omniva parcel locker' };
+  const order = (extra = {}) => ({ customer, method: 'locker', items: [{ id: 'apple-bar-35g:classic', qty: 2 }], locale: 'lv', page: '/lv/checkout/', ...extra });
+
+  is('the storefront says payments are on', (await (await call('/api/storefront')).json()).payments, true);
+  is('and off without the password', (await (await w.default.fetch(new Request('https://shop.example/api/storefront'), { PAYSERA_PROJECT_ID: '1' })).json()).payments, false);
+  is('checkout without Paysera says so', (await (await w.default.fetch(new Request('https://shop.example/api/checkout', { method: 'POST', body: '{}' }), {})).json()).reason, 'not-configured');
+
+  const res = await post(order());
+  const out = await res.json();
+  is('checkout answers with a payment link', [res.status, out.ok, typeof out.url], [200, true, 'string']);
+  const link = new URL(out.url);
+  is('on www.paysera.com', link.hostname, 'www.paysera.com');
+  const sentParams = payseraDecode(link.searchParams.get('data'));
+  is('signed with the project password', link.searchParams.get('sign'), createHash('md5').update(link.searchParams.get('data') + PAYSERA.PAYSERA_PASSWORD).digest('hex'));
+  // Two bars at 1.45 and the parcel-locker rate: the server's arithmetic, not the browser's.
+  is('for the amount the server priced', [sentParams.amount, sentParams.currency, sentParams.orderid], ['680', 'EUR', out.ref]);
+  is('as a test payment', sentParams.test, '1');
+  is('with the buyer', [sentParams.p_email, sentParams.p_firstname, sentParams.p_lastname], ['anna@example.com', 'Anna', 'Bērziņa']);
+  const row = db.prepare('SELECT * FROM orders WHERE id = ?').get(out.ref);
+  is('the order row exists before the shopper leaves', [row?.status, row?.total, row?.shipping, row?.pay_provider], ['new', 6.8, 3.9, 'paysera']);
+  is('with the locker it goes to', [row.address, JSON.parse(row.payload_json).locker, JSON.parse(row.payload_json).method, row.delivery], ['Omniva: Rīga Brīvības pakomāts (96331)', '96331', 'locker', 'Omniva parcel locker']);
+
+  // What a browser cannot talk the server into.
+  is('a courier with no price is refused', (await (await post(order({ method: 'courier', customer: { ...customer, postcode: 'LV-1010' } }))).json()).reason, 'method');
+  is('a parcel locker abroad is refused', (await (await post(order({ customer: { ...customer, country: 'Germany' } }))).json()).reason, 'country');
+  is('no address is refused', (await (await post(order({ customer: { ...customer, address: '' } }))).json()).reason, 'address');
+  is('a product off sale is refused by name', await (await post(order({ items: [{ id: 'gone-product', qty: 1 }] }))).json(), { ok: false, reason: 'unknown-item', id: 'gone-product' });
+
+  const callback = async (params, { method = 'GET', ss1, password = PAYSERA.PAYSERA_PASSWORD } = {}) => {
+    const { data, sign } = payseraRequest(params, password);
+    const sig = ss1 ?? sign;
+    const r =
+      method === 'GET'
+        ? await call(`/api/paysera/callback?data=${encodeURIComponent(data)}&ss1=${sig}&ss2=ignored`)
+        : await call('/api/paysera/callback', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ data, ss1: sig, ss2: 'ignored' }).toString() });
+    return { status: r.status, text: await r.text() };
+  };
+  const paid = (extra = {}) => ({ projectid: PAYSERA.PAYSERA_PROJECT_ID, orderid: out.ref, amount: '680', currency: 'EUR', status: '1', test: '1', requestid: '987654', p_email: 'anna@example.com', ...extra });
+  const statusOf = (id = out.ref) => db.prepare('SELECT status FROM orders WHERE id = ?').get(id)?.status;
+  const counts = () => [sent.mail.length, sent.telegram.length, sent.ops.length];
+
+  // A forged callback: right shape, wrong signature.
+  is('a bad signature is refused', await callback(paid(), { ss1: md5('forged') }), { status: 400, text: 'bad signature' });
+  is('and is logged', logged.some((l) => /paysera callback rejected: signature/.test(l)), true);
+  is('one signed with another password too', (await callback(paid(), { password: 'guess' })).status, 400);
+  is('and the order is untouched', statusOf(), 'new');
+  is('a callback for another project is refused', (await callback(paid({ projectid: '999' }))).status, 400);
+
+  // Not paid yet: acknowledged, and nothing changes.
+  is('a pending status is acknowledged', await callback(paid({ status: '2' })), { status: 200, text: 'OK' });
+  is('a failed one too', await callback(paid({ status: '0' })), { status: 200, text: 'OK' });
+  is('without marking the order paid', statusOf(), 'new');
+  is('or telling anyone', counts(), [0, 0, 0]);
+
+  // Someone else's sum, signed: not paid, flagged once.
+  is('a different amount is acknowledged', await callback(paid({ amount: '1' })), { status: 200, text: 'OK' });
+  is('but not marked paid', statusOf(), 'new');
+  is('and flagged for a person', /PAYSERA AMOUNT MISMATCH/.test(db.prepare('SELECT admin_note FROM orders WHERE id = ?').get(out.ref).admin_note), true);
+  await callback(paid({ amount: '1' }));
+  is('once, however often it comes', [sent.telegram.length, (db.prepare('SELECT admin_note FROM orders WHERE id = ?').get(out.ref).admin_note.match(/MISMATCH/g) || []).length], [1, 1]);
+  is('another currency is the same', [(await callback(paid({ currency: 'USD' }))).text, statusOf()], ['OK', 'new']);
+  sent.telegram.length = 0;
+
+  // The real thing, by POST as Paysera may send it.
+  is('the paid callback is acknowledged', await callback(paid(), { method: 'POST' }), { status: 200, text: 'OK' });
+  const done = db.prepare('SELECT * FROM orders WHERE id = ?').get(out.ref);
+  is('the order is paid', [done.status, done.pay_provider, done.pay_ref, done.pay_test, done.paid_at !== ''], ['paid', 'paysera', '987654', 1, true]);
+  is('the shop and the buyer are told, and the floor gets it', counts(), [2, 1, 1]);
+  const toBuyer = sent.mail.find((m) => m.to[0] === 'anna@example.com');
+  is('the buyer is told in their language that it is paid', /Apmaksa saņemta/.test(toBuyer?.subject || ''), true);
+  is('with the method in their language', toBuyer.text.includes('Piegādes veids: Omniva pakomāts'), true);
+  is('the shop sees a test is a test', /ТЕСТ/.test(sent.telegram[0].text) && /TEST, no money moved/.test(sent.telegram[0].text), true);
+  is('and which locker', sent.telegram[0].text.includes('Omniva locker ID: 96331'), true);
+  const ops = sent.ops[0];
+  is('the floor gets the locker and the payment', [ops.delivery.method, ops.delivery.carrier, ops.delivery.locker_id, ops.payment.provider, ops.payment.ref, ops.livemode], ['locker', 'Omniva', '96331', 'paysera', '987654', false]);
+  is('and the lines by GTIN', ops.items.map((i) => [i.gtin, i.qty]), [['4751043820181', 2]]);
+
+  // Paysera repeats itself. Nobody gets a second e-mail and the floor no second order.
+  is('a repeated callback is acknowledged', await callback(paid()), { status: 200, text: 'OK' });
+  is('and changes nothing', [counts(), statusOf()], [[2, 1, 1], 'paid']);
+  db.prepare("UPDATE orders SET status = 'shipped' WHERE id = ?").run(out.ref);
+  await callback(paid());
+  is('a late repeat cannot pull a shipped order back to paid', statusOf(), 'shipped');
+
+  // The floor was down: the callback fails so Paysera comes back, and the retry sends only what is owed.
+  const second = await (await post(order())).json();
+  opsOk = false;
+  is('an operations failure asks Paysera to retry', (await callback(paid({ orderid: second.ref }))).status, 500);
+  is('with the order already paid and the e-mails sent', [statusOf(second.ref), counts()], ['paid', [4, 2, 2]]);
+  opsOk = true;
+  is('the retry is acknowledged', (await callback(paid({ orderid: second.ref }))).text, 'OK');
+  is('and only the floor hears again', counts(), [4, 2, 3]);
+  is('then never again', [(await callback(paid({ orderid: second.ref }))).text, counts()], ['OK', [4, 2, 3]]);
+
+  // Money for an order nobody wrote down: kept, and raised for a person.
+  is('a payment with no order is acknowledged', (await callback(paid({ orderid: 'SM-000000-LOST', amount: '1234' }))).text, 'OK');
+  const lost = db.prepare('SELECT * FROM orders WHERE id = ?').get('SM-000000-LOST');
+  is('and recorded as a paid row to finish by hand', [lost?.status, lost?.total, /RECOVERED/.test(lost?.admin_note || '')], ['paid', 12.34, true]);
+
+  // The admin reads the same table.
+  is('the stored order is readable as json', typeof JSON.parse(db.prepare('SELECT items_json FROM orders WHERE id = ?').get(out.ref).items_json)[0].unit, 'number');
+  is('the operations failure was logged', logged.some((l) => /operations webhook refused/.test(l)), true);
+  globalThis.fetch = realFetch;
+  console.error = realError;
+}
+
+group('parcel lockers');
+{
+  // The documented shape of Omniva's locations.json, with the awkward cases in it.
+  const FEED = [
+    { ZIP: '96331', NAME: 'Rīga Brīvības Rimi pakomāts', TYPE: '0', A0_NAME: 'LV', A1_NAME: 'Rīga', A2_NAME: 'Rīga', A5_NAME: 'Brīvības iela', A7_NAME: '372' },
+    { ZIP: '96332', NAME: 'Āgenskalna tirgus pakomāts', TYPE: '0', A0_NAME: 'LV', A1_NAME: 'Rīga', A2_NAME: 'NULL', A5_NAME: 'Nometņu iela', A7_NAME: '64' },
+    { ZIP: '1001', NAME: 'Rīgas pasta nodaļa', TYPE: '1', A0_NAME: 'LV', A1_NAME: 'Rīga', A2_NAME: 'Rīga', A5_NAME: 'Stacijas laukums', A7_NAME: '1' },
+    { ZIP: 9102, NAME: 'Tallinna Kristiine Omniva pakiautomaat', TYPE: 0, A0_NAME: 'EE', A1_NAME: 'Harju maakond', A2_NAME: 'Tallinn', A5_NAME: 'Endla', A7_NAME: '45' },
+    { ZIP: '44001', NAME: 'Vilniaus Akropolis paštomatas', TYPE: '0', A0_NAME: 'LT', A1_NAME: 'Vilniaus apskr.', A2_NAME: 'Vilnius', A5_NAME: 'Ozo g.', A7_NAME: '25' },
+    { ZIP: '00100', NAME: 'Helsinki pakettiautomaatti', TYPE: '0', A0_NAME: 'FI', A1_NAME: 'Uusimaa', A2_NAME: 'Helsinki', A5_NAME: 'Mannerheimintie', A7_NAME: '1' },
+    { ZIP: '96331', NAME: 'Rīga Brīvības Rimi pakomāts (again)', TYPE: '0', A0_NAME: 'LV' },
+    { ZIP: '', NAME: 'No id', TYPE: '0', A0_NAME: 'LV' },
+    { ZIP: '96333', TYPE: '0', A0_NAME: 'LV' },
+    null,
+    'a string',
+    42,
+  ];
+  const got = compactLockers(FEED);
+  // Ā sorts with A, so Āgenskalna comes before Rīga.
+  is('parcel machines in the three countries, nothing else, by country then name', got.map((l) => l.id), ['9102', '44001', '96332', '96331']);
+  is('in the compact shape', got.find((l) => l.id === '96331'), { id: '96331', name: 'Rīga Brīvības Rimi pakomāts', city: 'Rīga', address: 'Brīvības iela 372', country: 'LV' });
+  is('a NULL city falls back to the county', got.find((l) => l.id === '96332').city, 'Rīga');
+  is('a numeric ZIP and TYPE still count', got[0], { id: '9102', name: 'Tallinna Kristiine Omniva pakiautomaat', city: 'Tallinn', address: 'Endla 45', country: 'EE' });
+  is('one row per locker id', got.filter((l) => l.id === '96331').length, 1);
+  is('a feed that is not a list is an empty list', [compactLockers(null), compactLockers({ locations: FEED }), compactLockers('[]'), compactLockers(undefined)], [[], [], [], []]);
+
+  const realFetch = globalThis.fetch;
+  const serve = (body, status = 200) => (globalThis.fetch = async (u) => {
+    if (!String(u).startsWith('https://www.omniva.ee/')) throw new Error(`unexpected fetch ${u}`);
+    if (body instanceof Error) throw body;
+    return new Response(typeof body === 'string' ? body : JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+  });
+  const ask = async (w) => {
+    const r = await w.default.fetch(new Request('https://shop.example/api/lockers'), {});
+    return { status: r.status, body: await r.json().catch(() => null), cache: r.headers.get('cache-control') };
+  };
+
+  const w1 = await freshIsolate();
+  serve(FEED);
+  const first = await ask(w1);
+  is('the endpoint serves the compact list', [first.status, first.body.length, first.body[0].id], [200, 4, '9102']);
+  is('and lets the browser keep it an hour', first.cache, 'public, max-age=3600');
+  serve(new Error('omniva is down'));
+  is('a second call inside the day does not refetch', (await ask(w1)).body.length, 4);
+
+  const w2 = await freshIsolate();
+  serve('{"not": "json"');
+  is('a malformed feed is a 502, not a crash', (await ask(w2)).status, 502);
+  serve({ locations: [] });
+  is('a feed of the wrong shape too', (await ask(w2)).status, 502);
+  serve([], 200);
+  is('an empty one too', (await ask(w2)).status, 502);
+  serve('oops', 503);
+  is('an Omniva error too', (await ask(w2)).status, 502);
+  serve(new Error('offline'));
+  is('and no network at all', (await ask(w2)).body, { ok: false, reason: 'lockers-unavailable' });
+  is('only GET', (await w2.default.fetch(new Request('https://shop.example/api/lockers', { method: 'POST' }), {})).status, 405);
+  globalThis.fetch = realFetch;
+}
 
 console.log(`\n${passed} passed, ${failed} failed`);
 process.exit(failed ? 1 : 0);

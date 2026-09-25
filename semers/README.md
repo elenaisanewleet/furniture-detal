@@ -1,10 +1,11 @@
 # Semers — online store
 
-Static e-commerce site for **Semers** (SIA Semers Group, Riga): App'Lite Apple Bars, Flourless Bars, PastiLite meringues, Belyov pastila, Belevini zephyr and gift boxes. Built with Astro 7, vanilla CSS and a small TypeScript client; no framework, no CMS, no tracking by default.
+Static e-commerce site for **Semers** (SIA Semers Group, Riga): App'Lite apple bars, apple meringues and baked apple desserts, and Blum Baker's flourless apple cakes. Built with Astro 7, vanilla CSS and a small TypeScript client; no framework, no CMS, no tracking by default. The API is one Cloudflare Worker (`worker/server.js`).
 
 ```
 semers/
-├─ api/order.js            Vercel serverless: orders + forms → Telegram / e-mail
+├─ worker/server.js        Cloudflare Worker: orders, Paysera payments, Omniva lockers, reviews, admin API
+├─ api/order.js            Vercel serverless fallback: order requests + forms only
 ├─ public/                 fonts, icons, manifest (and public/img after localize-images)
 ├─ scripts/                make-icons.mjs, localize-images.mjs
 ├─ src/
@@ -54,11 +55,22 @@ npm run preview
 * **FAQ** → `src/data/faq.ts` (rendered on `/faq/`, the home page and product pages with FAQ rich-result markup).
 * **Journal** → `src/data/journal.ts` (metadata) + `src/data/articles/<slug>.ts` (HTML body).
 
-## Orders and forms
+## Orders, payment and delivery
 
-There is no payment gateway yet, by design. Checkout collects the order and posts it to `/api/order`, which forwards it to Telegram and/or e-mail (Resend) and answers with a reference number; the customer gets a receipt e-mail if Resend is configured. If no channel is configured the browser falls back to a pre-filled `mailto:` so no order is lost. The same endpoint handles the newsletter, contact and wholesale forms.
+**Payment is Paysera** (WebToPay protocol 1.6). With `PAYSERA_PROJECT_ID` and `PAYSERA_PASSWORD` set on the host, the checkout posts only line ids, quantities, the delivery method and the customer's details to `/api/checkout`; the Worker prices the cart from `/catalog.json` (built from `src/data/products.ts` and `src/data/site.ts`), writes the order, and sends the shopper to Paysera with a signed request. Paysera's signed callback to `/api/paysera/callback` is what marks the order paid — once — and sends the shop's notification, the customer's receipt in their language, and the optional operations push. `PAYSERA_TEST=1` makes every payment a Paysera test payment. The whole protocol, the callback's answers and the Paysera account settings are in `DEPLOY.md` § 1c.
 
-To add card payments later: create a Stripe Checkout session in `api/order.js` (or a new `api/checkout.js`) from the `items` array and redirect to the returned URL instead of `/order/thank-you/`. The cart line items already carry `id`, `qty` and `price`. Today the endpoint forwards the prices the browser sent, which is fine while every order is confirmed by hand with a payment link; once a card flow charges automatically, recompute prices server-side from the catalogue (export it as JSON for the function) and add rate limiting.
+Without the Paysera values the shop takes **order requests** instead: the checkout posts the order to `/api/order`, which records it, forwards it to Telegram and/or e-mail (Resend) at `ORDER_TO_EMAIL` (the address is in `DEPLOY.md` § 1b), and answers with a reference; the customer gets a receipt, and the owner replies with a payment link by hand. If nothing can take the order the browser opens a pre-filled `mailto:` so no order is lost. The same endpoint handles the contact and wholesale forms.
+
+**Delivery** is an Omniva parcel locker in Latvia, Lithuania or Estonia at `site.shipping.flatRate`, or — only once `site.shipping.courierRate` is a number — a courier across the EU; both are free from `site.shipping.freeFrom`. There is no pickup. The checkout's locker picker searches Omniva's own list through `/api/lockers` (cached for a day) and falls back to a typed field when the list will not load. See `DEPLOY.md` § 1d.
+
+| Host variable | What it does |
+| --- | --- |
+| `PAYSERA_PROJECT_ID`, `PAYSERA_PASSWORD` | turn payment on; the password signs requests and verifies callbacks |
+| `PAYSERA_TEST` | `1` = Paysera test payments; unset or `0` = live |
+| `ORDER_TO_EMAIL` | where the shop's copy of every order goes (value in `DEPLOY.md`; never printed on a page) |
+| `REPLY_TO_EMAIL` | optional reply-to for customer receipts |
+
+`npm test` covers the money: cart pricing, the delivery rule in every place it is written, the MD5 behind Paysera's signatures (against Node's), request signing and decoding, and the callback end to end over a real SQLite database — forged signatures, pending statuses, a wrong amount, repeats that must not e-mail twice, a failed operations push, and a payment with no order. `npm run check:pay` and `npm run check:flow` drive the same path in a browser.
 
 ## Languages
 
@@ -76,7 +88,7 @@ There is one set of pages, rendered three times. The words come from three place
 
 The legal pages are translated too, and each translated one carries a note saying the English version governs if the two disagree.
 
-Where a translator had to choose between two defensible renderings — «контролёр» or «оператор персональных данных» for the GDPR controller, «постамат» or «пакомат» for a parcel locker — the choice and the reasoning are in `docs/translation-notes.md` — 375 of them, keyed by the English sentence so they can be found and changed. Nothing in that file is a known error: every number, date, deadline and allergen statement was checked against the English before it was committed.
+Where a translator had to choose between two defensible renderings — «контролёр» or «оператор персональных данных» for the GDPR controller, «постамат» or «пакомат» for a parcel locker — the choice and the reasoning are in `docs/translation-notes.md` — 334 of them, keyed by the English sentence so they can be found and changed. Nothing in that file is a known error: every number, date, deadline and allergen statement was checked against the English before it was committed.
 
 ## SEO
 

@@ -152,7 +152,7 @@ const faqs = [
     : []),
   ...(noAddedSugar ? [{ q: 'Does it contain added sugar?', a: 'No. No sugar is added; the sugars it contains occur naturally in the fruit.' }] : []),
   ...(keepAnswer ? [{ q: ui.keepQuestion, a: keepAnswer }] : []),
-  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across ${site.shipping.regions.slice(0, 3).join(', ')} and the EU. Orders over ${formatThreshold(site.shipping.freeFrom, locale)} ship free.` },
+  { q: 'Do you ship outside Latvia?', a: `Yes — we ship across Europe: to Omniva parcel lockers in Latvia, Lithuania and Estonia, and by courier elsewhere. Orders over ${formatThreshold(site.shipping.freeFrom, locale)} ship free.` },
 ];
 
 /** A value the card does not give stays null, and the table says so instead of printing a number. */
@@ -271,17 +271,12 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));---
             </button>
           </div>
 
-          {/* Revealed by the storefront sync when an override marks this product out of stock. */}
-          <form class="restock" data-restock hidden>
-            <p class="restock__t"><strong>Out of stock right now.</strong> Leave your e-mail and we will write to you the day the next batch is ready — nothing else.</p>
-            <input type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true" class="sr-only" />
-            <div class="restock__row">
-              <label class="sr-only" for="restock-email">E-mail</label>
-              <input id="restock-email" type="email" name="email" required maxlength="160" autocomplete="email" placeholder="you@example.com" class="input" />
-              <button class="btn" type="submit">{ui.notifyMe}</button>
-            </div>
-            <p class="restock__note" data-restock-note hidden></p>
-          </form>
+          {/*
+            Revealed by the storefront sync when an override marks this product out of stock.
+            A notice, not a form: the back-in-stock e-mail list went with the newsletter
+            (25.09.2026), so nothing on the page collects an address.
+          */}
+          <p class="restock" data-restock hidden><strong>Out of stock right now.</strong> Write to <a href={`mailto:${site.email}`}>{site.email}</a> to ask when it is back.</p>
 
           <ul class="pdp__trust">
             <li><Icon name="check" size={17} /> Free shipping over {formatThreshold(site.shipping.freeFrom, locale)} · ships from Riga in 1–2 business days</li>
@@ -415,8 +410,8 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));---
           <details>
             <summary>{ui.shippingReturnsTitle}</summary>
             <div class="acc__body">
-              <p>{site.shipping.note} Free shipping over {formatThreshold(site.shipping.freeFrom, locale)}; otherwise a flat €3.90 in the Baltics; EU courier rates are confirmed by e-mail. We ship to {site.shipping.regions.slice(0, 3).join(', ')} and the rest of the EU.</p>
-              <p>Damaged in transit? Send us a photo within 48 hours and we replace it. <a href="/legal/shipping-returns/">{ui.fullPolicy}</a>.</p>
+              <p>{site.shipping.note} We ship across Europe: to Omniva parcel lockers in Latvia, Lithuania and Estonia, and by courier elsewhere. Free shipping over {formatThreshold(site.shipping.freeFrom, locale)}; otherwise {formatPrice(site.shipping.flatRate, locale)} to a parcel locker.</p>
+              <p>Unopened, sealed goods can be returned within 14 days; the return shipping is yours to pay. Arrived damaged or wrong? We replace it, or refund it if you ask. <a href="/legal/shipping-returns/">{ui.fullPolicy}</a>.</p>
             </div>
           </details>
           {isBundle && (
@@ -577,7 +572,6 @@ const hasUndeclared = rows.some((r) => r.cells.some((c) => c == null));---
   .pdp__trust li { display: flex; gap: 0.55em; align-items: flex-start; }
   .pdp__trust :global(svg) { flex: none; margin-top: 0.15em; }
   .restock { margin-top: 1.25rem; }
-  .restock .btn { min-height: 3.2rem; }
 
   /* ------------------------------------------------------------- the facts list */
   .info { margin-top: 1.5rem; }

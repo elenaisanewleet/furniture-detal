@@ -25,8 +25,10 @@ const description =
   'Terms of sale for the Semers web shop: ordering and payment, delivery, the 14-day right of withdrawal, damaged goods, allergens and Latvian consumer law.';
 
 const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
-/** Flat Baltic rate; mirrors data-shipping="3.9" on the checkout page. */
-const flatRate = formatPrice(3.9, locale);
+/** The Omniva parcel-locker rate below the free-shipping threshold (site.shipping, as the owner set it on 25.09.2026). */
+const lockerRate = formatPrice(site.shipping.flatRate, locale);
+const { company } = site;
+const tel = site.phone.replace(/\s+/g, '');
 
 const band = im('packshot-classic');
 
@@ -61,7 +63,7 @@ const webPage = {
   inLanguage: 'en',
   isPartOf: { '@id': `${origin}/#website` },
   about: { '@id': `${origin}/#org` },
-  dateModified: '2026-09-01',
+  dateModified: '2026-09-25',
 };
 ---
 <Base
@@ -73,7 +75,7 @@ const webPage = {
 >
   <!-- ============================== HERO ============================== -->
   <section class="legal-hero container" aria-labelledby="page-title">
-    <p class="eyebrow">Legal · {site.brand.legalName}</p>
+    <p class="eyebrow">Legal · {company.legalName}</p>
     <h1 id="page-title" class="legal-title" data-words>Terms of sale, <em>in plain language.</em></h1>
     <div class="legal-hero__row">
       <div class="legal-hero__meta">
@@ -112,18 +114,22 @@ const webPage = {
       <div class="legal__summary" id="summary">
         <h2>In plain words</h2>
         <ul class="ticks">
-          <li><Icon name="check" size={18} /> You send an order request; we confirm by e-mail with the total and a payment link; the contract is concluded when you pay.</li>
+          <li><Icon name="check" size={18} /> You send an order request; we confirm by e-mail with the total and a payment link; the contract is concluded when you pay. Payments go through Paysera.</li>
           <li><Icon name="check" size={18} /> Prices are in euro and include VAT. Shipping is free over {freeFrom}.</li>
-          <li><Icon name="check" size={18} /> You may withdraw within 14 days of receiving your parcel, for products that are still sealed.</li>
-          <li><Icon name="check" size={18} /> Arrived damaged? A photo within 48 hours gets you a replacement or a refund.</li>
+          <li><Icon name="check" size={18} /> You may withdraw within 14 days of receiving your parcel, for goods that are unopened and still sealed; you pay the return shipping.</li>
+          <li><Icon name="check" size={18} /> Arrived damaged or wrong? We replace it, or refund it if you ask.</li>
           <li><Icon name="check" size={18} /> Every product we sell contains egg white.</li>
         </ul>
       </div>
 
       <h2 id="parties">Who we are and what these terms cover</h2>
-      <p>These terms apply to purchases made by consumers through the web shop at semers.org (“the shop”), operated by <strong>{site.brand.legalName}</strong>, {site.locality}, {site.country} (“Semers”, “we”).</p>
-      <!-- TODO Semers: add the company registration number (Reģ. Nr.) and VAT number here as visible text. -->
-      <!-- TODO Semers: add the registered street address here as visible text. -->
+      <p>These terms apply to purchases made by consumers through the web shop at semers.org (“the shop”), operated by <strong>{company.legalName}</strong> (“Semers”, “we”).</p>
+      <ul>
+        <li>Registration number: {company.regNo}</li>
+        <li>VAT number: <span translate="no">{company.vatNo}</span></li>
+        <li>Legal address: {company.legalAddress}</li>
+        <li>Office and returns address: {company.officeAddress}</li>
+      </ul>
       <p>A consumer is a natural person acting for purposes outside their trade, business or profession. If you are a retailer, café, office or distributor, please go through our <a href="/wholesale/">wholesale page</a>; those sales are governed by a separate supply agreement, not by these terms.</p>
       <p>By placing an order you accept these terms. The version published at the time of your order is the one that applies to it. Nothing in these terms limits the rights you have under the Latvian Consumer Rights Protection Law or under mandatory consumer law in the EU country where you live.</p>
 
@@ -132,11 +138,17 @@ const webPage = {
       <p>Ingredient lists are published on every product page, for example the <a href="/products/apple-bar-35g/">App’Lite Apple Bar</a>, together with the allergen statement and the nutrition declaration wherever the pack carries them. The label on the pack you receive is the definitive source: if the pack and the website ever differ, the pack is right, and we would like to know about it. Every product carries a printed best-before date, and where its pack gives storage conditions, the product page repeats them.</p>
 
       <h2 id="prices">Prices</h2>
-      <p>All prices are shown in euro (EUR) and include Latvian value added tax at the applicable rate. Shipping is charged separately and shown in the cart, at checkout and in our confirmation e-mail: free for orders over {freeFrom}, otherwise a flat {flatRate} in Latvia, Lithuania and Estonia, and for other EU countries a courier rate that we quote in the confirmation. Full details are on the <a href="/legal/shipping-returns/">shipping &amp; returns</a> page, which forms part of these terms.</p>
+      <p>All prices are shown in euro (EUR) and include Latvian value added tax at the applicable rate. Shipping is charged separately and shown in the cart, at checkout and in our confirmation e-mail: free for orders over {freeFrom}; below that, {lockerRate} for delivery to an Omniva parcel locker in Latvia, Lithuania and Estonia, and for other European countries the courier price shown at checkout once it is set. Full details are on the <a href="/legal/shipping-returns/">shipping &amp; returns</a> page, which forms part of these terms.</p>
       <p>We may change prices at any time. The price shown when you place your order request, and confirmed in our e-mail, is the price you pay. If a price on the site is obviously wrong, a typing slip rather than a discount, we will tell you before confirming, and you can cancel the request at no cost.</p>
 
       <h2 id="ordering">How ordering works</h2>
-      <p>The shop takes order requests. No payment is collected on the site itself, and no account is needed. The sequence is:</p>
+      {/*
+        Payment is switched on per deployment (PAYSERA_* on the host, DEPLOY.md § 1c), not per build,
+        so this section describes both routes and names the button that tells the shopper which one applies.
+      */}
+      <p>No account is needed. Payments are processed by Paysera, and the button at the end of the checkout tells you which of two ways your order goes.</p>
+      <p><strong>“Pay for the order”:</strong> you pay on Paysera’s secure page as the last step of the checkout. The contract of sale is concluded when Paysera confirms your payment. We then e-mail you a receipt with your order reference, and the parcel leaves Riga within 1–2 business days.</p>
+      <p><strong>“Place order”:</strong> while online payment is not switched on, the shop takes order requests and nothing is charged at checkout. The sequence is:</p>
       <ol class="steps legal__steps">
         <li class="step"><h3>Fill your box</h3><p>Add products to your cart and go to checkout. You can change quantities and flavours right up to the moment you send the request.</p></li>
         <li class="step"><h3>Send an order request</h3><p>Enter your delivery details and send the request. You receive an automatic e-mail with an order reference. This is your offer to buy; it is not yet a contract, and nothing is charged.</p></li>
@@ -144,11 +156,9 @@ const webPage = {
         <li class="step"><h3>You pay, we ship</h3><p>The contract of sale is concluded when your payment reaches us. The parcel then leaves Riga within 1–2 business days. If the payment link is not used within seven days, the request lapses quietly and nothing is owed.</p></li>
       </ol>
       <p>We may decline or limit an order in a few cases: quantities that look like resale rather than a family’s snack drawer (please write to <a href="/wholesale/">wholesale</a> instead), an address our carriers cannot reach, or suspected fraud. We will always tell you why.</p>
-      <p>Once online card payment is live, you will pay on the payment provider’s pages during checkout, and the contract will be concluded when that payment succeeds. We will update this section when it changes.</p>
-      <!-- TODO Semers: revise this section when online card payment goes live (provider name, moment of contract). -->
 
       <h2 id="delivery">Delivery</h2>
-      <p>We ship to Latvia, Lithuania, Estonia and the rest of the European Union, from Riga, within 1–2 business days of receiving payment. Estimated delivery times, costs, carriers and the option to collect in Riga are set out on the <a href="/legal/shipping-returns/">shipping &amp; returns</a> page. Delivery estimates are estimates, not guaranteed dates. If a parcel is seriously late, write to us: we will chase the carrier or send a replacement.</p>
+      <p>We ship across Europe from Riga, within 1–2 business days of receiving payment: to Omniva parcel lockers in Latvia, Lithuania and Estonia, and by courier to the rest of Europe. There is no pickup. Costs and carriers are set out on the <a href="/legal/shipping-returns/">shipping &amp; returns</a> page. If a parcel is seriously late, write to us and we will chase the carrier.</p>
       <p>The risk of loss of or damage to the goods passes to you when you, or a person you have nominated, take physical possession of them. For a parcel locker, that is when you collect the parcel. If a parcel comes back to us because the address was incomplete or it was not collected from the locker in time, we will contact you; sending it again is charged at the standard shipping rate.</p>
 
       <h2 id="withdrawal">Right of withdrawal</h2>
@@ -159,16 +169,15 @@ const webPage = {
         <li>sealed goods which are not suitable for return for health protection or hygiene reasons and were unsealed after delivery; and</li>
         <li>goods that are liable to deteriorate or expire rapidly.</li>
       </ul>
-      <p>In practice: you can return products that are still sealed and in the condition in which you received them. An opened bar, bag or box cannot be returned. Products with a short remaining shelf life may fall under the second exception; we will tell you if that is the case.</p>
+      <p>In practice: you can return goods that are unopened, still sealed and in the condition in which you received them. An opened bar, tub or box cannot be returned.</p>
       <h3>How to withdraw</h3>
       <p>Send us a clear statement before the 14 days end, by e-mail to <a href={`mailto:${site.email}`}>{site.email}</a>, with your order reference. You are welcome to use this wording:</p>
-      <blockquote class="legal__form">To {site.brand.legalName}, {site.locality}, {site.country}, {site.email}: I hereby give notice that I withdraw from my contract of sale of the following goods: [products]. Ordered on [date], received on [date], order reference [SM-…]. Name, address, date.</blockquote>
-      <p>Then send the goods back within 14 days of telling us, well packed, to the return address we give you in our reply. You bear the direct cost of returning the goods, unless the return is the result of our mistake. You are liable for any diminished value of the goods resulting from handling beyond what is needed to establish their nature and characteristics; for sealed food, that means keeping the seal intact.</p>
+      <blockquote class="legal__form">To {company.legalName}, {company.officeAddress}, {site.email}: I hereby give notice that I withdraw from my contract of sale of the following goods: [products]. Ordered on [date], received on [date], order reference [SM-…]. Name, address, date.</blockquote>
+      <p>Then send the goods back within 14 days of telling us, well packed, to our returns address: <strong>{company.legalName}, {company.officeAddress}</strong>. You bear the direct cost of returning the goods, unless the return is the result of our mistake. You are liable for any diminished value of the goods resulting from handling beyond what is needed to establish their nature and characteristics; for sealed food, that means keeping the seal intact.</p>
       <p>We refund the price of the goods and the standard outbound shipping, but not any premium delivery option you chose, within 14 days of receiving your notice, using the same payment method you used. We may hold the refund until the goods are back with us or you have shown proof of sending them, whichever comes first.</p>
 
       <h2 id="defects">Damaged or defective goods</h2>
-      <p>You are entitled to goods that conform to the contract, under the Latvian Consumer Rights Protection Law and EU law. If something arrives damaged, spoiled, wrong or missing, e-mail us a photo of the parcel and the product, together with your order reference, within <strong>48 hours</strong> of delivery. We then send a replacement or refund the affected items, including any shipping you paid, whichever you prefer. You do not need to send damaged food back unless we ask.</p>
-      <p>Reporting within 48 hours lets us claim from the carrier, which is why we ask for it. It is not a deadline for your statutory rights, which do not depend on this window.</p>
+      <p>You are entitled to goods that conform to the contract, under the Latvian Consumer Rights Protection Law and EU law. If something arrives damaged, spoiled or wrong, write to us with your order reference and, if you can, a photo of the parcel and the product. <strong>We replace the affected goods, or refund them if you ask.</strong> You do not need to send damaged food back unless we ask. Nothing here limits your statutory rights.</p>
 
       <h2 id="allergens">Allergens and food information</h2>
       <p>Every product we sell contains <strong>egg white</strong>. The allergen information is on each product page and on the pack.</p>
@@ -186,17 +195,19 @@ const webPage = {
       <p>We may update these terms from time to time. The version published when you place your order applies to that order. The current version is always at this address, with the date at the top.</p>
 
       <h2 id="legal-contact">Contact</h2>
-      <p>{site.brand.legalName}, {site.locality}, {site.country}<br />
-      <a href={`mailto:${site.email}`}>{site.email}</a></p>
-      <!-- TODO Semers: repeat the registration number and street address here as visible text. -->
+      <p>{company.legalName}<br />
+      Office and returns: {company.officeAddress}<br />
+      Legal address: {company.legalAddress}<br />
+      Reg. No. {company.regNo} · VAT No. <span translate="no">{company.vatNo}</span><br />
+      <a href={`mailto:${site.email}`}>{site.email}</a> · <a href={`tel:${tel}`}>{site.phone}</a></p>
       <p>Prefer a form? Use the <a href="/contact/">contact page</a>. For how we handle your data, see the <a href="/legal/privacy/">privacy policy</a>. Most practical questions are answered in the <a href="/faq/">FAQ</a>.</p>
     </div>
 
     <!-- Marginalia: the numbers that matter on this page, set as outlined type in the otherwise empty right third. -->
     <ul class="legal__facts">
-      <li><strong>14 days</strong><span>to return sealed products</span></li>
-      <li><strong>48 hours</strong><span>to report a damaged parcel</span></li>
-      <li><strong>{freeFrom}</strong><span>free shipping above this, across the EU</span></li>
+      <li><strong>14 days</strong><span>to return unopened, sealed goods</span></li>
+      <li><strong>1–2 days</strong><span>for a parcel to leave Riga</span></li>
+      <li><strong>{freeFrom}</strong><span>free shipping from this total, across Europe</span></li>
     </ul>
   </div>
 
@@ -206,7 +217,7 @@ const webPage = {
       <div class="legal__band-copy">
         <p class="eyebrow">Ready when you are</p>
         <h2 id="cta-title">The terms are long. The ingredient list isn’t.</h2>
-        <p>Apple bars, meringues and baked-apple desserts, made in Riga and shipped across the EU. Free shipping over {freeFrom}.</p>
+        <p>Apple bars, meringues and baked-apple desserts, made in Riga and shipped across Europe. Free shipping over {freeFrom}.</p>
         <div class="cluster mt-2">
           <a class="btn btn--paper" href="/shop/">Shop the range <Icon name="arrow" size={18} class="arrow" /></a>
           <a class="btn btn--ghost legal__ghost" href="/shop/apple-bars/">Start with the bars</a>

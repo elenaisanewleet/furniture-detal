@@ -18,7 +18,7 @@ const { locale } = Astro.props as { locale: Locale };
 const ui = t(locale);
 
 const origin = originOf(Astro.site);
-/** The catalogue on the home page: the single packs, in the catalogue's own order; the boxes and sets are one click away in the shop. */
+/** The catalogue on the home page: the single packs on sale, in the catalogue's own order. PRODUCTS leaves out hidden products, so the "All N products" count below is the visible one. */
 const featured = PRODUCTS.filter((p) => p.pack === 1 && p.collection !== 'gift-sets')
   .sort((a, b) => a.order - b.order)
   .slice(0, 4);
@@ -58,9 +58,9 @@ const { flatRate, freeFrom } = site.shipping;
 
   <div class="container">
     <!-- ============================== FOUR PROMISES ============================== -->
-    <!-- The delivery figures come from src/data/site.ts, so the promise here is the one the cart keeps. -->
+    <!-- The delivery figures come from src/data/site.ts, so the promise here is the one the cart keeps. The flat rate is the Omniva parcel-locker price in the Baltics. -->
     <div class="trust" id="delivery">
-      <div><Icon name="check" size={21} /><div><strong>Delivery across the Baltics</strong><span>{ui.shippingFlat(formatPrice(flatRate, locale), formatThreshold(freeFrom, locale))}</span></div></div>
+      <div><Icon name="check" size={21} /><div><strong>Delivery across Europe</strong><span>Free over {formatThreshold(freeFrom, locale)}; Omniva lockers in the Baltics {formatPrice(flatRate, locale)}</span></div></div>
       <div><Icon name="check" size={21} /><div><strong>Ships from Riga</strong><span>In 1–2 business days</span></div></div>
       <div><Icon name="check" size={21} /><div><strong>Secure payment</strong><span>On a protected payment page</span></div></div>
       <div><Icon name="check" size={21} /><div><strong>Prices include VAT</strong><span>And every product shows its price per 100 g</span></div></div>

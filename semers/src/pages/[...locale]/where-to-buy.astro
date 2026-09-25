@@ -3,7 +3,7 @@ import Base from '~/layouts/Base.astro';
 import Icon from '~/components/Icon.astro';
 import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
-import { formatThreshold } from '~/data/products';
+import { formatPrice, formatThreshold } from '~/data/products';
 import { FAQS } from '~/data/faq';
 import { faqPage } from '~/lib/schema';
 
@@ -18,6 +18,8 @@ export function getStaticPaths() {
 const { locale } = Astro.props as { locale: Locale };
 
 const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+/** The Omniva parcel-locker rate below the free-shipping threshold. */
+const lockerRate = formatPrice(site.shipping.flatRate, locale);
 const suggestHref = `mailto:${site.email}?subject=${encodeURIComponent('Store suggestion for Semers')}`;
 
 /** Retailers from site.ts, in the order they are listed there. */
@@ -57,7 +59,7 @@ const faqs = pick.flatMap((q) => {
 ---
 <Base
   title="Where to buy Semers apple bars & desserts"
-  description="Where to buy Semers: apple bars and baked apple desserts at Maxima and on Barbora in Latvia, in selected stores across Europe, or online with EU-wide shipping."
+  description="Where to buy Semers: apple bars and baked apple desserts at Maxima and on Barbora in Latvia, in selected stores across Europe, or online with delivery across Europe."
   canonical="/where-to-buy/"
   ogImage="hero-bars"
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Where to buy', href: '/where-to-buy/' }]}
@@ -68,7 +70,7 @@ const faqs = pick.flatMap((q) => {
     <p class="eyebrow">Where to buy · {site.locality} and across Europe</p>
     <h1 id="page-title" class="wtb-hero__title" data-words>Find Semers <em>near you.</em></h1>
     <div class="wtb-hero__row">
-      <p class="lead" data-reveal>Here is where to buy Semers apple bars, meringues and baked apple desserts: on the shelves at Maxima across Latvia, in your Barbora basket, and with selected retailers in {exportList}. Not near any of them? Our web shop ships across the EU, free over {freeFrom}.</p>
+      <p class="lead" data-reveal>Here is where to buy Semers apple bars, meringues and baked apple desserts: on the shelves at Maxima across Latvia, in your Barbora basket, and with selected retailers in {exportList}. Not near any of them? Our web shop ships across Europe, free over {freeFrom}.</p>
       <div class="wtb-hero__cta" data-reveal>
         <a class="btn btn--lg" href="/shop/">Shop online <Icon name="arrow" size={20} class="arrow" /></a>
         <a class="btn btn--lg btn--ghost" href="#stores">See the stores</a>
@@ -82,8 +84,8 @@ const faqs = pick.flatMap((q) => {
     <div class="trust wtb-trust" data-stagger>
       <div><Icon name="cart" size={22} /><div><strong>Maxima &amp; Barbora</strong><span>On shelves and delivered across Latvia</span></div></div>
       <div><Icon name="globe" size={22} /><div><strong>{countryCount} countries</strong><span>Latvia plus {exportCount} export markets</span></div></div>
-      <div><Icon name="truck" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Otherwise €3.90 flat in the Baltics</span></div></div>
-      <div><Icon name="clock" size={22} /><div><strong>1–2 business days</strong><span>Parcels leave Riga, ship across the EU</span></div></div>
+      <div><Icon name="truck" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Otherwise {lockerRate} to an Omniva parcel locker in the Baltics</span></div></div>
+      <div><Icon name="clock" size={22} /><div><strong>1–2 business days</strong><span>Parcels leave Riga, ship across Europe</span></div></div>
     </div>
   </div>
 
@@ -151,9 +153,9 @@ const faqs = pick.flatMap((q) => {
       <article class="lit lit--mint" data-tilt>
         <span class="lit__n" aria-hidden="true">01</span>
         <h3>The Semers web shop</h3>
-        <p>Everything we sell, in one place: <a href="/shop/apple-bars/">apple bars</a>, <a href="/shop/flourless-bars/">flourless apple cakes</a>, <a href="/shop/meringues/">meringues</a>, <a href="/shop/applite/">baked apple desserts</a>, the <a href="/products/apple-bar-12-pack/">12-pack</a> and <a href="/shop/gift-sets/">gift boxes</a>. Packed in Riga, shipped across the EU.</p>
+        <p>Everything we sell, in one place: <a href="/shop/apple-bars/">apple bars</a>, <a href="/shop/flourless-bars/">flourless apple cakes</a>, <a href="/shop/meringues/">meringues</a>, <a href="/shop/applite/">baked apple desserts</a>, and a <a href="/shop/build-your-box/">box you build yourself</a>. Packed in Riga, shipped across Europe.</p>
         <ul class="ticks small">
-          <li><Icon name="check" size={18} /> Free shipping over {freeFrom}; €3.90 flat below that in the Baltics</li>
+          <li><Icon name="check" size={18} /> Free shipping over {freeFrom}; below that, {lockerRate} to an Omniva parcel locker in the Baltics</li>
           <li><Icon name="check" size={18} /> Parcels leave within 1–2 business days</li>
           <li><Icon name="check" size={18} /> Place an order request at checkout; we confirm by e-mail with a payment link</li>
         </ul>
@@ -179,9 +181,9 @@ const faqs = pick.flatMap((q) => {
       <div class="postbox__copy">
         <p class="eyebrow">Not near you?</p>
         <h2 id="post-title">No store nearby? Your postbox is.</h2>
-        <p class="postbox__lead">Everything on the shelf, plus a few things that are not: the <a href="/products/tasting-box/">tasting box</a> and the 12-pack. Packed in Riga and shipped across the EU.</p>
+        <p class="postbox__lead">The whole range, packed in Riga and shipped across Europe.</p>
         <ul class="ticks postbox__ticks">
-          <li><Icon name="check" /> Free shipping over {freeFrom}; €3.90 flat in the Baltics below that</li>
+          <li><Icon name="check" /> Free shipping over {freeFrom}; below that, {lockerRate} to an Omniva parcel locker in the Baltics</li>
           <li><Icon name="check" /> Parcels leave Riga within 1–2 business days</li>
           <li><Icon name="check" /> You place an order request; we confirm by e-mail with a payment link</li>
         </ul>

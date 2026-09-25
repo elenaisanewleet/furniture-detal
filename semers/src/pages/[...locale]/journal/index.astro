@@ -39,7 +39,7 @@ const featImg = featured ? im(featured.image) : null;
 /** Evergreen pages the journal keeps pointing back to. */
 const startHere = [
   { href: '/why-pastila/', title: 'Why pastila', text: 'Two ingredients and no added sugar: the case for a baked-apple snack, and who it suits.' },
-  { href: '/how-its-made/', title: 'How it’s made', text: 'Twelve hours from whole Antonovka apples to a sealed pack: bake, whip, dry, press, cut.' },
+  { href: '/how-its-made/', title: 'How it’s made', text: 'Twelve hours from whole apples to a sealed pack: bake, whip, dry, press, cut.' },
   { href: '/story/', title: 'Our story', text: 'Who we are, and the bakery in Riga where the bars are made.' },
 ] as const;
 
@@ -49,7 +49,7 @@ const schema = [
     '@id': `${origin}/journal/#blog`,
     name: 'Semers Journal',
     url: `${origin}/journal/`,
-    description: 'Notes on pastila, Antonovka apples and snacks with no added sugar, from the Semers bakery in Riga.',
+    description: 'Notes on pastila, apples and snacks with no added sugar, from the Semers bakery in Riga.',
     publisher: { '@id': `${origin}/#org` },
     inLanguage: 'en',
     blogPost: ARTICLES_SORTED.map((a) => articleSchema(origin, { title: a.title, description: a.description, href: `/journal/${a.slug}/`, date: a.date, image: a.image })),
@@ -58,7 +58,7 @@ const schema = [
 ---
 <Base
   title="Journal: pastila, apples & no-added-sugar snacks"
-  description="Notes from the Semers bakery in Riga: what pastila is, why we bake Antonovka apples, and how to spot added sugar on a snack label. Short, honest reads."
+  description="Notes from the Semers bakery in Riga: what pastila is, how baking apples makes them sweet, and how to spot added sugar on a snack label. Short, honest reads."
   canonical="/journal/"
   ogImage={featured ? featured.image : 'hero-wide'}
   breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Journal', href: '/journal/' }]}
@@ -70,7 +70,7 @@ const schema = [
     <p class="eyebrow">Journal · From the bakery in {site.locality}</p>
     <h1 id="page-title" class="jr-hero__title" data-words>Notes from the <em>bakery.</em></h1>
     <div class="jr-hero__row">
-      <p class="lead">Longer reads on pastila, Antonovka apples and snacks with no added sugar, written by the people who bake the bars. The kettle takes four minutes. Most of these take six.</p>
+      <p class="lead">Longer reads on pastila, apples and snacks with no added sugar, written by the people who bake the bars. The kettle takes four minutes. Most of these take six.</p>
       <p class="jr-hero__count" data-reveal><span class="jr-hero__big" aria-hidden="true" translate="no">{String(count).padStart(2, '0')}</span><span class="jr-hero__count-t">{countLine} so far. New ones appear as they are written.</span></p>
     </div>
   </section>
@@ -150,29 +150,12 @@ const schema = [
     </div>
   </section>
 
-  <!-- ============================== NEWSLETTER ============================== -->
-  <!-- The form itself lives in the footer of every page; this panel only says what it is for and points there, so the reader is asked for an address once. -->
-  <section class="section container" aria-labelledby="nl-title">
-    <div class="nl" data-reveal>
-      <div class="nl__grid">
-        <div>
-          <p class="eyebrow">By e-mail</p>
-          <h2 id="nl-title" class="nl__title">The next note, when it is written.</h2>
-          <p class="muted mt-2">No countdown timers, no daily deals. An e-mail when there is a new article, and a line when a new flavour leaves the oven. Unsubscribe whenever you like.</p>
-        </div>
-        <div class="nl__go">
-          <a class="btn btn--ghost" href="#ftr-email">Leave your e-mail below <Icon name="arrow" size={18} class="arrow" /></a>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <!-- ============================== CTA ============================== -->
   <section class="section container section--tight jr-cta" aria-labelledby="cta-title">
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Reading done</p>
       <h2 id="cta-title">Everything these notes describe is in the shop.</h2>
-      <p>Apple bars, flourless apple cakes, apple meringues and baked-apple desserts, all with no added sugar. Parcels leave in 1–2 business days and ship across the EU; orders over {freeFrom} ship free.</p>
+      <p>Apple bars, flourless apple cakes, apple meringues and baked-apple desserts, all with no added sugar. Parcels leave in 1–2 business days and ship across Europe; orders over {freeFrom} ship free.</p>
       <div class="cluster mt-2">
         <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
         <a class="btn btn--ghost" href="/shop/apple-bars/">Apple bars</a>
@@ -243,15 +226,6 @@ const schema = [
   .jr-start__row:hover .jr-start__t { color: var(--accent-ink); }
   .jr-start__row:hover .jr-start__n { -webkit-text-stroke-color: var(--accent); text-shadow: none; }
   @media (prefers-reduced-motion: reduce) { .jr-start__n, .jr-start__arrow { transition: none; } }
-
-  /* ------------------------------------------------------------ newsletter: a panel lit from the honey side */
-  .nl { position: relative; isolation: isolate; overflow: clip; border-radius: var(--r-xl); padding: clamp(1.5rem, 5vw, 3.5rem); background: var(--bg-raised); box-shadow: var(--shadow-2), var(--glow-honey); }
-  .nl::before { content: ''; position: absolute; inset: 0; z-index: -1; background: none; pointer-events: none; }
-  .nl__grid { display: grid; gap: clamp(1.5rem, 4vw, 3rem); align-items: center; }
-  @media (min-width: 56rem) { .nl__grid { grid-template-columns: minmax(0, 1.4fr) auto; gap: clamp(2rem, 6vw, 6rem); } }
-  .nl__title { font-size: var(--fs-2xl); max-width: 16ch; }
-  .nl__go { display: flex; }
-  @media (min-width: 56rem) { .nl__go { justify-content: end; } }
 
   /* ------------------------------------------------------------ the one cream room */
   /* The band's own padding does the spacing before the footer; the section adds none of its own. */

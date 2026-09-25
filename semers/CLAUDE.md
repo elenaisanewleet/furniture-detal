@@ -23,8 +23,12 @@
   https://semers-store.higgsfield.app). See `DEPLOY.md` § 1b for the sync and the files that must
   survive it. The project has no runtime dependencies beyond Astro, its sitemap integration and
   sharp, so the sync is a file copy; `three`, `gsap` and `lenis` were removed in September 2026.
-- **The shop does not take payment yet.** `api/order.js` records an order request and notifies
-  Telegram and e-mail; the checkout promises a payment link by hand. Closing that gap is the
-  project's next step, and it needs an owner decision on the provider.
+- **Payment is Paysera (owner, 25.09.2026).** `worker/server.js` builds the WebToPay request and
+  verifies `/api/paysera/callback`; it turns on when PAYSERA_PROJECT_ID and PAYSERA_PASSWORD are set
+  in the host's secrets (PAYSERA_TEST=1 for test payments). Until then the checkout falls back to an
+  order request visible in `/admin/`. Delivery: Omniva parcel lockers in LV/LT/EE; courier to the
+  rest of Europe appears once `site.shipping.courierRate` is set.
 - Do not look at or copy from pastila.eu. Internal business figures and client names stay off the site.
-- Company registration and VAT numbers are not published until the owner confirms them.
+- Company details are confirmed and published (owner, 25.09.2026): reg. no. 40203400507, VAT
+  LV40203400507, legal address Vēju iela 14, Carnikava; returns to Pildas iela 10, Rīga, LV-1035.
+  The bank account (IBAN) is never published. Never mention Belyov anywhere.

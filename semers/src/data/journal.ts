@@ -2,6 +2,9 @@
  * Journal articles. Long-form, evergreen SEO content around the questions people
  * actually search for. `body` holds HTML fragments (paragraphs, h2/h3, lists) and
  * is rendered with set:html inside a .prose container.
+ *
+ * The article on one apple variety was deleted on 25.09.2026: the owner has not
+ * confirmed the variety, so no page names one.
  */
 export interface Article {
   slug: string;
@@ -33,16 +36,6 @@ export const ARTICLES: Article[] = [
     readMinutes: 7,
     image: 'flatlay-lunchbox',
     tags: ['nutrition', 'guide'],
-    body: '',
-  },
-  {
-    slug: 'antonovka-apples',
-    title: 'Why Antonovka apples? The sour green apple behind every Semers bar',
-    description: 'Antonovka is a hardy, tart, aromatic apple from the north. Its high pectin and acidity are exactly what pastila needs — here is why we will not use anything else.',
-    date: '2026-09-01',
-    readMinutes: 5,
-    image: 'apples-orchard',
-    tags: ['ingredients', 'orchard'],
     body: '',
   },
 ];

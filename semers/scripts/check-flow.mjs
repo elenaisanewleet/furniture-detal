@@ -8,9 +8,10 @@
  * keyboard can open and never leave.
  *
  * Two passes:
- *   flow      product → add → drawer → cart → checkout → submit → thank-you,
- *             in every language at a desktop and a phone width, against a
- *             stubbed endpoint so nothing is sent anywhere;
+ *   flow      product → add → drawer → cart → checkout (an Omniva parcel
+ *             locker found and chosen by keyboard) → submit → thank-you, in
+ *             every language at a desktop and a phone width, against stubbed
+ *             endpoints so nothing is sent anywhere;
  *   keyboard  the skip link actually hands over focus, every Tab stop shows a
  *             ring, the drawer takes focus and holds it, Escape closes it and
  *             gives focus back to the button that opened it.
@@ -50,6 +51,12 @@ const WIDTHS = [
 /** Two packs of the same bar: enough to exercise a quantity, cheap enough to stay under the free-shipping threshold. */
 const PRODUCT = '/products/apple-bar-35g/';
 const REF = 'SM-TEST-0001';
+/** What /api/lockers serves, in the compact shape; stubbed, so Omniva is never asked. */
+const LOCKERS = [
+  { id: '44001', name: 'Vilniaus Akropolis paštomatas', city: 'Vilnius', address: 'Ozo g. 25', country: 'LT' },
+  { id: '96332', name: 'Āgenskalna tirgus pakomāts', city: 'Rīga', address: 'Nometņu iela 64', country: 'LV' },
+  { id: '96331', name: 'Rīga Brīvības Rimi pakomāts', city: 'Rīga', address: 'Brīvības iela 372', country: 'LV' },
+];
 
 const problems = [];
 const note = (where, msg) => problems.push(`${where}: ${msg}`);
@@ -67,6 +74,7 @@ for (const [loc, name] of LOCALES) {
     page.on('pageerror', (e) => errors.push(String(e).slice(0, 100)));
 
     let posted = null;
+    await page.route('**/api/lockers', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(LOCKERS) }));
     await page.route('**/api/order', async (route) => {
       posted = JSON.parse(route.request().postData() || '{}');
       await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ ok: true, ref: REF }) });
@@ -102,16 +110,42 @@ for (const [loc, name] of LOCALES) {
         set('[name="name"]', 'Anna Bērziņa');
         set('[name="email"]', 'anna@example.com');
         set('[name="phone"]', '+37120000000');
-        set('[name="address"]', 'Brīvības iela 42-5');
-        set('[name="city"]', 'Rīga');
-        set('[name="postcode"]', 'LV-1010');
         const country = document.querySelector('[name="country"]');
         if (country?.tagName === 'SELECT') {
-          country.value = [...country.options].find((o) => /Latvia|Latvija|Латв/i.test(o.textContent))?.value || country.options[1]?.value;
+          country.value = [...country.options].find((o) => /Latvia|Latvija|Латв/i.test(o.textContent))?.value || country.options[0]?.value;
           country.dispatchEvent(new Event('change', { bubbles: true }));
         }
         document.querySelector('[name="terms"], [name="accept"]')?.click();
       });
+      // The locker, the way a keyboard finds one: type, arrow down, Enter.
+      await page.focus('#co-locker-q');
+      await page.keyboard.type('riga briv');
+      await page.waitForTimeout(150);
+      const listed = await page.evaluate(() => ({
+        options: document.querySelectorAll('#co-locker-list [role="option"]').length,
+        expanded: document.querySelector('#co-locker-q')?.getAttribute('aria-expanded'),
+        said: document.querySelector('[data-locker-status]')?.textContent?.trim() || '',
+      }));
+      if (listed.options !== 1) note(tag, `typing "riga briv" listed ${listed.options} lockers instead of the one in Latvia`);
+      if (listed.expanded !== 'true') note(tag, 'the locker field does not say its list is open');
+      if (!listed.said) note(tag, 'the live region said nothing about the matches');
+      await page.keyboard.press('ArrowDown');
+      const active = await page.evaluate(() => document.querySelector('#co-locker-q')?.getAttribute('aria-activedescendant') || '');
+      if (!active) note(tag, 'arrow down highlighted no locker');
+      await page.keyboard.press('Enter');
+      await page.waitForTimeout(100);
+      const chosen = await page.evaluate(() => ({
+        focus: document.activeElement?.id,
+        id: document.querySelector('[data-locker-id]')?.value,
+        shown: !document.querySelector('[data-locker-chosen]')?.hidden,
+        closed: document.querySelector('#co-locker-list')?.hidden,
+      }));
+      if (chosen.id !== '96331') note(tag, `Enter chose locker "${chosen.id}" instead of 96331`);
+      if (!chosen.shown || !chosen.closed) note(tag, 'choosing a locker did not show the choice and close the list');
+      if (chosen.focus !== 'co-locker-q') note(tag, `choosing a locker moved focus to ${chosen.focus}`);
+      // At a phone width nothing on the checkout may push the page sideways.
+      const wide = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+      if (wide > 1) note(tag, `the checkout scrolls sideways by ${wide}px`);
       await page.waitForTimeout(150);
       await page.evaluate(() => document.querySelector('form [type="submit"]')?.click());
       await page.waitForTimeout(900);
@@ -127,13 +161,15 @@ for (const [loc, name] of LOCALES) {
         if (Math.abs(lines - Number(posted.subtotal)) > 0.011) note(tag, `subtotal ${posted.subtotal} does not match the lines (${lines.toFixed(2)})`);
         const sum = Number(posted.subtotal) + Number(posted.shipping || 0);
         if (Math.abs(sum - Number(posted.total)) > 0.011) note(tag, `total ${posted.total} is not subtotal + shipping (${sum.toFixed(2)})`);
+        if (posted.method !== 'locker') note(tag, `the order reports method "${posted.method}"`);
+        if (posted.customer?.locker !== '96331' || !/^Omniva: .+ \(96331\)$/.test(posted.customer?.address || '')) note(tag, `the chosen locker did not reach the order: "${posted.customer?.address}" / ${posted.customer?.locker}`);
       }
 
       await page.waitForTimeout(500);
       const done = await page.evaluate(() => ({
         url: location.pathname,
         ref: document.body.innerText.match(/SM-[A-Z0-9-]+/)?.[0] || '',
-        left: JSON.parse(localStorage.getItem('semers.cart') || '[]').length,
+        left: JSON.parse(localStorage.getItem('semers.cart.v1') || '[]').length,
       }));
       trace.ref = done.ref;
       trace.left = done.left;

@@ -1,40 +1,30 @@
 ---
 import Logo from './Logo.astro';
 import { site, footerNav } from '~/data/site';
+import { ALL_COLLECTIONS, COLLECTIONS } from '~/data/products';
 import { localePath, stripLocale } from '~/i18n/config';
 import { t } from '~/i18n/ui';
 const year = new Date().getFullYear();
 const { locale } = stripLocale(Astro.url.pathname);
 const ui = t(locale);
 const L = (href: string) => localePath(href, locale);
+/** A collection with no product on sale has no page, so the footer does not link to it. */
+const noPage = new Set(ALL_COLLECTIONS.filter((c) => !COLLECTIONS.includes(c)).map((c) => `/shop/${c.key}/`));
+const { company } = site;
 const columns = [
-  { key: 'shop' as const, label: ui.footerHeadings.shop, links: footerNav.shop },
+  { key: 'shop' as const, label: ui.footerHeadings.shop, links: footerNav.shop.filter((l) => !noPage.has(l.href)) },
   { key: 'learn' as const, label: ui.footerHeadings.learn, links: footerNav.learn },
   { key: 'company' as const, label: ui.footerHeadings.company, links: footerNav.company },
 ];
 ---
-<!--
-  The newsletter as a quiet strip, then a plain footer: the mark, the pages
-  that left the header, the contacts, and the legal line. `#contact` is what
-  the header's "Contacts" scrolls to.
--->
-<section class="news" aria-labelledby="news-title">
-  <div class="news__in container">
-    <div class="news__say">
-      <h2 class="news__title" id="news-title">{ui.newsletterTitle}</h2>
-      <p>{ui.newsletterLead}</p>
-    </div>
-    <div class="news__act">
-      <form class="news__form" data-form="newsletter" data-success={ui.newsletterSuccess}>
-        <div class="honey" aria-hidden="true"><label>{ui.website} <input type="text" name="website" tabindex="-1" autocomplete="off" /></label></div>
-        <label class="sr-only" for="ftr-email">{ui.emailLabel}</label>
-        <input class="input" id="ftr-email" type="email" name="email" placeholder={ui.emailPlaceholder} required autocomplete="email" />
-        <button class="btn" type="submit">{ui.subscribe}</button>
-      </form>
-      <p class="tiny news__note" data-form-note>{ui.newsletterConsent} <a href={L('/legal/privacy/')}>{ui.privacyPolicy}</a>.</p>
-    </div>
-  </div>
-</section>
+{/*
+  A plain footer: the mark, the pages that left the header, the contacts, and
+  the legal lines with the company's registration details. `#contact` is what
+  the header's "Contacts" scrolls to. The newsletter strip that stood above it
+  was taken out on 25.09.2026 (the owner will decide on a newsletter later), so
+  nothing here collects an e-mail address. An Astro comment, not an HTML one, so
+  the note stays in the source and out of every page.
+*/}
 <footer class="ftr" id="contact">
   <div class="ftr__main container">
     <div class="ftr__brand">
@@ -58,25 +48,15 @@ const columns = [
     </div>
   </div>
   <div class="ftr__legal container">
-    <p>© {year} {site.brand.legalName} · {ui.vatLine}</p>
+    {/* The company particulars the owner confirmed for publication; each label is its own run, so the prose memory translates it. */}
+    <p class="ftr__co">
+      <span>Reg. No.</span> {company.regNo} · <span>VAT No.</span> <span translate="no">{company.vatNo}</span> · <span>Legal address:</span> <span>{company.legalAddress}</span> · <span>Office and returns:</span> <span>{company.officeAddress}</span>
+    </p>
+    <p>© {year} {company.legalName} · {ui.vatLine}</p>
     <p><a href={L('/legal/shipping-returns/')}>{ui.footerLinks.shippingReturns}</a> · <a href={L('/legal/terms/')}>{ui.footerLinks.terms}</a> · <a href={L('/legal/privacy/')}>{ui.footerLinks.privacy}</a></p>
   </div>
 </footer>
 <style>
-  /* ------------------------------------------------------------ the newsletter strip */
-  .news { margin-top: clamp(2.5rem, 5vw, 3.75rem); background: var(--bg-sunken); }
-  .news__in { display: flex; flex-wrap: wrap; align-items: center; gap: clamp(1.1rem, 4vw, 2.5rem); padding-block: clamp(1.75rem, 4vw, 2.75rem); }
-  .news__say { flex: 1 1 15rem; }
-  .news__title { font-size: clamp(1.375rem, 1.1rem + 1vw, 1.75rem); }
-  .news__say p { margin: 0.3rem 0 0; font-size: var(--fs-sm); color: var(--fg-2); }
-  .news__act { flex: 0 1 31rem; display: grid; gap: 0.5rem; }
-  .news__form { display: flex; flex-wrap: wrap; gap: 0.6rem; }
-  .news__form .input { flex: 1 1 14rem; width: auto; min-height: 3.375rem; border-radius: var(--r-pill); padding-inline: 1.25rem; font-size: 0.9375rem; }
-  .news__form .btn { min-height: 3.375rem; padding-inline: 1.75rem; font-size: 0.9375rem; }
-  .news__note { margin: 0; color: var(--fg-3); }
-  .news__note a { color: var(--fg-2); }
-  @media (max-width: 30rem) { .news__form .input, .news__form .btn { width: 100%; } }
-
   /* ------------------------------------------------------------ the footer */
   .ftr { border-top: 1px solid var(--line); }
   .ftr__main { display: grid; gap: 2rem clamp(1.5rem, 4vw, 4rem); padding-block: 2.75rem 1.75rem; grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -92,5 +72,6 @@ const columns = [
   .ftr__place { color: var(--fg-2); }
   .ftr__legal { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.5rem 2rem; padding-block: 1.25rem 1.9rem; border-top: 1px solid var(--line); font-size: var(--fs-xs); color: var(--fg-3); }
   .ftr__legal p { margin: 0; }
+  .ftr__co { flex-basis: 100%; }
   .ftr__legal a { color: var(--fg-2); }
 </style>

@@ -1,7 +1,7 @@
 {
   "name": "Semers — baked apple snacks",
   "short_name": "Semers",
-  "description": "Apple bars, meringues and Belyov pastila. 99% apples, no added sugar. Made in Riga.",
+  "description": "Baked apple snacks from Semers Group in Riga, Latvia. Bars, meringues, desserts and cakes with no added sugar.",
   "start_url": "/?utm_source=pwa",
   "display": "standalone",
   "background_color": "#faf3e4",

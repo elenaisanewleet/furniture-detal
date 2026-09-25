@@ -120,12 +120,12 @@ export function productSchema(origin: string, p: Product, flavourLabels?: Record
       shippingDestination: ['LV', 'LT', 'EE'].map((c) => ({ '@type': 'DefinedRegion', addressCountry: c })),
       deliveryTime: {
         '@type': 'ShippingDeliveryTime',
-        // Both halves, because Google adds them to show one delivery estimate and
-        // shows none at all with only the first. The figures are the ones on
-        // /legal/shipping-returns/: dispatched in 1–2 business days, 1–3 in transit
-        // to the Baltic destinations named above.
+        // Only the handling time: /legal/shipping-returns/ says orders leave Riga
+        // in 1–2 business days and, since the owner's delivery answer of
+        // 25.09.2026, states no carrier transit time. Google shows a delivery
+        // estimate only once both halves are here, so add transitTime when the
+        // owner gives the Omniva figure and the page prints it too.
         handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
-        transitTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 3, unitCode: 'DAY' },
       },
     },
     // Mirrors /legal/shipping-returns/: 14 days, sealed goods only, customer pays return postage, full refund.

@@ -13,7 +13,7 @@ renderings exist and one was picked.
 `src/i18n/prose.lv.json` — the files are keyed by the English sentence, so the
 "English" line below is the key to search for. Then rebuild.
 
-375 notes.
+334 notes.
 
 ### Russian — privacy
 
@@ -142,14 +142,6 @@ ADDITION: the Latvian original name «Datu valsts inspekcija» was inserted alon
 **Russian:** Наша хостинг-платформа или будущий поставщик платёжных услуг при оформлении заказа могут установить файл cookie, необходимый для безопасности или для завершения платежа. Такие файлы cookie не требуют согласия согласно правилам ePrivacy. Мы перечислим их здесь, если и когда они появятся.
 
 'ePrivacy rules' left as «правилам ePrivacy» — the Directive has no settled short Russian name and the English label is what a reader needs to find it. Could be expanded to «правилам Директивы ePrivacy (2002/58/EC)» if the lawyer wants the citation, but the English does not give a number and I did not add one.
-
----
-
-**English:** Apple bars, meringues and Belyov pastila, shipped from Riga across the EU. Free shipping over €25.
-
-**Russian:** Яблочные батончики, безе и белёвская пастила с доставкой из Риги по всему ЕС. Бесплатная доставка при заказе от 25 €.
-
-Price kept as the same amount but written in Russian typographic order: «25 €» instead of «€25». Number unchanged. Say if the euro sign must stay before the figure. Also: 'Belyov pastila' rendered as «белёвская пастила», the standard Russian name of the product (from the town Белёв).
 
 ---
 
@@ -283,14 +275,6 @@ Legal terms: "adequacy decision" → "lēmums par aizsardzības līmeņa pietiek
 
 ---
 
-**English:** Apple bars, meringues and Belyov pastila, shipped from Riga across the EU. Free shipping over €25.
-
-**Latvian:** Ābolu batoniņi, bezē un Beļovas pastila, ko piegādājam no Rīgas visā ES. Bezmaksas piegāde virs €25.
-
-"Belyov pastila" → "Beļovas pastila" (the town name transliterated into Latvian; the brand Belevini is untouched elsewhere). The price is kept exactly as the English token "€25" — Latvian typography would normally write "25 €", so confirm whether the symbol position should be normalised site-wide.
-
----
-
 **English:** We do not run analytics at the moment. If we add it, we will use a cookieless, privacy-friendly tool that counts page views in aggregate without identifying you, and we will update this section.
 
 **Latvian:** Pašlaik mēs neizmantojam analītiku. Ja to pievienosim, mēs izmantosim bezsīkdatņu, privātumu saudzējošu rīku, kas apkopotā veidā skaita lapu skatījumus, jūs neidentificējot, un mēs atjaunināsim šo sadaļu.
@@ -340,14 +324,6 @@ Segment 30 now ends with "piemēram," so the linked product name (i=31) follows 
 **Latvian:** Visas cenas ir norādītas eiro (EUR) un ietver Latvijas pievienotās vērtības nodokli pēc piemērojamās likmes. Piegāde tiek aprēķināta atsevišķi un ir redzama grozā, pasūtījuma noformēšanas laikā un mūsu apstiprinājuma e-pastā: pasūtījumiem virs €25 tā ir bez maksas, pretējā gadījumā Latvijā, Lietuvā un Igaunijā tā ir vienota — €3,90, bet uz citām ES valstīm — kurjera tarifs, ko norādām apstiprinājumā. Pilnīga informācija ir pieejama
 
 Price written with the Latvian decimal comma: €3.90 → €3,90 (same amount). €25 unchanged. Flag if the reviewer wants the English punctuation kept verbatim. Latvian typography would normally put the symbol after the figure (3,90 €); I kept the English symbol-first placement to stay close to the source.
-
----
-
-**English:** We sell food: baked-apple bars, apple meringues, Belyov pastila, zephyr and boxes that combine them, made in Riga from Antonovka apples and egg white. Because it is a natural product, colour, texture and exact weight vary a little from batch to batch, and the colour on your screen will never be quite the colour in your hand. Photographs are illustrative; the weights, pack sizes and flavour lists on each product page describe what you are buying.
-
-**Latvian:** Mēs pārdodam pārtiku: ceptu ābolu batoniņus, ābolu bezē, Beļovas pastilu, zefīru un kastes, kurās tie apvienoti; tie tiek gatavoti Rīgā no Antonovkas āboliem un olu baltuma. Tā kā tas ir dabīgs produkts, krāsa, tekstūra un precīzs svars nedaudz atšķiras no partijas uz partiju, un krāsa jūsu ekrānā nekad nebūs gluži tāda pati kā rokā. Fotoattēli ir ilustratīvi; svars, iepakojuma izmēri un garšu saraksti katra produkta lapā apraksta to, ko jūs pērkat.
-
-"Belyov pastila" rendered as "Beļovas pastila" (Latvian transliteration of the town Belyov, the standard designation for this pastila type). If the shop markets it under a fixed brand string, that string should be used instead. "Antonovka apples" → "Antonovkas āboli" (cultivar name).
 
 ---
 
@@ -711,14 +687,6 @@ Table column "Typical delivery" rendered as "Parastais piegādes laiks" (typical
 
 **Latvian:** Viss tiek iepakots izturīgā kastē ar papīra pildījumu. Pastilai ledusskapis nav vajadzīgs: istabas temperatūrā tā saglabājas līdz 12 mēnešiem, tāpēc nav ne aukstuma elementu, ne rūpju par aukstuma ķēdi — ne jūlijā, ne janvārī. Zefīram derīguma termiņš ir īsāks, un to sūtām no svaigas partijas, ar datumu, kas uzdrukāts uz kastes.
 
-"Pastila" and "Zephyr" are treated here as food names, not brands (they are not in the protected brand list, which covers Semers, App'Lite, PastiLite, Belevini etc.). Translated as "pastila" and "zefīrs", the normal Latvian names for these confections. If "Zephyr" is in fact a product line name that must stay in Latin script as written, revert i=52 to "Zephyr".
-
----
-
-**English:** Everything is packed in a sturdy box with paper padding. Pastila does not need a fridge: it keeps for up to 12 months at room temperature, so there are no ice packs and no cold-chain worries, in July or in January. Zephyr has a shorter shelf life and is shipped from fresh stock, with the date printed on the box.
-
-**Latvian:** Viss tiek iepakots izturīgā kastē ar papīra pildījumu. Pastilai ledusskapis nav vajadzīgs: istabas temperatūrā tā saglabājas līdz 12 mēnešiem, tāpēc nav ne aukstuma elementu, ne rūpju par aukstuma ķēdi — ne jūlijā, ne janvārī. Zefīram derīguma termiņš ir īsāks, un to sūtām no svaigas partijas, ar datumu, kas uzdrukāts uz kastes.
-
 Food wording kept literal: "keeps for up to 12 months at room temperature" = "istabas temperatūrā tā saglabājas līdz 12 mēnešiem"; "12" unchanged. "shelf life" = "derīguma termiņš" (the term used on Latvian food labels).
 
 ---
@@ -909,14 +877,6 @@ Lowercase inline link, so it sits inside a host sentence that is NOT in this bat
 
 ---
 
-**English:** Apple bars, meringues and Belyov pastila, made in Riga and shipped across the EU. Free shipping over €25.
-
-**Russian:** Яблочные батончики, безе и белёвская пастила — произведено в Риге, доставка по всему ЕС. Бесплатная доставка при заказе свыше 25 €.
-
-Three choices to review. (1) «meringues» → «безе»; «меренги» is the other standard term and is the one used when the product is a piped/French-style meringue — pick whichever matches the product name used elsewhere in the catalogue. (2) «Belyov pastila» → «белёвская пастила», the established Russian name of that regional product (with «ё» as required); note this is the generic product name, distinct from the brand «Belevini», which stays in Latin script. (3) «Free shipping over €25» → «при заказе свыше 25 €», i.e. strictly above 25, matching «over». If the shop's actual rule is 25 or more (inclusive), the English is wrong and both versions should read «от 25 €» — worth checking against the checkout logic. Price and currency unchanged; «25 €» follows the Russian convention of the symbol after the number, the amount itself is untouched.
-
----
-
 ### Latvian — shared
 
 **English:** Shipping &amp; returns
@@ -991,30 +951,6 @@ Marketing line, not a legal obligation. "Ready when you are" has no idiomatic La
 
 ---
 
-**English:** Apple bars, meringues and Belyov pastila, made in Riga and shipped across the EU. Free shipping over €25.
-
-**Latvian:** Ābolu batoniņi, bezē un Beļovas pastila, ražoti Rīgā un piegādāti visā ES. Bezmaksas piegāde pasūtījumiem virs 25 €.
-
-"Belyov pastila" was NOT on the do-not-translate list (that list covers App'Lite, PastiLite, Belevini), so I read it as a product type, not a brand, and transliterated the place name per Latvian usage: "Beļovas pastila" (Белёв → Beļova). Please confirm — if the company treats "Belyov pastila" as a fixed product designation on labels or in food-law documentation, it should stay exactly as written in English instead.
-
----
-
-**English:** Apple bars, meringues and Belyov pastila, made in Riga and shipped across the EU. Free shipping over €25.
-
-**Latvian:** Ābolu batoniņi, bezē un Beļovas pastila, ražoti Rīgā un piegādāti visā ES. Bezmaksas piegāde pasūtījumiem virs 25 €.
-
-Currency formatting: Latvian (and the Latvian State Language Centre) puts the symbol after the amount with a non-breaking space, so "€25" became "25 €". The amount 25 is unchanged. If the site's style guide requires the symbol before the number for visual consistency across languages, change it back to "€25" — that is a formatting decision, not a translation one.
-
----
-
-**English:** Apple bars, meringues and Belyov pastila, made in Riga and shipped across the EU. Free shipping over €25.
-
-**Latvian:** Ābolu batoniņi, bezē un Beļovas pastila, ražoti Rīgā un piegādāti visā ES. Bezmaksas piegāde pasūtījumiem virs 25 €.
-
-"Free shipping over €25" is rendered "Bezmaksas piegāde pasūtījumiem virs 25 €" — explicitly "for orders over €25", because Latvian needs a noun for what the threshold applies to and "virs 25 €" alone would be ungrammatical here. Please confirm the threshold really applies to the order value (not, say, the goods value excluding shipping); if it is the goods subtotal, say so and I will use "preču summai virs 25 €".
-
----
-
 **English:** Last updated: September 2026
 
 **Latvian:** Pēdējoreiz atjaunināts: 2026. gada septembris
@@ -1086,14 +1022,6 @@ aria-label kept short: "Juridiskās lapas". A fuller "Juridiskās informācijas 
 **Russian:** 1 000–10 000 штук в месяц
 
 Thousands separator changed from the English comma to a space (1,000 -> 1 000, 10,000 -> 10 000) — Russian typography, digits unchanged. Same in i=8 and i=9.
-
----
-
-**English:** App&#39;Lite Apple Bar 35 g
-
-**Russian:** Яблочный батончик App&#39;Lite 35 г
-
-The HTML entity &#39; in "App&#39;Lite" is reproduced verbatim, as is the curly apostrophe in "App’Lite" in i=81. Product descriptors (Apple Bar, Flourless Bar, Baked Apple Dessert, Apple Meringues, Apple Zephyr, Apple Pastila) are treated as descriptions and translated; only the brands App'Lite, PastiLite, Belevini stay in Latin. If any of these are registered pack names, they should be restored to Latin in i=24, 25, 29, 30, 31, 54, 93 and in the running text of i=6, 59, 81, 123.
 
 ---
 
@@ -1219,14 +1147,6 @@ Kept the HTML entity &#39; inside App&#39;Lite exactly as in the source (same in
 
 ---
 
-**English:** App&#39;Lite Apple Bar 35 g
-
-**Latvian:** App&#39;Lite ābolu batoniņš 35 g
-
-Formats-table SKU names: brand tokens (App'Lite, PastiLite, Belevini) stay in Latin script, but the descriptive part is translated, since the brief itself directs "Belyov pastila" → „Beļovas pastila”. This affects 24, 25, 29, 30, 31, 54, 93. If these names are locked catalogue strings that must match the labels on the packs, they should be left in English instead — flagging so a human can confirm against the actual packaging.
-
----
-
 **English:** Order a Tasting Box today. Talk wholesale tomorrow.
 
 **Latvian:** Pasūtiet Degustācijas kasti šodien. Par vairumtirdzniecību parunāsim rīt.
@@ -1309,14 +1229,6 @@ Left unchanged: brand name. The source carries the HTML entity &#39; for the apo
 
 ---
 
-**English:** Flourless
-
-**Russian:** Без муки
-
-"Flourless" is one of the five line names on the packs (alongside App'Lite, PastiLite, Belyov Pastila, Belevini), but it is an English word rather than a Latin-script brand, and it is not on the protected list. I translated it as «Без муки», matching i=10 and i=24. If the pack itself prints "Flourless" in Latin script, revert this one string.
-
----
-
 **English:** Maxima &amp; Barbora
 
 **Russian:** Maxima &amp; Barbora
@@ -1349,14 +1261,6 @@ Fragment ends with the preposition «в», which in Russian requires the followi
 
 ---
 
-**English:** Belyov pastila first sold
-
-**Russian:** Белёвская пастила впервые в продаже
-
-i=39 and i=40 are near-duplicates in the English ("first sold" vs "is first sold"). I kept them as two distinct strings — a compact label and a present-tense timeline line — matching the English distinction.
-
----
-
 **English:** Gift sets, tasting boxes and the box of twelve live under
 
 **Russian:** Подарочные наборы, дегустационные коробки и коробка из двенадцати живут в разделе
@@ -1378,14 +1282,6 @@ Same open-preposition issue as i=13: «...живут в разделе» expects
 **Russian:** Посылки уходят из Риги за 1–2 рабочих дня и доставляются по всему ЕС; заказы дороже 25 € отправляем бесплатно. Магазин, кафе или офис? Короба мы пакуем так же охотно, как посылки.
 
 €25 is written as «25 €» per Russian typography (symbol after the number). The digits are unchanged. The en dash in «1–2» is preserved.
-
----
-
-**English:** The front of the pack says what the back of the pack says. No “natural flavouring”, no E-numbers, no claims we cannot stand behind. Where a product does contain sugar, as our Belevini zephyr does, the label says so plainly.
-
-**Russian:** На лицевой стороне упаковки написано то же, что и на обороте. Никаких «натуральных ароматизаторов», никаких Е-добавок, никаких обещаний, за которые мы не можем отвечать. Если в продукте всё же есть сахар — как в нашем зефире Belevini, — на этикетке об этом сказано прямо.
-
-"E-numbers" rendered as «Е-добавок» with a Cyrillic Е, which is how additive codes are written on Russian-language labels. If your label copy uses the Latin E (E322 etc.), switch this letter for consistency.
 
 ---
 
@@ -1412,14 +1308,6 @@ Fragment. Translated genitive («добавленного сахара») so it 
 **Russian:** Как делают яблочную пастилу: печёные яблоки и яичный белок — Semers
 
 The source contains the HTML entity &amp;. An ampersand is not idiomatic in a Russian page title, so it is rendered as «и». If the entity must survive literally in the markup, replace «и» with &amp;.
-
----
-
-**English:** baked Antonovka apples
-
-**Russian:** печёных яблок антоновки
-
-Ambiguous fragment. Rendered genitive («печёных яблок антоновки»), which fits both «99% baked Antonovka apples» and «made from baked Antonovka apples». If it actually stands alone as a nominative label it should be «печёные яблоки антоновки» (cf. i=41, which is the capitalised nominative form).
 
 ---
 
@@ -1455,27 +1343,11 @@ Allergen line kept literal and complete. Two judgement calls: «Pine Nut loaf» 
 
 ---
 
-**English:** Antonovka, and only Antonovka. It is a tart, aromatic northern apple with plenty of pectin and acid, which is what lets the purée set without gelatine and taste of fruit rather than sugar. Sweet dessert apples make a flat, sticky pastila; sour ones make it sing.
-
-**Russian:** Антоновка, и только антоновка. Это кислое ароматное северное яблоко с большим запасом пектина и кислоты — именно поэтому пюре застывает без желатина и на вкус остаётся фруктом, а не сахаром. Из сладких десертных яблок пастила выходит плоской и липкой; из кислых — она звучит.
-
-«make it sing» is an idiom; rendered «из кислых — она звучит», which keeps the same plain register. Alternative if it reads too literary: «из кислых — живая».
-
----
-
 **English:** Colours
 
 **Russian:** Красители
 
 Read as «colourings» (the never-add list, cf. i=30) rather than «colours» in the visual sense: «Красители».
-
----
-
-**English:** Dried sheets are brushed with a little of the same apple foam, stacked several high and pressed into a block. The foam glues the layers together, and the whole block goes back into the warmth to set. This layering is the Belyov signature, and the reason a cut face looks like the pages of a book.
-
-**Russian:** Высушенные пласты промазываются той же яблочной пеной, складываются в несколько слоёв и прессуются в блок. Пена склеивает слои, и весь блок снова уходит в тепло, чтобы схватиться. Эта сборка слоёв — фирменная черта белёвской пастилы и причина, по которой срез похож на страницы книги.
-
-«block» is rendered «блок» and «loaf» «брусок» throughout (i=50, 89, 96, 97, 106) so the two do not collapse into one word — i=96 lists both in the same sentence.
 
 ---
 
@@ -1492,14 +1364,6 @@ Read as «colourings» (the never-add list, cf. i=30) rather than «colours» in
 **Russian:** Попробуйте эти двенадцать часов
 
 «Taste the twelve hours» is a heading; rendered «Попробуйте эти двенадцать часов». Deliberately kept short for the CTA block — it loses a little of the English wordplay.
-
----
-
-**English:** This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.
-
-**Russian:** Это рецепт нашей пастилы, яблочных батончиков, батончиков без муки, меренг и десертных квадратиков. Зефир Belevini — другое кондитерское изделие: он застывает на агаре и содержит сахар, поэтому на нём нет отметки «без добавленного сахара». Полные составы указаны на каждой странице продукта и на каждой упаковке.
-
-«Apple Bars» and «Flourless Bars» are capitalised like product names but are not on the keep-in-Latin list, so they are translated («яблочных батончиков, батончиков без муки»). If they are official product line names alongside App'Lite / PastiLite, they should stay in Latin script. Belevini kept in Latin as instructed.
 
 ---
 
@@ -1529,14 +1393,6 @@ The HTML entity &amp; was rendered as the Latvian word „un“ rather than kept
 
 ---
 
-**English:** baked Antonovka apples
-
-**Latvian:** cepti Antonovkas āboli
-
-AMBIGUOUS. Lowercase fragment. Translated in the nominative ("cepti Antonovkas āboli"), which fits an ingredient or spec line. If this fragment is actually concatenated after a percentage (e.g. "99% " + this string, mirroring the 0 g / added sugar pair at i=4 and i=8), Latvian requires the genitive and it must become "ceptu Antonovkas ābolu". Please check the /wholesale/ markup.
-
----
-
 **English:** added sugar
 
 **Latvian:** pievienota cukura
@@ -1561,14 +1417,6 @@ The eight stage chips (i=40 Āboli, 13 Cepšana, 79 Biezenis, 18 Putošana, 87 K
 
 ---
 
-**English:** This is the recipe for our pastila, Apple Bars, Flourless Bars, meringues and dessert squares. Belevini zephyr is a different confection: it is set with agar and does contain sugar, which is why it does not carry the no-added-sugar mark. Full ingredient lines are on every product page and every pack.
-
-**Latvian:** Šī ir mūsu pastilas, Ābolu batoniņu, Bezmiltu batoniņu, bezē un deserta kvadrātiņu recepte. Belevini zefīrs ir cits konditorejas izstrādājums: to sastingdina ar agaru un tas satur cukuru, tāpēc tam nav „bez pievienota cukura“ marķējuma. Pilni sastāvdaļu saraksti ir norādīti katrā produkta lapā un uz katra iepakojuma.
-
-"Apple Bars" and "Flourless Bars" were translated ("Ābolu batoniņi", "Bezmiltu batoniņi") because they are not in the protected brand list (Semers, App'Lite, PastiLite, Belevini). If they are registered product-line names that appear untranslated on the Latvian packaging, revert them to English. "Belevini" kept as given.
-
----
-
 **English:** Batch code and best-before date, printed at packing, so any pack can be traced back to the batch it came from.
 
 **Latvian:** Partijas kods un ieteicamais izlietošanas datums, uzdrukāti iepakošanas brīdī, lai jebkuru iepakojumu varētu izsekot līdz partijai, no kuras tas nācis.
@@ -1582,22 +1430,6 @@ The eight stage chips (i=40 Āboli, 13 Cepšana, 79 Biezenis, 18 Putošana, 87 K
 **Latvian:** Batoniņiem, deserta kvadrātiņiem un pastilai — vēsā, sausā skapī. Bezē un zefīrs glabājas mazāk; ticēt vajag datumam uz iepakojuma.
 
 "bezē" (meringue) is indeclinable in Latvian, so it stays unchanged in every case throughout the batch (also i=53, i=107).
-
----
-
-**English:** From Belyov, 1888, to Riga
-
-**Latvian:** No Beļovas 1888. gadā līdz Rīgai
-
-The bare year "1888" required ". gadā" to be grammatical in Latvian; the digits are untouched. Same at i=106.
-
----
-
-**English:** Antonovka, and only Antonovka. It is a tart, aromatic northern apple with plenty of pectin and acid, which is what lets the purée set without gelatine and taste of fruit rather than sugar. Sweet dessert apples make a flat, sticky pastila; sour ones make it sing.
-
-**Latvian:** Antonovka un tikai Antonovka. Tas ir skābens, aromātisks ziemeļu ābols ar daudz pektīna un skābes, un tieši tas ļauj biezenim sastingt bez želatīna un garšot pēc augļa, nevis pēc cukura. No saldiem deserta āboliem sanāk plakana, lipīga pastila; no skābajiem tā atdzīvojas.
-
-"make it sing" is an idiom with no Latvian equivalent that keeps the plain register; rendered as "tā atdzīvojas" (it comes alive). No exclamation or superlative added.
 
 ---
 
@@ -1699,14 +1531,6 @@ Decimal point converted to the Russian decimal comma: 1.8 g → «1,8 г». Digi
 
 ---
 
-**English:** 180 g Belyov loaf
-
-**Russian:** Белёвский брусок 180 г
-
-"loaf" rendered as «брусок» throughout (i=6, 11, 12, 67, 70, 87) for consistency. «Пласт» is the more traditional term for Belyov pastila but reads as a thin sheet, which clashes with the 180 g sliceable block; the drying sheets at i=62 are «пласты».
-
----
-
 **English:** Weighs 35 g, lies flat in a jersey pocket, does not melt, and keeps for months without a fridge.
 
 **Russian:** Весит 35 г, лежит плашмя в кармане спортивной формы, не тает и хранится месяцами без холодильника.
@@ -1802,14 +1626,6 @@ Link text put in the locative („žurnālā“) so it reads correctly inside th
 **Latvian:** mūsu
 
 Bare „ours“, lowercase. Translated as „mūsu“ on the assumption it labels the Semers row/series in the comparison chart. If it completes a sentence instead, the form may need to change (e.g. „mūsējie“ / „mūsējās“).
-
----
-
-**English:** Pastila is a traditional confection from the town of Belyov, first made commercially in 1888 by the merchant Amvrosy Prokhorov. The method has barely changed since. Sour Antonovka apples are baked whole until their sugars caramelise. The purée is whipped with egg white until it holds air, spread in thin sheets and dried for hours at low heat. The sheets are stacked, pressed and dried again.
-
-**Latvian:** Pastila ir tradicionāls saldums no Beļovas pilsētas; pirmoreiz to komerciāli ražoja 1888. gadā tirgotājs Amvrosijs Prohorovs. Kopš tā laika metode gandrīz nav mainījusies. Skābos Antonovkas ābolus cep veselus, līdz to cukuri karamelizējas. Biezeni saputo ar olu baltumu, līdz tas notur gaisu, izklāj plānās kārtās un vairākas stundas žāvē zemā temperatūrā. Kārtas sakrauj, saspiež un žāvē vēlreiz.
-
-The personal name is transliterated to Latvian as „Amvrosijs Prohorovs“, consistent with the required „Beļovas“ for Belyov. It is not on the do-not-translate brand list; say the word if you want it kept as „Amvrosy Prokhorov“.
 
 ---
 
@@ -1959,22 +1775,6 @@ Decimal separator: I kept the English decimal point in every number (0.1 г, 3.6
 
 ---
 
-**English:** Yes. Belevini zephyr is a traditional recipe made with apple purée, egg white, agar and sugar, and the pack says so. Our bars, meringues, dessert squares and Belyov pastila are the no-added-sugar range.
-
-**Russian:** Да. Зефир Belevini — традиционный рецепт из яблочного пюре, яичного белка, агара и сахара, и на упаковке это указано. Наши батончики, безе, десертные квадратики и белёвская пастила — линейка без добавленного сахара.
-
-'dessert squares' → «десертные квадратики» (the App'Lite 50 g dessert). If that product has a fixed Russian name on the site, it should be used here instead.
-
----
-
-**English:** Zephyr is set with agar rather than gelatine and, unlike the rest of our range, it is made with sugar. We start it from the same Antonovka purée as our pastila, and the pack says exactly what is in it.
-
-**Russian:** Зефир застывает на агаре, а не на желатине, и, в отличие от остальной линейки, делается с сахаром. Мы начинаем его с того же пюре из антоновки, что и пастилу, и на упаковке точно написано, что внутри.
-
-'the pack says exactly what is in it' kept complete and literal («на упаковке точно написано, что внутри»), since it is a label/composition statement rather than a marketing line.
-
----
-
 **English:** Image 1 of 3
 
 **Russian:** Изображение 1 из 3
@@ -2067,14 +1867,6 @@ Fragment that runs into a link ("More in the [FAQ/Journal]"). Translated as «Б
 
 ---
 
-**English:** Baked apple snacks from Riga: Apple Bars, Flourless Bars, meringues and Belyov pastila. 99% apples, egg white, no added sugar, about 97 kcal a bar.
-
-**Russian:** Снеки из печёных яблок из Риги: Apple Bars, Flourless Bars, меренги и белёвская пастила. 99% яблок, яичный белок, без добавленного сахара, около 97 ккал в батончике.
-
-"Apple Bars" and "Flourless Bars" kept in Latin script as product-line names — they are capitalised in the English and sit alongside App'Lite / PastiLite / Belevini (see i=24, where generic "meringues" is lowercase but "Apple Bars" is not). Same decision applied at i=24, 25, 26, 27, 89, 109. Lowercase generic "apple bar" (i=11, 35) is translated normally. Flag if the Russian site is meant to localise the collection names.
-
----
-
 **English:** App'Lite Apple Bar packs in Classic and Berry Mix with an unwrapped baked-apple bar and fresh apple
 
 **Russian:** Упаковки App'Lite Apple Bar в вариантах Classic и Berry Mix, рядом развёрнутый батончик из печёного яблока и свежее яблоко
@@ -2104,14 +1896,6 @@ Fragment that runs into a link ("More in the [FAQ/Journal]"). Translated as «Б
 **Russian:** Батончик, в котором
 
 Paired with i=68: «Батончик, в котором» + «99% яблока.» = "Батончик, в котором 99% яблока." This mirrors the English fragment pair ("A snack bar that is" / "99% apple."). If the two are not adjacent on the page, i=72 will read as an incomplete phrase — exactly as the English does.
-
----
-
-**English:** Same recipe as every Semers bar and loaf.
-
-**Russian:** Тот же рецепт, что у любого батончика и пласта Semers.
-
-"loaf" rendered as «пласт» throughout (i=14, 82, 83, 131, 137, 145, 148, 154) — the standard term for a slab of белёвская пастила. «буханка» would be wrong.
 
 ---
 
@@ -2197,14 +1981,6 @@ Prices kept exactly as in the English, decimal point and €-before-number (€1
 
 ---
 
-**English:** Baked apple snacks from Riga: Apple Bars, Flourless Bars, meringues and Belyov pastila. 99% apples, egg white, no added sugar, about 97 kcal a bar.
-
-**Latvian:** Ceptu ābolu uzkodas no Rīgas: ābolu batoniņi, batoniņi bez miltiem, bezē un Beļovas pastila. 99% ābolu, olu baltums, bez pievienota cukura, aptuveni 97 kcal batoniņā.
-
-Collection names „Apple Bars” and „Flourless Bars” are not in the protected brand list, so they are translated descriptively („ābolu batoniņi”, „batoniņi bez miltiem”) and used consistently in #24, #25, #26, #27, #89, #109. If these are to be treated as untranslatable product names, all six strings must be changed together.
-
----
-
 **English:** App'Lite Apple Bar packs in Classic and Berry Mix with an unwrapped baked-apple bar and fresh apple
 
 **Latvian:** App'Lite ābolu batoniņu iepakojumi Classic un Berry Mix garšā, izsaiņots ceptu ābolu batoniņš un svaigs ābols
@@ -2242,14 +2018,6 @@ The HTML entity &amp; is rendered as the Latvian word „un” rather than an am
 **Latvian:** 99% ābolu.
 
 #72 + #68 are concatenated on the page: „Uzkodu batoniņš, kas ir” + „99% ābolu.” — reads as one sentence, lowercase and punctuation as in the English.
-
----
-
-**English:** Belevini zephyr is the traditional apple marshmallow: Antonovka apple purée, egg white, agar and sugar. It is the only product here that is not a no-added-sugar recipe, and we say so on every pack.
-
-**Latvian:** Belevini zefīrs ir tradicionālais ābolu zefīrs: Antonovkas ābolu biezenis, olu baltums, agars un cukurs. Tas ir vienīgais produkts mūsu klāstā, kura receptē ir pievienots cukurs, un mēs to norādām uz katra iepakojuma.
-
-English distinguishes „zephyr” from „marshmallow”, but Latvian uses „zefīrs” for both, so „traditional apple marshmallow” became „tradicionālais ābolu zefīrs”. In #157 the English word „marshmallow” is kept in Latin script precisely to preserve that contrast (it is understood in Latvian as the American sweet); flag if leaving an English word there is unacceptable.
 
 ---
 
@@ -2423,14 +2191,6 @@ Button shortened to «Отправить» (not «Отправить сообщ�
 
 ---
 
-**English:** A Tasting Box holds four Apple Bars, two Flourless Bars, two bags of apple meringues and a 100 g loaf of Belyov pastila. It ships free from Riga in 1–2 business days.
-
-**Russian:** В дегустационный набор входят четыре яблочных батончика, два батончика без муки, два пакетика яблочного безе и брусок белёвской пастилы 100 г. Отправляем его из Риги бесплатно за 1–2 рабочих дня.
-
-"Flourless Bars" translated as «батончики без муки» (also in 72), matching the /shop/flourless-bars/ page. "loaf" of pastila rendered as «брусок» — the usual Russian word for a Belyov pastila block. 100 g kept as «100 г».
-
----
-
 **English:** Choose one
 
 **Russian:** Выберите одно
@@ -2529,14 +2289,6 @@ Dates written in the standard Latvian long form (2026. gada 1. septembris) rathe
 
 ---
 
-**English:** 99% baked Antonovka apples, 1% egg white
-
-**Latvian:** 99% ceptu Antonovkas ābolu, 1% olu baltuma
-
-Percent signs left tight against the digit (99%, 1%) as in the English. Latvian typography would use a thin space („99 %”); not changed so the number tokens stay identical.
-
----
-
 **English:** Keep
 
 **Latvian:** Turpini
@@ -2558,22 +2310,6 @@ The English answers „Where do you ship?” with a bare nominative list. Latvia
 **Latvian:** Pasūti degustācijas kasti
 
 „Tasting Box” translated as „degustācijas kaste” (lowercase inside sentences, capitalised sentence-initially in 71). It is capitalised in English like a product name but is not on the protected list — confirm whether it should stay English.
-
----
-
-**English:** 99% baked Antonovka apples and egg white, no added sugar, no flour, no gluten
-
-**Latvian:** 99% ceptu Antonovkas ābolu un olu baltums, bez pievienotā cukura, bez miltiem, bez lipekļa
-
-The English is ambiguous: „99% baked Antonovka apples and egg white” can read as 99% of both, though 20 says apples are 99% and egg white 1%. The Latvian keeps the same ambiguity („99% ceptu Antonovkas ābolu un olu baltums”). If the intended sense is „99% apples, the rest egg white”, the line should be rephrased in both languages.
-
----
-
-**English:** A Tasting Box holds four Apple Bars, two Flourless Bars, two bags of apple meringues and a 100 g loaf of Belyov pastila. It ships free from Riga in 1–2 business days.
-
-**Latvian:** Degustācijas kastē ir četri ābolu batoniņi, divi batoniņi bez miltiem, divi maisiņi ābolu bezē un 100 g Beļovas pastilas klaips. Tā no Rīgas tiek nosūtīta bez maksas 1–2 darba dienu laikā.
-
-„Flourless Bars” translated as „batoniņi bez miltiem” (also in 72). Capitalised as a product name in English; not on the protected list.
 
 ---
 
@@ -2747,14 +2483,6 @@ i=127 and i=128 are the same statement in English with the clauses reordered; I 
 
 ---
 
-**English:** pastila loaves
-
-**Russian:** бруски пастилы
-
-UNSURE. "pastila loaves" → «бруски пастилы». Belyov pastila is sold as a loaf/block, and «брусок» is how it is normally described in Russian; «булка пастилы» would be wrong. Worth a check against how the product pages name this format.
-
----
-
 **English:** Place order
 
 **Russian:** Отправить заказ
@@ -2861,14 +2589,6 @@ Left unchanged — brand name (Barbora). Same for Maxima (i 71), Omniva and DPD/
 
 ---
 
-**English:** 99% baked Antonovka apples, egg white, no added sugar
-
-**Latvian:** 99% cepti Antonovkas āboli, olu baltums, bez pievienota cukura
-
-Rendered as a nominative label list („99% cepti Antonovkas āboli, …"). Kept „99%" without a space; Latvian typography would normally write „99 %", but the number rule takes precedence.
-
----
-
 **English:** answered.
 
 **Latvian:** atbildēti.
@@ -2935,14 +2655,6 @@ Brand part unchanged with its &#39; entity; only the word 'Dessert' translated (
 
 ---
 
-**English:** Belevini
-
-**Latvian:** Belevini
-
-Returned unchanged: brand name (Belevini).
-
----
-
 **English:** Maxima &amp; Barbora
 
 **Latvian:** Maxima &amp; Barbora
@@ -2983,27 +2695,11 @@ Fragment ends with the preposition 'in', which Latvian expresses as a case endin
 
 ---
 
-**English:** All belyov pastila
-
-**Latvian:** Visa Beļovas pastila
-
-English has lowercase 'belyov', but Beļova is a proper place name and Latvian orthography requires the capital, so 'Beļovas' is capitalised even though the label is otherwise lowercase-free.
-
----
-
 **English:** Apple zephyr, the soft marshmallow of the east, set with agar. The one line in our range that does contain sugar, and the pack says so.
 
 **Latvian:** Ābolu zefīrs — austrumu mīkstais saldums, sarecināts ar agaru. Vienīgā līnija mūsu klāstā, kurā ir cukurs, un uz iepakojuma tas arī ir rakstīts.
 
 'the soft marshmallow of the east' rendered as 'austrumu mīkstais saldums' — Latvian already calls this product 'zefīrs', so a literal 'marshmallow' would be tautological in the same sentence.
-
----
-
-**English:** Belyov is a small town in orchard country south of Moscow. Its apples are Antonovka: sour, aromatic, and impossible to keep fresh through a winter. Baking, whipping and drying them was the local answer, and in 1888 the merchant Amvrosy Prokhorov turned that answer into a business. Belyov pastila was sold for the first time.
-
-**Latvian:** Beļova ir maza pilsēta ābeļdārzu novadā uz dienvidiem no Maskavas. Tās āboli ir antonovkas: skābi, aromātiski un neiespējami visu ziemu saglabājami svaigi. Vietējā atbilde bija tos cept, putot un žāvēt, un 1888. gadā tirgotājs Amvrosijs Prohorovs šo atbildi pārvērta uzņēmumā. Beļovas pastila tika pārdota pirmoreiz.
-
-Personal name transliterated per Latvian convention: 'Amvrosy Prokhorov' → 'Amvrosijs Prohorovs'. Person names were not in the do-not-translate list; if it must stay in the English spelling, change indices 38 and 59 together.
 
 ---
 
@@ -3023,14 +2719,6 @@ Link label paired with index 49. Latvian 'sadaļā' + a section name is idiomati
 
 ---
 
-**English:** Merchant Amvrosy Prokhorov puts baked-apple pastila into commercial production in the town of Belyov. Antonovka apples, egg white, thin layers, patience.
-
-**Latvian:** Tirgotājs Amvrosijs Prohorovs Beļovas pilsētā sāk ceptu ābolu pastilas rūpniecisko ražošanu. Antonovkas āboli, olu baltums, plānas kārtas, pacietība.
-
-Same personal-name transliteration as index 38 ('Amvrosijs Prohorovs').
-
----
-
 **English:** Parcels leave Riga in 1–2 business days and ship across the EU; orders over €25 ship free. Retailer, café or office? We pack cases as happily as parcels.
 
 **Latvian:** Sūtījumi no Rīgas izceļo 1–2 darbdienu laikā un tiek piegādāti visā ES; pasūtījumiem virs €25 piegāde ir bez maksas. Veikals, kafejnīca vai birojs? Kastes pakojam tikpat labprāt kā sūtījumus.
@@ -3039,26 +2727,10 @@ Kept verbatim: the en dash in 1–2 and the price €25 with its symbol and digi
 
 ---
 
-**English:** The front of the pack says what the back of the pack says. No “natural flavouring”, no E-numbers, no claims we cannot stand behind. Where a product does contain sugar, as our Belevini zephyr does, the label says so plainly.
-
-**Latvian:** Iepakojuma priekšpuse saka to pašu, ko aizmugure. Nekādu „dabīgo aromatizētāju”, nekādu E numuru, nekādu apgalvojumu, par kuriem nevaram galvot. Ja produktā ir cukurs, kā mūsu Belevini zefīrā, etiķete to pasaka tieši.
-
-Curly English quotes converted to Latvian „ ”. 'E-numbers' rendered as 'E numuri' (Latvian food labelling writes E followed by a space or the number, not a hyphen).
-
----
-
 **English:** What pastila is, in full
 
 **Latvian:** Kas ir pastila — pilnais stāsts
 
 'in full' has no compact Latvian equivalent as a heading; rendered as 'pilnais stāsts' ('the full story'). If the heading must stay literal, 'Kas ir pastila, pilnībā' is the alternative.
-
----
-
-**English:** Why Antonovka apples, in the journal
-
-**Latvian:** Kāpēc Antonovkas āboli — žurnālā
-
-'in the journal' rendered as 'žurnālā', assuming this links to the site's journal/blog section.
 
 ---

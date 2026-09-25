@@ -34,19 +34,19 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "How long does it keep and how should I store it?": {
       q: "Какой срок хранения и как хранить?",
-      a: "Зависит от продукта, и верить нужно дате на упаковке. Яблочные батончики хранятся 12 месяцев. Десерт из печёных яблок 50 г хранится 9 месяцев при температуре от +8 до +10 °C или 4 месяца при температуре от +10 до +25 °C; упаковка 500 г — 18 месяцев при температуре от +8 до +25 °C. Безе храните при температуре от +8 до +21 °C, а яблочные пирожные без муки — в сухом прохладном месте при температуре от +8 до +21 °C.",
+      a: "Зависит от продукта, и верить нужно дате на упаковке. Яблочные батончики хранятся 12 месяцев в сухом прохладном месте при температуре от +8 до +21 °C. Безе и яблочные пирожные без муки хранятся 18 месяцев: безе — при температуре от +8 до +21 °C, пирожные без муки — в сухом прохладном месте при температуре от +8 до +21 °C. Десерт из печёных яблок 50 г хранится 9 месяцев при температуре от +8 до +10 °C или 4 месяца при температуре от +10 до +25 °C; упаковка 500 г — 18 месяцев при температуре от +8 до +25 °C.",
     },
     "Where do you ship?": {
       q: "Куда вы доставляете?",
-      a: "Латвия, Литва, Эстония и остальные страны Европейского союза. Заказы свыше 25 € доставляем бесплатно; если сумма меньше, доставка по Балтии стоит фиксированные 3,90 €, а тарифы курьера по остальным странам ЕС мы подтверждаем по электронной почте. Посылки уходят из Риги в течение 1–2 рабочих дней.",
+      a: "По всей Европе. В Латвии, Литве и Эстонии доставляем в постаматы Omniva за 3,90 €; в остальные страны Европы — курьером, и его стоимость появится при оформлении заказа, как только будет установлена. До тех пор, если вы заказываете не из стран Балтии, напишите нам перед заказом. Заказы от 20 € доставляем бесплатно. Посылки уходят из Риги в течение 1–2 рабочих дней. Самовывоза нет.",
     },
     "How do I pay?": {
       q: "Как оплатить?",
-      a: "Онлайн-оплату мы как раз сейчас подключаем. Пока её нет, вы оставляете заявку на заказ при оформлении, а мы в течение одного рабочего дня подтверждаем её по электронной почте и присылаем защищённую ссылку на оплату.",
+      a: "Платежи проходят через Paysera. Пока онлайн-оплата в магазине не включена, вы оставляете заявку на заказ при оформлении, а мы в течение одного рабочего дня подтверждаем её по электронной почте и присылаем защищённую ссылку на оплату.",
     },
     "Can I return something?": {
       q: "Можно ли что-то вернуть?",
-      a: "Открытые продукты питания возврату не подлежат, но если посылка пришла повреждённой или с заказом что-то не так, пришлите нам фотографию в течение 48 часов — мы заменим товар или вернём деньги.",
+      a: "Да: неоткрытые товары в целой заводской упаковке можно вернуть в течение 14 дней после доставки, обратную пересылку оплачиваете вы. Сначала напишите нам и укажите номер заказа; возвраты отправляйте по адресу Pildas iela 10, Rīga, LV-1035. Если товар пришёл повреждённым или не тот, что вы заказывали, мы заменим его, а если попросите — вернём деньги.",
     },
     "Where can I buy in a shop?": {
       q: "Где купить в магазине?",
@@ -84,19 +84,19 @@ export const FAQ_COPY: Partial<Record<Locale, Record<string, FaqCopy>>> = {
     },
     "How long does it keep and how should I store it?": {
       q: "Cik ilgi tas glabājas un kā to uzglabāt?",
-      a: "Tas atkarīgs no produkta, un ticēt vajag datumam uz iepakojuma. Ābolu batoniņi glabājas 12 mēnešus. 50 g cepto ābolu deserts glabājas 9 mēnešus no +8 līdz +10 °C vai 4 mēnešus no +10 līdz +25 °C; 500 g iepakojums — 18 mēnešus no +8 līdz +25 °C. Bezē uzglabājiet temperatūrā no +8 līdz +21 °C, bet ābolu kūciņas bez miltiem — sausā, vēsā vietā no +8 līdz +21 °C.",
+      a: "Tas atkarīgs no produkta, un ticēt vajag datumam uz iepakojuma. Ābolu batoniņi glabājas 12 mēnešus sausā, vēsā vietā no +8 līdz +21 °C. Ābolu bezē un ābolu kūciņas bez miltiem glabājas 18 mēnešus: bezē — temperatūrā no +8 līdz +21 °C, kūciņas bez miltiem — sausā, vēsā vietā no +8 līdz +21 °C. 50 g cepto ābolu deserts glabājas 9 mēnešus no +8 līdz +10 °C vai 4 mēnešus no +10 līdz +25 °C; 500 g iepakojums — 18 mēnešus no +8 līdz +25 °C.",
     },
     "Where do you ship?": {
       q: "Kur jūs piegādājat?",
-      a: "Latvijā, Lietuvā, Igaunijā un pārējā Eiropas Savienībā. Pasūtījumiem virs 25 € piegāde ir bez maksas; ja summa ir mazāka, Baltijā piemērojam vienotu 3,90 € maksu, bet pārējai ES kurjera tarifus apstiprinām e-pastā. Sūtījumi izbrauc no Rīgas 1–2 darba dienu laikā.",
+      a: "Visā Eiropā. Latvijā, Lietuvā un Igaunijā piegādājam uz Omniva pakomātiem par 3,90 €; uz pārējām Eiropas valstīm — ar kurjeru, un tā cenu redzēsiet pasūtījuma noformēšanā, tiklīdz tā būs noteikta. Līdz tam, ja pasūtāt ārpus Baltijas, pirms pasūtīšanas uzrakstiet mums. Pasūtījumiem no 20 € piegāde ir bez maksas. Sūtījumi izbrauc no Rīgas 1–2 darba dienu laikā. Saņemšanas uz vietas nav.",
     },
     "How do I pay?": {
       q: "Kā es varu samaksāt?",
-      a: "Tiešsaistes maksājumi pašlaik tiek pieslēgti. Līdz tam jūs noformējat pasūtījuma pieteikumu, un mēs to apstiprinām e-pastā ar drošu maksājuma saiti vienas darba dienas laikā.",
+      a: "Maksājumus apstrādā Paysera. Kamēr tiešsaistes maksājumi veikalā nav ieslēgti, jūs noformējat pasūtījuma pieteikumu, un mēs to vienas darba dienas laikā apstiprinām e-pastā ar drošu maksājuma saiti.",
     },
     "Can I return something?": {
       q: "Vai es varu kaut ko atgriezt?",
-      a: "Pārtiku pēc atvēršanas atgriezt nevar, taču, ja sūtījums pienāk bojāts vai ar jūsu pasūtījumu kaut kas nav kārtībā, 48 stundu laikā atsūtiet mums fotogrāfiju, un mēs to nomainīsim vai atmaksāsim naudu.",
+      a: "Jā: neatvērtas preces neskartā iepakojumā var atgriezt 14 dienu laikā pēc piegādes, un atpakaļsūtīšanu apmaksājat jūs. Vispirms uzrakstiet mums un norādiet pasūtījuma numuru; preces atgriež uz adresi Pildas iela 10, Rīga, LV-1035. Ja prece pienāk bojāta vai nav tā, ko pasūtījāt, mēs to nomainīsim vai, ja vēlaties, atmaksāsim naudu.",
     },
     "Where can I buy in a shop?": {
       q: "Kur var nopirkt veikalā?",

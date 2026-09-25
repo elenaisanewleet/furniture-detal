@@ -4,7 +4,7 @@ import Icon from '~/components/Icon.astro';
 import { im, SIZES } from '~/data/images';
 import { site } from '~/data/site';
 import { FAQS } from '~/data/faq';
-import { formatThreshold } from '~/data/products';
+import { formatPrice, formatThreshold } from '~/data/products';
 import { originOf } from '~/lib/origin';
 
 import { localeParams } from '~/i18n/config';
@@ -19,6 +19,11 @@ const { locale } = Astro.props as { locale: Locale };
 
 const origin = originOf(Astro.site);
 const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+/** The Omniva parcel-locker rate below the free-shipping threshold. */
+const lockerRate = formatPrice(site.shipping.flatRate, locale);
+const { company } = site;
+const hasPhone = site.phone.length > 0;
+const telHref = `tel:${site.phone.replace(/\s+/g, '')}`;
 
 const title = 'Contact Semers in Riga: orders, wholesale, press';
 const description =
@@ -41,7 +46,8 @@ const [mailUser, mailHost] = site.email.split('@');
 const [salesUser, salesHost] = site.wholesaleEmail.split('@');
 
 const press = im('gift-box');
-const taste = im('tasting-box');
+/** The closing band points at the box builder; the Tasting Box it used to sell is not on sale now. */
+const taste = im('hero-bars');
 
 const contactPage = {
   '@type': 'ContactPage',
@@ -74,8 +80,8 @@ const contactPage = {
     </div>
     <div class="trust cx-trust" data-stagger>
       <div><Icon name="mail" size={22} /><div><strong>Reply within one business day</strong><span>From a person, not a ticket queue</span></div></div>
-      <div><Icon name="truck" size={22} /><div><strong>Parcels leave Riga in 1–2 business days</strong><span>Shipped across the EU</span></div></div>
-      <div><Icon name="box" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Otherwise a flat €3.90 in the Baltics</span></div></div>
+      <div><Icon name="truck" size={22} /><div><strong>Parcels leave Riga in 1–2 business days</strong><span>Shipped across Europe</span></div></div>
+      <div><Icon name="box" size={22} /><div><strong>Free shipping over {freeFrom}</strong><span>Otherwise {lockerRate} to an Omniva parcel locker in the Baltics</span></div></div>
       <div><Icon name="globe" size={22} /><div><strong>Made in {site.locality}, {site.country}</strong><span>{site.brand.legalName}</span></div></div>
     </div>
   </section>
@@ -140,6 +146,15 @@ const contactPage = {
               <span class="cx-dl__sub">Orders, press and partnerships, everything else</span>
             </dd>
           </div>
+          {hasPhone && (
+            <div class="cx-dl__row">
+              <dt>Phone</dt>
+              <dd>
+                <a class="cx-big" href={telHref}><span translate="no">{site.phone}</span></a>
+                <span class="cx-dl__sub">Questions about an order, a delivery or a return</span>
+              </dd>
+            </div>
+          )}
           <div class="cx-dl__row">
             <dt>Wholesale</dt>
             <dd>
@@ -167,7 +182,7 @@ const contactPage = {
             <dt>Where we are</dt>
             <dd>
               <span class="cx-big">{site.locality}, {site.country}</span>
-              <span class="cx-dl__sub">{site.brand.legalName}. Orders are packed and shipped from here.</span>
+              <span class="cx-dl__sub">Office and returns: {company.officeAddress}. Orders ship from Riga.</span>
             </dd>
           </div>
         </dl>
@@ -243,10 +258,10 @@ const contactPage = {
       <div class="cx-band__copy">
         <p class="eyebrow">Or skip the e-mail</p>
         <h2 id="cta-title">The fastest answer to “what does it taste like?”</h2>
-        <p>A Tasting Box holds App’Lite Apple Bars, App’Lite apple meringues and Blum Baker’s flourless apple cakes. It ships free from Riga in 1–2 business days.</p>
+        <p>Build a box of App’Lite Apple Bars, App’Lite apple meringues and Blum Baker’s flourless apple cakes, in the mix you like. It leaves Riga in 1–2 business days.</p>
         <div class="cluster mt-2">
           <a class="btn btn--paper" href="/shop/">Shop all products</a>
-          <a class="btn btn--ghost" href="/products/tasting-box/">Order a Tasting Box</a>
+          <a class="btn btn--ghost" href="/shop/build-your-box/">Build your box</a>
         </div>
       </div>
       <div class="cx-band__media">

@@ -21,7 +21,7 @@ declare global {
       tier2Pct?: number;
       tiersOn?: boolean;
       reviewsOn?: boolean;
-      /** True once the shop can charge a card; set by /api/storefront, never baked into the page. */
+      /** True once the shop can take a payment (Paysera is configured); set by /api/storefront, never baked into the page. */
       payments?: boolean;
       locale?: string;
       intl?: string;
@@ -34,7 +34,8 @@ declare global {
 
 const CFG = window.SEMERS || {
   endpoint: '/api/order',
-  freeFrom: 25,
+  // The layout always sets this from site.ts; the drawer carries the same number for the day it does not.
+  freeFrom: Number(document.querySelector<HTMLElement>('[data-free-from]')?.dataset.freeFrom) || 0,
   email: '',
   whatsapp: '',
   currency: 'EUR',
@@ -220,22 +221,26 @@ function shipsFree(total: number) {
  * The visible label is prose and is translated, so matching on its text would
  * be a different test in every language — and, once it reaches the server, a
  * free-text field the browser fills in. The key on the input is the same in
- * all three languages and is the only thing sent up.
+ * all three languages and is the only thing sent up. Anywhere without the
+ * checkout form (the cart page, the drawer) is priced as the parcel locker.
  */
-function deliveryMethod(): 'locker' | 'courier' | 'pickup' {
+type Method = 'locker' | 'courier';
+function deliveryMethod(): Method {
   const r = $<HTMLInputElement>('form[data-checkout] input[name="delivery"]:checked');
-  const key = r?.dataset.method;
-  return key === 'pickup' || key === 'courier' ? key : 'locker';
+  return r?.dataset.method === 'courier' ? 'courier' : 'locker';
 }
-/** "Pick up in Riga" is offered as free on the checkout form, so the summary must not add postage to it. */
-function pickupSelected() {
-  return deliveryMethod() === 'pickup';
-}
-/** The flat rate below the free threshold only covers the Baltics; other EU destinations are quoted in the confirmation e-mail. */
-const BALTICS = new Set(['Latvia', 'Lithuania', 'Estonia']);
-function shippingQuoted() {
-  const sel = $<HTMLSelectElement>('form[data-checkout] select[name="country"]');
-  return !!sel && !BALTICS.has(sel.value);
+/**
+ * Delivery for a subtotal, by the rule the Worker charges (priceCart in
+ * worker/server.js): free from the threshold or for a box sold as shipping
+ * free, otherwise the chosen method's rate. The rates come from the element
+ * that asks — data-shipping is the parcel-locker rate, data-courier the
+ * courier's, both written from site.ts when the page was built.
+ */
+function shippingFor(total: number, rates: DOMStringMap): number {
+  if (cart.count() === 0 || shipsFree(total)) return 0;
+  const raw = deliveryMethod() === 'courier' ? rates.courier : rates.shipping;
+  const rate = raw ? Number(raw) : NaN;
+  return Number.isFinite(rate) && rate > 0 ? rate : 0;
 }
 
 /* ----------------------------------------------------------------- drawer */
@@ -392,9 +397,7 @@ function renderSummary(root: HTMLElement) {
   const emptyEl = $('[data-summary-empty]', root);
   const full = $('[data-summary-full]', root);
   const total = cart.subtotal();
-  const free = c === 0 || pickupSelected() || shipsFree(total);
-  const quoted = !free && shippingQuoted();
-  const shipping = free || quoted ? 0 : Number(root.dataset.shipping || 3.9);
+  const shipping = shippingFor(total, root.dataset);
   if (emptyEl) emptyEl.hidden = c > 0;
   if (full) full.hidden = c === 0;
   const cta = $<HTMLAnchorElement>('[data-summary-checkout]', root);
@@ -417,8 +420,8 @@ function renderSummary(root: HTMLElement) {
       () => $<HTMLElement>('[data-summary-empty]:not([hidden]) a[href], [data-summary-checkout]', root),
     );
   if (sub) sub.textContent = fmt(total);
-  if (ship) ship.textContent = c === 0 ? '—' : quoted ? S('quotedByEmail', 'Quoted by e-mail') : shipping === 0 ? S('free', 'Free') : fmt(shipping);
-  if (tot) tot.textContent = quoted ? interp(S('totalPlusShipping', '{total} + shipping'), { total: fmt(total) }) : fmt(total + shipping);
+  if (ship) ship.textContent = c === 0 ? '—' : shipping === 0 ? S('free', 'Free') : fmt(shipping);
+  if (tot) tot.textContent = fmt(total + shipping);
   const hidden = $<HTMLInputElement>('[data-cart-json]', root);
   if (hidden) hidden.value = JSON.stringify({ items: cart.items, subtotal: total, shipping, total: total + shipping });
 }
@@ -841,6 +844,8 @@ if (builder) {
         weight: picks.reduce((n, p) => n + p.weight, 0),
         url: '/shop/build-your-box/',
         note,
+        // The box carries its own discount; the volume ladder does not stack on it, here or in the Worker.
+        tier: false,
       });
       picks.length = 0;
       render();
@@ -902,37 +907,282 @@ $$<HTMLFormElement>('form[data-form]').forEach((form) => {
   });
 });
 
+/* --------------------------------------------------------- parcel lockers */
+
+interface Locker {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  country: string;
+}
+
+/** Lower case with the accents gone, so "riga" finds Rīga and "siauliai" finds Šiauliai. */
+const fold = (v: string) => v.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+/** A list longer than this is a wall; the status line says how many more there are. */
+const LOCKER_MAX = 8;
+
+/**
+ * The Omniva parcel-locker picker: a combobox over /api/lockers.
+ *
+ * Type a city or a street and the matching lockers in the chosen country list
+ * under the field; arrow keys move through them, Enter or a click chooses one,
+ * Escape closes the list, and a polite live region says how many matched. The
+ * choice fills three hidden fields — the address line "Omniva: <name> (<id>)",
+ * the locker id and its city — which is all the order needs.
+ *
+ * If the list cannot be loaded, the picker gives way to a plain text field and
+ * a short note, so a locker can still be named in words; the shop checks it
+ * before sending. An order never waits on Omniva's feed.
+ */
+function lockerPicker(form: HTMLFormElement) {
+  const root = $('[data-locker-fields]', form);
+  const q = root ? $<HTMLInputElement>('[data-locker-q]', root) : null;
+  const list = root ? $<HTMLUListElement>('[data-locker-list]', root) : null;
+  if (!root || !q || !list) return null;
+  const status = $('[data-locker-status]', root);
+  const chosenEl = $('[data-locker-chosen]', root);
+  const picker = $('[data-locker-picker]', root);
+  const manual = $('[data-locker-manual]', root);
+  const manualIn = $<HTMLInputElement>('[data-locker-text]', root);
+  const hidden = [$<HTMLInputElement>('[data-locker-address]', root), $<HTMLInputElement>('[data-locker-id]', root), $<HTMLInputElement>('[data-locker-city]', root)];
+  const [hAddress, hId, hCity] = hidden;
+
+  let all: Locker[] | null = null;
+  let failed = false;
+  let loading = false;
+  let on = false;
+  let country = '';
+  let chosen: Locker | null = null;
+  let shown: Locker[] = [];
+  let cursor = -1;
+
+  const say = (msg: string) => {
+    if (status) status.textContent = msg;
+  };
+
+  /** Which fields exist for the form right now: the picker's, the fallback's, or none. */
+  const apply = () => {
+    const typed = on && failed;
+    const picking = on && !failed;
+    if (picker) picker.hidden = typed;
+    if (manual) manual.hidden = !typed;
+    q.disabled = !picking;
+    if (manualIn) (manualIn.disabled = !typed), (manualIn.required = typed);
+    hidden.forEach((el) => el && (el.disabled = !(picking && chosen)));
+    // The hidden fields cannot be `required`, so the visible one carries the rule.
+    q.setCustomValidity(picking && !chosen ? S('lockerChoose', 'Choose a parcel locker from the list.') : '');
+  };
+
+  const close = () => {
+    list.hidden = true;
+    q.setAttribute('aria-expanded', 'false');
+    q.removeAttribute('aria-activedescendant');
+    cursor = -1;
+  };
+
+  const highlight = (i: number) => {
+    cursor = i;
+    const opts = $$<HTMLElement>('[role="option"]', list);
+    opts.forEach((li, k) => li.setAttribute('aria-selected', String(k === i)));
+    const el = opts[i];
+    if (el) {
+      q.setAttribute('aria-activedescendant', el.id);
+      el.scrollIntoView({ block: 'nearest' });
+    } else q.removeAttribute('aria-activedescendant');
+  };
+
+  const search = () => {
+    if (!all) return;
+    const typedText = q.value.trim();
+    const terms = fold(typedText).split(/\s+/).filter(Boolean);
+    if (!terms.length) {
+      shown = [];
+      list.innerHTML = '';
+      close();
+      say('');
+      return;
+    }
+    const hits = all.filter((l) => (!country || l.country === country) && terms.every((t) => fold(`${l.name} ${l.city} ${l.address}`).includes(t)));
+    shown = hits.slice(0, LOCKER_MAX);
+    list.innerHTML = shown
+      .map(
+        (l, i) =>
+          `<li class="co-locker__opt" role="option" id="co-locker-opt-${i}" aria-selected="false" data-i="${i}"><strong>${esc(l.name)}</strong><span>${esc([l.address, l.city].filter(Boolean).join(', '))}</span></li>`,
+      )
+      .join('');
+    list.hidden = !shown.length;
+    q.setAttribute('aria-expanded', String(shown.length > 0));
+    q.removeAttribute('aria-activedescendant');
+    cursor = -1;
+    say(
+      !hits.length
+        ? interp(S('lockersNone', 'No parcel locker matches “{q}”. Try a city or a street name.'), { q: typedText })
+        : hits.length > LOCKER_MAX
+          ? interp(S('lockersMore', 'Showing the first {shown} of {n}. Type more to narrow the list.'), { shown: LOCKER_MAX, n: hits.length })
+          : interp(S('lockersFound', 'Parcel lockers found: {n}'), { n: hits.length }),
+    );
+  };
+
+  const choose = (l: Locker) => {
+    chosen = l;
+    q.value = l.name;
+    if (hAddress) hAddress.value = `Omniva: ${l.name} (${l.id})`;
+    if (hId) hId.value = l.id;
+    if (hCity) hCity.value = l.city;
+    if (chosenEl) {
+      chosenEl.innerHTML = `<span class="muted">${esc(S('lockerYours', 'Your parcel locker:'))}</span> <strong>${esc(l.name)}</strong> <span>${esc([l.address, l.city].filter(Boolean).join(', '))} · ${esc(l.id)}</span>`;
+      chosenEl.hidden = false;
+    }
+    close();
+    say(interp(S('lockerChosen', 'Chosen: {name}.'), { name: l.name }));
+    apply();
+  };
+
+  const clear = () => {
+    chosen = null;
+    hidden.forEach((el) => el && (el.value = ''));
+    if (chosenEl) (chosenEl.hidden = true), (chosenEl.textContent = '');
+    apply();
+  };
+
+  const load = () => {
+    if (all || failed || loading) return;
+    loading = true;
+    say(S('lockersLoading', 'Loading parcel lockers…'));
+    fetch('/api/lockers', { headers: { accept: 'application/json' } })
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(String(r.status)))))
+      .then((d: unknown) => {
+        const rows = (Array.isArray(d) ? d : []).filter((l): l is Locker => !!l && typeof l.id === 'string' && typeof l.name === 'string' && typeof l.country === 'string');
+        if (!rows.length) throw new Error('no lockers');
+        all = rows.map((l) => ({ id: l.id, name: l.name, city: String(l.city || ''), address: String(l.address || ''), country: l.country }));
+        say('');
+        if (!chosen && q.value.trim() && document.activeElement === q) search();
+      })
+      .catch(() => {
+        failed = true;
+        close();
+        say(S('lockersFailed', 'The list of parcel lockers did not load. Type the locker’s name or address instead — we check it before sending.'));
+        apply();
+      })
+      .finally(() => (loading = false));
+  };
+
+  q.addEventListener('input', () => {
+    if (chosen && q.value !== chosen.name) clear();
+    search();
+  });
+  q.addEventListener('focus', () => {
+    if (!chosen && q.value.trim()) search();
+  });
+  q.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (list.hidden) search();
+      if (shown.length) highlight((cursor + 1) % shown.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (shown.length) highlight(cursor <= 0 ? shown.length - 1 : cursor - 1);
+    } else if (e.key === 'Enter') {
+      // Enter chooses the highlighted locker (or the only one) instead of submitting the form.
+      const pick = !list.hidden ? shown[cursor >= 0 ? cursor : shown.length === 1 ? 0 : -1] : undefined;
+      if (pick) (e.preventDefault(), choose(pick));
+    } else if (e.key === 'Escape' && !list.hidden) {
+      // Stop here: the page's own Escape closes the cart drawer and the menu.
+      e.preventDefault();
+      e.stopPropagation();
+      close();
+    }
+  });
+  q.addEventListener('blur', () => window.setTimeout(close, 150));
+  // Choosing with the pointer must not take focus out of the field first.
+  list.addEventListener('mousedown', (e) => e.preventDefault());
+  list.addEventListener('click', (e) => {
+    const li = (e.target as HTMLElement).closest<HTMLElement>('[role="option"]');
+    const l = li ? shown[Number(li.dataset.i)] : undefined;
+    if (l) choose(l);
+  });
+
+  return {
+    /** Called whenever the method or the country changes. */
+    sync(isOn: boolean, code: string) {
+      on = isOn;
+      if (code !== country) {
+        country = code;
+        // A locker in another country is not one this parcel can go to.
+        if (chosen && chosen.country !== code) (q.value = ''), clear();
+        if (all && document.activeElement === q) search();
+        else close();
+      }
+      if (on) load();
+      apply();
+    },
+    /** The chosen locker as the order recap names it. */
+    label: () => (chosen ? chosen.name : manualIn && !manualIn.disabled ? manualIn.value.trim() : ''),
+  };
+}
+
 /* -------------------------------------------------------------- checkout */
+
+/** What the shopper is told when the server refuses the checkout, by the reason it gave. */
+function refusal(reason: string | undefined, id?: string) {
+  if (reason === 'email') return S('checkEmail', 'Please check the e-mail address and try again.');
+  if (reason === 'empty') return S('boxEmptyAdd', 'Your cart is empty — add something first.');
+  if (reason === 'address' || reason === 'country' || reason === 'method') return S('checkAddress', 'Please check the delivery details and try again.');
+  // A product taken off sale since it went into the cart: name it, so the fix is obvious.
+  if ((reason === 'unknown-item' || reason === 'unavailable' || reason === 'price') && id) {
+    const item = cart.items.find((i) => i.id === id);
+    if (item) return interp(S('itemGone', '“{name}” is no longer available. Remove it from your cart and try again.'), { name: item.name });
+  }
+  return S('somethingWrong', 'Something went wrong. Please try again.');
+}
+
 const checkout = $<HTMLFormElement>('form[data-checkout]');
 if (checkout) {
-  // Pick-up needs no address: the block is hidden and its fields stop being required (a hidden required field would block reportValidity()).
+  const lockers = lockerPicker(checkout);
   const addr = $('[data-address-fields]', checkout);
+  const lockerBox = $('[data-locker-fields]', checkout);
+  const countrySel = $<HTMLSelectElement>('select[name="country"]', checkout);
+  const picked = () => countrySel?.selectedOptions[0];
+
+  /** Show a block of fields or take it out of the form: hidden, and disabled so it is neither sent nor validated. */
+  const toggle = (block: HTMLElement | null, show: boolean) => {
+    if (!block) return;
+    block.hidden = !show;
+    $$<HTMLInputElement>('input, select, textarea', block).forEach((el) => (el.disabled = !show));
+  };
+
   const syncDelivery = () => {
-    // Parcel lockers exist only in the Baltics: outside them the option is disabled and a courier takes over.
-    const locker = $<HTMLInputElement>('input[name="delivery"][value^="Parcel locker"]', checkout);
-    const courier = $<HTMLInputElement>('input[name="delivery"][value^="Courier"]', checkout);
+    // Parcel lockers exist only in the Baltics: elsewhere the option is disabled and the courier takes over.
+    const locker = $<HTMLInputElement>('input[data-method="locker"]', checkout);
+    const courier = $<HTMLInputElement>('input[data-method="courier"]', checkout);
+    const lockerHere = picked()?.dataset.locker === '1';
     if (locker && courier) {
-      const abroad = shippingQuoted();
-      locker.disabled = abroad;
-      locker.closest('label')?.classList.toggle('is-disabled', abroad);
-      if (abroad && locker.checked) courier.checked = true;
+      locker.disabled = !lockerHere;
+      locker.closest('label')?.classList.toggle('is-disabled', !lockerHere);
+      if (!lockerHere && locker.checked) courier.checked = true;
     }
-    const pickup = pickupSelected();
-    if (addr) {
-      addr.hidden = pickup;
-      $$<HTMLInputElement>('input, select', addr).forEach((el) => {
-        if (el.dataset.req === undefined) el.dataset.req = String(el.required);
-        el.required = !pickup && el.dataset.req === 'true';
-      });
-    }
+    const method = deliveryMethod();
+    toggle(addr, method === 'courier');
+    if (lockerBox) lockerBox.hidden = method !== 'locker';
+    lockers?.sync(method === 'locker', picked()?.dataset.code || '');
     renderCart();
   };
-  // switching to pick-up (free), back to a courier, or to another country must update the summary column
+  // A change of method or of country changes the fields and the postage in the summary column.
   checkout.addEventListener('change', (e) => {
     const name = (e.target as HTMLInputElement).name;
     if (name === 'delivery' || name === 'country') syncDelivery();
   });
   syncDelivery();
+
+  /** The method as the recap on the thank-you page names it, in the page's language. */
+  const deliveryLabel = () => {
+    const r = $<HTMLInputElement>('input[name="delivery"]:checked', checkout);
+    const title = r?.closest('label')?.querySelector('strong')?.textContent?.trim() || String(r?.value || '');
+    const where = deliveryMethod() === 'locker' ? lockers?.label() : '';
+    return where ? `${title}: ${where}` : title;
+  };
+
   // The submit button carries an icon, so restore its markup rather than plain text.
   const submitBtn = checkout.querySelector<HTMLButtonElement>('[type="submit"]');
   const submitHtml = submitBtn?.innerHTML || 'Place order';
@@ -940,7 +1190,7 @@ if (checkout) {
     if (!submitBtn) return;
     submitBtn.disabled = cart.count() === 0;
     // paintCheckout keeps the original label on the element, so restoring after
-    // a failed attempt gives back "Pay by card" where that is the truth.
+    // a failed attempt gives back "Pay for the order" where that is the truth.
     if (!submitBtn.dataset.label) submitBtn.dataset.label = submitHtml;
     paintCheckout();
   };
@@ -948,7 +1198,7 @@ if (checkout) {
     e.preventDefault();
     if (checkout.dataset.busy) return; // one order at a time
     if (cart.count() === 0) {
-      toast(S('boxEmptyAdd', 'Your box is empty — add something first.'));
+      toast(S('boxEmptyAdd', 'Your cart is empty — add something first.'));
       return;
     }
     // The form carries `novalidate` (custom field styling), so constraint validation must be run here.
@@ -957,13 +1207,13 @@ if (checkout) {
     const note = $('[data-checkout-note]');
     const data = formData(checkout);
     if (data.website) return;
+    const method = deliveryMethod();
     const total = cart.subtotal();
-    const free = pickupSelected() || shipsFree(total);
-    const quoted = !free && shippingQuoted();
-    const shipping = free || quoted ? 0 : Number(checkout.dataset.shipping || 3.9);
+    const shipping = shippingFor(total, checkout.dataset);
     const order = {
       type: 'order',
       customer: data,
+      method,
       items: cart.items.map((i) => ({
         id: i.id,
         name: i.name,
@@ -975,63 +1225,64 @@ if (checkout) {
       })),
       subtotal: Math.round(total * 100) / 100,
       shipping,
-      shippingNote: quoted ? 'EU courier rate to be quoted by e-mail' : undefined,
-      shippingQuote: quoted,
       total: Math.round((total + shipping) * 100) / 100,
       currency: CFG.currency,
       page: location.pathname, locale: CFG.locale || 'en',
+    };
+    const recap = (ref: string) => {
+      try {
+        // The thank-you page shows a recap; it stays until the tab closes.
+        sessionStorage.setItem('semers.lastOrder', JSON.stringify({ ref, items: order.items, subtotal: order.subtotal, shipping, total: order.total, delivery: deliveryLabel(), email: String(data.email || '') }));
+      } catch {
+        /* private mode: the recap is a nicety */
+      }
+    };
+    const fail = (msg: string) => {
+      if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
+      toast(msg, 5000);
+      delete checkout.dataset.busy;
+      restoreBtn();
     };
     checkout.dataset.busy = '1';
     if (btn) (btn.disabled = true), (btn.textContent = CFG.payments ? S('openingPayment', 'Opening secure payment…') : S('placingOrder', 'Placing order…'));
 
     /*
-     * Card payment. Only the line id and the quantity go up: the server prices
-     * the cart again from the published catalogue, so the totals shown above
-     * are what the customer was shown, not what they will be charged — and the
-     * two are the same number by construction rather than by trust.
+     * Payment. Only the line ids, the quantities and the delivery key go up:
+     * the server prices the cart again from the published catalogue, so the
+     * totals shown above are what the customer was shown, not what they will
+     * be charged — and the two are the same number by construction rather than
+     * by trust.
      *
-     * The cart is deliberately NOT cleared here. Stripe's cancel link comes
-     * back to /cart/, and a shopper who hesitates at the card form must find
-     * their box still packed. The thank-you page empties it on paid=1.
+     * The cart is deliberately NOT cleared here. Paysera's cancel link comes
+     * back to /cart/, and a shopper who hesitates on the payment page must
+     * find their box still packed. The thank-you page empties it on paid=1.
      */
     if (CFG.payments) {
       try {
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ customer: data, method: deliveryMethod(), items: cart.items.map((i) => ({ id: i.id, qty: i.qty })), locale: CFG.locale || 'en', page: location.pathname }),
+          body: JSON.stringify({ customer: data, method, items: cart.items.map((i) => ({ id: i.id, qty: i.qty })), locale: CFG.locale || 'en', page: location.pathname }),
         });
-        const paid = (await res.json().catch(() => ({}))) as { ok?: boolean; url?: string; ref?: string; reason?: string };
+        const paid = (await res.json().catch(() => ({}))) as { ok?: boolean; url?: string; ref?: string; reason?: string; id?: string };
         if (paid.ok && paid.url) {
-          try {
-            sessionStorage.setItem('semers.lastOrder', JSON.stringify({ ref: paid.ref || '', items: order.items, subtotal: order.subtotal, shipping, shippingNote: order.shippingNote, total: order.total, delivery: String(data.delivery || ''), email: String(data.email || '') }));
-          } catch {
-            /* private mode: the recap is a nicety */
-          }
+          recap(paid.ref || '');
           location.href = paid.url;
           return;
         }
         // A stale flag — the keys were removed since this page loaded — is the
-        // one failure worth falling through for: the old order-request path
-        // still works and the sale is not lost. Anything else is said out loud,
+        // one failure worth falling through for: the order-request path still
+        // works and the sale is not lost. Anything else is said out loud,
         // because a shopper who thinks they paid and did not is the worst
         // outcome this form can produce.
         if (paid.reason !== 'not-configured') {
-          const msg = paid.reason === 'email' ? S('checkEmail', 'Please check the e-mail address and try again.') : S('somethingWrong', 'Something went wrong. Please try again.');
-          if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
-          toast(msg, 5000);
-          checkout.dataset.busy = '';
-          restoreBtn();
+          fail(refusal(paid.reason, paid.id));
           return;
         }
         CFG.payments = false;
         paintCheckout();
       } catch {
-        const msg = S('somethingWrong', 'Something went wrong. Please try again.');
-        if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
-        toast(msg, 5000);
-        checkout.dataset.busy = '';
-        restoreBtn();
+        fail(S('somethingWrong', 'Something went wrong. Please try again.'));
         return;
       }
     }
@@ -1039,19 +1290,14 @@ if (checkout) {
     try {
       const res = await post(order);
       checkout.dataset.done = '1';
-      try {
-        // The thank-you page shows a recap; the cart itself is cleared right after this.
-        sessionStorage.setItem('semers.lastOrder', JSON.stringify({ ref: res.ref || '', items: order.items, subtotal: order.subtotal, shipping, shippingNote: order.shippingNote, total: order.total, delivery: String(data.delivery || ''), email: String(data.email || '') }));
-      } catch {
-        /* private mode: the recap is a nicety */
-      }
+      recap(res.ref || '');
       cart.clear();
       location.href = `/order/thank-you/?ref=${encodeURIComponent(res.ref || '')}`;
     } catch (err) {
       const reason = (err as { data?: { reason?: string } })?.data?.reason;
       if (reason === 'email' || reason === 'empty') {
         // The server rejected the request itself; opening a mailto here would send a broken order.
-        const msg = reason === 'email' ? S('checkEmail', 'Please check the e-mail address and try again.') : S('boxEmptyAdd', 'Your box is empty — add something first.');
+        const msg = refusal(reason);
         if (note) (note.textContent = msg), (note.hidden = false), note.classList.add('notice', 'notice--err');
         toast(msg, 4000);
         restoreBtn();
@@ -1064,8 +1310,9 @@ if (checkout) {
         ...lines,
         '',
         `Subtotal: ${fmt(order.subtotal)}`,
-        `Shipping: ${quoted ? 'EU courier rate to be quoted' : shipping ? fmt(shipping) : 'free'}`,
-        `Total: ${fmt(order.total)}${quoted ? ' + shipping' : ''}`,
+        `Shipping: ${shipping ? fmt(shipping) : 'free'}`,
+        `Total: ${fmt(order.total)}`,
+        `Delivery: ${method === 'courier' ? 'Courier' : 'Omniva parcel locker'}`,
         '',
         ...Object.entries(data).filter(([k, v]) => k !== 'website' && String(v).trim()).map(([k, v]) => `${k}: ${v}`),
         // The shop reads this draft, so it is written in English — but the
@@ -1087,10 +1334,11 @@ if (checkout) {
       delete checkout.dataset.busy;
     }
   });
-  // Back from the thank-you page can restore this page from the bfcache mid-"Placing order…": reset for a fresh attempt.
+  // Back from the thank-you page (or from Paysera) can restore this page from the bfcache mid-submit: reset for a fresh attempt.
   window.addEventListener('pageshow', (e) => {
     if (!e.persisted) return;
     delete checkout.dataset.done;
+    delete checkout.dataset.busy;
     restoreBtn();
     cart.load();
     renderCart();
@@ -1136,7 +1384,7 @@ interface StorefrontOverride {
 }
 interface StorefrontData {
   settings: Record<string, string | number | boolean>;
-  /** Whether the Worker has payment keys. The button must not promise a card form that is not there. */
+  /** Whether the Worker can take a payment. The button must not promise a payment page that is not there. */
   payments?: boolean;
   products: Record<string, StorefrontOverride>;
   reviews: Record<string, { count: number; avg: number }>;
@@ -1261,10 +1509,11 @@ function applyOverrideToPdp(pdpEl: HTMLElement, o: StorefrontOverride) {
         b.disabled = true;
         b.textContent = S('soldOut', 'Sold out');
       });
-    // A dead button is a lost visit; ask for the e-mail instead. The ladder and
-    // the promise are about buying now, so they go away with the button.
-    const form = $('[data-restock]');
-    if (form) form.hidden = false;
+    // A dead button is a lost visit, so the out-of-stock notice (with the shop's
+    // e-mail address; nothing on the page collects one) takes its place. The
+    // ladder and the promise are about buying now, so they go away with the button.
+    const notice = $('[data-restock]');
+    if (notice) notice.hidden = false;
     $('[data-tiers]')?.setAttribute('hidden', '');
     const promise = $('[data-guarantee]');
     if (promise) promise.hidden = true;
@@ -1274,20 +1523,24 @@ function applyOverrideToPdp(pdpEl: HTMLElement, o: StorefrontOverride) {
 /**
  * The checkout button says what will actually happen.
  *
- * Whether cards are live is a property of the deployment, not of the page, so
- * the built HTML says "Place order" and this repaints it once /api/storefront
- * answers. The original label is kept on the element because the page was
- * rendered in the reader's language and re-deriving it here would not be.
+ * Whether payments are live is a property of the deployment, not of the page,
+ * so the built HTML says "Place order" and this repaints it once
+ * /api/storefront answers. The original label and note are kept on the
+ * elements because the page was rendered in the reader's language and
+ * re-deriving them here would not be.
  */
 function paintCheckout() {
   const btn = $<HTMLButtonElement>('form[data-checkout] [type="submit"]');
   if (btn) {
     if (!btn.dataset.label) btn.dataset.label = btn.innerHTML;
-    if (CFG.payments) btn.textContent = S('payByCard', 'Pay by card');
+    if (CFG.payments) btn.textContent = S('payOrder', 'Pay for the order');
     else btn.innerHTML = btn.dataset.label;
   }
   const note = $('[data-pay-note]');
-  if (note && CFG.payments) note.textContent = S('payHandoff', 'You will be taken to Stripe’s secure page to pay. We never see your card details.');
+  if (note) {
+    if (note.dataset.label === undefined) note.dataset.label = note.textContent || '';
+    note.textContent = CFG.payments ? S('payHandoff', 'You will pay on Paysera’s secure page. We never see your card or bank details.') : note.dataset.label;
+  }
 }
 
 function applyStorefront(data: StorefrontData) {
@@ -1493,30 +1746,5 @@ if (reviewsEl) {
     }
   });
 }
-
-/* ------------------------------------------------------- pdp: back in stock */
-
-const restock = $<HTMLFormElement>('[data-restock]');
-restock?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  if (!restock.reportValidity()) return;
-  const note = $('[data-restock-note]', restock);
-  const btn = restock.querySelector<HTMLButtonElement>('[type="submit"]');
-  const data = formData(restock);
-  if (data.website) return;
-  const name = document.querySelector('h1')?.textContent?.trim() || location.pathname;
-  if (btn) (btn.disabled = true), (btn.textContent = S('sending', 'Sending…'));
-  try {
-    // Reuses the order endpoint's contact type, so it lands in the same inbox
-    // and the same admin list as everything else a customer sends.
-    await post({ type: 'contact', name: 'Back-in-stock request', email: data.email, topic: `Back in stock: ${name}`, message: `Please notify me when ${name} is available again.`, page: location.pathname, locale: CFG.locale || 'en' });
-    restock.reset();
-    if (note) (note.textContent = S('notifyNoted', 'Noted — we will write to you when it is back.')), (note.hidden = false), note.classList.add('notice', 'notice--ok');
-  } catch {
-    if (note) (note.textContent = interp(S('notifyFailed', 'That did not send. Write to {email} and we will add you by hand.'), { email: CFG.email || 'us' })), (note.hidden = false), note.classList.add('notice', 'notice--err');
-  } finally {
-    if (btn) (btn.disabled = false), (btn.textContent = S('notifyMe', 'Notify me'));
-  }
-});
 
 syncStorefront();

@@ -70,7 +70,6 @@ const tagLine = a.tags.join(' · ');
 const SEO_TITLES: Record<string, string> = {
   'what-is-pastila': 'What is pastila? A two-ingredient baked-apple sweet',
   'healthy-snacks-no-added-sugar': 'Healthy snacks with no added sugar: read the label',
-  'antonovka-apples': 'Why Antonovka apples? The sour apple in every bar',
 };
 const shortTitle = (t: string) => {
   if (t.length <= 51) return t;
@@ -84,7 +83,6 @@ const pageTitle = SEO_TITLES[a.slug] ?? shortTitle(a.title);
 const SEO_DESC: Record<string, string> = {
   'what-is-pastila': 'Pastila is a baked-apple sweet: apple purée whipped with egg white, dried in thin layers. How it is made and why it needs no added sugar.',
   'healthy-snacks-no-added-sugar': 'Plenty of “healthy” snack bars hide syrups, sweeteners or fruit concentrates. How to read an ingredient list properly, and a short list that pass.',
-  'antonovka-apples': 'Antonovka is a hardy, tart, aromatic apple from the north. Its pectin and acidity are exactly what pastila needs. Why we will not bake with anything else.',
 };
 const trimDesc = (d: string) => {
   if (d.length <= 155) return d;
@@ -241,7 +239,7 @@ const facts = ['99% baked apples, plus egg white', 'No added sugar, no flour, gl
       <div class="cta-band" data-reveal>
         <p class="eyebrow">Taste the subject</p>
         <h2 id="cta-title">Reading about apples is the slow way to find out.</h2>
-        <p>Apple bars, meringues and baked-apple desserts, made in {site.locality} with no added sugar. Parcels leave in 1–2 business days and ship across the EU; orders over {freeFrom} ship free.</p>
+        <p>Apple bars, meringues and baked-apple desserts, made in {site.locality} with no added sugar. Parcels leave in 1–2 business days and ship across Europe; orders over {freeFrom} ship free.</p>
         <div class="cluster mt-2">
           <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
           <a class="btn btn--ghost" href="/why-pastila/">Why pastila</a>

@@ -32,7 +32,8 @@ const stages = [
   {
     short: 'Apples',
     name: 'Choosing the apples',
-    text: 'Antonovka, and only Antonovka. It is a tart, aromatic northern apple with plenty of pectin and acid, which is what lets the purée set without gelatine and taste of fruit rather than sugar. Sweet dessert apples make a flat, sticky pastila; sour ones make it sing.',
+    // No apple variety is named: the owner has not confirmed one, so the variety claim was taken out on 25.09.2026.
+    text: 'Everything starts with apples, and nothing stands in for them later. Apples bring their own pectin and acid, which is what lets the purée set without gelatine and taste of fruit rather than sugar.',
     image: 'apples-orchard',
   },
   {
@@ -100,7 +101,7 @@ const howTo = {
   image: abs('process-oven'),
   totalTime: 'PT12H',
   supply: [
-    { '@type': 'HowToSupply', name: 'Antonovka apples' },
+    { '@type': 'HowToSupply', name: 'Apples' },
     { '@type': 'HowToSupply', name: 'Egg white' },
   ],
   step: stages.map((s, i) => ({
@@ -128,7 +129,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
     <div class="hiw-hero__copy">
       <p class="eyebrow">How it’s made · {site.locality}, {site.country}</p>
       <h1 id="hero-title" data-words>Twelve hours. Apples and egg white. <em>Nothing to hide.</em></h1>
-      <p class="lead">This is how our baked apple snacks are made, from orchard to sealed pack: Antonovka apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into blocks.</p>
+      <p class="lead">This is how our baked apple snacks are made, from orchard to sealed pack: apples baked whole, puréed, whipped with egg white, dried in thin sheets and pressed into blocks.</p>
       <ul class="cluster hiw-facts" aria-label="Key facts">
         <li class="chip"><Icon name="apple" size={14} /> 99% baked apples</li>
         <li class="chip"><Icon name="egg" size={14} /> 1% egg white</li>
@@ -200,7 +201,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
           <p class="eyebrow">From orchard to wrapper</p>
           <h2 class="forge__title" id="forge-title">What twelve hours do to <em>one apple.</em></h2>
           <ol class="forge__steps" data-forge-steps>
-            <li class="forge__step"><b class="forge__n" aria-hidden="true">01</b><h3>One Antonovka apple.</h3><p>Tart, aromatic and full of pectin. Nothing has been added to it yet, and nothing will be.</p></li>
+            <li class="forge__step"><b class="forge__n" aria-hidden="true">01</b><h3>One apple.</h3><p>Whole, skin on, with its own pectin. Nothing has been added to it yet, and nothing will be.</p></li>
             <li class="forge__step"><b class="forge__n" aria-hidden="true">02</b><h3>Baked whole, until it collapses.</h3><p>Hours in a low oven. The sugars caramelise on their own — that is where all the sweetness comes from.</p></li>
             <li class="forge__step"><b class="forge__n" aria-hidden="true">03</b><h3>Whipped with egg white.</h3><p>Beaten until it triples in volume and holds the air. That is the entire second ingredient.</p></li>
             <li class="forge__step"><b class="forge__n" aria-hidden="true">04</b><h3>Spread thin, dried slowly.</h3><p>Twelve hours at low heat turn the foam into a fibrous sheet you can lift in one piece. That sheet is pastila.</p></li>
@@ -298,7 +299,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
         <h2 id="open-title" data-words>Cut one open. It is apple all the way through.</h2>
         <p class="open__text" data-reveal>No coating, no filling, no binder. The layers in a cut bar are the same whipped apple, dried and stacked; the gold colour is caramelised fruit, not a colouring. What is printed on the label is the whole of what is inside, and none of it needs a footnote.</p>
         <div class="stats open__stats" data-stagger>
-          <div class="stat"><strong data-count="99">99%</strong><span>baked Antonovka apples</span></div>
+          <div class="stat"><strong data-count="99">99%</strong><span>baked apples</span></div>
           <div class="stat"><strong data-count="1">1%</strong><span>egg white</span></div>
           <div class="stat"><strong>No</strong><span>added sugar</span></div>
           <div class="stat"><strong>~12 h</strong><span>from oven to pack</span></div>
@@ -321,7 +322,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
       <div class="io__col io__col--in" data-reveal>
         <p class="eyebrow">Goes in</p>
         <ul class="ticks io__list">
-          <li><Icon name="check" /> <span><strong>Baked Antonovka apples</strong> <span class="muted">— 99% of every App’Lite Apple Bar, meringue and 50 g dessert, as the packs print it; the Berry Mix dessert counts its berries in the 99%</span></span></li>
+          <li><Icon name="check" /> <span><strong>Baked apples</strong> <span class="muted">— 99% of every App’Lite Apple Bar, meringue and 50 g dessert, as the packs print it; the Berry Mix dessert counts its berries in the 99%</span></span></li>
           <li><Icon name="check" /> <span><strong>Egg white</strong> <span class="muted">— the other 1%</span></span></li>
           <li><Icon name="check" /> <span><strong>Whole berries or cinnamon</strong> <span class="muted">— in the flavoured versions only</span></span></li>
         </ul>
@@ -393,7 +394,7 @@ const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
       <p class="eyebrow" id="more-title">Keep reading</p>
       <ul class="more__list">
         <li><a class="more__link" href="/why-pastila/">Why a baked apple beats the usual bar <Icon name="arrow" size={16} class="arrow" /></a></li>
-        <li><a class="more__link" href="/journal/antonovka-apples/">Why Antonovka apples? <Icon name="arrow" size={16} class="arrow" /></a></li>
+        <li><a class="more__link" href="/journal/what-is-pastila/">What pastila is, in full <Icon name="arrow" size={16} class="arrow" /></a></li>
       </ul>
     </nav>
   </section>

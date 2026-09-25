@@ -15,7 +15,7 @@ The site lives in the `semers/` folder of this repository and is meant for Verce
 | `PUBLIC_MAIL`, `PUBLIC_WHOLESALE_MAIL`, `PUBLIC_PHONE`, `PUBLIC_WHATSAPP` | contacts shown on the site (`PUBLIC_WHATSAPP` as international number, e.g. `37120000000`) |
 | `PUBLIC_INSTAGRAM`, `PUBLIC_TIKTOK`, `PUBLIC_FACEBOOK`, `PUBLIC_LINKEDIN` | social links (empty = hidden) |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | orders/forms delivered to a Telegram chat |
-| `RESEND_API_KEY`, `ORDER_TO_EMAIL`, `ORDER_FROM_EMAIL` | orders/forms by e-mail + customer receipt (Resend, verify your sending domain first) |
+| `RESEND_API_KEY`, `ORDER_TO_EMAIL`, `ORDER_FROM_EMAIL` | orders/forms by e-mail + customer receipt (Resend, verify your sending domain first). `ORDER_TO_EMAIL` is `riga.pastila@gmail.com` (see § 1b) |
 | `PUBLIC_GOOGLE_VERIFICATION`, `PUBLIC_BING_VERIFICATION` | search-console verification tags |
 | `PUBLIC_PLAUSIBLE_DOMAIN` | enables privacy-friendly analytics (`semers.org`) |
 
@@ -36,8 +36,9 @@ of `semers/` with three differences:
   everything in `dist/` moves to `dist/client/`, and `worker/server.js` is copied to
   `dist/server/server.js`.
 * **`worker/server.js`** is the Cloudflare Worker — the API (`/api/order`,
-  `/api/storefront`, `/api/reviews`, `/api/admin/*`) plus the per-language 404
-  fallback. It is the same file as `semers/worker/server.js`; keep the two in step.
+  `/api/storefront`, `/api/reviews`, `/api/lockers`, `/api/checkout`,
+  `/api/paysera/callback`, `/api/admin/*`) plus the per-language 404 fallback.
+  It is the same file as `semers/worker/server.js`; keep the two in step.
 
 **Database.** The project has one Cloudflare D1 database, reachable in the Worker as
 `env.DB`. `migrations/0001_init.sql` is the reference shape, but the Worker creates
@@ -54,7 +55,13 @@ until the next deploy:
 | `ADMIN_PASSWORD` | the only credential for `/admin/`. Without it the back office answers 503 and says so. |
 | `ADMIN_SESSION_SECRET` | signs the admin session cookie (HMAC-SHA256). Rotating it logs everyone out, which is how to revoke a session. |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | where orders and form messages arrive |
-| `RESEND_API_KEY`, `ORDER_TO_EMAIL`, `ORDER_FROM_EMAIL` | orders by e-mail, and the customer's receipt |
+| `RESEND_API_KEY`, `ORDER_FROM_EMAIL` | the sending side of every e-mail: the shop's copy of an order and the customer's receipt |
+| `ORDER_TO_EMAIL` | where the shop's copy of every order goes: **`riga.pastila@gmail.com`** (owner, 25.09.2026). Several addresses may be given, comma-separated. This address is for the host only — it is never printed on a page |
+| `REPLY_TO_EMAIL` | optional: where a customer's answer to their receipt lands. Set it to the published customer address, `av@semers.org`, so a reply reaches a person rather than the sending address |
+| `PAYSERA_PROJECT_ID` | the Paysera project number (Paysera → Projects → your project). With `PAYSERA_PASSWORD` it switches the checkout from "order request" to payment |
+| `PAYSERA_PASSWORD` | the project's **sign password** from the same page. It signs every payment request and verifies every callback; treat it as a secret |
+| `PAYSERA_TEST` | `1` sends every payment as a Paysera **test** payment (no money moves; the order, the e-mails and the operations push all say TEST). Remove it, or set `0`, to go live |
+| `OPS_WEBHOOK_URL`, `OPS_WEBHOOK_SECRET` | optional: where a paid order is pushed for operations (one signed POST per order; see *Payments* below) |
 
 **To ship a change:** build and verify here (`npm run verify`), copy `src/`, `public/`,
 `worker/`, `migrations/`, `astro.config.mjs` and `scripts/` across to the website project,
@@ -97,6 +104,118 @@ exactly as CI does, run the checks over `dist/client`, then push and deploy. Bui
 before pushing is the point — the deploy ships whatever is on `main`, and there is no
 preview stage to catch a broken build.
 
+## 1c. Payments (Paysera)
+
+The shop takes payment through **Paysera** (the company's existing contract), using
+Paysera's classic WebToPay protocol, version 1.6. There is no Paysera SDK and no
+call from the Worker to Paysera: the Worker signs a request, the shopper's browser
+carries it to `https://www.paysera.com/pay/`, and Paysera calls back.
+
+**Switching it on.** Set `PAYSERA_PROJECT_ID` and `PAYSERA_PASSWORD` on the host
+(§ 1b) and deploy. `/api/storefront` then reports `payments: true`, the checkout
+button reads *Pay for the order* / *Оплатить заказ* / *Apmaksāt pasūtījumu*, and the
+note under it says the payment happens on Paysera's page. Without both values the
+shop behaves exactly as before: the checkout sends an order request and the owner
+replies with a payment link by hand.
+
+**What happens on a payment.**
+
+1. `POST /api/checkout` receives only line ids, quantities, the delivery method and
+   the customer's details. It prices the cart itself from `/catalog.json` (built
+   from `src/data/products.ts` and `src/data/site.ts`) and the owner's admin
+   overrides, refuses a hidden or sold-out product by name, **writes the order row
+   (status `new`)**, and only then returns the signed Paysera link. A failure to
+   write the row refuses the sale ("not-recorded"), because a payment with no order
+   behind it is the one outcome worth refusing a sale over.
+2. The shopper pays on Paysera. `accepturl` brings them to
+   `/<lang>/order/thank-you/?paid=1&ref=<ref>`, which empties the cart;
+   `cancelurl` brings them back to `/<lang>/cart/` with the box still packed.
+3. Paysera calls `GET` or `POST /api/paysera/callback` with `data` and `ss1`. The
+   Worker checks `ss1 = md5(data + PAYSERA_PASSWORD)` (constant-time), decodes
+   `data`, checks the project id, finds the order by `orderid`, and checks that
+   `amount` (cents) and `currency` are the order's. Status `1` marks the order
+   **paid** and records Paysera's `requestid` and whether it was a test. The shop's
+   notification (Telegram + `ORDER_TO_EMAIL`), the customer's receipt in their
+   language, and the operations push then go out — once: a repeated callback
+   changes nothing and sends nothing again, and a late repeat cannot pull a shipped
+   order back to paid.
+
+What the callback answers:
+
+| Situation | Answer | Effect |
+| --- | --- | --- |
+| signature wrong, or another project | `400` | logged; nothing changes |
+| status `0`, `2` or `3` (not paid, pending, info) | `200 OK` | audited; the order stays `new` |
+| status `1`, amount or currency not the order's | `200 OK` | **not** marked paid; the order gets a `PAYSERA AMOUNT MISMATCH` admin note and one Telegram alert |
+| status `1`, no such order | `200 OK` | a `paid` row marked `RECOVERED` is raised and the owner alerted, so the money is never silent |
+| status `1`, all good | `200 OK` | paid, notified, pushed |
+| our own failure (database, operations push) | `500` | Paysera retries later; the retry sends only what is still owed |
+
+**In the Paysera account**, check once that the project is active, that its website
+address is the shop's domain (the accept, cancel and callback URLs are sent with
+every request and are built from the address the shopper is on), and that
+the payment methods you want (Baltic bank links, cards) are enabled for it. The
+payment purpose the shopper sees is `Semers order [order_nr] ([site_name])`, which
+Paysera fills in.
+
+**Test first.** Set `PAYSERA_TEST=1`, deploy, and buy something: every message says
+TEST, the order row has `pay_test = 1`, and the operations payload carries
+`livemode: false`. Then remove `PAYSERA_TEST` and deploy to go live.
+
+**Database.** The Worker adds the columns it needs (`pay_provider`, `pay_ref`,
+`pay_test`, `paid_at`, `ops_sent`, `notified_at`) by itself. Tables and columns
+from the earlier Stripe draft (`stripe_events`, `stripe_session`, `stripe_intent`)
+are no longer used and can stay; `STRIPE_*` secrets can be deleted.
+
+**Operations push.** With `OPS_WEBHOOK_URL` set, every paid order is POSTed there
+once as JSON (`source: "semers-store"`, `order_no`, the lines by GTIN, the delivery
+method, the Omniva locker id, `payment: { provider: "paysera", ref, test }`,
+`livemode`), signed with `OPS_WEBHOOK_SECRET` as
+`x-semers-signature = HMAC-SHA256(secret, "<x-semers-timestamp>.<body>")`. A failed
+push makes the callback answer 500, so Paysera's retry delivers it later.
+`order_no` is unique per order; a receiver that sees one twice can drop it.
+
+## 1d. Delivery and Omniva parcel lockers
+
+The rules live in `src/data/site.ts` → `shipping`, and every copy of them is read
+from there (the cart, the checkout, `/catalog.json` the Worker charges from, the
+structured data); `npm test` fails if one drifts.
+
+* **Omniva parcel locker** — Latvia, Lithuania, Estonia (`lockerCountries`) at
+  `flatRate` (€3.90 until the owner's own Omniva price arrives), free from
+  `freeFrom` (€20).
+* **Courier** — the EU, at `courierRate`. It is `null` until the owner gives the
+  price, and while it is `null` the courier is **not offered anywhere**: the
+  checkout lists only the three Baltic countries and says that for the rest of the
+  EU the customer should write to the shop, and the Worker refuses a courier order.
+  Setting `courierRate` to a number and rebuilding switches it on everywhere at once
+  (all 27 EU countries appear in the checkout; lockers stay Baltic-only). It is
+  free from the same `freeFrom` — change that in `priceCart` and in the checkout
+  if the owner decides the courier threshold differs.
+* There is **no pickup**.
+
+**The free-shipping threshold can also be set in the admin**, and a saved admin value
+wins over `site.ts`. If the admin's settings were ever saved while the threshold
+was €25, D1 still says 25: after deploying, open `/admin/` → settings and check that
+"free shipping from" reads **20**.
+
+**The locker picker.** `GET /api/lockers` fetches Omniva's public list,
+`https://www.omniva.ee/locations.json`, and keeps it for a day — in each Worker
+isolate's memory and, where the host provides one, in the edge cache (Cache API;
+on a host where that is a no-op, each new isolate fetches once). It keeps only
+parcel machines (`TYPE` `"0"`) in LV, LT and EE, and answers
+`[{ id, name, city, address, country }]` sorted by country and name (`id` is
+Omniva's `ZIP`). The feed is one large JSON file for all three countries: on a plan with a very small
+CPU budget per request (Workers Free, 10 ms) the parse can run out of time, in
+which case the checkout simply shows the typed field; on a paid plan it does not
+come close. A feed that fails or cannot be read is answered
+with yesterday's copy if there is one, otherwise `502` — and the checkout then
+replaces the picker with a plain "locker name or address" field and a note, so an
+order never waits on Omniva. A chosen locker reaches the order as the address
+`Omniva: <name> (<id>)` plus the locker id, which the shop's e-mail
+(`Omniva locker ID: …`) and the operations push (`delivery.locker_id`) carry.
+The phone number is required at checkout: Omniva texts the locker code to it.
+
 ## 2. Domain
 
 Vercel project → Settings → Domains → add `semers.org` and `www.semers.org` (redirect www → apex). Set the DNS records Vercel shows at your registrar. Keep the old site up until the new one resolves.
@@ -112,12 +231,15 @@ Vercel project → Settings → Domains → add `semers.org` and `www.semers.org
 - [ ] Final prices in `src/data/products.ts` (search `TODO`).
 - [ ] Nutrition values checked against the printed packs.
 - [ ] `npm run localize-images` run and `public/img` committed (removes the dependency on the Higgsfield CDN).
-- [ ] Legal pages: registration number and street address filled in (`src/pages/legal/*.astro`, search `TODO`).
-- [ ] Contacts and socials set (`.env.example` → Vercel env).
+- [x] Legal pages: the company name, registration and VAT numbers, and the legal and office addresses come from `site.company` in `src/data/site.ts` (owner, 25.09.2026). One `TODO` is left in the privacy policy: a link to Paysera's own privacy policy.
+- [ ] Contacts and socials set (`.env.example` → Vercel env). A `PUBLIC_MAIL` or `PUBLIC_PHONE` set on the host wins over `site.ts`: it must read `av@semers.org` / `+371 22841714`, or be removed — not the old `hello@semers.org`.
 - [ ] Google Search Console: verify, submit `https://semers.org/sitemap-index.xml`.
-- [ ] Payment provider (Stripe Checkout) when ready — see README.
+- [ ] Paysera: `PAYSERA_PROJECT_ID`, `PAYSERA_PASSWORD` and `PAYSERA_TEST=1` set; one test purchase end to end (§ 1c); then `PAYSERA_TEST` removed.
+- [ ] `ORDER_TO_EMAIL=riga.pastila@gmail.com` and `REPLY_TO_EMAIL=av@semers.org` set on the host (§ 1b).
+- [ ] Admin → settings: "free shipping from" reads 20 (§ 1d). The old guarantee line ("…we refund the order — you keep the box") needs no action: a copy of it saved in D1 is read as the new default, so it is never shown again.
+- [ ] Omniva: the owner's own parcel-locker price, when it arrives, into `site.shipping.flatRate`; the courier price into `site.shipping.courierRate` (§ 1d).
 - [x] Abuse protection for `/api/order`: the endpoint is public and, with Resend configured, e-mails a receipt to whatever address is submitted. It is now limited to 30 submissions an hour per caller (10 for reviews), counted in the database against the edge-set client IP. Far above any real shopper, far below any use worth having. A honeypot hit answers before the allowance is spent, so a bot cannot use up a person's tries, and a limiter that cannot reach its table lets the order through rather than turning a customer away. Add a captcha as well only if that proves insufficient.
-- [ ] Russian and Latvian copy read by someone who speaks it. `docs/translation-notes.md` lists the 375 places a translator had to choose between two defensible renderings; the legal pages are worth a lawyer's eye.
+- [ ] Russian and Latvian copy read by someone who speaks it. `docs/translation-notes.md` lists the 334 places a translator had to choose between two defensible renderings; the legal pages are worth a lawyer's eye.
 - [ ] `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` set on the hosting project (see above). Until `ADMIN_PASSWORD` exists, `/admin/` cannot be logged into at all.
 - [x] Order receipts and the newsletter welcome go out in the language the customer was reading, with the money formatted the way that language writes it and every link pointing into that language. The shop's own notification stays English on purpose — one person reads them all — and carries a `Language:` line saying which language to reply in. `MAIL` in `worker/server.js` holds the wording; a key a language has not translated falls back to English rather than sending a blank.
 
@@ -167,7 +289,9 @@ it both ways to prove that it does.
 
 **The two order endpoints are not the same code.** `worker/server.js` is what
 runs today; `api/order.js` is the Vercel function that would run if the project
-in step 1 is ever created. Both are rate limited now — the Worker counts in D1,
+in step 1 is ever created. Only the Worker has the payment and the locker
+endpoints: on Vercel the checkout would take order requests only, and the locker
+picker would fall back to its typed field. Both are rate limited now — the Worker counts in D1,
 the function in the instance's memory, which is weaker but is the difference
 between thirty an hour and as many as a sender cares to send. One gap remains:
 the function still sends the shop's own English notification as the customer's
@@ -237,8 +361,17 @@ the Russian product page at 390 px.
 ## Purchase-path check
 
 `npm run check:flow` walks the path a customer walks — product, add to box,
-drawer, cart, checkout, submit, thank-you — in all three languages at a desktop
-and a phone width, against a stubbed endpoint so nothing is sent anywhere. It
+drawer, cart, checkout (finding and choosing an Omniva locker by keyboard),
+submit, thank-you — in all three languages at a desktop and a phone width,
+against stubbed endpoints so nothing is sent anywhere.
+
+`npm run check:pay` drives the payment half against a stubbed `/api/checkout`
+and `/api/lockers`, catching the hand-off to `www.paysera.com` before it leaves
+the machine: the button's wording in each language, that only ids and
+quantities go up, that the chosen locker reaches the order, the typed fallback
+when the list will not load, the cart surviving a cancelled payment and emptied
+by a paid one, and every failure said out loud. `DIST=<dir>` points it at a
+build other than `dist/`. It
 asserts the arithmetic the customer sees (lines add to the subtotal, subtotal
 plus shipping is the total), that the order reports the language it was placed
 in, that the reference comes back onto the thank-you page and that the box is

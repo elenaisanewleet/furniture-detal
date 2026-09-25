@@ -44,6 +44,7 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "«Классический»: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки (99%), чёрная смородина, клюква, брусника, черника, яичный белок.",
+      storage: "Хранить в сухом прохладном месте при температуре от +8 до +21 °C.",
     },
     "flourless-apple-bar-50g": {
       name: "Яблочное пирожное без муки",
@@ -110,13 +111,13 @@ export const PRODUCT_COPY: Partial<
     },
     "applite-baked-apple-dessert-500g": {
       name: "Классический яблочный десерт",
-      title: "Классический яблочный десерт 500 г",
+      title: "Классический яблочный десерт App'Lite, 500 г",
       legalName: "Классический яблочный десерт без добавленного сахара",
       hook: "Полкило, каждый кусочек в своей упаковке.",
       summary:
-        "Коробка 500 г классического яблочного десерта, каждый кусочек упакован отдельно. Яблоки и яичный белок, без добавленного сахара.",
+        "Коробка 500 г классического яблочного десерта App'Lite, каждый кусочек упакован отдельно. Яблоки и яичный белок, без добавленного сахара.",
       description: [
-        "Классический яблочный десерт в коробке 500 г, каждый кусочек в собственной упаковке. Два ингредиента: яблоки и яичный белок.",
+        "Классический яблочный десерт App'Lite в коробке 500 г, каждый кусочек в собственной упаковке. Два ингредиента: яблоки и яичный белок.",
       ],
       ingredients: "Яблоки, яичный белок.",
       storage: "18 месяцев при хранении от +8 до +25 °C.",
@@ -148,6 +149,7 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "«Классический»: печёные яблоки (99%), яичный белок. «Ягодный микс»: печёные яблоки (99%), чёрная смородина, клюква, брусника, черника, яичный белок.",
+      storage: "Хранить в сухом прохладном месте при температуре от +8 до +21 °C.",
     },
   },
   lv: {
@@ -168,6 +170,7 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli (99 %), upenes, dzērvenes, brūklenes, mellenes, olu baltums.",
+      storage: "Uzglabāt sausā, vēsā vietā no +8 līdz +21 °C.",
     },
     "flourless-apple-bar-50g": {
       name: "Ābolu kūciņa bez miltiem",
@@ -234,13 +237,13 @@ export const PRODUCT_COPY: Partial<
     },
     "applite-baked-apple-dessert-500g": {
       name: "Klasisks ābolu deserts",
-      title: "Klasisks ābolu deserts 500 g",
+      title: "App'Lite klasiskais ābolu deserts, 500 g",
       legalName: "Klasisks ābolu deserts bez pievienota cukura",
       hook: "Puskilograms, katrs gabaliņš iepakots atsevišķi.",
       summary:
-        "500 g kaste ar klasisku ābolu desertu, katrs gabaliņš iepakots atsevišķi. Āboli un olu baltums, bez pievienota cukura.",
+        "500 g kaste ar App'Lite klasisko ābolu desertu, katrs gabaliņš iepakots atsevišķi. Āboli un olu baltums, bez pievienota cukura.",
       description: [
-        "Klasisks ābolu deserts 500 g kastē, katrs gabaliņš savā iepakojumā. Divas sastāvdaļas: āboli un olu baltums.",
+        "App'Lite klasiskais ābolu deserts 500 g kastē, katrs gabaliņš savā iepakojumā. Divas sastāvdaļas: āboli un olu baltums.",
       ],
       ingredients: "Āboli, olu baltums.",
       storage: "18 mēneši, uzglabājot no +8 līdz +25 °C.",
@@ -272,6 +275,7 @@ export const PRODUCT_COPY: Partial<
       ],
       ingredients:
         "Klasiskais: cepti āboli (99 %), olu baltums. «Ogu maisījums»: cepti āboli (99 %), upenes, dzērvenes, brūklenes, mellenes, olu baltums.",
+      storage: "Uzglabāt sausā, vēsā vietā no +8 līdz +21 °C.",
     },
   },
 };
@@ -304,7 +308,7 @@ export const COLLECTION_COPY: Partial<
       name: "Десерты из печёных яблок",
       title: "Десерты из печёных яблок — без добавленного сахара",
       description:
-        "Десерты из печёных яблок без добавленного сахара: упаковки App'Lite по 50 г — классический, «Ягодный микс» и с корицей — и коробка 500 г классического яблочного десерта.",
+        "Десерты из печёных яблок App'Lite без добавленного сахара: упаковки по 50 г — классический, «Ягодный микс» и с корицей — и коробка 500 г классического яблочного десерта.",
     },
     "gift-sets": {
       name: "Подарочные наборы и боксы",
@@ -337,7 +341,7 @@ export const COLLECTION_COPY: Partial<
       name: "Cepto ābolu deserti",
       title: "Cepto ābolu deserti — bez pievienota cukura",
       description:
-        "Cepto ābolu deserti bez pievienota cukura: App'Lite 50 g iepakojumi — Klasiskais, «Ogu maisījums» un ar kanēli — un 500 g kaste ar klasisku ābolu desertu.",
+        "App'Lite cepto ābolu deserti bez pievienota cukura: 50 g iepakojumi — Klasiskais, «Ogu maisījums» un ar kanēli — un 500 g kaste ar klasisku ābolu desertu.",
     },
     "gift-sets": {
       name: "Dāvanu komplekti un kārbas",

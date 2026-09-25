@@ -2,6 +2,12 @@
  * Product catalog — the single source of truth for shop pages, product
  * pages, cart, JSON-LD and the sitemap.
  *
+ * ALL_PRODUCTS keeps every product, including the ones not on sale now;
+ * PRODUCTS is the part of it the shop shows. Everything that lists, counts,
+ * routes or describes products reads PRODUCTS, so a hidden product has no page,
+ * no card, no place in a count, the sitemap or the structured data, and no line
+ * in the catalogue the order endpoint prices from.
+ *
  * Every fact about a food in here — its name, ingredients, nutrition, storage,
  * shelf life and price — comes from the product cards Semers Group sent in
  * September 2026, and from nowhere else. EAN/GTIN codes come from the Semers
@@ -139,6 +145,12 @@ export interface Product {
   shelfLifeMonths: number | null;
   /** Ordering weight for listings (lower first). */
   order: number;
+  /**
+   * Not on sale now. The data stays in ALL_PRODUCTS for when it returns, but
+   * the product drops out of PRODUCTS and so out of every page, listing, count,
+   * sitemap entry, structured data and the priced catalogue.
+   */
+  hidden?: boolean;
 }
 
 export type CollectionKey = 'apple-bars' | 'flourless-bars' | 'meringues' | 'applite' | 'gift-sets';
@@ -154,7 +166,7 @@ export interface Collection {
   accent: string;
 }
 
-export const COLLECTIONS: Collection[] = [
+export const ALL_COLLECTIONS: Collection[] = [
   {
     key: 'apple-bars',
     name: 'Apple bars',
@@ -189,12 +201,12 @@ export const COLLECTIONS: Collection[] = [
     accent: 'var(--coral-100)',
   },
   {
-    // The key keeps the /shop/applite/ address; the 500 g carton names no brand, so the collection does not either.
+    // The key keeps the /shop/applite/ address. Both desserts are App'Lite (the owner restored the brand on the 500 g carton on 25.09.2026).
     key: 'applite',
     name: 'Baked apple desserts',
     title: 'Baked Apple Desserts — no added sugar',
     description:
-      "Baked apple desserts with no added sugar: App'Lite 50 g packs in Classic, Berry Mix and Cinnamon, and a 500 g carton of classic apple dessert.",
+      "App'Lite baked apple desserts with no added sugar: 50 g packs in Classic, Berry Mix and Cinnamon, and a 500 g carton of classic apple dessert.",
     intro:
       'Layered baked apple for a plate rather than a pocket: a 50 g pack, or a 500 g carton of individually wrapped pieces. Good with tea, coffee or a spoon of yoghurt.',
     image: 'pastila-texture',
@@ -270,7 +282,7 @@ const BAR_NUTRITION: Nutrition = { energyKj: 1337, energyKcal: 320, fat: 0, satu
 const BAR_INGREDIENTS =
   'Classic: baked apples (99%), egg white. Berry Mix: baked apples (99%), blackcurrants, cranberries, lingonberries, blueberries, egg white.';
 
-export const PRODUCTS: Product[] = [
+export const ALL_PRODUCTS: Product[] = [
   {
     slug: 'apple-bar-35g',
     name: 'Apple Bar',
@@ -295,7 +307,8 @@ export const PRODUCTS: Product[] = [
     ingredients: BAR_INGREDIENTS,
     // The bar cards carry no allergen sentence; the egg white is emphasised in the ingredient list.
     nutrition: BAR_NUTRITION,
-    storage: null,
+    // The owner's storage conditions for the bars, 25.09.2026.
+    storage: 'Store in a cool, dry place at a temperature between +8 and +21 °C.',
     // 320 kcal per 100 g, and one bar weighs 35 g.
     kcalPerUnit: 112,
     // The pack front: no flour, gluten free, no sugar added.
@@ -349,8 +362,8 @@ export const PRODUCTS: Product[] = [
     ],
     images: ['pack-flourless-classic', 'pack-flourless-cranberry', 'pack-flourless-cinnamon', 'pack-flourless-blueberry'],
     accent: 'var(--honey-100)',
-    // The card gives storage conditions and no shelf life.
-    shelfLifeMonths: null,
+    // The card gives storage conditions only; the owner confirmed 18 months on 25.09.2026.
+    shelfLifeMonths: 18,
     order: 20,
   },
   {
@@ -393,8 +406,8 @@ export const PRODUCTS: Product[] = [
     accent: 'var(--coral-100)',
     badge: 'New',
     new: true,
-    // The card gives storage conditions and no shelf life.
-    shelfLifeMonths: null,
+    // The card gives storage conditions only; the owner confirmed 18 months on 25.09.2026.
+    shelfLifeMonths: 18,
     order: 30,
   },
   {
@@ -441,10 +454,11 @@ export const PRODUCTS: Product[] = [
     order: 40,
   },
   {
-    // The card names no brand for the carton, so it has none here: the name is the card's.
+    // The carton is App'Lite: the owner restored the brand on 25.09.2026. The name of the food is the card's.
     slug: 'applite-baked-apple-dessert-500g',
     name: 'Classic Apple Dessert',
-    title: 'Classic Apple Dessert 500 g',
+    title: "App'Lite Classic Apple Dessert 500 g",
+    brand: "App'Lite",
     legalName: 'Classic apple dessert with no added sugar',
     collection: 'applite',
     weightGrams: 500,
@@ -452,8 +466,8 @@ export const PRODUCTS: Product[] = [
     price: 12.99,
     hook: 'Half a kilo, wrapped piece by piece.',
     summary:
-      'A 500 g carton of classic apple dessert in individually wrapped pieces. Apples and egg white, no added sugar.',
-    description: ['Classic apple dessert in a 500 g carton, every piece wrapped on its own. Two ingredients: apples and egg white.'],
+      'A 500 g carton of App’Lite classic apple dessert in individually wrapped pieces. Apples and egg white, no added sugar.',
+    description: ['App’Lite classic apple dessert in a 500 g carton, every piece wrapped on its own. Two ingredients: apples and egg white.'],
     ingredients: 'Apples, egg white.',
     // The card gives no allergen sentence; the egg white is emphasised in the ingredient list.
     nutrition: DESSERT_500G_NUTRITION,
@@ -501,6 +515,8 @@ export const PRODUCTS: Product[] = [
     // The contents, and so the shelf life, are not defined yet.
     shelfLifeMonths: null,
     order: 5,
+    // Not sold now (owner, 25.09.2026).
+    hidden: true,
   },
   {
     slug: 'apple-bar-12-pack',
@@ -522,9 +538,9 @@ export const PRODUCTS: Product[] = [
     ],
     ingredients: BAR_INGREDIENTS,
     // As for the single bar: no allergen sentence on the card, the egg white emphasised in the list.
-    // The same bars, twelve of them, so the same panel.
+    // The same bars, twelve of them, so the same panel and the same storage.
     nutrition: { ...BAR_NUTRITION },
-    storage: null,
+    storage: 'Store in a cool, dry place at a temperature between +8 and +21 °C.',
     kcalPerUnit: null,
     diet: ['no-added-sugar', 'gluten-free', 'flourless'],
     variants: [{ key: 'classic' }, { key: 'berry' }, { key: 'assorted' }],
@@ -533,8 +549,16 @@ export const PRODUCTS: Product[] = [
     badge: 'Save 11%',
     shelfLifeMonths: 12,
     order: 15,
+    // Replaced by 8-unit boxes whose prices are pending (owner, 25.09.2026); kept for when they arrive.
+    hidden: true,
   },
 ];
+
+/** The products on sale: every listing, count, collection, route, sitemap entry and piece of structured data reads this. */
+export const PRODUCTS: Product[] = ALL_PRODUCTS.filter((p) => !p.hidden);
+
+/** The collections with at least one product on sale; a collection with none has no page and no link. */
+export const COLLECTIONS: Collection[] = ALL_COLLECTIONS.filter((c) => PRODUCTS.some((p) => p.collection === c.key));
 
 /**
  * Sizes the mix-and-match box is sold in. Each one is its own page with its own
@@ -577,7 +601,7 @@ export function formatPrice(eur: number, locale: Locale = DEFAULT_LOCALE): strin
   return new Intl.NumberFormat(LOCALE_META[locale].intl, { style: 'currency', currency: 'EUR' }).format(eur);
 }
 
-/** Whole-euro amounts such as the free-shipping threshold read "€25", not "€25.00". */
+/** Whole-euro amounts such as the free-shipping threshold read "€20", not "€20.00". */
 export function formatThreshold(eur: number, locale: Locale = DEFAULT_LOCALE): string {
   if (!Number.isInteger(eur)) return formatPrice(eur, locale);
   return new Intl.NumberFormat(LOCALE_META[locale].intl, { style: 'currency', currency: 'EUR', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(eur);

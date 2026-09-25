@@ -73,7 +73,7 @@ const shapes = [
  * a brand with no products in the catalogue drops out instead of showing an empty row.
  */
 const LINE_NOTES: Record<string, string> = {
-  "App'Lite": 'Baked apples and egg white as a bar, a meringue and a dessert. The bar and the meringue come in Classic and Berry Mix, the 50 g dessert in Classic, Cinnamon and Berry Mix.',
+  "App'Lite": 'Baked apples and egg white as a bar, a meringue and a dessert. The bar and the meringue come in Classic and Berry Mix, the 50 g dessert in Classic, Cinnamon and Berry Mix, and the Classic dessert also comes in a 500 g carton.',
   "Blum Baker's": 'A flourless apple cake, 50 g, in Classic, Cinnamon, Blueberry and Cranberry: apples and egg white, with the fruit or spice in the name. We sell it alongside our own range.',
 };
 const lines = Object.keys(LINE_NOTES).flatMap((brand) => {
@@ -152,7 +152,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
         <p class="eyebrow">The range</p>
         <h2 id="loaf-title" data-words>Apples and egg white, five ways.</h2>
         <div class="prose mt-4">
-          <p>App’Lite is the 35 g Apple Bar, the 35 g Apple Meringue and the 50 g Baked Apple Dessert. The shop also sells the Classic Apple Dessert in a 500 g carton, and Blum Baker’s 50 g flourless apple cake. Every one of them lists apples and egg white as its ingredients, with berries or cinnamon in some flavours.</p>
+          <p>App’Lite is the 35 g Apple Bar, the 35 g Apple Meringue, the 50 g Baked Apple Dessert and the Classic Apple Dessert in a 500 g carton. The shop also sells Blum Baker’s 50 g flourless apple cake. Every one of them lists apples and egg white as its ingredients, with berries or cinnamon in some flavours.</p>
           <p>This shop came last. Until now you found us at Maxima, on Barbora and in stores across Europe; now the same cases can leave Riga for your door.</p>
         </div>
         <ul class="shapes" aria-label="What we sell">
@@ -286,7 +286,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
           </li>
         ))}
       </ul>
-      <p class="small muted mt-4">Gift sets, tasting boxes and the box of twelve live under <a href="/shop/gift-sets/">gift sets</a>. Questions about ordering are answered in the <a href="/faq/">FAQ</a>, or <a href="/contact/">write to us</a>.</p>
+      <p class="small muted mt-4">Mix bars, meringues and flourless cakes in one box on the <a href="/shop/build-your-box/">build your box</a> page. Questions about ordering are answered in the <a href="/faq/">FAQ</a>, or <a href="/contact/">write to us</a>.</p>
     </div>
   </section>
 
@@ -295,7 +295,7 @@ const pad = (n: number) => String(n).padStart(2, '0');
     <div class="cta-band" data-reveal>
       <p class="eyebrow">Taste the story</p>
       <h2 id="cta-title">Start with a bar, then work through the range.</h2>
-      <p>Parcels leave Riga in 1–2 business days and ship across the EU; orders over {freeFrom} ship free. Retailer, café or office? We pack cases as happily as parcels.</p>
+      <p>Parcels leave Riga in 1–2 business days and ship across Europe; orders over {freeFrom} ship free. Retailer, café or office? We pack cases as happily as parcels.</p>
       <div class="cluster mt-2">
         <a class="btn btn--paper" href="/shop/">Shop all products <Icon name="arrow" size={18} class="arrow" /></a>
         <a class="btn btn--ghost" href="/wholesale/">Wholesale &amp; B2B</a>

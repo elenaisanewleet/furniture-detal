@@ -77,7 +77,7 @@ export default `
   <li><strong>The shared shelf.</strong> The <a href="/products/applite-baked-apple-dessert-500g/">500 g carton</a> of classic apple dessert, each piece wrapped on its own.</li>
   <li><strong>Something crisp.</strong> <a href="/shop/meringues/">Apple meringues</a> for the moment that usually calls for biscuits.</li>
 </ul>
-<p>For an office, the <a href="/shop/gift-sets/">Tasting Box and the box of twelve</a> put a bit of everything on the shared shelf.</p>
+<p>For an office, <a href="/shop/build-your-box/">build a box</a> of bars, meringues and flourless cakes to put a bit of everything on the shared shelf.</p>
 
 <h2>A note before you go</h2>
 <p>This article is general information about food labelling, written by people who make snacks, not by clinicians. It is not medical or dietary advice. If you manage a health condition through what you eat, take the label to someone qualified. And whatever you buy, turn the pack over first. The <a href="/faq/">FAQ</a> answers the rest, and the <a href="/shop/">shop</a> has the bar.</p>
