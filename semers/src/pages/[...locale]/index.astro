@@ -78,8 +78,8 @@ const { flatRate, freeFrom } = site.shipping;
     </section>
 
     <!-- ============================== WHAT'S INSIDE ============================== -->
-    <!-- The one dark block on the site: contrast, without a dark site. -->
-    <section class="room dark" id="about" aria-labelledby="about-title">
+    <!-- A pale green band (owner, 28.09: no dark green on the site). -->
+    <section class="room" id="about" aria-labelledby="about-title">
       <div class="room__in">
         <div>
           <p class="eyebrow">What’s inside</p>
@@ -135,8 +135,8 @@ const { flatRate, freeFrom } = site.shipping;
   /* ------------------------------------------------------------ the catalogue */
   .cat { padding-top: clamp(2.125rem, 5vw, 3.75rem); }
 
-  /* ------------------------------------------------------------ the dark room */
-  .room { margin-top: clamp(2.5rem, 6vw, 4.5rem); border-radius: var(--r-xl); overflow: hidden; }
+  /* ------------------------------------------------------------ the pale band */
+  .room { margin-top: clamp(2.5rem, 6vw, 4.5rem); border-radius: var(--r-xl); overflow: hidden; background: var(--leaf-band); }
   .room__in { display: grid; gap: clamp(1.75rem, 4vw, 3.5rem); align-items: center; padding: clamp(2.125rem, 5vw, 3.75rem) clamp(1.4rem, 4vw, 3.75rem); }
   @media (min-width: 55.01rem) { .room__in { grid-template-columns: 20rem minmax(0, 1fr); } }
   .room h2 { margin: 1.25rem 0 0.75rem; font-size: clamp(1.75rem, 1.3rem + 2vw, 2.5rem); line-height: 1.06; }

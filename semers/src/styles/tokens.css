@@ -12,7 +12,8 @@
      cream-*  the ink family    — headings, text and inverted surfaces (dark here)
    A surface written as "cream background, night text" (a pressed pill, a
    toast, a solid button) is therefore dark ink with light type, as the design
-   wants. The one dark block re-declares both families under `.dark`.
+   wants. Since 28.09 (owner: "no dark green") small solid surfaces are light
+   green with dark ink, and the home page has no dark block.
    ========================================================================= */
 :root {
   color-scheme: light;
@@ -49,6 +50,11 @@
   --leaf-500: #245b08; /* the brand deep green: ticks and "yes" */
   --leaf-600: #1b4506;
   --leaf-100: #eef3e6;
+  /* Owner, 28.09: no dark green surfaces. Anything that used to be a dark fill
+     (small buttons, pressed chips, badges, the toast) is this light green with dark ink. */
+  --leaf-soft: #dcebc9;   /* fill: 13:1 with --cream-0 */
+  --leaf-soft-2: #9fca77; /* the brand light green: hover, selected, added (8:1 with --cream-0) */
+  --leaf-band: #e6efda;   /* the pale band on the home page */
 
   --mint-500: #3ecfa8; /* App'Lite Classic wrapper */
   --mint-600: #2bb597;

@@ -68,9 +68,9 @@
 .pc__swatch { width: 0.6875rem; height: 0.6875rem; border-radius: 50%; background: var(--sw); box-shadow: 0 0 0 1.5px var(--bg-raised), 0 0 0 2.5px rgb(20 26 18 / 0.12); }
 .pc__more { font-size: var(--fs-xs); color: var(--fg-3); }
 /* "Add to cart": a small dark pill, above the stretched link so a click on it adds rather than opens. */
-.pc__add { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 0.4em; min-height: 2.625rem; padding: 0 1.1rem; border-radius: var(--r-pill); background: var(--cream-0); color: #fff; font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; transition: background var(--dur-fast), transform var(--dur-fast) ease; }
-.pc__add:hover { background: #000; transform: translateY(-2px); }
-.pc__add.is-done { background: var(--leaf-500); color: #fff; }
+.pc__add { position: relative; z-index: 2; display: inline-flex; align-items: center; justify-content: center; gap: 0.4em; min-height: 2.625rem; padding: 0 1.1rem; border-radius: var(--r-pill); background: var(--leaf-soft); color: var(--cream-0); font-size: var(--fs-sm); font-weight: 700; white-space: nowrap; transition: background var(--dur-fast), transform var(--dur-fast) ease; }
+.pc__add:hover { background: var(--leaf-soft-2); transform: translateY(-2px); }
+.pc__add.is-done { background: var(--leaf-soft-2); color: var(--cream-0); }
 @media (prefers-reduced-motion: reduce) { .pc__add:hover { transform: none; } }
 .pc--compact .pc__media { aspect-ratio: 1; }
 @media (max-width: 35rem) {
@@ -140,7 +140,7 @@
 .pills { display: flex; flex-wrap: wrap; gap: 0.55rem; }
 .pill { display: inline-flex; align-items: center; min-height: 2.5rem; padding: 0.45em 1.1em; border-radius: var(--r-pill); border: 1px solid var(--night-500); background: var(--bg-raised); font-size: var(--fs-sm); font-weight: 400; color: var(--cream-0); transition: background var(--dur-fast), color var(--dur-fast), border-color var(--dur-fast); text-decoration: none; }
 .pill:hover { border-color: var(--cream-0); }
-.pill[aria-pressed="true"], .pill.is-active { background: var(--cream-0); color: #fff; border-color: var(--cream-0); }
+.pill[aria-pressed="true"], .pill.is-active { background: var(--leaf-soft); color: var(--cream-0); border-color: var(--leaf-soft-2); }
 
 /* ---------- Cart drawer ---------- */
 .drawer[hidden] { display: none; }
@@ -264,7 +264,7 @@
 .var span { display: inline-flex; align-items: center; gap: 0.55em; min-height: 2.875rem; padding: 0.5em 1.25em; border-radius: var(--r-pill); border: 1.5px solid var(--night-500); background: var(--bg-raised); font-size: var(--fs-sm); cursor: pointer; color: var(--cream-0); transition: border-color var(--dur-fast), background var(--dur-fast), color var(--dur-fast); }
 .var span:hover { border-color: var(--cream-0); }
 .var i { width: 0.6875rem; height: 0.6875rem; border-radius: 50%; background: var(--sw); flex: none; }
-.var input:checked + span { border-color: var(--cream-0); background: var(--cream-0); color: #fff; }
+.var input:checked + span { border-color: var(--leaf-soft-2); background: var(--leaf-soft); color: var(--cream-0); box-shadow: inset 0 0 0 1px var(--leaf-soft-2); }
 .var input:focus-visible + span { outline: 2.5px solid var(--focus); outline-offset: 2px; }
 .var input:disabled + span { opacity: 0.4; text-decoration: line-through; cursor: not-allowed; }
 
@@ -296,7 +296,7 @@
 .dark .btn:hover { background: var(--cream-1); }
 
 /* ---------------------------------------------------- announcement, ladder, reviews */
-.announce { background: var(--cream-0); color: #fff; font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.02em; }
+.announce { background: var(--leaf-soft); color: var(--cream-0); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.02em; }
 .announce .container { padding-block: 0.55rem; text-align: center; }
 .announce a { color: inherit; text-underline-offset: 3px; }
 

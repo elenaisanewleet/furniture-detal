@@ -99,10 +99,10 @@ p:last-child { margin-bottom: 0; }
 .hairline { border-top: 1px solid var(--line); }
 
 /* ---- Buttons ---------------------------------------------------------- */
-/* Three kinds, as on the approved shop: dark for a small action, white with an edge for the second choice, orange for the one to press. */
+/* Three kinds: light green for a small action, white with an edge for the second choice, orange for the one to press. */
 .btn {
-  --btn-bg: var(--cream-0);
-  --btn-fg: var(--night-900);
+  --btn-bg: var(--leaf-soft);
+  --btn-fg: var(--cream-0);
   position: relative;
   display: inline-flex; align-items: center; justify-content: center; gap: 0.6em;
   min-height: 3.1rem; padding: 0.8em 1.6em;
@@ -111,7 +111,7 @@ p:last-child { margin-bottom: 0; }
   font-weight: 700; font-size: var(--fs-md); line-height: 1.1; text-decoration: none; white-space: nowrap;
   transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast), box-shadow var(--dur), color var(--dur-fast), border-color var(--dur-fast);
 }
-.btn:hover { background: #000; transform: translateY(-2px); text-decoration: none; }
+.btn:hover { background: var(--leaf-soft-2); transform: translateY(-2px); text-decoration: none; }
 .btn:active { transform: translateY(0) scale(0.98); }
 .btn--accent { --btn-bg: var(--accent-fill); --btn-fg: var(--accent-on); box-shadow: var(--glow-accent); }
 /* White on the brand orange is AA only as large text: bold, and 19 px at the least, wherever the button is. */
@@ -121,7 +121,7 @@ p:last-child { margin-bottom: 0; }
 .btn--ghost:hover { background: var(--bg-raised); color: var(--cream-0); border-color: var(--cream-0); box-shadow: none; }
 .btn--paper { --btn-bg: var(--bg-raised); --btn-fg: var(--cream-0); border-color: var(--night-500); }
 .btn--paper:hover { background: var(--bg-raised); border-color: var(--cream-0); }
-.btn--ink { --btn-bg: var(--cream-0); --btn-fg: var(--night-900); }
+.btn--ink { --btn-bg: var(--leaf-soft); --btn-fg: var(--cream-0); }
 .btn--lg { --btn-fs: var(--fs-lg); min-height: 3.5rem; padding: 0.95em 2em; font-size: var(--fs-md); }
 .btn--sm { min-height: 2.625rem; padding: 0.55em 1.2em; font-size: var(--fs-sm); }
 .btn--block { width: 100%; }
@@ -136,12 +136,12 @@ p:last-child { margin-bottom: 0; }
 
 /* ---- Chips & badges --------------------------------------------------- */
 .chip { display: inline-flex; align-items: center; gap: 0.4em; padding: 0.4em 0.85em; border-radius: var(--r-pill); background: var(--bg-raised); border: 1px solid var(--line); font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.02em; white-space: nowrap; }
-.chip--solid { background: var(--cream-0); color: var(--night-900); border-color: transparent; }
+.chip--solid { background: var(--leaf-soft); color: var(--cream-0); border-color: transparent; }
 .chip--accent { background: var(--apple-100); color: var(--accent-ink); border-color: transparent; }
 .chip--mint { background: var(--mint-100); color: var(--mint-ink); border-color: transparent; }
 .chip--leaf { background: var(--leaf-100); color: #2f4a1c; border-color: transparent; }
 .chip .dot { width: 0.6em; height: 0.6em; border-radius: 50%; background: var(--chip-color, var(--accent)); }
-.badge { position: absolute; top: 0.8rem; left: 0.8rem; z-index: 2; padding: 0.4em 0.85em; border-radius: var(--r-pill); background: var(--cream-0); color: #fff; font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.01em; }
+.badge { position: absolute; top: 0.8rem; left: 0.8rem; z-index: 2; padding: 0.4em 0.85em; border-radius: var(--r-pill); background: var(--leaf-soft); color: var(--cream-0); font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.01em; }
 
 /* ---- Cards ----------------------------------------------------------- */
 .card { position: relative; background: var(--bg-raised); border-radius: var(--r-lg); box-shadow: var(--shadow-1); overflow: clip; }
@@ -209,9 +209,9 @@ p:last-child { margin-bottom: 0; }
 .acc .acc__body { padding: 0 0 1.2rem; color: var(--fg-2); max-width: 66ch; }
 
 /* ---- Toast ------------------------------------------------------------ */
-.toast { position: fixed; left: 50%; bottom: 1.6rem; z-index: 90; width: max-content; max-width: min(calc(100vw - 2rem), 34rem); text-align: center; opacity: 0; transform: translate(-50%, 150%); padding: 0.9rem 1.5rem; border-radius: var(--r-pill); background: #111a13; color: #f3e9d6; font-size: var(--fs-sm); font-weight: 700; box-shadow: 0 20px 50px -18px rgb(0 0 0 / 0.6); transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1), opacity var(--dur); pointer-events: none; }
+.toast { position: fixed; left: 50%; bottom: 1.6rem; z-index: 90; width: max-content; max-width: min(calc(100vw - 2rem), 34rem); text-align: center; opacity: 0; transform: translate(-50%, 150%); padding: 0.9rem 1.5rem; border-radius: var(--r-pill); background: var(--night-800); color: var(--cream-0); border: 1px solid var(--night-500); font-size: var(--fs-sm); font-weight: 700; box-shadow: 0 20px 50px -18px rgb(20 26 18 / 0.35); transition: transform 0.3s cubic-bezier(0.2, 0.9, 0.3, 1), opacity var(--dur); pointer-events: none; }
 .toast.is-on { opacity: 1; transform: translate(-50%, 0); }
 
 /* ---- Skip link -------------------------------------------------------- */
-.skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 100; padding: 0.6rem 1rem; background: var(--cream-0); color: #fff; border-radius: var(--r-md); font-weight: 700; }
+.skip-link { position: absolute; left: 1rem; top: -4rem; z-index: 100; padding: 0.6rem 1rem; background: var(--leaf-soft); color: var(--cream-0); border-radius: var(--r-md); font-weight: 700; }
 .skip-link:focus { top: 1rem; }
