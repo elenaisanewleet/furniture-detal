@@ -1,0 +1,26 @@
+---
+import { localePath, stripLocale } from '~/i18n/config';
+import { t as dict } from '~/i18n/ui';
+interface Props { trail: { name: string; href: string }[] }
+const { trail } = Astro.props;
+/** Pages give English hrefs; the trail has to stay inside the locale being read. */
+const { locale } = stripLocale(Astro.url.pathname);
+const ui = dict(locale);
+---
+<nav class="crumbs container" aria-label={ui.breadcrumb}>
+  <ol>
+    {trail.map((c, i) => (
+      <li>
+        {i < trail.length - 1 ? <a href={localePath(c.href, locale)}>{c.name}</a> : <span aria-current="page">{c.name}</span>}
+      </li>
+    ))}
+  </ol>
+</nav>
+<style>
+  .crumbs { padding-top: 1rem; font-size: var(--fs-sm); color: var(--fg-3); }
+  .crumbs ol { display: flex; flex-wrap: wrap; gap: 0.35rem 0.6rem; list-style: none; margin: 0; padding: 0; }
+  .crumbs li + li::before { content: '/'; margin-right: 0.6rem; opacity: 0.5; }
+  .crumbs a { text-decoration: none; }
+  .crumbs a:hover { color: var(--fg); text-decoration: underline; }
+  .crumbs [aria-current] { color: var(--fg); }
+</style>

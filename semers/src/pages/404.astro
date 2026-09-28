@@ -1,0 +1,17 @@
+---
+/*
+ * Astro only emits dist/404.html for a page file literally named 404.astro, and
+ * that exact filename is what the Worker serves for a path that matched
+ * nothing. One file per language, all three rendering the same component: see
+ * src/pages/ru/404.astro and src/pages/lv/404.astro.
+ */
+import Base from '~/layouts/Base.astro';
+import NotFound from '~/components/NotFound.astro';
+import { stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+
+const ui = t(stripLocale(Astro.url.pathname).locale);
+---
+<Base title={ui.notFoundTitle} description={ui.notFoundHead} noindex>
+  <NotFound />
+</Base>

@@ -1,0 +1,16 @@
+// Cloudflare Pages: the shop's own hosting (company account smm@semers.org).
+// Pages, not a plain Worker, because a Pages project accepts a custom subdomain
+// from any DNS provider: shop.semers.org is one CNAME in the semers.org zone at
+// Nano IT, and nothing else in that zone changes.
+//
+// Build: `npm run build:pages` (Astro build, then scripts/pages-prepare.mjs puts
+// worker/server.js in dist/_worker.js and limits it to /api/* via _routes.json).
+// Deploy: `npx wrangler pages deploy --branch main`.
+{
+  "name": "semers-shop",
+  "pages_build_output_dir": "./dist",
+  "compatibility_date": "2026-09-01",
+  "d1_databases": [
+    { "binding": "DB", "database_name": "semers-shop", "database_id": "d95b0da9-49ad-48e8-911e-34dc8547b341" }
+  ]
+}

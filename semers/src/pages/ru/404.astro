@@ -1,0 +1,17 @@
+---
+/*
+ * The ru copy of the 404 page. It exists so that a reader who mistypes a URL
+ * under /ru/ gets the 404 in the language they were reading, rather than being
+ * dropped into English at the moment they are already lost. The Worker picks
+ * this file by the first path segment.
+ */
+import Base from '~/layouts/Base.astro';
+import NotFound from '~/components/NotFound.astro';
+import { stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+
+const ui = t(stripLocale(Astro.url.pathname).locale);
+---
+<Base title={ui.notFoundTitle} description={ui.notFoundHead} noindex>
+  <NotFound />
+</Base>

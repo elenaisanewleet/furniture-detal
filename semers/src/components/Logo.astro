@@ -1,0 +1,23 @@
+---
+/**
+ * The Semers logo — public/logo-semers.svg, the official mark from semers.org
+ * (the apple-and-wordmark in the brand navy, #1b3892). Served as a file rather
+ * than inlined: the artwork ships its own `.cls-*` stylesheet, which would leak
+ * into the page if pasted into the DOM. The plaque behind the wordmark is
+ * transparent, so it picks up whatever surface sits behind it — the cream pill
+ * in the header and footer.
+ */
+interface Props { class?: string; size?: number }
+const { class: cls = '', size = 28 } = Astro.props;
+/** Artwork is 103.3 × 85.7; `size` is the type size the logo is laid out against. */
+const height = Math.round(size * 1.6);
+const width = Math.round((height * 103.3) / 85.7);
+---
+<span class={`logo ${cls}`} translate="no">
+  <img class="logo__mark" src="/logo-semers.svg" alt="Semers" width={width} height={height} />
+</span>
+<style>
+  .logo { display: inline-flex; align-items: center; line-height: 0; }
+  .logo__mark { display: block; height: auto; transition: transform var(--dur) var(--ease-spring); }
+  a:hover .logo__mark { transform: scale(1.05); }
+</style>

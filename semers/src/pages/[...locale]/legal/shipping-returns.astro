@@ -1,0 +1,381 @@
+---
+import Base from '~/layouts/Base.astro';
+import GoverningLanguage from '~/components/GoverningLanguage.astro';
+import Icon from '~/components/Icon.astro';
+import { im, SIZES } from '~/data/images';
+import { site } from '~/data/site';
+import { formatPrice, formatThreshold } from '~/data/products';
+import { originOf } from '~/lib/origin';
+
+import { localeParams } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+
+/** One page per language; the default locale keeps the bare URL. */
+export function getStaticPaths() {
+  return localeParams();
+}
+
+const { locale } = Astro.props as { locale: Locale };
+
+const origin = originOf(Astro.site);
+const path = '/legal/shipping-returns/';
+const updated = 'September 2026';
+const title = 'Shipping & returns: costs, lockers, returns';
+/*
+ * Everything on this page is the owner's delivery and returns answer of
+ * 25.09.2026: all of Europe, Omniva parcel lockers in the Baltics, a courier
+ * everywhere else once its price is set, free from site.shipping.freeFrom, no
+ * pickup, and a 14-day withdrawal for unopened, sealed goods. No carrier price
+ * or delivery time is stated beyond the ones the owner gave.
+ */
+const description = `Semers shipping and returns: delivery across Europe, Omniva parcel lockers in the Baltics, free over ${formatThreshold(site.shipping.freeFrom)}, dispatch from Riga in 1–2 business days, 14-day returns.`;
+
+const freeFrom = formatThreshold(site.shipping.freeFrom, locale);
+/** The Omniva parcel-locker rate below the free-shipping threshold. */
+const lockerRate = formatPrice(site.shipping.flatRate, locale);
+/** The courier price, once the owner has set one; until then the courier is not offered at checkout. */
+const courierRate = site.shipping.courierRate;
+const courierCost = courierRate == null ? `Free over ${freeFrom}; otherwise shown at checkout once the courier price is set` : `Free over ${freeFrom}, otherwise ${formatPrice(courierRate, locale)}`;
+const { company } = site;
+const tel = site.phone.replace(/\s+/g, '');
+
+const band = im('bar-12-pack');
+
+const legalNav = [
+  { href: '/legal/privacy/', label: 'Privacy policy' },
+  { href: '/legal/terms/', label: 'Terms of sale' },
+  { href: '/legal/shipping-returns/', label: 'Shipping & returns' },
+].map((l) => ({ ...l, active: l.href === path }));
+
+const sections = [
+  { id: 'glance', label: 'At a glance' },
+  { id: 'zones', label: 'Where we ship and what it costs' },
+  { id: 'dispatch', label: 'Dispatch from Riga' },
+  { id: 'tracking', label: 'Tracking your parcel' },
+  { id: 'damaged', label: 'Damaged or wrong goods' },
+  { id: 'cancel', label: 'Cancelling before dispatch' },
+  { id: 'returns', label: 'Returns' },
+  { id: 'legal-contact', label: 'Contact' },
+];
+
+const zones = [
+  { zone: 'Baltics', where: 'Latvia, Lithuania, Estonia', how: 'Omniva parcel locker', cost: `Free over ${freeFrom}, otherwise ${lockerRate}` },
+  { zone: 'Rest of Europe', where: 'Every other European country', how: 'Courier to the door', cost: courierCost },
+];
+
+const webPage = {
+  '@type': 'WebPage',
+  '@id': `${origin}${path}#webpage`,
+  url: `${origin}${path}`,
+  name: 'Shipping & returns',
+  description,
+  inLanguage: 'en',
+  isPartOf: { '@id': `${origin}/#website` },
+  about: { '@id': `${origin}/#org` },
+  dateModified: '2026-09-25',
+};
+---
+<Base
+  title={title}
+  description={description}
+  canonical={path}
+  ogImage="gift-box"
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shipping & returns', href: path }]}
+  schema={[webPage]}
+>
+  <!-- ============================== HERO ============================== -->
+  <section class="legal-hero container" aria-labelledby="page-title">
+    <p class="eyebrow">Legal · {company.legalName}</p>
+    <h1 id="page-title" class="legal-title" data-words>Shipping &amp; returns, <em>from Riga to your door.</em></h1>
+    <div class="legal-hero__row">
+      <div class="legal-hero__meta">
+        <p class="legal__updated"><Icon name="clock" size={16} /> Last updated: {updated}</p>
+      </div>
+      <div class="legal-hero__lead">
+        <p class="lead">Everything about shipping and returns for orders from the Semers web shop: where we deliver in Europe and what it costs, how fast a parcel leaves Riga, how to return unopened goods, and what happens if something arrives damaged or wrong.</p>
+        <GoverningLanguage />
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== BODY ============================== -->
+  <div class="container legal">
+    <aside class="legal__aside">
+      <nav class="legal__nav" aria-label="Legal pages">
+        <p class="eyebrow">Legal</p>
+        <div class="pills legal__pills">
+          {legalNav.map((l) => (
+            <a class={`pill${l.active ? ' is-active' : ''}`} href={l.href} aria-current={l.active ? 'page' : undefined}>{l.label}</a>
+          ))}
+        </div>
+      </nav>
+      <nav class="legal__toc" aria-label="On this page" data-toc>
+        <p class="eyebrow">On this page</p>
+        <ol>
+          {sections.map((s) => <li><a href={`#${s.id}`}>{s.label}</a></li>)}
+        </ol>
+      </nav>
+      <div class="legal__help">
+        <p class="small"><strong>Where is my parcel?</strong> Write to <a href={`mailto:${site.email}`}>{site.email}</a> with your order reference. A person in Riga replies within one business day.</p>
+      </div>
+    </aside>
+
+    <div class="prose legal__body" data-legal-body>
+      <div class="legal__summary" id="glance">
+        <h2>At a glance</h2>
+        <div class="stats legal__stats">
+          <div class="stat"><strong>{freeFrom}</strong><span>free shipping from this total, across Europe</span></div>
+          <div class="stat"><strong>{lockerRate}</strong><span>to an Omniva parcel locker in the Baltics below it</span></div>
+          <div class="stat"><strong>1–2 days</strong><span>for a parcel to leave Riga</span></div>
+          <div class="stat"><strong>14 days</strong><span>to return unopened, sealed goods</span></div>
+        </div>
+      </div>
+
+      <h2 id="zones">Where we ship and what it costs</h2>
+      <p>We ship consumer orders across Europe. In Latvia, Lithuania and Estonia we deliver to Omniva parcel lockers; everywhere else in Europe a courier brings the parcel to your door. Shipping is free on orders over {freeFrom}. Below that, a parcel locker costs {lockerRate}.</p>
+      {courierRate == null && (
+        <p>The courier price has not been set yet. Until it is, the checkout offers parcel lockers only; if you are ordering from outside the Baltics, write to <a href={`mailto:${site.email}`}>{site.email}</a> before you order. Once the price is set, it is shown at checkout before you pay.</p>
+      )}
+      <p>We do not offer pickup: every order is delivered.</p>
+      {/* Scrolls sideways when the columns do not fit, which a mouse can do and a keyboard cannot — unless the box itself can take focus. Named from the heading above it, so the name is translated with the page. */}
+      <div class="table-wrap" tabindex="0" role="region" aria-labelledby="zones">
+        <table class="table legal__zones">
+          <thead><tr><th>Zone</th><th>Countries</th><th>How it ships</th><th>Cost</th></tr></thead>
+          <tbody>
+            {zones.map((z) => (
+              <tr><td data-label="Zone">{z.zone}</td><td data-label="Countries">{z.where}</td><td data-label="How it ships">{z.how}</td><td data-label="Cost">{z.cost}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p>Prefer a shop? In Latvia you will find us at Maxima and on Barbora, and in selected stores across Europe; see <a href="/where-to-buy/">where to buy</a>. Businesses order by the case through <a href="/wholesale/">wholesale</a>.</p>
+
+      <h2 id="dispatch">Dispatch from Riga</h2>
+      <p>Orders leave Riga within <strong>1–2 business days</strong> after we receive your payment. Business days are Monday to Friday, excluding Latvian public holidays, so an order paid on a Friday afternoon usually leaves on Monday or Tuesday. Payments go through Paysera, and the clock starts when your payment arrives, not when you send the order request.</p>
+      <p>Everything is packed in a sturdy box with paper padding. We ship without ice packs. Every pack carries its best-before date, and its storage conditions where the pack gives them.</p>
+
+      <h2 id="tracking">Tracking your parcel</h2>
+      <p>Every parcel is sent with tracking. As soon as it leaves, we e-mail you the tracking number and a link. Parcel-locker deliveries also send an SMS with the locker location and door code, which is why we ask for a phone number at checkout. Lockers hold a parcel for a limited number of days before returning it, so please collect promptly.</p>
+      <p>If tracking shows “delivered” but there is no parcel, check with neighbours, the building’s reception and the locker, then write to us and we will open a trace with the carrier.</p>
+
+      <h2 id="damaged">Damaged or wrong goods</h2>
+      <p>If something arrives damaged, or is not what you ordered, write to <a href={`mailto:${site.email}`}>{site.email}</a> or call <a href={`tel:${tel}`}>{site.phone}</a> with your order reference and, if you can, a photo. <strong>We replace it, or refund it if you ask.</strong> You do not need to send damaged food back unless we ask.</p>
+      <p>If the box is visibly crushed when the courier hands it over, you can refuse it or ask the courier to note the damage; either one helps us claim from the carrier.</p>
+
+      <h2 id="cancel">Cancelling before dispatch</h2>
+      <p>Changed your mind? Before we ship, e-mail your order reference and we cancel the request. If you have already paid, we refund the full amount to the same payment method. Because we dispatch quickly, write as soon as you can; once the parcel has left, a cancellation becomes a return, below.</p>
+
+      <h2 id="returns">Returns</h2>
+      <p>You may return goods within <strong>14 days</strong> of receiving them, no reason needed, as long as they are <strong>unopened and still sealed</strong>. Food that has been opened cannot be returned, for hygiene reasons. The cost of sending the goods back is yours. This is your right of withdrawal under the EU Consumer Rights Directive; the full wording is in our <a href="/legal/terms/#withdrawal">terms of sale</a>.</p>
+      <ol>
+        <li>E-mail us at <a href={`mailto:${site.email}`}>{site.email}</a> within 14 days of delivery with your order reference and what you are returning.</li>
+        <li>Send the goods back, well packed and at your own cost, within 14 days of your e-mail, to <strong>{company.legalName}, {company.officeAddress}</strong>.</li>
+        <li>We refund the price and the standard outbound shipping within 14 days of your notice, to the same payment method. We may wait until the goods arrive or you show proof of posting.</li>
+      </ol>
+
+      <h2 id="legal-contact">Contact</h2>
+      <p>{company.legalName}<br />
+      Office and returns: {company.officeAddress}<br />
+      Legal address: {company.legalAddress}<br />
+      Reg. No. {company.regNo} · VAT No. <span translate="no">{company.vatNo}</span><br />
+      <a href={`mailto:${site.email}`}>{site.email}</a> · <a href={`tel:${tel}`}>{site.phone}</a></p>
+      <p>Prefer a form? Use the <a href="/contact/">contact page</a>. Quick answers about storage, calories and ingredients are in the <a href="/faq/">FAQ</a>; how we handle your data is in the <a href="/legal/privacy/">privacy policy</a>.</p>
+    </div>
+
+    <!-- Marginalia: the numbers that matter on this page, set as outlined type in the otherwise empty right third. -->
+    <ul class="legal__facts">
+      <li><strong>1–2</strong><span>business days for a parcel to leave Riga</span></li>
+      <li><strong>14</strong><span>days to return unopened, sealed goods</span></li>
+      <li><strong>12</strong><span>months’ shelf life on an Apple Bar</span></li>
+    </ul>
+  </div>
+
+  <!-- ============================== CTA ============================== -->
+  <section class="section container section--tight" aria-labelledby="cta-title">
+    <div class="cta-band legal__band" data-reveal>
+      <div class="legal__band-copy">
+        <p class="eyebrow">Ready when you are</p>
+        <h2 id="cta-title">Fill a box. We’ll have it on its way in a day or two.</h2>
+        <p>Apple bars, meringues and baked-apple desserts, made in Riga and shipped across Europe. Free shipping over {freeFrom}.</p>
+        <div class="cluster mt-2">
+          <a class="btn btn--paper" href="/shop/">Shop the range <Icon name="arrow" size={18} class="arrow" /></a>
+          <a class="btn btn--ghost legal__ghost" href="/shop/build-your-box/">Build your box</a>
+        </div>
+      </div>
+      <div class="legal__band-media">
+        <img src={band.src} srcset={band.srcset} sizes={band.srcset && SIZES.third} alt={band.alt} width={band.width} height={band.height} loading="lazy" decoding="async" data-parallax="0.1" />
+      </div>
+    </div>
+  </section>
+</Base>
+
+<script>
+  /*
+   * The rail: which section is under the reader lights up in the table of
+   * contents, and a thin honey line grows down the rail as the reading goes.
+   * On a phone the same list is a strip of chips and the lit chip is kept in view.
+   */
+  const toc = document.querySelector<HTMLElement>('[data-toc]');
+  const body = document.querySelector<HTMLElement>('[data-legal-body]');
+  if (toc && body) {
+    const list = toc.querySelector<HTMLElement>('ol');
+    const links = [...toc.querySelectorAll<HTMLAnchorElement>('a[href^="#"]')];
+    const byId = new Map(links.map((a) => [a.getAttribute('href')!.slice(1), a]));
+    const heads = [...body.querySelectorAll<HTMLElement>('[id]')].filter((h) => byId.has(h.id));
+    let current: HTMLAnchorElement | null = null;
+    let raf = 0;
+    const set = (a: HTMLAnchorElement | null) => {
+      if (a === current) return;
+      current?.classList.remove('is-on');
+      current?.removeAttribute('aria-current');
+      current = a;
+      if (!a) return;
+      a.classList.add('is-on');
+      a.setAttribute('aria-current', 'location');
+      if (list && list.scrollWidth > list.clientWidth) list.scrollTo({ left: a.offsetLeft - list.clientWidth / 2 + a.offsetWidth / 2, behavior: 'smooth' });
+    };
+    const update = () => {
+      raf = 0;
+      const line = innerHeight * 0.35;
+      let pick: HTMLElement | null = null;
+      for (const h of heads) {
+        if (h.getBoundingClientRect().top <= line) pick = h;
+        else break;
+      }
+      set(pick ? byId.get(pick.id)! : null);
+      const r = body.getBoundingClientRect();
+      toc.style.setProperty('--p', Math.min(1, Math.max(0, (line - r.top) / r.height)).toFixed(3));
+    };
+    const ask = () => { if (!raf) raf = requestAnimationFrame(update); };
+    addEventListener('scroll', ask, { passive: true });
+    addEventListener('resize', ask);
+    update();
+  }
+</script>
+
+<style>
+  /* ------------------------------------------------------------- hero */
+  .legal-hero { padding-block: clamp(3.5rem, 8vw, 7rem) clamp(1.5rem, 4vw, 3rem); }
+  .legal-hero .eyebrow { margin-bottom: 1.25rem; }
+  .legal-title { font-size: var(--fs-4xl); line-height: var(--lh-tight); letter-spacing: -0.04em; max-width: 13ch; text-wrap: balance; }
+  /* Phones: a long Cyrillic or Latvian word must still fit one line at a size the ground can carry. */
+  @media (max-width: 48rem) { .legal-title { max-width: none; font-size: clamp(2.25rem, 9.5vw, 3.25rem); overflow-wrap: anywhere; hyphens: auto; } }
+  /* Russian legal nouns run to 19 letters; a step smaller keeps them whole on a 390 px screen. */
+  @media (max-width: 48rem) { .legal-title:lang(ru) { font-size: clamp(2rem, 8.2vw, 3rem); } }
+  .legal-title em { font-style: italic; font-weight: 400; color: var(--honey-ink); font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1; }
+  /* The honey phrase takes its own line, so it is never split with one word stranded above. */
+  @media (min-width: 48.01rem) { .legal-title { max-width: 20ch; } .legal-title em { display: block; text-wrap: balance; } }
+  .legal-hero__row { display: grid; gap: 1.25rem; margin-top: clamp(1.5rem, 4vw, 3rem); }
+  .legal-hero__lead { max-width: 65ch; }
+  .legal-hero__lead .lead { max-width: none; font-size: var(--fs-lg); line-height: 1.55; }
+  .legal-hero .legal-hero__lead :global(.governing) { margin: 1.25rem 0 0; }
+  .legal__updated { display: inline-flex; align-items: center; gap: 0.5em; margin: 0; font-size: var(--fs-sm); color: var(--fg-3); }
+  .legal__updated svg { color: var(--honey-ink); }
+  @media (min-width: 60rem) {
+    .legal-hero__row { grid-template-columns: 16rem minmax(0, 1fr); gap: var(--sp-8); align-items: start; }
+    .legal-hero__meta { padding-top: 0.4rem; }
+  }
+
+  /* ------------------------------------------------------------- shell */
+  .legal { display: grid; gap: var(--sp-6); align-items: start; padding-block: var(--sp-5) clamp(2rem, 5vw, 4rem); }
+  @media (min-width: 60rem) {
+    .legal { grid-template-columns: 16rem minmax(0, 1fr); gap: var(--sp-8); }
+    /* The rail stays put and only the table of contents scrolls inside it, so the help box is never cut off. */
+    .legal__aside { position: sticky; top: 7rem; max-height: calc(100vh - 7.5rem); grid-template-rows: auto minmax(0, 1fr) auto; }
+    .legal__toc { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 1.25rem; scrollbar-width: thin; scrollbar-color: rgb(20 26 18 / 0.18) transparent; mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent); -webkit-mask-image: linear-gradient(#000 calc(100% - 1.25rem), transparent); }
+    .legal__pills { flex-direction: column; align-items: stretch; }
+    .legal__pills .pill { text-align: left; }
+  }
+  .legal__aside { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--sp-5); min-width: 0; }
+  .legal__nav, .legal__toc { min-width: 0; }
+  .legal__aside .eyebrow { margin-bottom: 0.75rem; }
+
+  /* The rail: every section as a small outlined numeral; the one in view lights, and a honey line grows with the reading. */
+  .legal__toc ol { position: relative; counter-reset: toc; list-style: none; margin: 0; padding: 0; display: grid; gap: 0.1rem; }
+  .legal__toc ol::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--line); }
+  .legal__toc ol::after { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: var(--honey-500); box-shadow: none; transform: scaleY(var(--p, 0)); transform-origin: top; transition: transform 0.25s linear; }
+  .legal__toc li { counter-increment: toc; }
+  .legal__toc a { position: relative; display: grid; grid-template-columns: 1.7rem 1fr; align-items: baseline; gap: 0.4rem; padding: 0.35rem 0 0.35rem 1.1rem; font-size: var(--fs-sm); line-height: 1.35; color: var(--fg-2); text-decoration: none; transition: color var(--dur-fast); }
+  .legal__toc a::before { content: counter(toc, decimal-leading-zero); font-family: var(--font-display); font-size: 0.95rem; font-weight: 400; letter-spacing: 0.02em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 48, 'SOFT' 0; transition: color var(--dur-fast); }
+  .legal__toc a:hover { color: var(--cream-0); }
+  .legal__toc a.is-on { color: var(--cream-0); }
+  .legal__toc a.is-on::before { color: var(--honey-ink); -webkit-text-stroke: 0; }
+  @media (max-width: 59.99rem) {
+    .legal__toc { margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
+    .legal__toc ol { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; scrollbar-width: none; scroll-snap-type: x proximity; }
+    .legal__toc ol::-webkit-scrollbar { display: none; }
+    .legal__toc ol::before, .legal__toc ol::after { display: none; }
+    .legal__toc li { flex: none; scroll-snap-align: start; }
+    .legal__toc a { grid-template-columns: auto auto; align-items: center; gap: 0.5rem; min-height: 2.75rem; padding: 0.5rem 1rem; border: 1px solid var(--line); border-radius: var(--r-pill); white-space: nowrap; }
+    .legal__toc a.is-on { border-color: rgb(240 176 74 / 0.55); background: var(--honey-100); }
+  }
+  .legal__help { padding: 1rem 1.1rem; border-radius: var(--r-md); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .legal__help p { margin: 0; color: var(--fg-2); }
+
+  /* ------------------------------------------------------------- reading column */
+  .legal__body { min-width: 0; max-width: 65ch; font-size: 1.125rem; line-height: 1.75; counter-reset: sec; }
+  .legal__body p, .legal__body li { color: var(--fg-2); }
+  .legal__body p strong, .legal__body li strong { color: var(--cream-0); }
+  .legal__body a { color: var(--cream-0); }
+  .legal__body h2 { position: relative; counter-increment: sec; scroll-margin-top: 7.5rem; margin: 3.4rem 0 0.9rem; padding-top: 1.4rem; border-top: 1px solid var(--line); font-size: var(--fs-2xl); letter-spacing: -0.03em; line-height: 1.05; }
+  .legal__body h2::before { content: counter(sec, decimal-leading-zero); display: block; margin-bottom: 0.6rem; font-size: 1.1rem; font-weight: 400; letter-spacing: 0.02em; line-height: 1; color: transparent; -webkit-text-stroke: 1px var(--cream-3); font-variation-settings: 'opsz' 48, 'SOFT' 0; }
+  .legal__body h3 { margin-top: 2.2rem; font-size: var(--fs-xl); }
+  @media (min-width: 60rem) {
+    .legal__body h2::before { position: absolute; left: -3.4rem; top: 1.85rem; margin: 0; }
+  }
+  .legal__summary { position: relative; margin-bottom: 1.5rem; padding: 1.6rem 1.75rem 1.75rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .legal__summary h2 { margin: 0 0 1rem; padding: 0; border: 0; font-size: var(--fs-xl); }
+  .legal__summary h2::before { top: 0.35rem; }
+  @media (min-width: 60rem) { .legal__summary h2::before { left: -5.15rem; } }
+  .legal__summary .ticks { font-size: var(--fs-md); line-height: 1.5; }
+
+  /* Tables as lit panels. */
+  .legal__body .table-wrap { margin: 1.25rem 0 2rem; padding: 0.35rem 1.25rem 0.5rem; border-radius: var(--r-lg); background: var(--bg-raised); box-shadow: var(--shadow-1); }
+  .legal__body .table { font-size: var(--fs-sm); line-height: 1.5; }
+  .legal__body .table th { padding: 1em 0.6em 0.75em; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg-3); }
+  .legal__body .table td { padding: 0.9em 0.6em; color: var(--fg-2); }
+  .legal__body .table tr:last-child td { border-bottom: 0; }
+  .legal__body .table td:first-child { font-weight: 600; color: var(--cream-0); }
+
+  /* On the cream band a ghost button is dark-on-cream, or it vanishes into the room. */
+  .legal__ghost { --btn-fg: var(--cream-0); border-color: var(--night-500); }
+  .legal__ghost:hover { background: var(--bg-raised); color: var(--cream-0); border-color: var(--cream-0); }
+
+  .legal__stats { grid-template-columns: repeat(2, 1fr); gap: 1.25rem 1.5rem; }
+  @media (min-width: 40rem) { .legal__stats { grid-template-columns: repeat(4, 1fr); } }
+  .legal__stats .stat strong { font-size: var(--fs-2xl); white-space: nowrap; }
+  .legal__stats .stat span { font-size: var(--fs-xs); line-height: 1.4; }
+  .legal__zones { min-width: 40rem; }
+  .legal__zones td:first-child { white-space: nowrap; }
+  /* Phones: the five-column table becomes a stack of labelled rows, so cost and delivery time are never off-screen. */
+  @media (max-width: 40rem) {
+    .legal__zones, .legal__zones tbody { display: block; min-width: 0; width: 100%; }
+    .legal__zones thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+    .legal__zones tr { display: grid; gap: 0.4rem; padding: 1rem 0; border-bottom: 1px solid var(--line); }
+    .legal__zones tr:last-child { border-bottom: 0; }
+    .legal__zones td { display: grid; grid-template-columns: 6.5rem 1fr; gap: 0.5rem; padding: 0; border: 0; font-size: var(--fs-sm); }
+    .legal__zones td::before { content: attr(data-label); padding-top: 0.2em; font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--fg-3); }
+    .legal__zones td:first-child { display: block; font-family: var(--font-display); font-size: var(--fs-lg); font-weight: 500; white-space: normal; }
+    .legal__zones td:first-child::before { display: none; }
+  }
+
+  /* ------------------------------------------------------------- marginalia: the page's key numbers in the empty right third */
+  .legal__facts { display: none; }
+  @media (min-width: 72rem) {
+    .legal { grid-template-columns: 16rem minmax(0, 44rem) minmax(0, 1fr); }
+    .legal__facts { display: grid; gap: 1.5rem; align-content: start; position: sticky; top: 7.5rem; justify-self: end; width: min(100%, 15rem); margin: 0; padding: 0; list-style: none; }
+    .legal__facts li { display: grid; gap: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); }
+    .legal__facts strong { font-family: var(--font-display); font-weight: 400; font-size: clamp(3rem, 4.6vw, 4.75rem); line-height: 0.85; letter-spacing: -0.04em; color: transparent; -webkit-text-stroke: 1px var(--cream-3); white-space: nowrap; font-variant-numeric: tabular-nums; font-variation-settings: 'opsz' 144, 'SOFT' 60; }
+    .legal__facts span { font-size: var(--fs-sm); line-height: 1.4; color: var(--fg-2); max-width: 22ch; }
+  }
+
+  /* The cream room: copy on the left, a lit picture on the right wall from 64rem up. */
+  .legal__band { align-items: center; }
+  .legal__band-copy { display: grid; gap: 1rem; }
+  .legal__band-media { display: none; }
+  @media (min-width: 64rem) {
+    .legal__band { grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); column-gap: clamp(2rem, 5vw, 4rem); }
+    .legal__band-media { position: relative; display: block; overflow: clip; aspect-ratio: 1 / 1; width: min(100%, 26rem); justify-self: end; border-radius: var(--r-lg); background: var(--cream-2); box-shadow: 0 0 0 1px rgb(27 22 18 / 0.08), 0 30px 70px -30px rgb(27 22 18 / 0.6); }
+    .legal__band-media img { position: absolute; inset: -8% 0; width: 100%; height: 116%; object-fit: cover; }
+  }
+</style>

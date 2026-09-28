@@ -1,0 +1,39 @@
+---
+/**
+ * On a translated legal page, says which version governs.
+ *
+ * The terms, privacy policy and shipping rules are translated because a shopper
+ * has to be able to read the contract they are agreeing to — but a translation
+ * of a contract is a translation, and if the two versions ever disagree one of
+ * them has to win. Saying so plainly, on the page, is the ordinary commercial
+ * practice and costs the reader nothing.
+ *
+ * Renders nothing on the English pages, where there is no discrepancy to
+ * resolve.
+ */
+import { DEFAULT_LOCALE, localePath, stripLocale } from '~/i18n/config';
+import { t } from '~/i18n/ui';
+
+const { locale, path } = stripLocale(Astro.url.pathname);
+const ui = t(locale);
+---
+
+{locale !== DEFAULT_LOCALE && (
+  <p class="governing">
+    {ui.governingLanguage}{' '}
+    <a href={localePath(path, DEFAULT_LOCALE)} hreflang={DEFAULT_LOCALE} lang={DEFAULT_LOCALE}>{ui.governingLanguageLink}</a>
+  </p>
+)}
+
+<style>
+  .governing {
+    margin: 0 0 1.5rem;
+    padding: 0.7rem 0.9rem;
+    font-size: var(--fs-sm);
+    color: var(--fg-3);
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: var(--r-md);
+  }
+  .governing a { color: inherit; }
+</style>

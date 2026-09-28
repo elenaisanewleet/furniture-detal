@@ -1,0 +1,114 @@
+---
+import Base from '~/layouts/Base.astro';
+import Icon from '~/components/Icon.astro';
+import ProductCard from '~/components/ProductCard.astro';
+import { COLLECTIONS, productsInCollection, formatThreshold, type Collection } from '~/data/products';
+import { site } from '~/data/site';
+import { itemList } from '~/lib/schema';
+import { originOf } from '~/lib/origin';
+import { withLocales } from '~/i18n/config';
+import type { Locale } from '~/i18n/config';
+import { localizedCollection, localizedCollections } from '~/data/copy';
+import { t } from '~/i18n/ui';
+
+export function getStaticPaths() {
+  return withLocales(COLLECTIONS.map((c) => ({ params: { collection: c.key }, props: { collection: c } })));
+}
+const { collection: rawCollection, locale } = Astro.props as { collection: Collection; locale: Locale };
+const ui = t(locale);
+const c = localizedCollection(rawCollection, locale);
+const products = productsInCollection(rawCollection.key);
+const all = localizedCollections(COLLECTIONS, locale);
+const origin = originOf(Astro.site);
+/*
+ * Shelf life differs by format (the 50 g dessert 4 months, the 500 g carton 18), so the tick reads
+ * from the catalogue. It is shown only when every product here has a figure on its card: a range
+ * over the ones that do would be read as covering the ones that do not.
+ */
+const months = products.map((p) => p.shelfLifeMonths);
+const known = months.filter((m): m is number => m != null);
+const shelfLine =
+  known.length === 0 || known.length < months.length
+    ? ''
+    : Math.min(...known) === Math.max(...known)
+      ? `Keeps ${known[0]} months`
+      : `Keeps ${Math.min(...known)}–${Math.max(...known)} months`;
+/*
+ * The "good to know" lead says only what every product here can back: the flavour additions that
+ * are really in the range, and the claims every pack in it prints.
+ */
+const extras = new Set(products.flatMap((p) => p.variants.map((v) => (v.key === 'cinnamon' ? 'cinnamon' : ['berry', 'blueberry', 'cranberry'].includes(v.key) ? 'berries' : ''))).filter(Boolean));
+const extrasLine = extras.size === 2 ? '; some flavours add berries or cinnamon' : extras.size === 1 ? `; some flavours add ${[...extras][0]}` : '';
+const CLAIM_WORDS = { 'no-added-sugar': 'no added sugar', flourless: 'no flour', 'gluten-free': 'gluten free' } as const;
+const claims = (Object.keys(CLAIM_WORDS) as (keyof typeof CLAIM_WORDS)[]).filter((k) => products.length > 0 && products.every((p) => p.diet.includes(k))).map((k) => CLAIM_WORDS[k]);
+const claimsLine = claims.length ? ` ${claims.join(', ').replace(/^./, (c) => c.toUpperCase())}.` : '';
+const knowLead = `Every product here starts from apples and egg white${extrasLine}.${claimsLine}`;
+---
+<Base
+  title={c.title}
+  description={c.description}
+  canonical={`/shop/${c.key}/`}
+  ogImage={c.image}
+  breadcrumb={[{ name: 'Home', href: '/' }, { name: 'Shop', href: '/shop/' }, { name: c.name, href: `/shop/${c.key}/` }]}
+  schema={[itemList(origin, products)]}
+>
+  <!--
+    A collection is the shop page narrowed to one shelf: its name and a line
+    about it, the chips to the other shelves, the grid, and what every product
+    here has in common.
+  -->
+  <section class="container shop" id="products" data-shop data-collection={c.key} aria-labelledby="col-title">
+    <div class="shop__head">
+      <div>
+        <h1 id="col-title">{c.name}</h1>
+        <p class="lead shop__lead">{c.intro}</p>
+      </div>
+      <p class="shop__count" data-shop-count aria-live="polite">{ui.productCount(products.length)}</p>
+    </div>
+    <nav class="pills shop__bar" aria-label="Other collections">
+      <a class="pill" href="/shop/">All</a>
+      {all.map((o) => <a class={`pill ${o.key === c.key ? 'is-active' : ''}`} href={`/shop/${o.key}/`} aria-current={o.key === c.key ? 'page' : undefined}>{o.name}</a>)}
+    </nav>
+    <h2 class="sr-only">Products</h2>
+    <div class="grid grid--4 col-grid" data-shop-grid>
+      {products.map((p, i) => <ProductCard product={p} loading={i < 4 ? 'eager' : 'lazy'} />)}
+    </div>
+    {products.length === 0 && <p class="muted">Nothing here yet — <a href="/shop/">see all products</a>.</p>}
+    <div class="shop__empty" data-shop-empty hidden>
+      <p><strong>Nothing matches those filters.</strong></p>
+      <button class="btn btn--ghost btn--sm" type="button" data-filter-reset>Clear filters</button>
+    </div>
+  </section>
+
+  <!-- What every product on this shelf can back, and nothing more. -->
+  <section class="section--tight container" aria-labelledby="know-title">
+    <div class="cta-band know">
+      <p class="eyebrow">Good to know</p>
+      <h2 id="know-title">Apples and egg white first.</h2>
+      <p>{knowLead}</p>
+      <ul class="ticks">
+        {shelfLine && <li><Icon name="check" /> {shelfLine}</li>}
+        <li><Icon name="check" /> Ships from Riga in 1–2 business days</li>
+        <li><Icon name="check" /> Free shipping over {formatThreshold(site.shipping.freeFrom, locale)}</li>
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .shop { padding-top: 0.9rem; }
+  .shop__head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.5rem 1.25rem; }
+  .shop__head h1 { font-size: clamp(2rem, 1.4rem + 3vw, 3.25rem); }
+  .shop__lead { margin: 0.75rem 0 0; font-size: var(--fs-md); }
+  .shop__count { margin: 0; font-size: var(--fs-sm); color: var(--fg-3); }
+  .shop__bar { margin-block: 1.5rem; }
+  .shop__empty { padding: 4rem 0; text-align: center; display: grid; gap: 0.75rem; justify-items: center; }
+  /* A shelf of one or two keeps its cards card-sized rather than stretching them across the page. */
+  .col-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 15.75rem), 18rem)); }
+  .know .ticks { margin-top: 0.5rem; }
+  @media (max-width: 40rem) {
+    .shop__bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); }
+    .shop__bar::-webkit-scrollbar { display: none; }
+    .shop__bar .pill { flex: none; white-space: nowrap; }
+  }
+</style>
