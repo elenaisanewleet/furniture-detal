@@ -55,6 +55,7 @@
   --leaf-soft: #dcebc9;   /* fill: 13:1 with --cream-0 */
   --leaf-soft-2: #9fca77; /* the brand light green: hover, selected, added (8:1 with --cream-0) */
   --leaf-band: #e6efda;   /* the pale band on the home page */
+  --leaf-mid: #5e8f34;    /* the outline of a chosen option: 3.9:1 on white, so the choice is visible */
 
   --mint-500: #3ecfa8; /* App'Lite Classic wrapper */
   --mint-600: #2bb597;
