@@ -20,9 +20,12 @@
   protocol, then the one task card you need. One task, one verifiable result, a ten-point
   HUMAN REVIEW CARD, and a stop before the next stage. Update the task card, the history and the
   handoff when a piece of work is finished; do not start a second plan anywhere else.
-- **Hosting is the company's own Cloudflare account** (owner's login smm@semers.org), since
-  25.09.2026: Worker `semers-shop` at https://semers-shop.semers-shop.workers.dev, config in
-  `wrangler.jsonc`, D1 database `semers-shop`. The network proxy here blocks Cloudflare, so deploys
+- **Hosting is the company's own Cloudflare account** (owner's login smm@semers.org): since
+  28.09.2026 the **Pages** project `semers-shop` (https://semers-shop.pages.dev, custom domain
+  shop.semers.org via one CNAME `shop → semers-shop.pages.dev` in the Nano IT cPanel zone; nothing
+  else in that zone may change). Build `npm run build:pages` with `SITE_URL=https://shop.semers.org`,
+  deploy `wrangler pages deploy --branch main`; config in `wrangler.jsonc`, D1 database `semers-shop`.
+  The earlier Worker `semers-shop` (…workers.dev, 25.09) is superseded. The network proxy here blocks Cloudflare, so deploys
   run `wrangler login --device` + `wrangler deploy` from the Higgsfield sandbox (it has internet);
   the owner approves the device code. `ADMIN_PASSWORD` is a Worker secret the owner can change in
   the Cloudflare dashboard. The old Higgsfield project (`ce8b3b43-…`, semers-store.higgsfield.app,
