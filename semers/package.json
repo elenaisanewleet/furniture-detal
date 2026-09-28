@@ -11,6 +11,7 @@
     "start": "astro dev",
     "build": "astro check && astro build",
     "build:fast": "astro build",
+    "build:pages": "astro build && node scripts/pages-prepare.mjs",
     "preview": "astro preview",
     "astro": "astro",
     "localize-images": "node scripts/localize-images.mjs",
